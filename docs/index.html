@@ -1,0 +1,2294 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Umswap</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <meta name="description" content="Umswap (c) Bok Consulting Pty Ltd 2022" />
+    <meta name="author" content="BokkyPooBah" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@BokkyPooBah" />
+    <meta name="twitter:creator" content="@BokkyPooBah" />
+    <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="css/bootstrap-vue.min.css"/>
+    <link type="text/css" rel="stylesheet" href="css/bootstrap-vue-icons.min.css"/>
+    <script src="js/vue.js"></script>
+    <script src="js/bootstrap-vue.min.js"></script>
+    <script src="js/bootstrap-vue-icons.min.js"></script>
+    <script src="js/ethers-5.6.umd.min.js" type="application/javascript"></script>
+    <script src="js/moment.min.js"></script>
+    <script src="js/dexie.js"></script>
+    <script src="globals.js"></script>
+    <script src="deploymentData.js"></script>
+
+    <link rel="apple-touch-icon" sizes="57x57" href="images/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="images/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="images/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="images/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="images/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="images/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="images/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="images/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="images/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="images/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+    <link rel="manifest" href="images/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="images/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+  </head>
+  <body>
+    <div id="app">
+      <b-container fluid class="m-0 p-0">
+        <b-navbar toggleable="sm" variant="light" class="mx-1 my-0 p-0">
+          <b-navbar-brand to="/" variant="primary">
+            <b-avatar rounded variant="light" size="3.0rem" src="images/ZombieBaby_001_gp2_3871_8601_10786.gif" v-b-popover.hover.bottom="'gm'" class="ml-0"></b-avatar>
+            <em v-b-popover.hover.bottom="'gm gm gm'">Umswap</em>
+          </b-navbar-brand>
+          <b-navbar-nav class="ml-auto">
+            <!-- <b-avatar v-if="coinbase && coinbase != ensOrAddress(coinbase)" rounded variant="light" size="2.5rem" :src="ensOrAddress(coinbase)"></b-avatar> -->
+            <b-button size="sm" variant="outline-primary" class="ml-1" @click="doIt('syncUmswaps')" v-b-popover.hover.bottom="'Click to update wallet'">{{ coinbase ? ensOrAddress(coinbase) : 'Connect' }}</b-button>
+          </b-navbar-nav>
+        </b-navbar>
+
+        <b-card no-body class="p-0 mt-0" style="min-height: 666px;">
+          <b-alert size="sm" dismissible variant="warning" show class="m-1 my-0">
+            Warning: This is experimental unaudited software. Revoke permissions when not required, at this early stage.
+          </b-alert>
+          <b-card class="m-2 p-1" header-class="warningheader" header="Welcome" v-if="!coinbase">
+            <b-card-text>
+              Please install the MetaMask extension, connect to the Ethereum mainnet and refresh this page. Then click the [Connect] button on the top right.
+            </b-card-text>
+          </b-card>
+
+          <b-card-body v-if="coinbase" class="m-0 px-1 py-0">
+            <!-- ALL COLLECTIONS TOOLBAR -->
+            <div class="d-flex flex-wrap m-0 p-0">
+              <div class="mt-0 pr-1">
+                <b-button :disabled="selectedCollection != null || sync.section != null" size="sm" @click="doIt('syncUmswaps')" variant="primary" style="min-width: 40px;" v-b-popover.hover.top="'Sync Umswaps'"><b-icon-cloud-download shift-v="+1" font-scale="0.9"></b-icon-cloud-download></b-button>
+              </div>
+              <div class="mt-0 pr-1">
+                <b-form-input :disabled="newPool" type="text" size="sm" v-model.trim="searchCollections" debounce="600" v-b-popover.hover.top="'Filter by partial ERC-721 NFT collection address, symbol or name'" placeholder="🔍 collection"></b-form-input>
+              </div>
+              <div class="mt-0 pr-1">
+                <b-form-select :disabled="newPool" size="sm" v-model="selectedCollection" :options="collectionsOptions" @change="selectedCollectionChanged" v-b-popover.hover.top="'ERC-721 NFT Collection'"></b-form-select>
+              </div>
+              <div class="mt-0">
+                <b-button size="sm" :pressed.sync="newPool" variant="link" v-b-popover.hover.top="'Create new pool'"><span v-if="newPool"><b-icon-pencil-square shift-v="+1" font-scale="1.0"></b-icon-pencil-square></span><span v-else><b-icon-pencil-square shift-v="+1" font-scale="1.0"></b-icon-pencil-square></span></b-button>
+              </div>
+              <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-1" style="width: 200px;">
+                <b-progress v-if="(selectedCollection == null || newUmswap) && sync.section != null" height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click on the Sync(ing) button to (un)pause'">
+                  <b-progress-bar :value="sync.completed">
+                    {{ sync.total == null ? (sync.completed + ' ' + sync.section) : (sync.completed + '/' + sync.total + ' ' + ((sync.completed / sync.total) * 100).toFixed(0) + '% ' + sync.section) }}
+                  </b-progress-bar>
+                </b-progress>
+              </div>
+              <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-0 pr-1">
+                <b-button size="sm" :pressed.sync="showInfo" variant="link" v-b-popover.hover.top="'Show info'"><span v-if="showInfo"><b-icon-info-circle-fill shift-v="+1" font-scale="1.0"></b-icon-info-circle-fill></span><span v-else><b-icon-info-circle shift-v="+1" font-scale="1.0"></b-icon-info-circle></span></b-button>
+              </div>
+              <div class="mt-0 pr-1">
+                <b-form-select :disabled="selectedCollection != null" size="sm" v-model="collectionsSortOption" :options="collectionsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+              </div>
+              <div class="mt-0 pr-1">
+                <font size="-2" v-b-popover.hover.top="'# collections'">{{ selectedCollection ? 1 : filteredCollections.length }}</font>
+              </div>
+              <div class="mt-0 pr-1">
+                <b-pagination :disabled="selectedCollection != null" size="sm" v-model="collectionsCurrentPage" :total-rows="filteredSortedCollections.length" :per-page="collectionsPageSize" style="height: 0;"></b-pagination>
+              </div>
+              <div class="mt-0 pl-1">
+                <b-form-select :disabled="selectedCollection != null" size="sm" v-model="collectionsPageSize" :options="pageSizes" v-b-popover.hover.top="'Collections Page size'"></b-form-select>
+              </div>
+            </div>
+
+            <!-- INFO -->
+            <div v-if="showInfo">
+              <b-card no-header no-body class="mx-0 my-1 p-0">
+                <b-card-body class="m-0 p-0">
+                  <b-card-text class="m-1 p-1">
+                    <b-form-group label-cols="2" label-size="sm" label-align="right" label="" class="mx-0 mt-3 p-0">
+                      Umswaps are subsets of ERC-721 NFT collections pooled into ERC-20 tokens.
+                      <br />
+                      Umswaps are created by UmswapFactory.
+                      <br />
+                      "Like WETH, but for ERC-721s"
+                      <br />
+                      <br />
+                      WARNING: Experimental un-audited software!
+                    </b-form-group>
+                    <b-form-group label-cols="2" label-size="sm" label-align="right" label="UmswapFactory:" class="mx-0 my-1 p-0">
+                      <b-link :href="'https://etherscan.io/address/' + umswapFactoryAddress + '#code'" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">{{ umswapFactoryAddress }}</b-link>
+                    </b-form-group>
+                    <b-form-group label-cols="2" label-size="sm" label-align="right" label="This Dapp GitHub:" class="mx-0 my-1 p-0">
+                      <b-link :href="'https://github.com/bokkypoobah/umswap'" v-b-popover.hover.bottom="'View in GitHub.com. Feel free to clone and improve'" target="_blank">https://github.com/bokkypoobah/umswap</b-link>
+                    </b-form-group>
+                    <b-form-group label-cols="2" label-size="sm" label-align="right" label="" class="mx-0 mt-3 p-0">
+                      Enjoy. And hello, from the past.
+                      <br />
+                      (c) BokkyPooBah / Bok Consulting Pty Ltd 2022. The MIT Licence.
+                    </b-form-group>
+                  </b-card-text>
+                </b-card-body>
+              </b-card>
+            </div>
+
+            <!-- TABLE OF COLLECTIONS -->
+            <b-card v-if="!newPool" no-header no-body class="m-0 mt-1 p-0 border-0">
+              <b-card-body class="m-0 p-0">
+                <b-table small fixed striped selectable responsive hover select-mode="single" @row-selected='collectionsRowSelected' :fields="collectionsFields" :items="selectedCollection ? (collections[selectedCollection] ? [collections[selectedCollection]] : []) : pagedFilteredSortedCollections" head-variant="light" class="m-0">
+                  <template #head(image)="data">
+                    <span v-b-popover.hover="'ERC-721 NFT collection contract address, symbol and name. Always check this against a separate source'">{{ selectedCollection ? 'Collection' : 'Collections' }}</span>
+                  </template>
+                  <template #head(pools)="data">
+                    <span v-b-popover.hover="'Number of Umswap pools for this collection'">{{ data.label }}</span>
+                  </template>
+                  <template #head(nftsInPool)="data">
+                    <span v-b-popover.hover="'Number of NFTs across all Umswap pools for this collection'">{{ data.label }}</span>
+                  </template>
+                  <template #cell(image)="data">
+                    <b-avatar rounded variant="light" size="5.0rem" :src="data.item.reservoirInfo.metadata.imageUrl" v-b-popover.hover.bottom="'gm'" class="ml-0"></b-avatar>
+                  </template>
+                  <template #cell(collection)="data">
+                    <span v-b-popover.hover="selectedCollection ? 'View all collections' : 'View pools for the \'' + data.item.name + '\' collection'">{{ data.item.name }}</span>
+                    <br />
+                    <b-link :href="'https://opensea.io/collection/' + data.item.slug" v-b-popover.hover.bottom="'View collection in Opensea.io'" target="_blank">
+                      {{ data.item.symbol }}
+                    </b-link>
+                    <br />
+                    <b-link :href="'https://etherscan.io/token/' + data.item.address + '#balances'" v-b-popover.hover.bottom="'View contract in Etherscan.io'" target="_blank">
+                      {{ data.item.address.substring(0, 10) }}
+                    </b-link>
+                  </template>
+                  <template #cell(pools)="data">
+                    {{ data.item.umswaps.length }}
+                  </template>
+                  <template #cell(balance)="data">
+                    {{ parseFloat(data.item.umswaps.map(e => e.balance).reduce((r, n) => parseFloat(r) + parseFloat(n))).toFixed(9) }}
+                  </template>
+                  <template #cell(nftsInPool)="data">
+                    {{ data.item.umswaps.map(e => e.tokenIds.length).reduce((r, n) => parseFloat(r) + parseFloat(n)) }}
+                  </template>
+                </b-table>
+              </b-card-body>
+            </b-card>
+
+            <b-card v-if="selectedCollection != null && !newPool" no-header no-body class="m-0 mt-1 p-1 border-1">
+              <!-- UMSWAPS TOOLBAR -->
+              <div class="d-flex flex-wrap m-0 p-0">
+                <div class="mt-0 pr-1">
+                  <b-button :disabled="sync.section != null" size="sm" @click="doIt('syncUmswapsAndCollection')" variant="primary" style="min-width: 40px;" v-b-popover.hover.top="'Sync Umswaps and collection'"><b-icon-cloud-download shift-v="+1" font-scale="0.9"></b-icon-cloud-download></b-button>
+                </div>
+                <!-- TODO
+                <div class="mt-0 pr-1">
+                  <b-form-input type="text" size="sm" v-model.trim="selectedPool" debounce="600" v-b-popover.hover.top="'Filter by partial Umswap pool address, symbol or name'" placeholder="🔍 pool"></b-form-input>
+                </div>
+                -->
+                <div class="mt-0 pr-1">
+                  <b-form-select size="sm" v-model="selectedPool" :options="poolsOptions" v-b-popover.hover.top="'Umswap Pool'"></b-form-select>
+                </div>
+                <div class="mt-0 flex-grow-1">
+                </div>
+                <div v-if="false && sync.section != null" class="mt-1 pr-1" style="width: 200px;">
+                  <b-progress height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click on the Sync(ing) button to (un)pause'">
+                    <b-progress-bar :value="sync.completed">
+                      {{ sync.total == null ? (sync.completed + ' ' + sync.section) : (sync.completed + '/' + sync.total + ' ' + ((sync.completed / sync.total) * 100).toFixed(0) + '% ' + sync.section) }}
+                    </b-progress-bar>
+                  </b-progress>
+                </div>
+                <div v-if="sync.section == null" class="mt-0 pr-1">
+                  <font v-if="collectionLoaded != null" size="-2" v-b-popover.hover.top="'Collection data last updated. Click Sync button to refresh'">{{ 'Last updated ' + formatTimestamp(collectionLoaded) }}</font>
+                  <font v-if="collectionLoaded == null" size="-2" v-b-popover.hover.top="'Click Sync button to load collection'">{{ 'Click Sync button to load collection'  }}</font>
+                </div>
+                <div class="mt-0 flex-grow-1">
+                </div>
+                <div class="mt-0 pr-1">
+                  <b-form-select :disabled="selectedPool != null" size="sm" v-model="poolsSortOption" :options="poolsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+                </div>
+                <div class="mt-0 pr-1">
+                  <font v-if="selectedCollection" size="-2" v-b-popover.hover.top="'# pools'">{{ selectedPool != null ? 1 : filteredPools.length }}</font>
+                </div>
+                <div class="mt-0 pr-1">
+                  <b-pagination :disabled="selectedPool != null" size="sm" v-model="collectionsCurrentPage" :total-rows="filteredSortedCollections.length" :per-page="collectionsPageSize" style="height: 0;"></b-pagination>
+                </div>
+                <div class="mt-0 pl-1">
+                  <b-form-select :disabled="selectedPool != null" size="sm" v-model="poolsPageSize" :options="pageSizes" v-b-popover.hover.top="'Collections Page size'"></b-form-select>
+                </div>
+              </div>
+
+              <!-- TABLE OF UMSWAPS -->
+              <b-card-body class="m-0 mt-1 p-0">
+                <font size="-1">
+                  <b-table small fixed striped selectable responsive hover select-mode="single" @row-selected='poolsRowSelected' :fields="poolsFields" :items="selectedPool != null ? [getSelectedPoolRecord] : pagedFilteredSortedPools" head-variant="light" class="m-0">
+                    <template #head(address)="data">
+                      <span v-b-popover.hover="'ERC-20 Umswap pool contract address'">{{ selectedPool ? 'Pool' : 'Pools' }}</span>
+                    </template>
+                    <template #head(symbol)="data">
+                      <span v-b-popover.hover="'ERC-20 Umswap pool symbol'">{{ data.label }}</span>
+                    </template>
+                    <template #head(name)="data">
+                      <span v-b-popover.hover="'ERC-20 Umswap pool name'">{{ data.label }}</span>
+                    </template>
+                    <template #head(validTokenIds)="data">
+                      <span v-b-popover.hover="'ERC-721 token ids accepted by this Umswap pool'">{{ data.label }}</span>
+                    </template>
+                    <template #head(swappedIn)="data">
+                      <span v-b-popover.hover="'Number of ERC-721 tokens swapped into this Umswap pool'">{{ data.label }}</span>
+                    </template>
+                    <template #head(swappedOut)="data">
+                      <span v-b-popover.hover="'Number of ERC-721 tokens swapped out of this Umswap pool'">{{ data.label }}</span>
+                    </template>
+                    <template #head(balance)="data">
+                      <span v-b-popover.hover="'My number of Umswap tokens'">{{ data.label }}</span>
+                    </template>
+                    <template #head(totalSupply)="data">
+                      <span v-b-popover.hover="'Total number of Umswap tokens = number of ERC-721 tokens currently in this pool'">{{ data.label }}</span>
+                    </template>
+                    <template #head(isApprovedForAll)="data">
+                      <span v-b-popover.hover="'Umswap contract has been approved by NFT contract to transfer in tokens'">{{ data.label }}</span>
+                    </template>
+                    <template #cell(address)="data">
+                      <b-link :href="'https://etherscan.io/token/' + data.item.address + '#balances'" v-b-popover.hover.bottom="'View Umswap pool contract in Etherscan.io'" target="_blank">
+                        {{ data.item.address }}
+                      </b-link>
+                    </template>
+                    <template #cell(symbol)="data">
+                      <b-link :href="'https://opensea.io/' + data.item.address" v-b-popover.hover.bottom="'View pool wallet in Opensea.io'" target="_blank">
+                        {{ data.item.symbol }}
+                      </b-link>
+                    </template>
+                    <template #cell(name)="data">
+                      <span v-b-popover.hover="selectedPool ? 'View pools for the same collection' : ('View pool \'' + data.item.name + '\'')">{{ data.item.name }}</span>
+                    </template>
+                    <template #cell(validTokenIds)="data">
+                      <div v-if="data.item.validTokenIds.length == 0">
+                        (All in collection)
+                      </div>
+                      <div v-else>
+                        {{ data.item.validTokenIds.length + 'x: [' + data.item.validTokenIds.join(",") + ']' }}
+                      </div>
+                    </template>
+                    <template #cell(swappedIn)="data">
+                      {{ data.item.swappedIn }}
+                    </template>
+                    <template #cell(swappedOut)="data">
+                      {{ data.item.swappedOut }}
+                    </template>
+                    <template #cell(balance)="data">
+                      {{ parseFloat(data.item.balance).toFixed(9) }}
+                    </template>
+                    <template #cell(totalSupply)="data">
+                      {{ formatETH(data.item.totalSupply) }}
+                    </template>
+                    <template #cell(isApprovedForAll)="data">
+                      {{ data.item.isApprovedForAll == 0 ? 'No' : 'Yes' }}
+                    </template>
+                  </b-table>
+                </font>
+              </b-card-body>
+            </b-card>
+
+            <b-card v-if="!newPool" class="mx-0 mt-1" body-class="m-1 p-0" header-class="m-0 p-2">
+              <template #header>
+                <div v-if="selectedCollection != null">
+                  <div v-if="selectedPool == null">
+                    <h6 class="m-0 p-0">{{ ensOrAddress(selectedCollection) }}</h6>
+                  </div>
+                  <div v-else>
+                    <h6 class="m-0 p-0"><font size="-1">{{ ensOrAddress(selectedCollection) }}:</font> {{ ensOrAddress(selectedPool, 48) }}</h6>
+                  </div>
+                </div>
+                <div v-else>
+                  <h6 class="m-0 p-0">All Collections</h6>
+                </div>
+              </template>
+              <b-card-text class="m-0 p-0">
+                <div class="d-flex flex-wrap mx-0 mt-0 mb-1 p-0">
+                  <div class="mt-0">
+                    <b-button v-if="selectedPool" size="sm" :pressed.sync="showSwap" variant="link" v-b-popover.hover.top="'Swap tokens'"><span v-if="showSwap"><b-icon-check-circle-fill shift-v="+1" font-scale="1.0"></b-icon-check-circle-fill></span><span v-else><b-icon-check-circle shift-v="+1" font-scale="1.0"></b-icon-check-circle></span></b-button>
+                  </div>
+                  <div class="mt-0 flex-grow-1">
+                  </div>
+                  <div class="mt-0">
+                    <b-button size="sm" :pressed.sync="newMessage" variant="link" v-b-popover.hover.top="'Send message'"><span v-if="newPool"><b-icon-pencil-square shift-v="+1" font-scale="1.0"></b-icon-pencil-square></span><span v-else><b-icon-pencil-square shift-v="+1" font-scale="1.0"></b-icon-pencil-square></span></b-button>
+                  </div>
+                  <div class="mt-0">
+                    <b-button v-if="selectedPool" size="sm" :pressed.sync="showRating" variant="link" v-b-popover.hover.top="'Rate pool'"><span v-if="showRating"><b-icon-star-fill shift-v="+1" font-scale="1.0"></b-icon-star-fill></span><span v-else><b-icon-star shift-v="+1" font-scale="1.0"></b-icon-star></span></b-button>
+                  </div>
+                  <div class="mt-0 flex-grow-1">
+                  </div>
+                  <div class="mt-0 pr-1">
+                    <b-button size="sm" :pressed.sync="showCollectionOrPoolInfo" variant="link" v-b-popover.hover.top="'Show collection or pool info'"><span v-if="showCollectionOrPoolInfo"><b-icon-info-circle-fill shift-v="+1" font-scale="1.0"></b-icon-info-circle-fill></span><span v-else><b-icon-info-circle shift-v="+1" font-scale="1.0"></b-icon-info-circle></span></b-button>
+                  </div>
+                  <div class="mt-0 pr-1">
+                    <b-form-select size="sm" v-model="messagesSortOption" :options="messagesSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+                  </div>
+                  <div class="mt-0 pr-1">
+                    <font size="-2" v-b-popover.hover.top="'# tokens'">{{ filteredSortedMessages.length }}</font>
+                  </div>
+                  <div class="mt-0 pr-1">
+                    <b-pagination size="sm" v-model="messagesCurrentPage" :total-rows="filteredSortedMessages.length" :per-page="messagesPageSize" style="height: 0;"></b-pagination>
+                  </div>
+                  <div class="mt-0 pl-1">
+                    <b-form-select size="sm" v-model="messagesPageSize" :options="pageSizes" v-b-popover.hover.top="'Messages Page size'"></b-form-select>
+                  </div>
+                </div>
+                <b-card v-if="newMessage" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+                  <b-card-body class="m-1 p-1">
+                    <b-form-group label-cols-lg="2" label="Send Message" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+                      <b-form-group label="To:" label-for="message-to" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-form-input type="text" size="sm" id="message-to" v-model.trim="message.to" placeholder="0x1234... (optional)" class="w-50"></b-form-input>
+                      </b-form-group>
+                      <b-form-group label="Topic:" label-for="message-topic" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-form-input type="text" size="sm" id="message-topic" v-model.trim="message.topic" placeholder="{topic}" class="w-50"></b-form-input>
+                      </b-form-group>
+                      <b-form-group label="Text:" label-for="message-text" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-form-input type="text" size="sm" id="message-text" v-model.trim="message.text" placeholder="{text}" class="w-75"></b-form-input>
+                      </b-form-group>
+                      <b-form-group label="" label-for="message-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-button size="sm" :disabled="message.topic == null && message.text == null" id="message-submit" @click="sendMessage()" variant="warning">Send Message</b-button>
+                      </b-form-group>
+                    </b-form-group>
+                  </b-card-body>
+                </b-card>
+                <b-card v-if="selectedCollection && showCollectionOrPoolInfo" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+                  <b-card-body class="m-1 p-1">
+                    <b-form-group label-cols-lg="2" label="Info" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+                      <b-form-group v-if="getSelectedCollection && getSelectedCollection.reservoirInfo" label="Collection Name:" label-for="info-collectionname" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-link id="info-collectionname" :href="'https://opensea.io/collection/' + getSelectedCollection.reservoirInfo.slug" v-b-popover.hover.bottom="'View in Opensea.io'" target="_blank">{{ getSelectedCollection.name }}</b-link>
+                      </b-form-group>
+                      <b-form-group v-if="getSelectedCollection" label="Collection Address:" label-for="info-collectionaddress" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-link id="info-collectionaddress" :href="'https://etherscan.io/token/' + getSelectedCollection.address + '#code'" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">{{ getSelectedCollection.address }}</b-link>
+                      </b-form-group>
+                      <b-form-group v-if="getSelectedPoolRecord" label="Pool:" label-for="info-poolname" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-input-group>
+                          <b-form-input type="text" size="sm" disabled :value="getSelectedPoolRecord.symbol" class="w-25"></b-form-input>
+                          <b-form-input type="text" size="sm" id="info-poolname" disabled :value="getSelectedPoolRecord.name" class="w-50"></b-form-input>
+                        </b-input-group>
+                      </b-form-group>
+                      <b-form-group v-if="getSelectedPoolRecord" label="Pool Balances:" label-for="info-poolbalances" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-link id="info-poolbalances" :href="'https://etherscan.io/token/' + getSelectedPoolRecord.address + '#balances'" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">{{ getSelectedPoolRecord.address }}</b-link>
+                      </b-form-group>
+                      <b-form-group v-if="getSelectedPoolRecord" label="Pool NFTs:" label-for="info-poolnfts" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-link id="info-poolnfts" :href="'https://opensea.io/' + getSelectedPoolRecord.address" v-b-popover.hover.bottom="'View in Opensea.io'" target="_blank">{{ getSelectedPoolRecord.address }}</b-link>
+                      </b-form-group>
+                    </b-form-group>
+                  </b-card-body>
+                </b-card>
+                <b-card v-if="selectedPool && showRating" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+                  <b-card-body class="m-1 p-1">
+                    <b-form-group label-cols-lg="2" label="Rate Pool" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+                      <b-form-group label="Current:" label-for="ratepool-current" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="getSelectedPoolRecord.raters > 0 ? ('Number of ratings: ' + getSelectedPoolRecord.raters) : 'No ratings'" class="mx-0 my-1 p-0">
+                        <b-form-rating size="sm" readonly id="ratepool-current" :value="getSelectedPoolRecord.raters > 0 ? (getSelectedPoolRecord.totalScores / getSelectedPoolRecord.raters) : null" :stars="10" show-value color="#ff8800" class="w-50"></b-form-rating>
+                      </b-form-group>
+                      <b-form-group label="Score:" label-for="ratepool-score" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Select from 1 to 10 stars" class="mx-0 my-1 p-0">
+                        <b-form-rating size="sm" id="ratepool-score" v-model="poolRating.score" stars="10" show-value color="#ff8800" class="w-50"></b-form-rating>
+                      </b-form-group>
+                      <b-form-group label="Text:" label-for="ratepool-text" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-form-input type="text" size="sm" id="ratepool-text" v-model.trim="poolRating.text" placeholder="{text}" class="w-50"></b-form-input>
+                      </b-form-group>
+                      <b-form-group label="" label-for="ratepool-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-button size="sm" :disabled="poolRating.score == null" id="ratepool-submit" @click="ratePool()" variant="warning">Rate Pool</b-button>
+                      </b-form-group>
+                    </b-form-group>
+                  </b-card-body>
+                </b-card>
+                <b-card v-if="selectedPool && showSwap" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+                  <b-card-body class="m-1 p-1">
+                    <b-form-group label-cols-lg="2" label="Swap" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+                      <b-form-group label="Into Pool:" label-for="swap-in" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Select tokens to swap in below" class="mx-0 my-1 p-0">
+                        <b-form-textarea size="sm" id="swap-in" readonly v-model.trim="tokenIdsToSwapIn.join(',')" rows="1" max-rows="5" class="w-100"></b-form-textarea>
+                      </b-form-group>
+                      <b-form-group label="Out Of Pool:" label-for="swap-out" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Select tokens to swap out below" class="mx-0 my-1 p-0">
+                        <b-form-textarea size="sm" id="swap-out" readonly v-model.trim="tokenIdsToSwapOut.join(',')" rows="1" max-rows="5" class="w-100"></b-form-textarea>
+                      </b-form-group>
+                      <b-form-group label="Pool Approval:" label-for="info-poolapproved" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Approval is required to swap your NFTs into the pool. Revoke when not transferring into the pool" class="mx-0 my-1 p-0">
+                        <b-input-group class="m-0 w-50">
+                          <b-form-input type="text" size="sm" id="info-poolapproved" readonly :value="umswapApproved ? 'Yes' : 'No'"></b-form-input>
+                          <b-input-group-append>
+                            <b-button v-if="!umswapApproved" size="sm" @click="approveTransfer(true)" variant="warning">Approve</b-button>
+                            <b-button v-if="umswapApproved" size="sm" @click="approveTransfer(false)" variant="warning">Revoke Approval</b-button>
+                          </b-input-group-append>
+                        </b-input-group>
+                      </b-form-group>
+                      <b-form-group v-if="getSelectedPoolRecord" label="My Pool Balance:" label-for="info-mypoolbalance" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                        <b-form-input type="text" size="sm" id="info-mypoolbalance" readonly v-model.trim="umswapBalance" class="w-50"></b-form-input>
+                      </b-form-group>
+                      <b-form-group label="" label-for="swap-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Pool balance must be sufficient to cover any net NFTs swapped out, and approval is required" class="mx-0 my-1 p-0">
+                        <b-button size="sm" id="swap-submit" :disabled="!umswapApproved || (parseFloat(convertETH(umswapBalance)) + parseFloat(umswapChange) < 0) || (tokenIdsToSwapIn.length == 0 && tokenIdsToSwapOut.length == 0)" @click="swapIt" variant="warning">Swap</b-button>
+                      </b-form-group>
+                    </b-form-group>
+                  </b-card-body>
+                </b-card>
+                <font v-if="!newMessage && !showRating && !showCollectionOrPoolInfo && (!showSwap || selectedPool == null)" size="-1" class="mt-1">
+                  <b-table small fixed striped responsive hover :fields="messagesFields" :items="pagedFilteredSortedMessages" head-variant="light" class="m-0">
+                    <template #cell(timestamp)="data">
+                      <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">{{ formatTimestamp(data.item.timestamp) }}</b-link>
+                    </template>
+                    <template #cell(account)="data">
+                      <b-link :href="'https://opensea.io/' + data.item.account" v-b-popover.hover.bottom="'View in Opensea.io'" target="_blank">{{ ensOrAddress(data.item.account) }}</b-link>
+                    </template>
+                    <template #cell(collection)="data">
+                      <b-link :href="'https://opensea.io/collection/' + (collections[data.item.collection] && collections[data.item.collection].reservoirInfo.slug || '')" v-b-popover.hover.bottom="'View in Opensea.io'" target="_blank">{{ ensOrAddress(data.item.collection) }}</b-link>
+                    </template>
+                    <template #cell(umswap)="data">
+                      <b-link :href="'https://opensea.io/' + data.item.umswap" v-b-popover.hover.bottom="'View in Opensea.io'" target="_blank">{{ data.item.umswap && ensOrAddress(data.item.umswap) || '' }}</b-link>
+                    </template>
+                  </b-table>
+                </font>
+              </b-card-text>
+            </b-card>
+
+            <!-- NEW POOL -->
+            <div v-if="newPool">
+              <b-card class="mx-1 my-1" body-class="m-1 p-0" header-class="m-0 p-2">
+                <template #header>
+                  <h6 class="mb-0">New Pool</h6>
+                </template>
+                <b-card-text>
+                  <b-form-group label-cols="3" label-size="sm" label-align="right" label="ERC-721 Collection Address:" description="This UI will only handle ~10k ERC-721 NFT collections" class="mx-0 my-1 p-0">
+                    <b-input-group class="m-0 w-50">
+                      <b-form-input type="text" size="sm" v-model.trim="newUmswap.collectionAddress" @change="newUmswapCollectionAddressChanged"></b-form-input>
+                      <b-input-group-append>
+                        <b-button size="sm" @click="doIt('newUmswapRetrieveCollection')" variant="primary">Check</b-button>
+                      </b-input-group-append>
+                    </b-input-group>
+                  </b-form-group>
+                  <b-form-group v-if="collectionLoaded != null" label-cols="3" label-size="sm" label-align="right" label="NFT Collection Name:" class="mx-0 my-1 p-0">
+                    <b-form-input type="text" size="sm" readonly v-model.trim="collection.name" class="w-25"></b-form-input>
+                  </b-form-group>
+                  <b-form-group v-if="collectionLoaded != null" label-cols="3" label-size="sm" label-align="right" label="NFT Collection Slug:" class="mx-0 my-1 p-0">
+                    <b-form-input type="text" size="sm" readonly v-model.trim="collection.slug" class="w-25"></b-form-input>
+                  </b-form-group>
+                  <b-form-group v-if="collectionLoaded != null" label-cols="3" label-size="sm" label-align="right" label="Selected Token Ids:" description="Leave this empty for the whole NFT collection to be included" class="mx-0 my-1 p-0">
+                    <b-form-textarea size="sm" readonly v-model.trim="Object.keys(selectedTokenIds).join(',')" rows="1" max-rows="100" class="w-75"></b-form-textarea>
+                  </b-form-group>
+                  <b-form-group label-cols="3" label-size="sm" label="" description="Request for Reservoir API to refresh the collection data that takes several minutes to complete" class="mx-0 my-1 p-0">
+                    <b-button size="sm" @click="refreshMetadata" variant="primary">Request Metadata Refresh</b-button>
+                  </b-form-group>
+                  <b-form-group v-if="collectionLoaded != null" label-cols="3" label-size="sm" label-align="right" label="Umswap Name:" description="Choose a suitable name to describe this NFT collection subset. > 0 and <= 48 regular alphanumeric characters and some symbols" class="mx-0 my-1 p-0">
+                    <b-form-input type="text" size="sm" v-model.trim="newUmswap.name" debounce="600" class="w-25"></b-form-input>
+                  </b-form-group>
+                  <b-form-group label-cols="3" label-size="sm" label="" description="Note that duplicate (collection, tokenIds) sets will be rejected" class="mx-0 my-1 p-0">
+                    <b-button size="sm" @click="createNewUmswap" :disabled="!collectionLoaded || newUmswap.name == null || newUmswap.name.length == 0" variant="warning">Create New Pool</b-button>
+                  </b-form-group>
+                </b-card-text>
+              </b-card>
+            </div>
+
+            <b-row v-if="selectedCollection != null || newPool" class="m-0 p-0">
+              <!-- FILTER -->
+              <b-col v-if="showFilter" cols="2" class="m-0 p-0 border-0">
+                <b-card no-header no-body class="m-0 p-0 border-0">
+                  <b-card-body class="m-0 p-1" style="flex-grow: 1; max-height: 1500px; overflow-y: auto;">
+                    <div v-for="(attributeKey, attributeIndex) in Object.keys(tokenAttributes).sort()" v-bind:key="attributeIndex">
+                      <b-card header-class="m-0 px-2 pt-2 pb-0" body-class="p-0" class="m-0 p-0 border-0">
+                        <template #header>
+                          <span variant="secondary" class="small truncate">
+                            {{ attributeKey }}
+                          </span>
+                        </template>
+                        <font size="-2">
+                          <b-table small fixed striped sticky-header="200px" :fields="tokenAttributesFields" :items="getSortedTraitsForTokenAttributes(attributeKey)" head-variant="light">
+                            <template #cell(select)="data">
+                              <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeKey] && tokenAttributesFilter[attributeKey].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeKey, data.item.attributeOption)"></b-form-checkbox>
+                            </template>
+                            <template #cell(attributeOption)="data">
+                              {{ data.item.attributeOption }}
+                            </template>
+                            <template #cell(attributeTotal)="data">
+                              {{ data.item.attributeTotal.length }}
+                            </template>
+                          </b-table>
+                        </font>
+                      </b-card>
+                    </div>
+                  </b-card-body>
+                </b-card>
+              </b-col>
+              <b-col class="m-0 p-0">
+                <!-- TOKENS BY GROUPS -->
+                <!-- {{ getPoolTokens(selectedCollection, selectedPool) }} -->
+                <div v-if="collectionLoaded != null" v-for="(set, setIndex) in getPoolTokens(selectedCollection, selectedPool)" :key="setIndex">
+                  <b-card class="mx-0 my-1" body-class="m-1 p-0" header-class="m-0 p-2">
+                    <template #header>
+                      <div v-if="selectedCollection != null">
+                        <div v-if="selectedPool == null">
+                          <h6 class="m-0 p-0"><font size="-1">{{ ensOrAddress(selectedCollection) }}</font>: {{ set.description }}</h6>
+                        </div>
+                        <div v-else>
+                          <h6 class="m-0 p-0"><font size="-2">{{ ensOrAddress(selectedCollection) }}:</font> <font size="-1">{{ ensOrAddress(selectedPool, 48) }}:</font> {{ set.description }}</h6>
+                        </div>
+                      </div>
+                      <div v-else>
+                        <h6 class="m-0 p-0">All Collections With Pools</h6>
+                      </div>
+                    </template>
+                    <b-card-text v-if="set.tokens.length == 0">
+                      Empty
+                    </b-card-text>
+                    <div v-if="set.tokens.length > 0" class="d-flex flex-wrap m-0 p-0">
+                      <div class="mt-0 pr-1">
+                        <b-button size="sm" :pressed.sync="showFilter" variant="link" v-b-popover.hover.top="'Show filter'"><span v-if="showFilter"><b-icon-layout-sidebar-inset shift-v="+1" font-scale="1.0"></b-icon-layout-sidebar-inset></span><span v-else><b-icon-layout-sidebar shift-v="+1" font-scale="1.0"></b-icon-layout-sidebar></span></b-button>
+                      </div>
+                      <div v-if="set.name == 'tokenIdsSelected'" class="mt-0 pr-1">
+                        <b-button size="sm" @click="resetSelection" variant="link" v-b-popover.hover.top="'Reset selection'"><b-icon-trash shift-v="+1" font-scale="1.0"></b-icon-trash></b-button>
+                      </div>
+                      <div v-if="set.name == 'tokenIdsUnselected'" class="mt-0 pr-1">
+                        <b-button size="sm" @click="selectTokenIds(pagedFilteredTokens(selectedCollection, selectedPool, set.name))" variant="link" v-b-popover.hover.top="'Select all from current page'"><b-icon-check shift-v="+1" font-scale="1.0"></b-icon-check></b-button>
+                      </div>
+                      <div v-if="set.name == 'tokenIdsUnselected'" class="mt-0 pr-1">
+                        <b-button size="sm" @click="selectTokenIds(getPoolTokens(selectedCollection, selectedPool)[1].tokens)" variant="link" v-b-popover.hover.top="'Select all from all pages'"><b-icon-check-all shift-v="+1" font-scale="1.0"></b-icon-check-all></b-button>
+                      </div>
+                      <div class="mt-0 flex-grow-1">
+                      </div>
+                      <div class="mt-0 pr-1">
+                        <b-form-select size="sm" v-model="tokens[set.name].sortOption" :options="tokensSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+                      </div>
+                      <div class="mt-0 pr-1">
+                        <font size="-2" v-b-popover.hover.top="'# tokens'">{{ set.tokens.length }}</font>
+                      </div>
+                      <div class="mt-0 pr-1">
+                        <b-pagination size="sm" v-model="tokens[set.name].currentPage" :total-rows="set.tokens.length" :per-page="tokens[set.name].pageSize" style="height: 0;"></b-pagination>
+                      </div>
+                      <div class="mt-0 pl-1">
+                        <b-form-select size="sm" v-model="tokens[set.name].pageSize" :options="pageSizes" v-b-popover.hover.top="'Tokens Page size'"></b-form-select>
+                      </div>
+                    </div>
+                    <b-card-group v-if="set.tokens.length > 0" deck class="m-0 p-0">
+                      <div v-for="(token, tokenIndex) in pagedFilteredTokens(selectedCollection, selectedPool, set.name)" :key="tokenIndex">
+                        <b-card body-class="p-0" header-class="p-1" img-top class="m-1 p-0 border-0" style="max-width: 12rem;">
+                          <b-avatar v-if="['validTokenIdsInPool', 'validTokenIdsOwned'].includes(set.name)" button @click="toggleToken(set.name, token.tokenId)" rounded size="12rem" :src="token.image" style="background-color: #fafafa" v-b-popover.hover.top="'Click to select/deselect'">
+                            <template v-if="selectedTokens[set.name] && selectedTokens[set.name][token.tokenId]" #badge><b-icon icon="check"></b-icon></template>
+                          </b-avatar>
+                          <b-avatar v-else-if="['tokenIdsSelected'].includes(set.name)" button @click="selectTokenId(token.tokenId, false)" rounded size="12rem" :src="token.image" style="background-color: #fafafa">
+                          </b-avatar>
+                          <b-avatar v-else-if="['tokenIdsUnselected'].includes(set.name)" button @click="selectTokenId(token.tokenId, true)" rounded size="12rem" :src="token.image" style="background-color: #fafafa">
+                          </b-avatar>
+                          <b-avatar v-else="!['validTokenIdsInPool', 'validTokenIdsOwned'].includes(set.name)" rounded size="12rem" :src="token.image" style="background-color: #fafafa">
+                          </b-avatar>
+
+                          <b-card-text>
+                            <div class="d-flex justify-content-between m-0 p-0">
+                              <div>
+                                <font size="-1">
+                                  <b-link :href="'https://opensea.io/assets/ethereum/' + selectedCollection + '/' + token.tokenId" v-b-popover.hover.bottom="'View in Opensea.io'" target="_blank">
+                                    <b-badge variant="light">{{ token.tokenId }}</b-badge>
+                                  </b-link>
+                                </font>
+                              </div>
+                              <div class="flex-grow-1">
+                              </div>
+                              <div>
+                                <font size="-1">
+                                  <b-badge variant="light" class="truncate">{{ ensOrAddress(token.owner) }}</b-badge>
+                                </font>
+                              </div>
+                            </div>
+                          </b-card-text>
+                        </b-card>
+                      </div>
+                    </div>
+                  </b-card-body>
+                </b-card>
+              </b-col>
+            </b-row>
+
+          </b-card-body>
+        </b-card>
+        <b-card no-header body-class="m-0 p-0" class="m-0 p-0 border-0">
+          <b-card-text class="text-right">
+            gm, and enjoy! <i>Umswap</i> &copy; Bok Consulting Pty Ltd 2022.
+          </b-card-text>
+        </b-card no-header>
+      </b-container>
+    </div>
+
+    <script>
+      window.app = new Vue({
+        el: '#app',
+        // --- DATA ---
+        data: {
+          coinbase: null,
+          showInfo: false,
+          showFilter: false,
+          newPool: false,
+          newMessage: false,
+          showCollectionOrPoolInfo: false,
+          showRating: false,
+          showSwap: false,
+          selectedCollection: null,
+          selectedPool: null,
+          poolRating: {
+            score: null,
+            text: null,
+          },
+          message: {
+            to: null,
+            topic: null,
+            text: null,
+          },
+          tokenAttributesFilter: {},
+          collectionsCurrentPage: 1,
+          collectionsPageSize: 25,
+          collectionsSortOption: 'nameasc',
+          poolsCurrentPage: 1,
+          poolsPageSize: 25,
+          poolsSortOption: 'nameasc',
+          messagesCurrentPage: 1,
+          messagesPageSize: 10,
+          messagesSortOption: 'timedsc',
+          tokens: {
+            'tokenIdsSelected': {
+              currentPage: 1,
+              pageSize: 100,
+              sortOption: 'idasc',
+            },
+            'tokenIdsUnselected': {
+              currentPage: 1,
+              pageSize: 100,
+              sortOption: 'idasc',
+            },
+            'validTokenIdsInPool': {
+              currentPage: 1,
+              pageSize: 100,
+              sortOption: 'idasc',
+            },
+            'validTokenIdsOwned': {
+              currentPage: 1,
+              pageSize: 100,
+              sortOption: 'idasc',
+            },
+            'validTokenIdsNotInPoolOrOwned': {
+              currentPage: 1,
+              pageSize: 25,
+              sortOption: 'idasc',
+            },
+            'invalidTokenIdsOwned': {
+              currentPage: 1,
+              pageSize: 25,
+              sortOption: 'idasc',
+            },
+            'invalidTokenIdsNotInPoolOrOwned': {
+              currentPage: 1,
+              pageSize: 25,
+              sortOption: 'idasc',
+            },
+            'tokenIdsOwned': {
+              currentPage: 1,
+              pageSize: 100,
+              sortOption: 'idasc',
+            },
+            'tokenIdsNotOwned': {
+              currentPage: 1,
+              pageSize: 25,
+              sortOption: 'idasc',
+            },
+          },
+          searchCollections: null,
+          searchCollection: null,
+          collections: {},
+          umswapEvents: [],
+          globalENSMap: {},
+          collection: {
+            address: null,
+            symbol: null,
+            name: null,
+            slug: null,
+            imageUrl: null,
+            tokens: [],
+            ensMap: {},
+            tokenAttributes: {},
+            blockNumber: null,
+            timestamp: null,
+          },
+          newUmswap: {
+            collectionAddress: null,
+            name: null,
+            tokenIds: [],
+          },
+          selectedTokens: {},
+          selectedTokenIds: {},
+          sync: {
+            section: null,
+            // ? error: false,
+            total: null,
+            completed: null,
+          },
+          db: {
+            name: "umswapdb090",
+            version: 1,
+            schemaDefinition: {
+              cache: '&objectName',
+              collection: '&address',
+            },
+            updated: null,
+          },
+          collectionsSortOptions: [
+            { value: 'symbolasc', text: '▲ Symbol' },
+            { value: 'symboldsc', text: '▼ Symbol' },
+            { value: 'nameasc', text: '▲ Name' },
+            { value: 'namedsc', text: '▼ Name' },
+            { value: 'random', text: 'Random' },
+          ],
+          poolsSortOptions: [
+            { value: 'symbolasc', text: '▲ Symbol' },
+            { value: 'symboldsc', text: '▼ Symbol' },
+            { value: 'nameasc', text: '▲ Name' },
+            { value: 'namedsc', text: '▼ Name' },
+            { value: 'random', text: 'Random' },
+          ],
+          tokensSortOptions: [
+            { value: 'idasc', text: '▲ Id' },
+            { value: 'iddsc', text: '▼ Id' },
+            // TODO: Not working
+            // { value: 'rarityasc', text: '▲ Rarity' },
+            // { value: 'raritydsc', text: '▼ Rarity' },
+            // { value: 'rarityrankasc', text: '▲ RarityRank' },
+            // { value: 'rarityrankdsc', text: '▼ RarityRank' },
+            { value: 'random', text: 'Random' },
+          ],
+          messagesSortOptions: [
+            { value: 'timeasc', text: '▲ Time' },
+            { value: 'timedsc', text: '▼ Time' },
+          ],
+          pageSizes: [
+            { value: 10, text: '10' },
+            { value: 25, text: '25' },
+            { value: 50, text: '50' },
+            { value: 100, text: '100' },
+            { value: 500, text: '500' },
+            { value: 1000, text: '1k' },
+            { value: 2500, text: '2.5k' },
+            { value: 10000, text: '10k' },
+          ],
+          collectionsFields: [
+            { key: 'image', label: 'Collections', thStyle: 'width: 8%;' },
+            { key: 'collection', label: '', thStyle: 'width: 52%;', tdClass: 'text-truncate' },
+            { key: 'pools', label: '# Pools', thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
+            { key: 'balance', label: '∑ Balance', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+            { key: 'nftsInPool', label: '∑ NFTs', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+          ],
+          poolsFields: [
+            { key: 'address', label: 'Pool', thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+            { key: 'symbol', label: 'Symbol', thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+            { key: 'name', label: 'Name', thStyle: 'width: 30%;', tdClass: 'text-truncate' },
+            { key: 'validTokenIds', label: 'Valid Token Ids', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'swappedIn', label: '# In', thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
+            { key: 'swappedOut', label: '# Out', thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
+            { key: 'balance', label: 'My Balance', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+            { key: 'totalSupply', label: 'Total Supply', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+            { key: 'isApprovedForAll', label: 'Apprv', thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
+          ],
+          tokenAttributesFields: [
+            { key: 'select', label: '', thStyle: 'width: 10%;' },
+            { key: 'attributeOption', label: 'Attribute' /*, sortable: true*/ },
+            { key: 'attributeTotal', label: 'Count', /*sortable: true,*/ thStyle: 'width: 30%;', thClass: 'text-right', tdClass: 'text-right' },
+          ],
+          messagesFields: [
+            { key: 'type', label: 'Type', thStyle: 'width: 5%;', tdClass: 'text-truncate' },
+            { key: 'timestamp', label: 'Time', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'account', label: 'Account', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'collection', label: 'Collection', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'umswap', label: 'Umswap Pool', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'message', label: 'Message', thStyle: 'width: 35%;' },
+          ],
+        },
+
+        // --- COMPUTED ---
+        computed: {
+          umswapFactoryAddress() {
+            return UMSWAPFACTORYADDRESS;
+          },
+          collectionsOptions() {
+            const results = [];
+            results.push({ value: null, text: '(select collection)' });
+            for (const collection of this.filteredSortedCollections) {
+              results.push({ value: collection.address, text: collection.symbol + ': ' + collection.name });
+            }
+            return results;
+          },
+          poolsOptions() {
+            const results = [];
+            results.push({ value: null, text: '(select pool)' });
+            if (this.collections[this.selectedCollection]) {
+              for (const umswap of this.collections[this.selectedCollection].umswaps) {
+                results.push({ value: umswap.address, text: umswap.symbol + ': ' + umswap.name });
+              }
+            }
+            return results;
+          },
+          filteredCollections() {
+            const results = this.collectionsSortOption ? [] : [];
+            const searchLower = this.searchCollections && this.searchCollections.toLowerCase() || null;
+            for (const [k, v] of Object.entries(this.collections)) {
+              if (searchLower == null ||
+                (v.symbol && v.symbol.toLowerCase().includes(searchLower)) ||
+                (v.name && v.name.toLowerCase().includes(searchLower)) ||
+                (v.address && v.address.toLowerCase().includes(searchLower))
+              ) {
+                results.push(v);
+              }
+            }
+            return results;
+          },
+          filteredSortedCollections() {
+            let results = this.filteredCollections;
+            if (this.collectionsSortOption == 'symbolasc') {
+              results.sort((a, b) => ('' + a.symbol).localeCompare(b.symbol))
+            } else if (this.collectionsSortOption == 'symboldsc') {
+              results.sort((a, b) => ('' + b.symbol).localeCompare(a.symbol))
+            } else if (this.collectionsSortOption == 'nameasc') {
+              results.sort((a, b) => ('' + a.name).localeCompare(b.name))
+            } else if (this.collectionsSortOption == 'namedsc') {
+              results.sort((a, b) => ('' + b.name).localeCompare(a.name))
+            } else {
+              results.sort(() => { return Math.random() - 0.5; });
+            }
+            return results;
+          },
+          pagedFilteredSortedCollections() {
+            return this.filteredSortedCollections.slice((this.collectionsCurrentPage - 1) * this.collectionsPageSize, this.collectionsCurrentPage * this.collectionsPageSize);
+          },
+          filteredPools() {
+            const results = this.selectedCollection ? [] : [];
+            if (this.collections[this.selectedCollection]) {
+              for (const umswap of this.collections[this.selectedCollection].umswaps) {
+                results.push(umswap);
+              }
+            }
+            return results;
+          },
+          filteredSortedPools() {
+            let results = this.filteredPools;
+            if (this.poolsSortOption == 'symbolasc') {
+              results.sort((a, b) => ('' + a.symbol).localeCompare(b.symbol))
+            } else if (this.poolsSortOption == 'symboldsc') {
+              results.sort((a, b) => ('' + b.symbol).localeCompare(a.symbol))
+            } else if (this.poolsSortOption == 'nameasc') {
+              results.sort((a, b) => ('' + a.name).localeCompare(b.name))
+            } else if (this.poolsSortOption == 'namedsc') {
+              results.sort((a, b) => ('' + b.name).localeCompare(a.name))
+            } else {
+              results.sort(() => { return Math.random() - 0.5; });
+            }
+            return results;
+          },
+          pagedFilteredSortedPools() {
+            return this.filteredSortedPools.slice((this.poolsCurrentPage - 1) * this.poolsPageSize, this.poolsCurrentPage * this.poolsPageSize);
+          },
+          getSelectedCollection() {
+            if (this.selectedCollection && this.collections[this.selectedCollection]) {
+              return this.collections[this.selectedCollection];
+            }
+            return null;
+          },
+          getSelectedPoolRecord() {
+            const results = this.selectedCollection ? [] : [];
+            if (this.collections[this.selectedCollection]) {
+              for (const umswap of this.collections[this.selectedCollection].umswaps) {
+                if (this.selectedPool == umswap.address) {
+                  return umswap;
+                }
+              }
+            }
+            return null;
+          },
+          // 3 modes - Collection, Pool, NewPool
+          collectionLoaded() {
+            let checkAddress;
+            if (this.newPool) {
+              checkAddress = this.newUmswap.collectionAddress && ethers.utils.getAddress(this.newUmswap.collectionAddress) || null;
+            } else {
+              checkAddress = this.selectedCollection && ethers.utils.getAddress(this.selectedCollection) || null;
+            }
+            return checkAddress && this.collection && this.collection.address == checkAddress && this.collection.timestamp || null;
+          },
+          tokenAttributes() {
+            return this.collectionLoaded && this.collection.tokenAttributes || {};
+          },
+          tokenIdsToSwapIn() {
+            if ('validTokenIdsOwned' in this.selectedTokens) {
+              return Object.keys(this.selectedTokens['validTokenIdsOwned']);
+            } else {
+              return [];
+            }
+          },
+          tokenIdsToSwapOut() {
+            if ('validTokenIdsInPool' in this.selectedTokens) {
+              return Object.keys(this.selectedTokens['validTokenIdsInPool']);
+            } else {
+              return [];
+            }
+          },
+          umswapChange() {
+            return this.tokenIdsToSwapIn.length - this.tokenIdsToSwapOut.length;
+          },
+          umswapBalance() {
+            if (this.selectedCollection != null && this.selectedPool != null) {
+              for (const umswapItem of this.collections[this.selectedCollection].umswaps) {
+                if (this.selectedPool == umswapItem.address) {
+                  return umswapItem.balance;
+                }
+              }
+            }
+            return 0;
+          },
+          umswapApproved() {
+            if (this.selectedCollection != null && this.selectedPool != null) {
+              for (const umswapItem of this.collections[this.selectedCollection].umswaps) {
+                if (this.selectedPool == umswapItem.address) {
+                  // console.log("umswapApproved: " + JSON.stringify(umswapItem, null, 2));
+                  return umswapItem.isApprovedForAll == 1;
+                }
+              }
+            }
+            return false;
+          },
+          filteredMessages() {
+            const results = [];
+            const umswapToCollection = {};
+            for (const c of Object.values(this.collections)) {
+              for (const u of c.umswaps) {
+                umswapToCollection[u.address] = c.address;
+              }
+            }
+            for (const e of this.umswapEvents) {
+              let collection = null;
+              let umswap = null;
+              let account;
+              let message;
+              if (e.type == "New") {
+                account = e.creator;
+                collection = e.collection;
+                umswap = e.umswap;
+                if (e.tokenIds.length == 0) {
+                  message = "Created \"" + e.name + "\" valid for all tokens in the collection";
+                } else {
+                  let tokenIdsString = e.tokenIds.length > 10 ? e.tokenIds.slice(0, 10).join(",") + " + " + (e.tokenIds.length - 10) + " more": e.tokenIds.join(",");
+                  message = "Created \"" + e.name + "\" for [" + tokenIdsString + "]";
+                }
+              } else if (e.type == "Swap") {
+                account = e.account;
+                umswap = e.umswap;
+                collection = umswapToCollection[e.umswap] || null;
+                let inTokenIdsString = e.inTokenIds.length > 10 ? e.inTokenIds.slice(0, 10).join(",") + " + " + (e.inTokenIds.length - 10) + " more": e.inTokenIds.join(",");
+                let outTokenIdsString = e.outTokenIds.length > 10 ? e.outTokenIds.slice(0, 10).join(",") + " + " + (e.outTokenIds.length - 10) + " more": e.outTokenIds.join(",");
+                message = "Swapped in [" + inTokenIdsString + "] and out [" + outTokenIdsString + "]";
+              } else if (e.type == "Message") {
+                account = e.from;
+                if (e.umswapOrCollection != ADDRESS0) {
+                  for (const c of Object.values(this.collections)) {
+                    if (c.address == e.umswapOrCollection) {
+                      collection = c.address;
+                    }
+                    for (const u of c.umswaps) {
+                      if (u.address == e.umswapOrCollection) {
+                        umswap = u.address;
+                        collection = c.address;
+                        break;
+                      }
+                    }
+                    if (collection != null) {
+                      break;
+                    }
+                  }
+                }
+                if (e.to == ADDRESS0) {
+                  message = "Topic \"" + e.topic + "\", message \"" + e.message + "\"";
+                } else {
+                  message = "To \"" + e.to + "\", topic \"" + e.topic + "\", message \"" + e.message + "\"";
+                }
+              } else if (e.type == "Rated") {
+                account = e.account;
+                umswap = e.umswap;
+                for (const c of Object.values(this.collections)) {
+                  for (const u of c.umswaps) {
+                    if (u.address == e.umswap) {
+                      umswap = u.address;
+                      collection = c.address;
+                      break;
+                    }
+                  }
+                  if (collection != null) {
+                    break;
+                  }
+                }
+                message = "Rated \"" + e.score + "\", text \"" + e.text + "\"";
+              }
+              if ((this.selectedCollection == null || this.selectedCollection == collection) && (this.selectedPool == null || this.selectedPool == e.umswap)) {
+                results.push({ txHash: e.txHash, type: e.type, timestamp: e.timestamp, account, collection, umswap: umswap, message });
+              }
+            }
+            return results;
+          },
+          filteredSortedMessages() {
+            let results = this.filteredMessages;
+            if (this.messagesSortOption == 'timeasc') {
+              results.sort((a, b) => a.timestamp - b.timestamp);
+            } else {
+              results.sort((a, b) => b.timestamp - a.timestamp);
+            }
+            return results;
+          },
+          pagedFilteredSortedMessages() {
+            return this.filteredSortedMessages.slice((this.messagesCurrentPage - 1) * this.messagesPageSize, this.messagesCurrentPage * this.messagesPageSize);
+          },
+        },
+
+        // --- METHODS ---
+        methods: {
+          formatTimestamp(ts) {
+            if (ts != null) {
+              return moment.unix(ts).format("YYYY-MM-DD HH:mm:ss");
+            }
+            return null;
+          },
+          formatETH(e) {
+            try {
+              return e ? parseFloat(ethers.utils.formatEther(e)).toFixed(9) : null;
+            } catch (err) {
+            }
+            return e.toFixed(9);
+          },
+          convertETH(e) {
+            try {
+              return e ? ethers.utils.formatEther(e) : null;
+            } catch (err) {
+            }
+            return e.toString();
+          },
+          collectionsRowSelected(item) {
+            if (item && item.length > 0) {
+              this.selectedCollection = this.selectedCollection != null ? null : item[0].address;
+              this.selectedPool = null;
+              for (const setName of ['validTokenIdsInPool', 'validTokenIdsOwned']) {
+                Vue.set(this.selectedTokens, setName, {});
+              }
+              // console.log("collectionsRowSelected - this.selectedCollection: " + JSON.stringify(this.selectedCollection));
+              (async() => {
+                const db0 = new Dexie(this.db.name);
+                db0.version(this.db.version).stores(this.db.schemaDefinition);
+                const records = await db0.collection.where("address").equals(this.selectedCollection || '').toArray();
+                // console.log("collectionsRowSelected - records: " + JSON.stringify(records, null, 2));
+                if (records.length == 1) {
+                  this.collection = records[0];
+                  // console.log("collectionsRowSelected - Loaded collection: " + JSON.stringify(this.collection, null, 2));
+                  // console.log("collectionsRowSelected - Loaded collection " + this.selectedCollection);
+                }
+                db0.close();
+              })();
+            }
+          },
+          poolsRowSelected(item) {
+            if (item && item.length > 0) {
+              this.selectedPool = this.selectedPool != null ? null : item[0].address;
+              for (const setName of ['validTokenIdsInPool', 'validTokenIdsOwned']) {
+                Vue.set(this.selectedTokens, setName, {});
+              }
+            }
+          },
+          selectedCollectionChanged(event) {
+            this.selectedPool = null;
+            for (const setName of ['validTokenIdsInPool', 'validTokenIdsOwned']) {
+              Vue.set(this.selectedTokens, setName, {});
+            }
+            (async() => {
+              const db0 = new Dexie(this.db.name);
+              db0.version(this.db.version).stores(this.db.schemaDefinition);
+              const records = await db0.collection.where("address").equals(this.selectedCollection || '').toArray();
+              if (records.length == 1) {
+                // console.log("selectedCollectionChanged: " + JSON.stringify(records[0], null, 2));
+                this.collection = records[0];
+              }
+              db0.close();
+            })();
+          },
+          getPoolTokens(collectionAddress, poolAddress) {
+            if (this.newPool) {
+              collectionAddress = this.collection.address && ethers.utils.getAddress(this.collection.address) || null;
+            } else {
+              collectionAddress = this.selectedCollection && ethers.utils.getAddress(this.selectedCollection) || null;
+            }
+            // console.log("getPoolTokens: " + collectionAddress + " " + poolAddress);
+            if (collectionAddress != null && collectionAddress == this.collection.address) {
+              let umswap = null;
+              if (poolAddress != null && this.collections[collectionAddress]) {
+                for (const umswapItem of this.collections[collectionAddress].umswaps) {
+                  if (poolAddress == umswapItem.address) {
+                    umswap = umswapItem;
+                  }
+                }
+              }
+              let filteredTokenIds = [];
+              if (Object.keys(this.tokenAttributesFilter) == 0) {
+                filteredTokenIds = Object.keys(this.collection.tokens);
+              } else {
+                for (const [trait, value] of Object.entries(this.tokenAttributesFilter)) {
+                  let thisTraitTokenIds = [];
+                  for (const selectedValue of Object.keys(value)) {
+                    const tokenIds = this.tokenAttributes[trait] && this.tokenAttributes[trait][selectedValue] || [];
+                    thisTraitTokenIds = [...thisTraitTokenIds, ...tokenIds];
+                  }
+                  if (filteredTokenIds.length == 0) {
+                    filteredTokenIds = thisTraitTokenIds;
+                  } else {
+                    filteredTokenIds = filteredTokenIds.filter(tokenId => thisTraitTokenIds.includes(tokenId));
+                  }
+                }
+              }
+              const tokens = {};
+              if (this.newPool) {
+                for (const setName of ['tokenIdsSelected', 'tokenIdsUnselected']) {
+                  tokens[setName] = [];
+                }
+                const selectedTokenIds = Object.keys(this.selectedTokenIds);
+                for (const tokenId of filteredTokenIds) {
+                  const token = this.collection.tokens[tokenId];
+                  if (selectedTokenIds.includes(tokenId)) {
+                    setName = 'tokenIdsSelected';
+                  } else {
+                    setName = 'tokenIdsUnselected';
+                  }
+                  tokens[setName].push(token);
+                }
+                for (const setName of ['tokenIdsSelected', 'tokenIdsUnselected']) {
+                  if (this.tokens[setName].sortOption == 'idasc') {
+                    tokens[setName].sort((a, b) => a.tokenId - b.tokenId);
+                  } else if (this.tokens[setName].sortOption == 'iddsc') {
+                    tokens[setName].sort((a, b) => b.tokenId - a.tokenId);
+                  } else {
+                    tokens[setName].sort(() => { return Math.random() - 0.5; });
+                  }
+                }
+                return [
+                  { name: 'tokenIdsSelected', description: 'Selected Tokens', tokens: tokens['tokenIdsSelected'] },
+                  { name: 'tokenIdsUnselected', description: 'Unselected Tokens', tokens: tokens['tokenIdsUnselected'] },
+                ];
+
+              } else if (umswap) {
+                for (const setName of ['validTokenIdsInPool', 'validTokenIdsOwned', 'validTokenIdsNotInPoolOrOwned', 'invalidTokenIdsOwned', 'invalidTokenIdsNotInPoolOrOwned']) {
+                  tokens[setName] = [];
+                }
+                for (const tokenId of filteredTokenIds) {
+                  const token = this.collection.tokens[tokenId];
+                  const validInPool = umswap.validTokenIds.length == 0 || umswap.validTokenIds.includes(parseInt(tokenId));
+                  let setName;
+                  if (token.owner == umswap.address) {
+                    setName = 'validTokenIdsInPool';
+                  } else if (token.owner == this.coinbase) {
+                    if (validInPool) {
+                      setName = 'validTokenIdsOwned';
+                    } else {
+                      setName = 'invalidTokenIdsOwned';
+                    }
+                  } else {
+                    if (validInPool) {
+                      setName = 'validTokenIdsNotInPoolOrOwned';
+                    } else {
+                      setName = 'invalidTokenIdsNotInPoolOrOwned';
+                    }
+                  }
+                  tokens[setName].push(token);
+                }
+                for (const setName of ['validTokenIdsInPool', 'validTokenIdsOwned', 'validTokenIdsNotInPoolOrOwned', 'invalidTokenIdsOwned', 'invalidTokenIdsNotInPoolOrOwned']) {
+                  if (this.tokens[setName].sortOption == 'idasc') {
+                    tokens[setName].sort((a, b) => a.tokenId - b.tokenId);
+                  } else if (this.tokens[setName].sortOption == 'iddsc') {
+                    tokens[setName].sort((a, b) => b.tokenId - a.tokenId);
+                  // } else if (this.tokens[setName].sortOption == 'rarityasc') {
+                  //   // tokens[setName].sort((a, b) => a.rarity - b.rarity);
+                  //   results.sort((a, b) => {
+                  //     if (a.rarity == priceb) {
+                  //       return a.tokenId - b.tokenId;
+                  //     } else {
+                  //       return a.rarity - b.rarity;
+                  //     }
+                  //   });
+                  // } else if (this.tokens[setName].sortOption == 'raritydsc') {
+                  //   // tokens[setName].sort((a, b) => b.rarity - a.rarity);
+                  //   results.sort((a, b) => {
+                  //     if (a.rarity == priceb) {
+                  //       return a.tokenId - b.tokenId;
+                  //     } else {
+                  //       return b.rarity - a.rarity;
+                  //     }
+                  //   });
+                  // } else if (this.tokens[setName].sortOption == 'rarityrankasc') {
+                  //   tokens[setName].sort((a, b) => a.rarityRank - b.rarityRank);
+                  // } else if (this.tokens[setName].sortOption == 'rarityrankdsc') {
+                  //   tokens[setName].sort((a, b) => b.rarityRank - a.rarityRank);
+                  } else {
+                    tokens[setName].sort(() => { return Math.random() - 0.5; });
+                  }
+                }
+                return [
+                  { name: 'validTokenIdsInPool', description: 'Tokens In Pool', tokens: tokens['validTokenIdsInPool'] },
+                  { name: 'validTokenIdsOwned', description: 'My Tokens - Eligible For This Pool', tokens: tokens['validTokenIdsOwned'] },
+                  { name: 'validTokenIdsNotInPoolOrOwned', description: 'Not My Tokens - Eligible For This Pool', tokens: tokens['validTokenIdsNotInPoolOrOwned'] },
+                  { name: 'invalidTokenIdsOwned', description: 'My Tokens - Not Eligible For This Pool', tokens: tokens['invalidTokenIdsOwned'] },
+                  { name: 'invalidTokenIdsNotInPoolOrOwned', description: 'Not My Tokens - Not Eligible For This Pool', tokens: tokens['invalidTokenIdsNotInPoolOrOwned'] },
+                ];
+              } else {
+                for (const setName of ['tokenIdsOwned', 'tokenIdsNotOwned']) {
+                  tokens[setName] = [];
+                }
+                for (const tokenId of filteredTokenIds) {
+                  const token = this.collection.tokens[tokenId];
+                  if (token.owner == this.coinbase) {
+                    setName = 'tokenIdsOwned';
+                  } else {
+                    setName = 'tokenIdsNotOwned';
+                  }
+                  tokens[setName].push(token);
+                }
+                for (const setName of ['tokenIdsOwned', 'tokenIdsNotOwned']) {
+                  if (this.tokens[setName].sortOption == 'idasc') {
+                    tokens[setName].sort((a, b) => a.tokenId - b.tokenId);
+                  } else if (this.tokens[setName].sortOption == 'iddsc') {
+                    tokens[setName].sort((a, b) => b.tokenId - a.tokenId);
+                  } else {
+                    tokens[setName].sort(() => { return Math.random() - 0.5; });
+                  }
+                }
+                return [
+                  { name: 'tokenIdsOwned', description: 'My Tokens', tokens: tokens['tokenIdsOwned'] },
+                  { name: 'tokenIdsNotOwned', description: 'Not My Tokens', tokens: tokens['tokenIdsNotOwned'] },
+                ];
+              }
+            }
+            return [];
+          },
+          pagedFilteredTokens(collectionAddress, poolAddress, setName) {
+            const allTokens = this.getPoolTokens(collectionAddress, poolAddress);
+            if (allTokens) {
+              let tokens;
+              if (setName == 'tokenIdsSelected') {
+                tokens = allTokens[0].tokens;
+              } else if (setName == 'tokenIdsUnselected') {
+                tokens = allTokens[1].tokens;
+              } else if (setName == 'tokenIdsOwned') {
+                tokens = allTokens[0].tokens;
+              } else if (setName == 'tokenIdsNotOwned') {
+                tokens = allTokens[1].tokens;
+              } else if (setName == 'validTokenIdsInPool') {
+                tokens = allTokens[0].tokens;
+              } else if (setName == 'validTokenIdsOwned') {
+                tokens = allTokens[1].tokens;
+              } else if (setName == 'validTokenIdsNotInPoolOrOwned') {
+                tokens = allTokens[2].tokens;
+              } else if (setName == 'invalidTokenIdsOwned') {
+                tokens = allTokens[3].tokens;
+              } else if (setName == 'invalidTokenIdsNotInPoolOrOwned') {
+                tokens = allTokens[4].tokens;
+              }
+              return tokens.slice((this.tokens[setName].currentPage - 1) * this.tokens[setName].pageSize, this.tokens[setName].currentPage * this.tokens[setName].pageSize);
+            } else {
+              return [];
+            }
+          },
+          getSortedTraitsForTokenAttributes(category) {
+            const results = [];
+            for (let attributeKey in this.tokenAttributes[category]) {
+              const c = this.tokenAttributes[category][attributeKey];
+              results.push({ attributeOption: attributeKey, attributeTotal: c })
+            }
+            results.sort((a, b) => b.attributeTotal.length - a.attributeTotal.length);
+            return results;
+          },
+          collectionFilterChange(attribute, option) {
+            if (!this.tokenAttributesFilter[attribute]) {
+              Vue.set(this.tokenAttributesFilter, attribute, {});
+            }
+            if (this.tokenAttributesFilter[attribute][option]) {
+              Vue.delete(this.tokenAttributesFilter[attribute], option);
+              if (Object.keys(this.tokenAttributesFilter[attribute]) == 0) {
+                Vue.delete(this.tokenAttributesFilter, attribute);
+              }
+            } else {
+              Vue.set(this.tokenAttributesFilter[attribute], option, true);
+            }
+          },
+          toggleToken(setName, tokenId) {
+            if (!this.selectedTokens[setName]) {
+              Vue.set(this.selectedTokens, setName, {});
+            }
+            if (this.selectedTokens[setName][tokenId]) {
+              Vue.delete(this.selectedTokens[setName], tokenId);
+              if (Object.keys(this.selectedTokens[setName]) == 0) {
+                Vue.delete(this.selectedTokens, setName);
+              }
+            } else {
+              Vue.set(this.selectedTokens[setName], tokenId, true);
+            }
+            this.showSwap = true;
+          },
+          selectTokenId(tokenId, offOrOn) {
+            if (offOrOn) {
+              Vue.set(this.selectedTokenIds, tokenId, true);
+            } else {
+              Vue.delete(this.selectedTokenIds, tokenId);
+            }
+          },
+          resetSelection() {
+            this.selectedTokenIds = {};
+          },
+          selectTokenIds(tokens) {
+            for (const token of tokens) {
+              Vue.set(this.selectedTokenIds, token.tokenId, true);
+            }
+          },
+          newUmswapCollectionAddressChanged(item) {
+            this.selectedTokenIds = {};
+            (async() => {
+              const db0 = new Dexie(this.db.name);
+              db0.version(this.db.version).stores(this.db.schemaDefinition);
+              let collectionAddress;
+              try {
+                collectionAddress = ethers.utils.getAddress(this.newUmswap.collectionAddress);
+              } catch (e) {
+                collectionAddress = '';
+              }
+              const records = await db0.collection.where("address").equals(collectionAddress).toArray();
+              if (records.length == 1) {
+                this.collection = records[0];
+              }
+              db0.close();
+            })();
+          },
+          ensOrAddress(address, length = 24) {
+            if (this.globalENSMap) {
+              if (address in this.globalENSMap) {
+                return this.globalENSMap[address].substring(0, length);
+              }
+            }
+            if (this.collection && this.collection.ensMap) {
+              if (address in this.collection.ensMap) {
+                return this.collection.ensMap[address].substring(0, length);
+              }
+            }
+            return address == null ? null : address.substring(0, length);
+          },
+          getUmswap(address) {
+            for (const c of Object.values(this.collections)) {
+              for (const u of c.umswaps) {
+                if (u.address == address) {
+                  return u;
+                }
+              }
+            }
+            return null;
+          },
+          async doIt(action) {
+            console.log("doIt: " + action);
+            let connected = true;
+            if (!window.ethereum) {
+              connected = false;
+            } else {
+              try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                connected = window.ethereum.isConnected();
+              } catch (e) {
+                console.log("window.ethereum.request error: " + e.message);
+                connected = false;
+              }
+            }
+            if (!connected) {
+              alert("Please use the https://metamask.io addon with Firefox, Chromium, Opera or Chrome, or any other other web3 browser, for web3 data retrieval. And refresh!");
+            } else {
+              const provider = new ethers.providers.Web3Provider(window.ethereum);
+              const signer = provider.getSigner();
+              this.coinbase = await signer.getAddress();
+              localStorage.coinbase = this.coinbase;
+              const network = await provider.getNetwork();
+              const umswapFactory = new ethers.Contract(UMSWAPFACTORYADDRESS, UMSWAPFACTORYABI, provider);
+              const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider);
+              const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
+              const block = await provider.getBlock("latest");
+              const blockNumber = block.number;
+              const timestamp = block.timestamp;
+
+              const ENSOWNERBATCHSIZE = 200; // 500 fails occassionally
+
+              const db0 = new Dexie(this.db.name);
+              db0.version(this.db.version).stores(this.db.schemaDefinition);
+
+              const globalENSMap = {};
+              globalENSMap[this.coinbase] = this.coinbase;
+
+              // Get UmswapFactory events
+              const startBlock = UMSWAPFACTORYDEPLOYMENTBLOCK;
+              const endBlock = blockNumber;
+              const filter = {
+                address: UMSWAPFACTORYADDRESS,
+                fromBlock: startBlock,
+                toBlock: endBlock,
+                topics: [
+                  [
+                    '0x077e1cf6babf9ad326aba5f77f1dc9829deb8eb27be7e883108bb3837ad0214e', // NewUmswap (index_topic_1 address creator, uint256 timestamp, index_topic_2 address umswap, index_topic_3 address collection, string name, uint256[] tokenIds)
+                    '0xecf7cba0a43f1cd8521a490776b3d7ce17c6521eb4e164acede254de0551ba7f', // Message (index_topic_1 address from, uint256 timestamp, index_topic_2 address to, index_topic_3 address umswapOrCollection, string topic, string message)
+                  ],
+                  null,
+                  null,
+                ],
+              };
+              const umswapFactoryEventLogs = await provider.getLogs(filter);
+              const umswapEvents = [];
+              for (const event of umswapFactoryEventLogs) {
+                const logData = umswapFactory.interface.parseLog(event);
+                const txHash = event.transactionHash;
+                const blockNumber = event.blockNumber;
+                if (logData.eventFragment.name == "NewUmswap") {
+                  const creator = logData.args[0] || null;
+                  if (!globalENSMap[creator]) {
+                    globalENSMap[creator] = creator;
+                  }
+                  const timestamp = logData.args[1].toNumber();
+                  const umswap = logData.args[2];
+                  const collection = logData.args[3];
+                  const name = logData.args[4];
+                  const tokenIds = logData.args[5].map(i => i.toNumber());
+                  umswapEvents.push({ type: "New", txHash, creator, blockNumber, timestamp, umswap, collection, name, tokenIds });
+                } else if (logData.eventFragment.name == "Message") {
+                  const from = logData.args[0];
+                  if (!globalENSMap[from]) {
+                    globalENSMap[from] = from;
+                  }
+                  const timestamp = logData.args[1].toNumber();
+                  const to = logData.args[2];
+                  if (to != ADDRESS0 && !globalENSMap[to]) {
+                    globalENSMap[to] = to;
+                  }
+                  const umswapOrCollection = logData.args[3];
+                  const topic = logData.args[4];
+                  const message = logData.args[5];
+                  umswapEvents.push({ type: "Message", txHash, from, blockNumber, timestamp, to, umswapOrCollection, topic, message });
+                }
+              }
+
+              // Get Umswap state
+              const umswapsLength = (await umswapFactory.getUmswapsLength()).toNumber();
+              var umswapsIndices = generateRange(0, umswapsLength - 1, 1);
+              this.sync.completed = 0;
+              this.sync.total = umswapsLength;
+              this.sync.section = "Umswaps";
+              const UMSWAPBATCHSIZE = 200; // 500 OK
+              const collections = {};
+              for (let i = 0; i < umswapsLength; i += UMSWAPBATCHSIZE) {
+                const batch = umswapsIndices.slice(i, parseInt(i) + UMSWAPBATCHSIZE);
+                const umswaps = await umswapFactory.getUmswaps(this.coinbase, batch);
+                for (let j = 0; j < umswaps[0].length; j++) {
+                  const index = umswapsIndices[j];
+                  const address = umswaps[0][j];
+                  const symbol = umswaps[1][j];
+                  const name = umswaps[2][j];
+                  const collection = umswaps[3][j];
+                  const validTokenIds = umswaps[4][j].map(e => e.toNumber());
+                  const tokenIds = umswaps[5][j].map(e => e.toNumber());
+                  const creator = umswaps[6][j];
+                  const stats = umswaps[7][j];
+                  const swappedIn = stats[0].toString();
+                  const swappedOut = stats[1].toString();
+                  const totalScores = stats[2].toString();
+                  const balance = ethers.utils.formatEther(stats[3]).toString();
+                  const totalSupply = stats[4].toString();
+                  const raters = stats[5].toString();
+                  const isApprovedForAll = stats[6].toString();
+                  if (!(collection in collections)) {
+                    collections[collection] = { address: collection, type: null, symbol: null, name: null, balance: null, totalSupply: null, reservoirInfo: null, allTokens: [], umswaps: [] };
+                  }
+                  const umswap = { index, address, symbol, name, collection, validTokenIds, tokenIds, creator, swappedIn, swappedOut, totalScores, balance, totalSupply, raters, isApprovedForAll };
+                  collections[collection].umswaps.push(umswap);
+                }
+                this.sync.completed = i + 1;
+              }
+
+              // Get UmswapFactory events
+              // const umswapAddresses = [];
+              // for (const c of Object.values(collections)) {
+              //   for (const u of c.umswaps) {
+              //     umswapAddresses.push(u.address);
+              //   }
+              // }
+              // console.log(JSON.stringify(umswapAddresses));
+              const umswapInterface = new ethers.utils.Interface(UMSWAPABI);
+              const umswapFilter = {
+                address: null,
+                fromBlock: startBlock,
+                toBlock: endBlock,
+                topics: [
+                  [
+                    '0xd03d7fc2b11276326661de98a5f2efeeb83b095eb821f2f282e5f589c2d4a59f', // event Swapped(address indexed account, uint indexed timestamp, uint[] inTokenIds, uint[] outTokenIds, uint64[3] stats);
+                    '0x645dc3ff76881bfb2bb80eaafe4f0e12fe5c517c3b5200ea9108bc6273ecaf05', // event Rated(address indexed account, uint indexed timestamp, uint score, string text, uint64[3] stats);
+                  ],
+                  null,
+                  null,
+                ],
+              };
+              const umswapEventLogs = await provider.getLogs(umswapFilter);
+              for (const event of umswapEventLogs) {
+                const logData = umswapInterface.parseLog(event);
+                const txHash = event.transactionHash;
+                const umswap = event.address;
+                const blockNumber = event.blockNumber;
+                if (logData.eventFragment.name == "Swapped") {
+                  const account = logData.args[0];
+                  if (!globalENSMap[account]) {
+                    globalENSMap[account] = account;
+                  }
+                  const timestamp = logData.args[1].toNumber();
+                  const inTokenIds = logData.args[2].map(t => t.toNumber());
+                  const outTokenIds = logData.args[3].map(t => t.toNumber());
+                  const stats = logData.args[4].map(s => s.toNumber());
+                  umswapEvents.push({ type: "Swap", txHash, umswap, blockNumber, account, timestamp, inTokenIds, outTokenIds, stats });
+                } else if (logData.eventFragment.name == "Rated") {
+                  const account = logData.args[0];
+                  if (!globalENSMap[account]) {
+                    globalENSMap[account] = account;
+                  }
+                  const timestamp = logData.args[1].toNumber();
+                  const score = logData.args[2].toNumber();
+                  const text = logData.args[3];
+                  const stats = logData.args[4].map(s => s.toNumber());
+                  umswapEvents.push({ type: "Rated", txHash, umswap, blockNumber, account, timestamp, score, text, stats });
+                }
+              }
+              this.umswapEvents = umswapEvents;
+              await db0.cache.put({ objectName: 'umswapEvents', object: umswapEvents }).then (function() {
+              }).catch(function(error) {
+                console.log("error: " + error);
+              });
+
+              // Get collection metadata
+              this.sync.section = null;
+              this.sync.completed = 0;
+              this.sync.total = Object.keys(collections).length;
+              this.sync.section = "Collection Metadata";
+              for (const [address, collection] of Object.entries(collections)) {
+                const info = await erc721Helper.tokenInfo([address]);
+                collection.type = info[0][0].toString();
+                collection.symbol = info[1][0].toString();
+                collection.name = info[2][0].toString();
+                collection.totalSupply = info[3][0].toString();
+                let infoUrl = "https://api.reservoir.tools/collection/v2?id=" + address;
+                const reservoirInfo = await fetch(infoUrl)
+                  .then(handleErrors)
+                  .then(response => response.json())
+                  .catch(function(error) {
+                     console.log("ERROR - doIt: " + error);
+                     // Want to work around API data unavailablity - state.sync.error = true;
+                     return [];
+                  });
+                collection.reservoirInfo = reservoirInfo && reservoirInfo.collection || null;
+                this.sync.completed++;
+              }
+              this.collections = collections;
+              await db0.cache.put({ objectName: 'collections', object: this.collections }).then (function() {
+              }).catch(function(error) {
+                console.log("error: " + error);
+              });
+
+              // Global ENS map
+              this.sync.section = null;
+              this.sync.completed = 0;
+              const globalAddresses = Object.keys(globalENSMap);
+              this.sync.total = globalAddresses.length;
+              this.sync.section = "Global ENS Names";
+              for (let i = 0; i < globalAddresses.length; i += ENSOWNERBATCHSIZE) {
+                const batch = globalAddresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
+                const allnames = await ensReverseRecordsContract.getNames(batch);
+                for (let j = 0; j < batch.length; j++) {
+                  const address = batch[j];
+                  const name = allnames[j];
+                  globalENSMap[address] = name != null && name.length > 0 ? name : address;
+                  // const normalized = normalize(address);
+                }
+                this.sync.completed = parseInt(this.sync.completed) + batch.length;
+              }
+              for (const c of Object.values(collections)) {
+                globalENSMap[c.address] = c.name;
+                for (const u of c.umswaps) {
+                  globalENSMap[u.address] = u.name;
+                }
+              }
+              globalENSMap[this.umswapFactoryAddress] = "UmswapFactory";
+              this.globalENSMap = globalENSMap;
+              await db0.cache.put({ objectName: 'globalENSMap', object: globalENSMap }).then (function() {
+              }).catch(function(error) {
+                console.log("error: " + error);
+              });
+
+              // Get specific collection if requested
+              let collectionAddress = null;
+              if (action == 'newUmswapRetrieveCollection') {
+                collectionAddress = this.newUmswap.collectionAddress == null ? null : ethers.utils.getAddress(this.newUmswap.collectionAddress);
+              } else {
+                if (this.selectedCollection != null) {
+                  collectionAddress = this.selectedCollection == null ? null : ethers.utils.getAddress(this.selectedCollection);
+                }
+              }
+              if (collectionAddress != null) {
+                // Get specific collection metadata
+                this.sync.section = null;
+                this.sync.completed = 0;
+                this.sync.total = 1;
+                this.sync.section = "Collection Metadata";
+                let infoUrl = "https://api.reservoir.tools/collection/v2?id=" + collectionAddress;
+                const reservoirInfo = await fetch(infoUrl)
+                  .then(handleErrors)
+                  .then(response => response.json())
+                  .catch(function(error) {
+                     console.log("ERROR - doIt: " + error);
+                     // Want to work around API data unavailablity - state.sync.error = true;
+                     return [];
+                  });
+                this.sync.completed = 1;
+
+                // Get specific collection token metadata
+                this.sync.section = null;
+                this.sync.completed = 0;
+                this.sync.total = null;
+                this.sync.section = "Token Metadata";
+                let continuation = null;
+                let tokens = {};
+                do {
+                  let tokensUrl = "https://api.reservoir.tools/tokens/v5?contract=" + collectionAddress + "&limit=100&includeAttributes=true" +
+                    (continuation != null ? "&continuation=" + continuation : '');
+                  const reservoirTokens = await fetch(tokensUrl)
+                    .then(handleErrors)
+                    .then(response => response.json())
+                    .catch(function(error) {
+                       console.log("ERROR - doIt: " + error);
+                       // Want to work around API data unavailablity - state.sync.error = true;
+                       return [];
+                    });
+                  continuation = reservoirTokens.continuation;
+                  if (reservoirTokens && reservoirTokens.tokens) {
+                    for (const token of reservoirTokens.tokens) {
+                      let price = null;
+                      let validUntil = null;
+                      let source = null;
+                      if (token.market.floorAsk.price) {
+                        price = token.market.floorAsk.price.amount.native;
+                        validUntil = token.market.floorAsk.validUntil;
+                        source = token.market.floorAsk.source.name;
+                      }
+                      tokens[token.token.tokenId] = {
+                        tokenId: token.token.tokenId,
+                        owner: token.token.owner && ethers.utils.getAddress(token.token.owner) || null,
+                        name: token.token.name || null,
+                        image: token.token.image || null,
+                        attributes: token.token.attributes.map(e => ({ key: e.key, value: e.value })) || [],
+                        price,
+                        validUntil,
+                        source,
+                        lastSell: token.token.lastSell,
+                        rarity: token.token.rarity || null,
+                        rarityRank: token.token.rarityRank || null,
+                      };
+                    }
+                    this.sync.completed = Object.keys(tokens).length;
+                  }
+                } while (continuation != null /*&& !state.halt && !state.sync.error */);
+
+                // Get specific collection token owners
+                this.sync.section = null;
+                this.sync.completed = 0;
+                const tokenIds = Object.keys(tokens);
+                this.sync.total = tokenIds.length;
+                this.sync.section = "Token Owners";
+                const NFTOWNERBATCHSIZE = 200; // 500 OK
+                for (let i = 0; i < tokenIds.length; i += NFTOWNERBATCHSIZE) {
+                  const batch = tokenIds.slice(i, parseInt(i) + NFTOWNERBATCHSIZE);
+                  const ownersResult = await erc721Helper.ownersByTokenIds(collectionAddress, batch);
+                  for (let j = 0; j < ownersResult[0].length; j++) {
+                    tokens[batch[j]].owner = ownersResult[1][j];
+                  }
+                  this.sync.completed = parseInt(this.sync.completed) + batch.length;
+                }
+                this.collection.tokens = tokens;
+
+                // Get specific collection owner reverse ENS names
+                this.sync.section = null;
+                this.sync.completed = 0;
+                const ensMap = {};
+                for (const [tokenId, token] of Object.entries(tokens)) {
+                  if (!ensMap[token.owner]) {
+                    ensMap[token.owner] = token.owner;
+                  }
+                }
+                const addresses = Object.keys(ensMap);
+                this.sync.total = addresses.length;
+                this.sync.section = "ENS Names";
+                for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
+                  const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
+                  const allnames = await ensReverseRecordsContract.getNames(batch);
+                  for (let j = 0; j < batch.length; j++) {
+                    const address = batch[j];
+                    const name = allnames[j];
+                    ensMap[address] = name != null && name.length > 0 ? name : address;
+                    // const normalized = normalize(address);
+                  }
+                  this.sync.completed = parseInt(this.sync.completed) + batch.length;
+                }
+                this.collection.ensMap = ensMap;
+
+                // Aggregate attributes for filter
+                const tokenAttributes = {};
+                for (const [tokenId, token] of Object.entries(tokens)) {
+                  for (let attribute of token.attributes) {
+                      const key = attribute.key;
+                      const value = attribute.value;
+                      if (!tokenAttributes[key]) {
+                        tokenAttributes[key] = {};
+                      }
+                      if (!tokenAttributes[key][value]) {
+                        tokenAttributes[key][value] = [token.tokenId];
+                      } else {
+                        tokenAttributes[key][value].push(token.tokenId);
+                      }
+                  }
+                }
+                // console.log("tokenAttributes: " + JSON.stringify(tokenAttributes, null, 2));
+                this.collection.tokenAttributes = tokenAttributes;
+
+                // Saving metadata
+                if (reservoirInfo && reservoirInfo.collection) {
+                  // console.log(JSON.stringify(reservoirInfo.collection, null, 2));
+                  this.collection.address = collectionAddress;
+                  this.collection.symbol = reservoirInfo.collection.symbol || null;
+                  this.collection.name = reservoirInfo.collection.name || null;
+                  this.collection.slug = reservoirInfo.collection.slug || null;
+                  this.collection.imageUrl = reservoirInfo.collection.metadata.imageUrl || null;
+                  this.collection.blockNumber = blockNumber;
+                  this.collection.timestamp = timestamp;
+                }
+                // TODO console.log(JSON.stringify(this.collection, null, 2));
+                await db0.collection.put(this.collection).then (function() {
+                }).catch(function(error) {
+                  console.log("error: " + error);
+                });
+              }
+              db0.close();
+              this.sync.section = null;
+            }
+          },
+          async approveTransfer(approved) {
+            console.log("approveTransfer: " + approved);
+            // this.newUmswap.txHash = null;
+            // this.newUmswap.error = null;
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const nftContract = new ethers.Contract(this.selectedCollection, ERC721ABI, provider);
+            const nftContractWithSigner = nftContract.connect(provider.getSigner());
+            const from = await provider.getSigner().getAddress();
+            const h = this.$createElement;
+            const messageVNode = h('div', { class: ['confirm-modal'] }, [
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'From:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + from, 'target': '_blank' } }, this.ensOrAddress(from)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'To ERC-721 Contract:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + this.selectedCollection + '#code', 'target': '_blank' } }, this.ensOrAddress(this.selectedCollection)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'setApprovalForAll('),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'operator:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + this.selectedPool + '#code', 'target': '_blank' } }, this.ensOrAddress(this.selectedPool)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'approved:'),
+                  h('b-col', approved),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, ')'),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'Note:'),
+                  h('b-col', 'Please resync a few minutes after your transaction has been executed'),
+                ]
+              ),
+            ])
+            this.$bvModal.msgBoxConfirm([messageVNode], {
+              title: 'Set/Revoke Approval For Umswap To Transfer Your NFTs Into This Pool',
+              size: 'lg',
+              buttonSize: 'sm',
+              centered: true,
+              okVariant: 'danger',
+              okTitle: 'Confirm',
+              cancelTitle: 'Cancel',
+            }).then( async value1 => {
+              if (value1) {
+                event.preventDefault();
+                try {
+                  const tx = await nftContractWithSigner.setApprovalForAll(this.selectedPool, approved);
+            //       this.newUmswap.txHash = tx.hash;
+                  console.log("tx: " + JSON.stringify(tx));
+                } catch (e) {
+            //       this.newUmswap.error = e.message.toString();
+                  console.log("approveTransfer error: " + JSON.stringify(e));
+                }
+              }
+            }).catch(err => {
+              // this.newUmswap.error = err.message.toString();
+              console.log("approveTransfer error: " + JSON.stringify(e));
+            });
+          },
+          async ratePool() {
+            console.log("ratePool: " + this.poolRating.score + " " + this.poolRating.text);
+            // this.newUmswap.txHash = null;
+            // this.newUmswap.error = null;
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const umswapContract = new ethers.Contract(this.selectedPool, UMSWAPABI, provider);
+            const umswapContractWithSigner = umswapContract.connect(provider.getSigner());
+            const from = await provider.getSigner().getAddress();
+            const h = this.$createElement;
+            const messageVNode = h('div', { class: ['confirm-modal'] }, [
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'From:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + from, 'target': '_blank' } }, this.ensOrAddress(from)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'To Umswap Pool Contract:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + this.selectedPool + '#code', 'target': '_blank' } }, this.ensOrAddress(this.selectedPool)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'rate('),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'score:'),
+                  h('b-col', this.poolRating.score),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'text:'),
+                  h('b-col', this.poolRating.text),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, ')'),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'Note:'),
+                  h('b-col', 'Please resync a few minutes after your transaction has been executed'),
+                ]
+              ),
+            ])
+            this.$bvModal.msgBoxConfirm([messageVNode], {
+              title: 'Rate This Pool',
+              size: 'lg',
+              buttonSize: 'sm',
+              centered: true,
+              okVariant: 'danger',
+              okTitle: 'Confirm',
+              cancelTitle: 'Cancel',
+            }).then( async value1 => {
+              if (value1) {
+                event.preventDefault();
+                try {
+                  const tx = await umswapContractWithSigner.rate(this.poolRating.score || 0, this.poolRating.text || '');
+            //       this.newUmswap.txHash = tx.hash;
+                  console.log("tx: " + JSON.stringify(tx));
+                } catch (e) {
+            //       this.newUmswap.error = e.message.toString();
+                  console.log("ratePool error: " + JSON.stringify(e));
+                }
+              }
+            }).catch(err => {
+              // this.newUmswap.error = err.message.toString();
+              console.log("ratePool error: " + JSON.stringify(e));
+            });
+          },
+          async sendMessage() {
+            console.log("sendMessage: " + JSON.stringify(this.message));
+            // this.newUmswap.txHash = null;
+            // this.newUmswap.error = null;
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const umswapFactoryContract = new ethers.Contract(UMSWAPFACTORYADDRESS, UMSWAPFACTORYABI, provider);
+            const umswapFactoryContractWithSigner = umswapFactoryContract.connect(provider.getSigner());
+            const from = await provider.getSigner().getAddress();
+            const re = this.selectedCollection == null ? ADDRESS0 : (this.selectedPool == null ? this.selectedCollection : this.selectedPool);
+            const h = this.$createElement;
+            const messageVNode = h('div', { class: ['confirm-modal'] }, [
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'From:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + from, 'target': '_blank' } }, this.ensOrAddress(from)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'To Umswap Factory Contract:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + this.umswapFactoryAddress + '#code', 'target': '_blank' } }, this.ensOrAddress(this.umswapFactoryAddress)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'sendMessage('),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'to:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + this.message.to, 'target': '_blank' } }, this.ensOrAddress(this.message.to)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 're:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + re, 'target': '_blank' } }, re == ADDRESS0 ? '(general)' : this.ensOrAddress(re)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'topic:'),
+                  h('b-col', this.message.topic),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'text:'),
+                  h('b-col', this.message.text),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, ')'),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'Note:'),
+                  h('b-col', 'Please resync a few minutes after your transaction has been executed'),
+                ]
+              ),
+            ])
+            this.$bvModal.msgBoxConfirm([messageVNode], {
+              title: 'Send Message',
+              size: 'lg',
+              buttonSize: 'sm',
+              centered: true,
+              okVariant: 'danger',
+              okTitle: 'Confirm',
+              cancelTitle: 'Cancel',
+            }).then( async value1 => {
+              if (value1) {
+                event.preventDefault();
+                try {
+                  const tx = await umswapFactoryContractWithSigner.sendMessage(this.message.to || ADDRESS0, this.selectedCollection == null ? ADDRESS0 : (this.selectedPool == null ? this.selectedCollection : this.selectedPool == null), this.message.topic || '', this.message.text || '');
+            //       this.newUmswap.txHash = tx.hash;
+                  console.log("tx: " + JSON.stringify(tx));
+                } catch (e) {
+            //       this.newUmswap.error = e.message.toString();
+                  console.log("sendMessage error: " + JSON.stringify(e));
+                }
+              }
+            }).catch(err => {
+              // this.newUmswap.error = err.message.toString();
+              console.log("sendMessage error: " + JSON.stringify(e));
+            });
+          },
+          async createNewUmswap() {
+            console.log("createNewUmswap");
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const umswapFactoryContract = new ethers.Contract(UMSWAPFACTORYADDRESS, UMSWAPFACTORYABI, provider);
+            const umswapFactoryContractWithSigner = umswapFactoryContract.connect(provider.getSigner());
+            const from = await provider.getSigner().getAddress();
+            const collectionAddress = this.newUmswap.collectionAddress;
+            const name = this.newUmswap.name == null || this.newUmswap.name.trim().length == 0 ? null : this.newUmswap.name.trim();
+            const selectedTokenIds = Object.keys(this.selectedTokenIds);
+            const h = this.$createElement;
+            const messageVNode = h('div', { class: ['confirm-modal'] }, [
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'From:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + from, 'target': '_blank' } }, this.ensOrAddress(from)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'To:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + this.umswapFactoryAddress + '#code', 'target': '_blank' } }, this.ensOrAddress(this.umswapFactoryAddress)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'newUmswap('),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'collection:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/token/' + collectionAddress + '#code', 'target': '_blank' } }, this.ensOrAddress(collectionAddress)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'name:'),
+                  h('b-col', name),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'tokenIds:'),
+                  h('b-col', '[' + selectedTokenIds.join(',') + ']'),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, ')'),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'Note:'),
+                  h('b-col', 'Please resync a few minutes after your transaction has been executed'),
+                ]
+              ),
+            ])
+            this.$bvModal.msgBoxConfirm([messageVNode], {
+              title: 'Create New Umswap Pool',
+              size: 'lg',
+              buttonSize: 'sm',
+              centered: true,
+              okVariant: 'danger',
+              okTitle: 'Confirm',
+              cancelTitle: 'Cancel',
+            }).then( async value1 => {
+              if (value1) {
+                event.preventDefault();
+                try {
+                  const tx = await umswapFactoryContractWithSigner.newUmswap(collectionAddress, name, selectedTokenIds);
+            //       this.newUmswap.txHash = tx.hash;
+                  console.log("tx: " + JSON.stringify(tx));
+                } catch (e) {
+            //       this.newUmswap.error = e.message.toString();
+                  console.log("swapIt error: " + JSON.stringify(e));
+                }
+              }
+            }).catch(err => {
+              // this.newUmswap.error = err.message.toString();
+              console.log("swapIt error: " + JSON.stringify(e));
+            });
+          },
+          async swapIt() {
+            console.log("swapIt");
+            // this.newUmswap.txHash = null;
+            // this.newUmswap.error = null;
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const umswapContract = new ethers.Contract(this.selectedPool, UMSWAPABI, provider);
+            const umswapContractWithSigner = umswapContract.connect(provider.getSigner());
+            const from = await provider.getSigner().getAddress();
+            const h = this.$createElement;
+            const messageVNode = h('div', { class: ['confirm-modal'] }, [
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'From:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + from, 'target': '_blank' } }, this.ensOrAddress(from)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'To Umswap Pool:'),
+                  h('b-col',
+                    [
+                      h('a', { class: ['blah'], attrs: { 'href': 'https://etherscan.io/address/' + this.selectedPool + '#code', 'target': '_blank' } }, this.ensOrAddress(this.selectedPool)),
+                    ]
+                  ),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'swap('),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'inTokenIds:'),
+                  h('b-col', '[' + this.tokenIdsToSwapIn.join(",") + ']'),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'outTokenIds:'),
+                  h('b-col', '[' + this.tokenIdsToSwapOut.join(",") + ']'),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, ')'),
+                  h('b-col', ''),
+                ]
+              ),
+              h('b-row', {
+                }, [
+                  h('b-col', { class: ['text-right'], props: { cols: 3 } }, 'Note:'),
+                  h('b-col', 'Please resync a few minutes after your transaction has been executed'),
+                ]
+              ),
+            ])
+            this.$bvModal.msgBoxConfirm([messageVNode], {
+              title: 'Swap NFTs Into or Out Of This Pool',
+              size: 'lg',
+              buttonSize: 'sm',
+              centered: true,
+              okVariant: 'danger',
+              okTitle: 'Confirm',
+              cancelTitle: 'Cancel',
+            }).then( async value1 => {
+              if (value1) {
+                event.preventDefault();
+                try {
+                  const tx = await umswapContractWithSigner.swap(this.tokenIdsToSwapIn, this.tokenIdsToSwapOut);
+            //       this.newUmswap.txHash = tx.hash;
+                  console.log("tx: " + JSON.stringify(tx));
+                } catch (e) {
+            //       this.newUmswap.error = e.message.toString();
+                  console.log("swapIt error: " + JSON.stringify(e));
+                }
+              }
+            }).catch(err => {
+              // this.newUmswap.error = err.message.toString();
+              console.log("swapIt error: " + JSON.stringify(e));
+            });
+          },
+          async refreshMetadata() {
+            console.log("refreshMetadata");
+            const options = {
+              method: 'POST',
+              headers: {accept: '*/*', 'content-type': 'application/json', 'x-api-key': 'demo-api-key'},
+              body: JSON.stringify({collection: this.newUmswap.collectionAddress })
+            };
+            fetch('https://api.reservoir.tools/collections/refresh/v1', options)
+              .then(response => response.json())
+              .then(response => console.log(response))
+              .catch(err => console.error(err));
+          },
+        },
+
+        // --- MOUNTED ---
+        mounted() {
+          if ('coinbase' in localStorage) {
+            this.coinbase = localStorage.coinbase;
+          }
+          (async() => {
+            const db0 = new Dexie(this.db.name);
+            db0.version(this.db.version).stores(this.db.schemaDefinition);
+            const collections = await db0.cache.where("objectName").equals('collections').toArray();
+            if (collections.length == 1) {
+              this.collections = collections[0].object;
+            }
+            const umswapEvents = await db0.cache.where("objectName").equals('umswapEvents').toArray();
+            if (umswapEvents.length == 1) {
+              this.umswapEvents = umswapEvents[0].object;
+            }
+            const globalENSMap = await db0.cache.where("objectName").equals('globalENSMap').toArray();
+            if (globalENSMap.length == 1) {
+              this.globalENSMap = globalENSMap[0].object;
+            }
+            if (window.location.href.indexOf("0x") >= 0) {
+              this.selectedCollection = window.location.href.replace(/^.*0x/, "0x");
+              const records = await db0.collection.where("address").equals(this.selectedCollection).toArray();
+              if (records.length == 1) {
+                this.collection = records[0];
+              }
+            }
+            db0.close();
+          })();
+        },
+      })
+    </script>
+  </body>
+</html>
