@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <meta name="description" content="Umswap (c) Bok Consulting Pty Ltd 2022" />
+    <meta name="description" content="Txs (c) Bok Consulting Pty Ltd 2022" />
     <meta name="author" content="BokkyPooBah" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@BokkyPooBah" />
@@ -46,7 +46,7 @@
         <b-navbar toggleable="sm" variant="light" class="mx-1 my-0 p-0">
           <b-navbar-brand to="/" variant="primary">
             <b-avatar rounded variant="light" size="3.0rem" src="images/ZombieBaby_001_gp2_3871_8601_10786.gif" v-b-popover.hover.bottom="'gm'" class="ml-0"></b-avatar>
-            <em v-b-popover.hover.bottom="'gm gm gm'">Umswap</em>
+            <em v-b-popover.hover.bottom="'gm gm gm'">Txs</em>
           </b-navbar-brand>
           <b-navbar-nav class="ml-auto">
             <!-- <b-avatar v-if="coinbase && coinbase != ensOrAddress(coinbase)" rounded variant="light" size="2.5rem" :src="ensOrAddress(coinbase)"></b-avatar> -->
@@ -55,7 +55,7 @@
         </b-navbar>
 
         <b-card no-body class="p-0 mt-0" style="min-height: 666px;">
-          <b-alert size="sm" dismissible variant="warning" show class="m-1 my-0">
+          <b-alert v-if="false" size="sm" dismissible variant="warning" show class="m-1 my-0">
             Warning: This is experimental unaudited software. Revoke permissions when not required, at this early stage.
           </b-alert>
           <b-card class="m-2 p-1" header-class="warningheader" header="Welcome" v-if="!coinbase">
@@ -64,7 +64,41 @@
             </b-card-text>
           </b-card>
 
-          <b-card-body v-if="coinbase" class="m-0 px-1 py-0">
+
+          <b-card no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+            <b-card-body class="m-1 p-1">
+              <b-form-group label-cols-lg="2" label="Transaction Hashes" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+                <b-form-group label="Hashes:" label-for="swap-in" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Select tokens to swap in below" class="mx-0 my-1 p-0">
+                  <b-form-textarea size="sm" id="swap-in" v-model.trim="txHashes" rows="1" max-rows="5" class="w-100"></b-form-textarea>
+                </b-form-group>
+                <!--
+                <b-form-group label="Out Of Pool:" label-for="swap-out" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Select tokens to swap out below" class="mx-0 my-1 p-0">
+                  <b-form-textarea size="sm" id="swap-out" readonly v-model.trim="tokenIdsToSwapOut.join(',')" rows="1" max-rows="5" class="w-100"></b-form-textarea>
+                </b-form-group>
+                <b-form-group label="Pool Approval:" label-for="info-poolapproved" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Approval is required to swap your NFTs into the pool. Revoke when not transferring into the pool" class="mx-0 my-1 p-0">
+                  <b-input-group class="m-0 w-50">
+                    <b-form-input type="text" size="sm" id="info-poolapproved" readonly :value="umswapApproved ? 'Yes' : 'No'"></b-form-input>
+                    <b-input-group-append>
+                      <b-button v-if="!umswapApproved" size="sm" @click="approveTransfer(true)" variant="warning">Approve</b-button>
+                      <b-button v-if="umswapApproved" size="sm" @click="approveTransfer(false)" variant="warning">Revoke Approval</b-button>
+                    </b-input-group-append>
+                  </b-input-group>
+                </b-form-group>
+                <b-form-group v-if="getSelectedPoolRecord" label="My Pool Balance:" label-for="info-mypoolbalance" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                  <b-form-input type="text" size="sm" id="info-mypoolbalance" readonly v-model.trim="umswapBalance" class="w-50"></b-form-input>
+                </b-form-group>
+                -->
+                <!-- HERE -->
+                <b-form-group label="" label-for="swap-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Pool balance must be sufficient to cover any net NFTs swapped out, and approval is required" class="mx-0 my-1 p-0">
+                  <b-button size="sm" id="swap-submit" :disabled="!umswapApproved || (parseFloat(convertETH(umswapBalance)) + parseFloat(umswapChange) < 0) || (tokenIdsToSwapIn.length == 0 && tokenIdsToSwapOut.length == 0)" @click="processIt" variant="warning">Add</b-button>
+                </b-form-group>
+              </b-form-group>
+            </b-card-body>
+          </b-card>
+
+
+
+          <b-card-body v-if="false && coinbase" class="m-0 px-1 py-0">
             <!-- ALL COLLECTIONS TOOLBAR -->
             <div class="d-flex flex-wrap m-0 p-0">
               <div class="mt-0 pr-1">
@@ -420,7 +454,7 @@
                         <b-form-input type="text" size="sm" id="info-mypoolbalance" readonly v-model.trim="umswapBalance" class="w-50"></b-form-input>
                       </b-form-group>
                       <b-form-group label="" label-for="swap-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Pool balance must be sufficient to cover any net NFTs swapped out, and approval is required" class="mx-0 my-1 p-0">
-                        <b-button size="sm" id="swap-submit" :disabled="!umswapApproved || (parseFloat(convertETH(umswapBalance)) + parseFloat(umswapChange) < 0) || (tokenIdsToSwapIn.length == 0 && tokenIdsToSwapOut.length == 0)" @click="swapIt" variant="warning">Swap</b-button>
+                        <b-button size="sm" id="swap-submit" :disabled="!umswapApproved || (parseFloat(convertETH(umswapBalance)) + parseFloat(umswapChange) < 0) || (tokenIdsToSwapIn.length == 0 && tokenIdsToSwapOut.length == 0)" @click="processIt" variant="warning">Swap</b-button>
                       </b-form-group>
                     </b-form-group>
                   </b-card-body>
@@ -603,7 +637,7 @@
         </b-card>
         <b-card no-header body-class="m-0 p-0" class="m-0 p-0 border-0">
           <b-card-text class="text-right">
-            gm, and enjoy! <i>Umswap</i> &copy; Bok Consulting Pty Ltd 2022.
+            gm, and enjoy! <i>Txs</i> &copy; Bok Consulting Pty Ltd 2022.
           </b-card-text>
         </b-card no-header>
       </b-container>
@@ -615,6 +649,10 @@
         // --- DATA ---
         data: {
           coinbase: null,
+
+          txHashes: null,
+
+
           showInfo: false,
           showFilter: false,
           newPool: false,
@@ -2158,8 +2196,8 @@
               console.log("swapIt error: " + JSON.stringify(e));
             });
           },
-          async swapIt() {
-            console.log("swapIt");
+          async processIt() {
+            console.log("processIt");
             // this.newUmswap.txHash = null;
             // this.newUmswap.error = null;
             const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -2236,12 +2274,12 @@
                   console.log("tx: " + JSON.stringify(tx));
                 } catch (e) {
             //       this.newUmswap.error = e.message.toString();
-                  console.log("swapIt error: " + JSON.stringify(e));
+                  console.log("processIt error: " + JSON.stringify(e));
                 }
               }
             }).catch(err => {
               // this.newUmswap.error = err.message.toString();
-              console.log("swapIt error: " + JSON.stringify(e));
+              console.log("processIt error: " + JSON.stringify(e));
             });
           },
           async refreshMetadata() {
