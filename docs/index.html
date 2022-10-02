@@ -1590,48 +1590,48 @@
 
               if (action == "retrieveData") {
                 console.log("Retrieving data");
-                this.sync.completed = 70;
-                this.sync.total = 100;
-                this.sync.section = "Retrieve Data";
-
+                const txHashesToProcess = [];
                 for (const [txHash, txItem] of Object.entries(this.txHashes)) {
-                  console.log(txHash + " " + this.txHashes[txHash].timestamp);
-                  if (true || this.txHashes[txHash].timestamp == null) {
-                    const tx = await provider.getTransaction(txHash);
-                    const txReceipt = await provider.getTransactionReceipt(txHash);
-                    const block = await provider.getBlock(txReceipt.blockNumber);
-                    const ethBalance = await provider.getBalance(tx.from, txReceipt.blockNumber);
-                    const ethBalancePreviousBlock = await provider.getBalance(tx.from, txReceipt.blockNumber - 1);
-                    // this.txHashes[txHash].timestamp = block.timestamp;
-                    // this.txHashes[txHash].blockNumber = txReceipt.blockNumber;
-                    // this.txHashes[txHash].from = tx.from;
-                    this.txHashes[txHash].data.tx = {
-                      hash: tx.hash,
-                      type: tx.type,
-                      blockHash: tx.blockHash,
-                      blockNumber: tx.blockNumber,
-                      transactionIndex: tx.transactionIndex,
-                      from: tx.from,
-                      gasPrice: tx.gasPrice,
-                      gasLimit: tx.gasLimit,
-                      to: tx.to,
-                      value: tx.value,
-                      nonce: tx.nonce,
-                      data: tx.data,
-                      r: tx.r,
-                      s: tx.s,
-                      v: tx.v,
-                      chainId: tx.chainId,
-                    };
-                    // console.log("tx: " + JSON.stringify(tx, null, 2));
-                    this.txHashes[txHash].data.txReceipt = txReceipt;
-                    // console.log("txReceipt: " + JSON.stringify(txReceipt, null, 2));
-                    this.txHashes[txHash].data.ethBalance = ethBalance;
-                    this.txHashes[txHash].data.ethBalancePreviousBlock = ethBalancePreviousBlock;
-                    console.log(JSON.stringify(this.txHashes[txHash], null, 2));
+                  if (txItem.timestamp == null) {
+                    txHashesToProcess.push(txHash);
                   }
+                }
+                this.sync.total = Object.keys(this.txHashes).length;
+                this.sync.completed = this.sync.total - txHashesToProcess.length;
+                this.sync.section = "Retrieve Data";
+                console.log("txHashesToProcess: " + txHashesToProcess);
+
+                for (const txHash of txHashesToProcess) {
+                  console.log(txHash + " " + this.txHashes[txHash].timestamp);
+                  const tx = await provider.getTransaction(txHash);
+                  const txReceipt = await provider.getTransactionReceipt(txHash);
+                  const block = await provider.getBlock(txReceipt.blockNumber);
+                  const ethBalance = await provider.getBalance(tx.from, txReceipt.blockNumber);
+                  const ethBalancePreviousBlock = await provider.getBalance(tx.from, txReceipt.blockNumber - 1);
+                  this.txHashes[txHash].data.tx = {
+                    hash: tx.hash,
+                    type: tx.type,
+                    blockHash: tx.blockHash,
+                    blockNumber: tx.blockNumber,
+                    transactionIndex: tx.transactionIndex,
+                    from: tx.from,
+                    gasPrice: tx.gasPrice,
+                    gasLimit: tx.gasLimit,
+                    to: tx.to,
+                    value: tx.value,
+                    nonce: tx.nonce,
+                    data: tx.data,
+                    r: tx.r,
+                    s: tx.s,
+                    v: tx.v,
+                    chainId: tx.chainId,
+                  };
+                  this.txHashes[txHash].data.txReceipt = txReceipt;
+                  this.txHashes[txHash].data.ethBalance = ethBalance;
+                  this.txHashes[txHash].data.ethBalancePreviousBlock = ethBalancePreviousBlock;
+                  console.log(JSON.stringify(this.txHashes[txHash], null, 2));
+                  this.sync.completed = parseInt(this.sync.completed) + 1;
                   if (this.sync.halt) {
-                    console.log("Halted");
                     break;
                   }
                 }
@@ -1639,6 +1639,7 @@
                 }).catch(function(error) {
                   console.log("error: " + error);
                 });
+                this.sync.section = null;
               }
 
 
