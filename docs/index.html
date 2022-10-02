@@ -957,48 +957,52 @@
           },
           filteredTxs() {
             const results = this.collectionsSortOption ? [] : [];
-            // const searchLower = this.searchCollections && this.searchCollections.toLowerCase() || null;
+            let startPeriod = null;
+            let endPeriod = null;
+            if (this.txs.period != null && this.txs.period != "nodata") {
+              const periodRecords = this.txsPeriodOptions.filter(e => e.value == this.txs.period);
+              startPeriod = periodRecords[0].data.startPeriod;
+              endPeriod = periodRecords[0].data.endPeriod;
+            }
             let i = 0;
             for (const [k, v] of Object.entries(this.txHashes)) {
-              if (i < 1) {
-                // console.log(JSON.stringify(v, null, 2));
+              let include = true;
+              if (this.txs.period == "nodata") {
+                if (v.timestamp != null) {
+                  include = false;
+                }
+              } else {
+                if (startPeriod != null && v.timestamp < startPeriod.unix()) {
+                  include = false;
+                }
+                if (endPeriod != null && v.timestamp > endPeriod.unix()) {
+                  include = false;
+                }
               }
-            //   if (searchLower == null ||
-            //     (v.symbol && v.symbol.toLowerCase().includes(searchLower)) ||
-            //     (v.name && v.name.toLowerCase().includes(searchLower)) ||
-            //     (v.address && v.address.toLowerCase().includes(searchLower))
-            //   ) {
-              results.push({
-                txHash: k,
-                timestamp: v.timestamp,
-                from: v.data.tx && v.data.tx.from || null,
-                to: v.data.tx && v.data.tx.to || null,
-              });
-            //   }
+              if (include) {
+                results.push({
+                  txHash: k,
+                  timestamp: v.timestamp,
+                  from: v.data.tx && v.data.tx.from || null,
+                  to: v.data.tx && v.data.tx.to || null,
+                });
+              }
               i++;
             }
             return results;
           },
           filteredSortedTxs() {
             let results = this.filteredTxs;
-            // if (this.collectionsSortOption == 'symbolasc') {
-            //   results.sort((a, b) => ('' + a.symbol).localeCompare(b.symbol))
-            // } else if (this.collectionsSortOption == 'symboldsc') {
-            //   results.sort((a, b) => ('' + b.symbol).localeCompare(a.symbol))
-            // } else if (this.collectionsSortOption == 'nameasc') {
-            //   results.sort((a, b) => ('' + a.name).localeCompare(b.name))
-            // } else if (this.collectionsSortOption == 'namedsc') {
-            //   results.sort((a, b) => ('' + b.name).localeCompare(a.name))
-            // } else {
-            //   results.sort(() => { return Math.random() - 0.5; });
-            // }
+            if (this.txs.sortOption == 'timeasc') {
+              results.sort((a, b) => a.timestamp - b.timestamp);
+            } else if (this.txs.sortOption == 'timedsc') {
+              results.sort((a, b) => b.timestamp - a.timestamp);
+            }
             return results;
           },
           pagedFilteredSortedTxs() {
             return this.filteredSortedTxs.slice((this.txs.currentPage - 1) * this.txs.pageSize, this.txs.currentPage * this.txs.pageSize);
           },
-
-
 
           umswapFactoryAddress() {
             return UMSWAPFACTORYADDRESS;
