@@ -105,6 +105,11 @@
             </b-card>
 
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
+              <template #cell(txHash)="data">
+                <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View collection in Etherscan.io'" target="_blank">
+                  {{ data.item.txHash }}
+                </b-link>
+              </template>
             </b-table>
 
           </b-card-body>
@@ -688,7 +693,8 @@
             { value: 10000, text: '10k' },
           ],
           txsFields: [
-            { key: 'txHash', label: 'Transctions', thStyle: 'width: 100%;' },
+            { key: 'txHash', label: 'Transactions', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'blah', label: 'Blah', thStyle: 'width: 85%;', tdClass: 'text-truncate' },
             // { key: 'collection', label: '', thStyle: 'width: 52%;', tdClass: 'text-truncate' },
             // { key: 'pools', label: '# Pools', thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
             // { key: 'balance', label: '∑ Balance', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
