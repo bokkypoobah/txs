@@ -67,10 +67,25 @@
           <b-card-body class="m-0 px-1 py-0 pt-1">
 
             <div class="d-flex flex-wrap m-0 p-0">
+              <div class="mt-0 pr-1">
+                <b-button size="sm" @click="processIt('retrieveData')" variant="primary" style="min-width: 40px;" v-b-popover.hover.top="'Retrieve tx data via web3. Import your tx hashes if you have not already done so'"><b-icon-cloud-download shift-v="+1" font-scale="0.9"></b-icon-cloud-download></b-button>
+              </div>
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 pr-1">
                 <b-button size="sm" :pressed.sync="showImport" variant="link" v-b-popover.hover.top="'Show import dialog'"><span v-if="showImport"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
+              </div>
+              <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-1" style="width: 200px;">
+                <b-progress v-if="sync.section != null" height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click the button on the right to stop. This process can be continued later'">
+                  <b-progress-bar :value="sync.completed">
+                    {{ sync.total == null ? (sync.completed + ' ' + sync.section) : (sync.completed + '/' + sync.total + ' ' + ((sync.completed / sync.total) * 100).toFixed(0) + '% ' + sync.section) }}
+                  </b-progress-bar>
+                </b-progress>
+              </div>
+              <div class="ml-0 mt-1">
+                <b-button v-if="sync.section != null" size="sm" @click="halt" variant="link" v-b-popover.hover.top="'Click to stop. This process can be continued later'"><b-icon-stop-fill shift-v="+1" font-scale="1.0"></b-icon-stop-fill></b-button>
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
@@ -673,6 +688,12 @@
             sortOption: 'timeasc',
           },
           showImport: false,
+          sync: {
+            section: null,
+            total: null,
+            completed: null,
+            halt: false,
+          },
           importTxHashes: {
             hashes: null,
           },
@@ -801,12 +822,6 @@
           },
           selectedTokens: {},
           selectedTokenIds: {},
-          sync: {
-            section: null,
-            // ? error: false,
-            total: null,
-            completed: null,
-          },
           db: {
             name: "txs089",
             version: 1,
@@ -1169,6 +1184,10 @@
 
         // --- METHODS ---
         methods: {
+          async halt() {
+            this.sync.halt = true;
+            console.log("this.sync.halt: " + this.sync.halt);
+          },
           formatTimestamp(ts) {
             if (ts != null) {
               return moment.unix(ts).format("YYYY-MM-DD HH:mm:ss");
@@ -1532,14 +1551,9 @@
               this.coinbase = await signer.getAddress();
               localStorage.coinbase = this.coinbase;
               const network = await provider.getNetwork();
-              // const umswapFactory = new ethers.Contract(UMSWAPFACTORYADDRESS, UMSWAPFACTORYABI, provider);
-              // const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider);
-              const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
               const block = await provider.getBlock("latest");
               const blockNumber = block.number;
               const timestamp = block.timestamp;
-
-              const ENSOWNERBATCHSIZE = 200; // 500 fails occassionally
 
               const db0 = new Dexie(this.db.name);
               db0.version(this.db.version).stores(this.db.schemaDefinition);
@@ -1552,6 +1566,9 @@
                   if (!(txHash in this.importTxHashes)) {
                     this.txHashes[txHash] = {
                       txHash,
+                      // timestamp: null,
+                      // blockNumber: null,
+                      // from: null,
                       data: {
                         tx: null,
                         txReceipt: null,
@@ -1564,7 +1581,60 @@
                     importOrder++;
                   }
                 }
-                console.log("this.txHashes: " + JSON.stringify(this.txHashes, null, 2));
+                // console.log("this.txHashes: " + JSON.stringify(this.txHashes, null, 2));
+                await db0.cache.put({ objectName: 'txHashes', object: this.txHashes }).then (function() {
+                }).catch(function(error) {
+                  console.log("error: " + error);
+                });
+              }
+
+              if (action == "retrieveData") {
+                console.log("Retrieving data");
+                this.sync.completed = 70;
+                this.sync.total = 100;
+                this.sync.section = "Retrieve Data";
+
+                for (const [txHash, txItem] of Object.entries(this.txHashes)) {
+                  console.log(txHash + " " + this.txHashes[txHash].timestamp);
+                  if (true || this.txHashes[txHash].timestamp == null) {
+                    const tx = await provider.getTransaction(txHash);
+                    const txReceipt = await provider.getTransactionReceipt(txHash);
+                    const block = await provider.getBlock(txReceipt.blockNumber);
+                    const ethBalance = await provider.getBalance(tx.from, txReceipt.blockNumber);
+                    const ethBalancePreviousBlock = await provider.getBalance(tx.from, txReceipt.blockNumber - 1);
+                    // this.txHashes[txHash].timestamp = block.timestamp;
+                    // this.txHashes[txHash].blockNumber = txReceipt.blockNumber;
+                    // this.txHashes[txHash].from = tx.from;
+                    this.txHashes[txHash].data.tx = {
+                      hash: tx.hash,
+                      type: tx.type,
+                      blockHash: tx.blockHash,
+                      blockNumber: tx.blockNumber,
+                      transactionIndex: tx.transactionIndex,
+                      from: tx.from,
+                      gasPrice: tx.gasPrice,
+                      gasLimit: tx.gasLimit,
+                      to: tx.to,
+                      value: tx.value,
+                      nonce: tx.nonce,
+                      data: tx.data,
+                      r: tx.r,
+                      s: tx.s,
+                      v: tx.v,
+                      chainId: tx.chainId,
+                    };
+                    // console.log("tx: " + JSON.stringify(tx, null, 2));
+                    this.txHashes[txHash].data.txReceipt = txReceipt;
+                    // console.log("txReceipt: " + JSON.stringify(txReceipt, null, 2));
+                    this.txHashes[txHash].data.ethBalance = ethBalance;
+                    this.txHashes[txHash].data.ethBalancePreviousBlock = ethBalancePreviousBlock;
+                    console.log(JSON.stringify(this.txHashes[txHash], null, 2));
+                  }
+                  if (this.sync.halt) {
+                    console.log("Halted");
+                    break;
+                  }
+                }
                 await db0.cache.put({ objectName: 'txHashes', object: this.txHashes }).then (function() {
                 }).catch(function(error) {
                   console.log("error: " + error);
