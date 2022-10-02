@@ -70,6 +70,12 @@
               <div class="mt-0 pr-1">
                 <b-button size="sm" @click="processIt('retrieveData')" variant="primary" style="min-width: 40px;" v-b-popover.hover.top="'Retrieve tx data via web3. Import your tx hashes if you have not already done so'"><b-icon-cloud-download shift-v="+1" font-scale="0.9"></b-icon-cloud-download></b-button>
               </div>
+              <div class="mt-0">
+                <b-button-group>
+                  <b-button size="sm" @click="toggleTxs(pagedFilteredSortedTxs)" variant="link" v-b-popover.hover.top="'Toggle selection for all from current page'"><b-icon-check shift-v="+1" font-scale="1.0"></b-icon-check></b-button>
+                  <b-button size="sm" @click="toggleTxs(filteredSortedTxs)" variant="link" v-b-popover.hover.top="'Toggle selection for all from all pages'"><b-icon-check-all shift-v="+1" font-scale="1.0"></b-icon-check-all></b-button>
+                </b-button-group>
+              </div>
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 pr-1">
@@ -118,19 +124,21 @@
 
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
               <template #cell(number)="data">
-                {{ parseInt(data.index) + ((txs.currentPage - 1) * txs.pageSize) + 1 }}
+                <b-form-checkbox size="sm" :checked="selectedTxs[data.item.txHash] ? 1 : 0" value="1" @change="toggleTx(data.item.txHash)">
+                  {{ parseInt(data.index) + ((txs.currentPage - 1) * txs.pageSize) + 1 }}
+                </b-form-checkbox>
               </template>
               <template #cell(timestamp)="data">
                 <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">{{ formatTimestamp(data.item.timestamp) }}</b-link>
               </template>
               <template #cell(from)="data">
                 <b-link :href="'https://etherscan.io/address/' + data.item.from" v-b-popover.hover.bottom="'View address in Etherscan.io'" target="_blank">
-                  {{ data.item.from.substring(0, 16) }}
+                  {{ ensOrAddress(data.item.from) }}
                 </b-link>
               </template>
               <template #cell(to)="data">
                 <b-link :href="'https://etherscan.io/address/' + data.item.to" v-b-popover.hover.bottom="'View address in Etherscan.io'" target="_blank">
-                  {{ data.item.to.substring(0, 16) }}
+                  {{ ensOrAddress(data.item.to) }}
                 </b-link>
               </template>
               <template #cell(txHash)="data">
@@ -697,7 +705,7 @@
 
           txs: {
             currentPage: 1,
-            pageSize: 10,
+            pageSize: 100,
             sortOption: 'timeasc',
           },
           showImport: false,
@@ -712,6 +720,7 @@
           },
           txHashes: {},
           ensMap: {},
+          selectedTxs: {},
 
           txsSortOptions: [
             { value: 'timeasc', text: '▲ Time' },
@@ -728,7 +737,7 @@
             { value: 10000, text: '10k' },
           ],
           txsFields: [
-            { key: 'number', label: '#', thStyle: 'width: 5%;', tdClass: 'text-truncate' },
+            { key: 'number', label: '#', thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
             { key: 'timestamp', label: 'Timestamp', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'from', label: 'From', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'to', label: 'To', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
@@ -1229,6 +1238,36 @@
             }
             return e.toString();
           },
+          ensOrAddress(address, length = 24) {
+            if (this.ensMap) {
+              if (address in this.ensMap) {
+                return this.ensMap[address].substring(0, length);
+              }
+            }
+            return address == null ? null : address.substring(0, length);
+          },
+          toggleTx(txHash) {
+            if (!this.selectedTxs[txHash]) {
+              Vue.set(this.selectedTxs, txHash, true);
+            } else {
+              Vue.delete(this.selectedTxs, txHash);
+            }
+          },
+          toggleTxs(txItems) {
+            let someFalse = false;
+            let someTrue = false;
+            for (const item of txItems) {
+              if (this.selectedTxs[item.txHash]) {
+                someTrue = true;
+              } else {
+                someFalse = true;
+              }
+            }
+            for (const item of txItems) {
+              Vue.set(this.selectedTxs, item.txHash, !(someTrue && !someFalse));
+            }
+          },
+
           collectionsRowSelected(item) {
             if (item && item.length > 0) {
               this.selectedCollection = this.selectedCollection != null ? null : item[0].address;
@@ -1527,19 +1566,6 @@
               db0.close();
             })();
           },
-          ensOrAddress(address, length = 24) {
-            if (this.globalENSMap) {
-              if (address in this.globalENSMap) {
-                return this.globalENSMap[address].substring(0, length);
-              }
-            }
-            if (this.collection && this.collection.ensMap) {
-              if (address in this.collection.ensMap) {
-                return this.collection.ensMap[address].substring(0, length);
-              }
-            }
-            return address == null ? null : address.substring(0, length);
-          },
           getUmswap(address) {
             for (const c of Object.values(this.collections)) {
               for (const u of c.umswaps) {
@@ -1569,12 +1595,14 @@
             } else {
               const provider = new ethers.providers.Web3Provider(window.ethereum);
               const signer = provider.getSigner();
+              const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
               this.coinbase = await signer.getAddress();
               localStorage.coinbase = this.coinbase;
               const network = await provider.getNetwork();
               const block = await provider.getBlock("latest");
               const blockNumber = block.number;
               const timestamp = block.timestamp;
+              const ENSOWNERBATCHSIZE = 100; // TODO 200; // 500 fails occassionally
 
               const db0 = new Dexie(this.db.name);
               db0.version(this.db.version).stores(this.db.schemaDefinition);
@@ -1664,7 +1692,45 @@
                 this.sync.section = null;
               }
 
+              const ensMap = {};
+              ensMap[this.coinbase] = this.coinbase;
+              for (const txItem of Object.values(this.txHashes)) {
+                if (txItem.timestamp != null) {
+                  const from = txItem.data.tx && txItem.data.tx.from || null;
+                  if (from && !ensMap[from]) {
+                    ensMap[from] = from;
+                  }
+                  const to = txItem.data.tx && txItem.data.tx.to || null;
+                  if (to && !ensMap[to]) {
+                    ensMap[to] = to;
+                  }
+                }
+              }
+              console.log("ensMap: " + JSON.stringify(ensMap, null, 2));
+              this.sync.completed = 0;
+              const addresses = Object.keys(ensMap);
+              this.sync.total = addresses.length;
+              this.sync.section = "ENS Names";
+              for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
+                const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
+                console.log("batch: " + JSON.stringify(batch));
+                const allnames = await ensReverseRecordsContract.getNames(batch);
+                for (let j = 0; j < batch.length; j++) {
+                  const address = batch[j];
+                  const name = allnames[j];
+                  ensMap[address] = name != null && name.length > 0 ? name : address;
+                  // const normalized = normalize(address);
+                }
+                this.sync.completed = parseInt(this.sync.completed) + batch.length;
+              }
+              this.ensMap = ensMap;
+              await db0.cache.put({ objectName: 'ensMap', object: ensMap }).then (function() {
+              }).catch(function(error) {
+                console.log("error: " + error);
+              });
+              this.sync.section = null;
               this.sync.halt = false;
+
               return;
 
               const globalENSMap = {};
