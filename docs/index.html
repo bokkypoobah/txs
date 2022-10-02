@@ -101,7 +101,7 @@
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 pr-1">
-                <b-button size="sm" :pressed.sync="showAddresses" variant="link" v-b-popover.hover.top="'Show address book'"><span v-if="showAddresses"><b-icon-people-fill shift-v="+1" font-scale="1.0"></b-icon-people-fill></span><span v-else><b-icon-people shift-v="+1" font-scale="1.0"></b-icon-people></span></b-button>
+                <b-button size="sm" :pressed.sync="showAddresses" variant="link" v-b-popover.hover.top="'Show addresses'"><span v-if="showAddresses"><b-icon-people-fill shift-v="+1" font-scale="1.0"></b-icon-people-fill></span><span v-else><b-icon-people shift-v="+1" font-scale="1.0"></b-icon-people></span></b-button>
               </div>
               <div class="mt-0 pr-1">
                 <b-form-select size="sm" v-model="txs.sortOption" :options="txsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
@@ -132,7 +132,7 @@
 
             <b-card v-if="showAddresses" class="mx-0 my-1" body-class="m-1 p-0" header-class="m-0 p-2">
               <template #header>
-                Address Book
+                Addresses
               </template>
               <div class="d-flex flex-wrap m-0 p-0">
                 <div class="mt-0 flex-grow-1">
@@ -380,7 +380,6 @@
           filteredSortedAddresses() {
             let results = this.filteredAddresses;
             if (this.addresses.sortOption == 'groupasc') {
-              console.log("groupasc");
               results.sort((a, b) => {
                 if (('' + a.group).localeCompare(b.group) == 0) {
                   return ('' + a.name).localeCompare(b.name);
@@ -389,7 +388,6 @@
                 }
               });
             } else if (this.addresses.sortOption == 'groupdsc') {
-              console.log("groupdsc");
               results.sort((a, b) => {
                 if (('' + a.group).localeCompare(b.group) == 0) {
                   return ('' + a.name).localeCompare(b.name);
@@ -398,7 +396,6 @@
                 }
               });
             } else if (this.addresses.sortOption == 'nameasc') {
-              console.log("nameasc");
               results.sort((a, b) => {
                 if (('' + a.name).localeCompare(b.name) == 0) {
                   return ('' + a.group).localeCompare(b.group);
@@ -407,7 +404,6 @@
                 }
               });
             } else if (this.addresses.sortOption == 'namedsc') {
-              console.log("namedsc");
               results.sort((a, b) => {
                 if (('' + a.name).localeCompare(b.name) == 0) {
                   return ('' + a.group).localeCompare(b.group);
