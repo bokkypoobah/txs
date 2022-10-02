@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Umswap</title>
+    <title>Txs</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
@@ -92,15 +92,12 @@
               <div class="mt-0 pr-1">
                 <b-form-select size="sm" v-model="txs.sortOption" :options="txsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
               </div>
-              <!-- <div class="mt-0 pr-1">
-                <font size="-2" v-b-popover.hover.top="'# collections'">{{ selectedCollection ? 1 : filteredCollections.length }}</font>
+              <div class="mt-0 pr-1">
+                <font size="-2" v-b-popover.hover.top="'# txs'">{{ filteredSortedTxs.length }}</font>
               </div>
               <div class="mt-0 pr-1">
-                <b-pagination :disabled="selectedCollection != null" size="sm" v-model="collectionsCurrentPage" :total-rows="filteredSortedCollections.length" :per-page="collectionsPageSize" style="height: 0;"></b-pagination>
+                <b-pagination size="sm" v-model="txs.currentPage" :total-rows="filteredSortedTxs.length" :per-page="txs.pageSize" style="height: 0;"></b-pagination>
               </div>
-              <div class="mt-0 pl-1">
-                <b-form-select :disabled="selectedCollection != null" size="sm" v-model="collectionsPageSize" :options="pageSizes" v-b-popover.hover.top="'Collections Page size'"></b-form-select>
-              </div> -->
               <div class="mt-0 pl-1">
                 <b-form-select size="sm" v-model="txs.pageSize" :options="txsPageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
               </div>
@@ -120,9 +117,20 @@
             </b-card>
 
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
+              <template #cell(number)="data">
+                {{ parseInt(data.index) + ((txs.currentPage - 1) * txs.pageSize) + 1 }}
+              </template>
+              <template #cell(timestamp)="data">
+                <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">{{ formatTimestamp(data.item.timestamp) }}</b-link>
+              </template>
               <template #cell(txHash)="data">
-                <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View collection in Etherscan.io'" target="_blank">
+                <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View tx in Etherscan.io'" target="_blank">
                   {{ data.item.txHash.substring(0, 16) }}
+                </b-link>
+              </template>
+              <template #cell(from)="data">
+                <b-link :href="'https://etherscan.io/address/' + data.item.from" v-b-popover.hover.bottom="'View address in Etherscan.io'" target="_blank">
+                  {{ data.item.from.substring(0, 16) }}
                 </b-link>
               </template>
             </b-table>
@@ -714,8 +722,10 @@
             { value: 10000, text: '10k' },
           ],
           txsFields: [
+            { key: 'number', label: '#', thStyle: 'width: 5%;', tdClass: 'text-truncate' },
+            { key: 'timestamp', label: 'Timestamp', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'blah', label: 'Blah', thStyle: 'width: 65%;', tdClass: 'text-truncate' },
             { key: 'txHash', label: 'Transactions', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            { key: 'blah', label: 'Blah', thStyle: 'width: 85%;', tdClass: 'text-truncate' },
             // { key: 'collection', label: '', thStyle: 'width: 52%;', tdClass: 'text-truncate' },
             // { key: 'pools', label: '# Pools', thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
             // { key: 'balance', label: '∑ Balance', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
@@ -907,14 +917,20 @@
           filteredTxs() {
             const results = this.collectionsSortOption ? [] : [];
             // const searchLower = this.searchCollections && this.searchCollections.toLowerCase() || null;
+            let i = 0;
             for (const [k, v] of Object.entries(this.txHashes)) {
+              console.log(JSON.stringify(v));
             //   if (searchLower == null ||
             //     (v.symbol && v.symbol.toLowerCase().includes(searchLower)) ||
             //     (v.name && v.name.toLowerCase().includes(searchLower)) ||
             //     (v.address && v.address.toLowerCase().includes(searchLower))
             //   ) {
-              results.push({ txHash: k });
+              results.push({ txHash: k, timestamp: v.timestamp });
             //   }
+              i++;
+              // if (i > 3) {
+              //   break;
+              // }
             }
             return results;
           },
@@ -934,14 +950,8 @@
             return results;
           },
           pagedFilteredSortedTxs() {
-            return this.filteredSortedTxs;
-            // return this.filteredSortedTxs.slice((this.collectionsCurrentPage - 1) * this.collectionsPageSize, this.collectionsCurrentPage * this.collectionsPageSize);
+            return this.filteredSortedTxs.slice((this.txs.currentPage - 1) * this.txs.pageSize, this.txs.currentPage * this.txs.pageSize);
           },
-
-
-
-
-
 
           umswapFactoryAddress() {
             return UMSWAPFACTORYADDRESS;
@@ -1566,7 +1576,7 @@
                   if (!(txHash in this.importTxHashes)) {
                     this.txHashes[txHash] = {
                       txHash,
-                      // timestamp: null,
+                      timestamp: null,
                       // blockNumber: null,
                       // from: null,
                       data: {
@@ -1608,6 +1618,7 @@
                   const block = await provider.getBlock(txReceipt.blockNumber);
                   const ethBalance = await provider.getBalance(tx.from, txReceipt.blockNumber);
                   const ethBalancePreviousBlock = await provider.getBalance(tx.from, txReceipt.blockNumber - 1);
+                  this.txHashes[txHash].timestamp = block.timestamp;
                   this.txHashes[txHash].data.tx = {
                     hash: tx.hash,
                     type: tx.type,
@@ -1642,7 +1653,7 @@
                 this.sync.section = null;
               }
 
-
+              this.sync.halt = false;
               return;
 
               const globalENSMap = {};
