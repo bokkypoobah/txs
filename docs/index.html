@@ -123,14 +123,19 @@
               <template #cell(timestamp)="data">
                 <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">{{ formatTimestamp(data.item.timestamp) }}</b-link>
               </template>
-              <template #cell(txHash)="data">
-                <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View tx in Etherscan.io'" target="_blank">
-                  {{ data.item.txHash.substring(0, 16) }}
-                </b-link>
-              </template>
               <template #cell(from)="data">
                 <b-link :href="'https://etherscan.io/address/' + data.item.from" v-b-popover.hover.bottom="'View address in Etherscan.io'" target="_blank">
                   {{ data.item.from.substring(0, 16) }}
+                </b-link>
+              </template>
+              <template #cell(to)="data">
+                <b-link :href="'https://etherscan.io/address/' + data.item.to" v-b-popover.hover.bottom="'View address in Etherscan.io'" target="_blank">
+                  {{ data.item.to.substring(0, 16) }}
+                </b-link>
+              </template>
+              <template #cell(txHash)="data">
+                <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View tx in Etherscan.io'" target="_blank">
+                  {{ data.item.txHash.substring(0, 16) }}
                 </b-link>
               </template>
             </b-table>
@@ -706,6 +711,7 @@
             hashes: null,
           },
           txHashes: {},
+          ensMap: {},
 
           txsSortOptions: [
             { value: 'timeasc', text: '▲ Time' },
@@ -724,14 +730,15 @@
           txsFields: [
             { key: 'number', label: '#', thStyle: 'width: 5%;', tdClass: 'text-truncate' },
             { key: 'timestamp', label: 'Timestamp', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            { key: 'blah', label: 'Blah', thStyle: 'width: 65%;', tdClass: 'text-truncate' },
+            { key: 'from', label: 'From', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'to', label: 'To', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'blah', label: 'Blah', thStyle: 'width: 35%;', tdClass: 'text-truncate' },
             { key: 'txHash', label: 'Transactions', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             // { key: 'collection', label: '', thStyle: 'width: 52%;', tdClass: 'text-truncate' },
             // { key: 'pools', label: '# Pools', thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
             // { key: 'balance', label: '∑ Balance', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
             // { key: 'nftsInPool', label: '∑ NFTs', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
           ],
-
 
           showInfo: false,
           showFilter: false,
@@ -919,18 +926,22 @@
             // const searchLower = this.searchCollections && this.searchCollections.toLowerCase() || null;
             let i = 0;
             for (const [k, v] of Object.entries(this.txHashes)) {
-              console.log(JSON.stringify(v));
+              if (i < 1) {
+                console.log(JSON.stringify(v, null, 2));
+              }
             //   if (searchLower == null ||
             //     (v.symbol && v.symbol.toLowerCase().includes(searchLower)) ||
             //     (v.name && v.name.toLowerCase().includes(searchLower)) ||
             //     (v.address && v.address.toLowerCase().includes(searchLower))
             //   ) {
-              results.push({ txHash: k, timestamp: v.timestamp });
+              results.push({
+                txHash: k,
+                timestamp: v.timestamp,
+                from: v.data.tx && v.data.tx.from || null,
+                to: v.data.tx && v.data.tx.to || null,
+              });
             //   }
               i++;
-              // if (i > 3) {
-              //   break;
-              // }
             }
             return results;
           },
@@ -2507,6 +2518,10 @@
             const txHashes = await db0.cache.where("objectName").equals('txHashes').toArray();
             if (txHashes.length == 1) {
               this.txHashes = txHashes[0].object;
+            }
+            const ensMap = await db0.cache.where("objectName").equals('ensMap').toArray();
+            if (ensMap.length == 1) {
+              this.ensMap = ensMap[0].object;
             }
             db0.close();
           })();
