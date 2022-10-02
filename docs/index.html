@@ -65,13 +65,9 @@
           </b-card>
 
           <b-card-body class="m-0 px-1 py-0 pt-1">
-
             <div class="d-flex flex-wrap m-0 p-0">
               <div class="mt-0 pr-0">
                 <b-button size="sm" :pressed.sync="showImport" variant="link" v-b-popover.hover.top="'Show import dialog to import hashes'"><span v-if="showImport"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
-              </div>
-              <div class="mt-0 pr-1">
-                <b-button size="sm" :pressed.sync="showAddressBook" variant="link" v-b-popover.hover.top="'Show address book'"><span v-if="showAddressBook"><b-icon-people-fill shift-v="+1" font-scale="1.0"></b-icon-people-fill></span><span v-else><b-icon-people shift-v="+1" font-scale="1.0"></b-icon-people></span></b-button>
               </div>
               <div class="mt-0 pr-1">
                 <b-button size="sm" :disabled="sync.section != null" @click="processIt('retrieveData')" variant="primary" style="min-width: 40px;" v-b-popover.hover.top="'Retrieve tx data via web3 for your imported tx hashes'"><b-icon-cloud-download shift-v="+1" font-scale="0.9"></b-icon-cloud-download></b-button>
@@ -105,6 +101,9 @@
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 pr-1">
+                <b-button size="sm" :pressed.sync="showAddressBook" variant="link" v-b-popover.hover.top="'Show address book'"><span v-if="showAddressBook"><b-icon-people-fill shift-v="+1" font-scale="1.0"></b-icon-people-fill></span><span v-else><b-icon-people shift-v="+1" font-scale="1.0"></b-icon-people></span></b-button>
+              </div>
+              <div class="mt-0 pr-1">
                 <b-form-select size="sm" v-model="txs.sortOption" :options="txsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
               </div>
               <div class="mt-0 pr-1">
@@ -114,7 +113,7 @@
                 <b-pagination size="sm" v-model="txs.currentPage" :total-rows="filteredSortedTxs.length" :per-page="txs.pageSize" style="height: 0;"></b-pagination>
               </div>
               <div class="mt-0 pl-1">
-                <b-form-select size="sm" v-model="txs.pageSize" :options="txsPageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
+                <b-form-select size="sm" v-model="txs.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
               </div>
             </div>
 
@@ -129,6 +128,38 @@
                   </b-form-group>
                 </b-form-group>
               </b-card-body>
+            </b-card>
+
+            <b-card v-if="showAddressBook" class="mx-0 my-1" body-class="m-1 p-0" header-class="m-0 p-2">
+              <template #header>
+                Address Book
+              </template>
+              <div class="d-flex flex-wrap m-0 p-0">
+                <div class="mt-0 flex-grow-1">
+                </div>
+                <div class="mt-0 pr-1">
+                  Blah
+                  <!-- <b-form-select :disabled="selectedPool != null" size="sm" v-model="poolsSortOption" :options="poolsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select> -->
+                </div>
+                <div class="mt-0 flex-grow-1">
+                </div>
+                <div class="mt-0 pr-1">
+                  <b-form-select size="sm" v-model="addressBook.sortOption" :options="addressBookSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+                </div>
+                <div class="mt-0 pr-1">
+                  <font size="-2" v-b-popover.hover.top="'# txs'">{{ filteredSortedTxs.length }}</font>
+                </div>
+                <div class="mt-0 pr-1">
+                  <b-pagination size="sm" v-model="txs.currentPage" :total-rows="filteredSortedTxs.length" :per-page="txs.pageSize" style="height: 0;"></b-pagination>
+                </div>
+                <div class="mt-0 pl-1">
+                  <b-form-select size="sm" v-model="addressBook.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
+                </div>
+              </div>
+              <b-card-text>
+                Empty
+              </b-card-text>
+              <!-- b-table -->
             </b-card>
 
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
@@ -180,6 +211,11 @@
           },
           showImport: false,
           showAddressBook: false,
+          addressBook: {
+            currentPage: 1,
+            pageSize: 10,
+            sortOption: 'nameasc',
+          },
           sync: {
             section: null,
             total: null,
@@ -193,11 +229,19 @@
           ensMap: {},
           selectedTxs: {},
 
+          addressBookSortOptions: [
+            { value: 'nameasc', text: '▲ Name' },
+            { value: 'namedsc', text: '▼ Name' },
+          ],
           txsSortOptions: [
             { value: 'timeasc', text: '▲ Time' },
             { value: 'timedsc', text: '▼ Time' },
+            { value: 'fromasc', text: '▲ From' },
+            { value: 'fromdsc', text: '▼ From' },
+            { value: 'toasc', text: '▲ To' },
+            { value: 'todsc', text: '▼ To' },
           ],
-          txsPageSizes: [
+          pageSizes: [
             { value: 10, text: '10' },
             { value: 25, text: '25' },
             { value: 50, text: '50' },
@@ -293,6 +337,14 @@
               results.sort((a, b) => a.timestamp - b.timestamp);
             } else if (this.txs.sortOption == 'timedsc') {
               results.sort((a, b) => b.timestamp - a.timestamp);
+            } else if (this.txs.sortOption == 'fromasc') {
+              results.sort((a, b) => ('' + a.from.toString()).localeCompare(b.from.toString()))
+            } else if (this.txs.sortOption == 'fromdsc') {
+              results.sort((a, b) => ('' + b.from.toString()).localeCompare(a.from.toString()))
+            } else if (this.txs.sortOption == 'toasc') {
+              results.sort((a, b) => ('' + (a.to && a.to.toString() || '')).localeCompare((b.to && b.to.toString() || '')))
+            } else if (this.txs.sortOption == 'todsc') {
+              results.sort((a, b) => ('' + (b.to && b.to.toString() || '')).localeCompare((a.to && a.to.toString() || '')))
             }
             return results;
           },
