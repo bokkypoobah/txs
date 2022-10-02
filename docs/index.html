@@ -64,38 +64,50 @@
             </b-card-text>
           </b-card>
 
+          <b-card-body class="m-0 px-1 py-0 pt-1">
 
-          <b-card no-body no-header bg-variant="light" class="m-1 p-1 w-75">
-            <b-card-body class="m-1 p-1">
-              <b-form-group label-cols-lg="2" label="Transaction Hashes" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
-                <b-form-group label="Hashes:" label-for="swap-in" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Select tokens to swap in below" class="mx-0 my-1 p-0">
-                  <b-form-textarea size="sm" id="swap-in" v-model.trim="txHashes" rows="1" max-rows="5" class="w-100"></b-form-textarea>
-                </b-form-group>
-                <!--
-                <b-form-group label="Out Of Pool:" label-for="swap-out" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Select tokens to swap out below" class="mx-0 my-1 p-0">
-                  <b-form-textarea size="sm" id="swap-out" readonly v-model.trim="tokenIdsToSwapOut.join(',')" rows="1" max-rows="5" class="w-100"></b-form-textarea>
-                </b-form-group>
-                <b-form-group label="Pool Approval:" label-for="info-poolapproved" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Approval is required to swap your NFTs into the pool. Revoke when not transferring into the pool" class="mx-0 my-1 p-0">
-                  <b-input-group class="m-0 w-50">
-                    <b-form-input type="text" size="sm" id="info-poolapproved" readonly :value="umswapApproved ? 'Yes' : 'No'"></b-form-input>
-                    <b-input-group-append>
-                      <b-button v-if="!umswapApproved" size="sm" @click="approveTransfer(true)" variant="warning">Approve</b-button>
-                      <b-button v-if="umswapApproved" size="sm" @click="approveTransfer(false)" variant="warning">Revoke Approval</b-button>
-                    </b-input-group-append>
-                  </b-input-group>
-                </b-form-group>
-                <b-form-group v-if="getSelectedPoolRecord" label="My Pool Balance:" label-for="info-mypoolbalance" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-                  <b-form-input type="text" size="sm" id="info-mypoolbalance" readonly v-model.trim="umswapBalance" class="w-50"></b-form-input>
-                </b-form-group>
-                -->
-                <!-- HERE -->
-                <b-form-group label="" label-for="swap-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Pool balance must be sufficient to cover any net NFTs swapped out, and approval is required" class="mx-0 my-1 p-0">
-                  <b-button size="sm" id="swap-submit" :disabled="!umswapApproved || (parseFloat(convertETH(umswapBalance)) + parseFloat(umswapChange) < 0) || (tokenIdsToSwapIn.length == 0 && tokenIdsToSwapOut.length == 0)" @click="processIt" variant="warning">Add</b-button>
-                </b-form-group>
-              </b-form-group>
-            </b-card-body>
-          </b-card>
+            <div class="d-flex flex-wrap m-0 p-0">
+              <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-0 pr-1">
+                <b-button size="sm" :pressed.sync="showImport" variant="link" v-b-popover.hover.top="'Show import dialog'"><span v-if="showImport"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
+              </div>
+              <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-0 pr-1">
+                <b-form-select size="sm" v-model="txs.sortOption" :options="txsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+              </div>
+              <!-- <div class="mt-0 pr-1">
+                <font size="-2" v-b-popover.hover.top="'# collections'">{{ selectedCollection ? 1 : filteredCollections.length }}</font>
+              </div>
+              <div class="mt-0 pr-1">
+                <b-pagination :disabled="selectedCollection != null" size="sm" v-model="collectionsCurrentPage" :total-rows="filteredSortedCollections.length" :per-page="collectionsPageSize" style="height: 0;"></b-pagination>
+              </div>
+              <div class="mt-0 pl-1">
+                <b-form-select :disabled="selectedCollection != null" size="sm" v-model="collectionsPageSize" :options="pageSizes" v-b-popover.hover.top="'Collections Page size'"></b-form-select>
+              </div> -->
+              <div class="mt-0 pl-1">
+                <b-form-select size="sm" v-model="txs.pageSize" :options="txsPageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
+              </div>
+            </div>
 
+            <b-card v-if="showImport" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+              <b-card-body class="m-1 p-1">
+                <b-form-group label-cols-lg="2" label="Import Hashes" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+                  <b-form-group label="Hashes:" label-for="importhashes-hashes" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Export from Etherscan.io and paste in the column of Ethereum tx hashes" class="mx-0 my-1 p-0">
+                    <b-form-textarea size="sm" id="importhashes-hashes" v-model.trim="importTxHashes.hashes" rows="1" max-rows="5" class="w-100"></b-form-textarea>
+                  </b-form-group>
+                  <b-form-group label="" label-for="importhashes-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Tx hashes will be saved into your local browser storage" class="mx-0 my-1 p-0">
+                    <b-button size="sm" id="importhashes-submit" :disabled="importTxHashes.hashes == null || importTxHashes.hashes.length == 0" @click="processIt('importHashes')" variant="warning">Import</b-button>
+                  </b-form-group>
+                </b-form-group>
+              </b-card-body>
+            </b-card>
+
+            <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
+            </b-table>
+
+          </b-card-body>
 
 
           <b-card-body v-if="false && coinbase" class="m-0 px-1 py-0">
@@ -650,7 +662,38 @@
         data: {
           coinbase: null,
 
-          txHashes: null,
+          txs: {
+            currentPage: 1,
+            pageSize: 10,
+            sortOption: 'timeasc',
+          },
+          showImport: false,
+          importTxHashes: {
+            hashes: null,
+          },
+          txHashes: {},
+
+          txsSortOptions: [
+            { value: 'timeasc', text: '▲ Time' },
+            { value: 'timedsc', text: '▼ Time' },
+          ],
+          txsPageSizes: [
+            { value: 10, text: '10' },
+            { value: 25, text: '25' },
+            { value: 50, text: '50' },
+            { value: 100, text: '100' },
+            { value: 500, text: '500' },
+            { value: 1000, text: '1k' },
+            { value: 2500, text: '2.5k' },
+            { value: 10000, text: '10k' },
+          ],
+          txsFields: [
+            { key: 'txHash', label: 'Transctions', thStyle: 'width: 100%;' },
+            // { key: 'collection', label: '', thStyle: 'width: 52%;', tdClass: 'text-truncate' },
+            // { key: 'pools', label: '# Pools', thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
+            // { key: 'balance', label: '∑ Balance', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+            // { key: 'nftsInPool', label: '∑ NFTs', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+          ],
 
 
           showInfo: false,
@@ -759,11 +802,11 @@
             completed: null,
           },
           db: {
-            name: "umswapdb090",
+            name: "txs089",
             version: 1,
             schemaDefinition: {
               cache: '&objectName',
-              collection: '&address',
+              // collection: '&address',
             },
             updated: null,
           },
@@ -840,6 +883,45 @@
 
         // --- COMPUTED ---
         computed: {
+          filteredTxs() {
+            const results = this.collectionsSortOption ? [] : [];
+            // const searchLower = this.searchCollections && this.searchCollections.toLowerCase() || null;
+            for (const [k, v] of Object.entries(this.txHashes)) {
+            //   if (searchLower == null ||
+            //     (v.symbol && v.symbol.toLowerCase().includes(searchLower)) ||
+            //     (v.name && v.name.toLowerCase().includes(searchLower)) ||
+            //     (v.address && v.address.toLowerCase().includes(searchLower))
+            //   ) {
+              results.push({ txHash: k });
+            //   }
+            }
+            return results;
+          },
+          filteredSortedTxs() {
+            let results = this.filteredTxs;
+            // if (this.collectionsSortOption == 'symbolasc') {
+            //   results.sort((a, b) => ('' + a.symbol).localeCompare(b.symbol))
+            // } else if (this.collectionsSortOption == 'symboldsc') {
+            //   results.sort((a, b) => ('' + b.symbol).localeCompare(a.symbol))
+            // } else if (this.collectionsSortOption == 'nameasc') {
+            //   results.sort((a, b) => ('' + a.name).localeCompare(b.name))
+            // } else if (this.collectionsSortOption == 'namedsc') {
+            //   results.sort((a, b) => ('' + b.name).localeCompare(a.name))
+            // } else {
+            //   results.sort(() => { return Math.random() - 0.5; });
+            // }
+            return results;
+          },
+          pagedFilteredSortedTxs() {
+            return this.filteredSortedTxs;
+            // return this.filteredSortedTxs.slice((this.collectionsCurrentPage - 1) * this.collectionsPageSize, this.collectionsCurrentPage * this.collectionsPageSize);
+          },
+
+
+
+
+
+
           umswapFactoryAddress() {
             return UMSWAPFACTORYADDRESS;
           },
@@ -1422,8 +1504,8 @@
             }
             return null;
           },
-          async doIt(action) {
-            console.log("doIt: " + action);
+          async processIt(action) {
+            console.log("processIt: " + JSON.stringify(action));
             let connected = true;
             if (!window.ethereum) {
               connected = false;
@@ -1444,8 +1526,8 @@
               this.coinbase = await signer.getAddress();
               localStorage.coinbase = this.coinbase;
               const network = await provider.getNetwork();
-              const umswapFactory = new ethers.Contract(UMSWAPFACTORYADDRESS, UMSWAPFACTORYABI, provider);
-              const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider);
+              // const umswapFactory = new ethers.Contract(UMSWAPFACTORYADDRESS, UMSWAPFACTORYABI, provider);
+              // const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider);
               const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
               const block = await provider.getBlock("latest");
               const blockNumber = block.number;
@@ -1455,6 +1537,36 @@
 
               const db0 = new Dexie(this.db.name);
               db0.version(this.db.version).stores(this.db.schemaDefinition);
+
+              if (action == "importHashes") {
+                const importTxHashes = this.importTxHashes.hashes == null ? [] : this.importTxHashes.hashes.split(/[, \t\n]+/).filter(name => (name.length == 66 && name.substring(0, 2) == '0x'));
+                console.log(JSON.stringify(importTxHashes, null, 2));
+                let importOrder = 0;
+                for (const txHash of importTxHashes) {
+                  if (!(txHash in this.importTxHashes)) {
+                    this.txHashes[txHash] = {
+                      txHash,
+                      data: {
+                        tx: null,
+                        txReceipt: null,
+                        ethBalance: null,
+                        ethBalancePreviousBlock: null,
+                        imported: timestamp,
+                        importOrder,
+                      },
+                    };
+                    importOrder++;
+                  }
+                }
+                console.log("this.txHashes: " + JSON.stringify(this.txHashes, null, 2));
+                await db0.cache.put({ objectName: 'txHashes', object: this.txHashes }).then (function() {
+                }).catch(function(error) {
+                  console.log("error: " + error);
+                });
+              }
+
+
+              return;
 
               const globalENSMap = {};
               globalENSMap[this.coinbase] = this.coinbase;
@@ -1670,148 +1782,148 @@
                   collectionAddress = this.selectedCollection == null ? null : ethers.utils.getAddress(this.selectedCollection);
                 }
               }
-              if (collectionAddress != null) {
-                // Get specific collection metadata
-                this.sync.section = null;
-                this.sync.completed = 0;
-                this.sync.total = 1;
-                this.sync.section = "Collection Metadata";
-                let infoUrl = "https://api.reservoir.tools/collection/v2?id=" + collectionAddress;
-                const reservoirInfo = await fetch(infoUrl)
-                  .then(handleErrors)
-                  .then(response => response.json())
-                  .catch(function(error) {
-                     console.log("ERROR - doIt: " + error);
-                     // Want to work around API data unavailablity - state.sync.error = true;
-                     return [];
-                  });
-                this.sync.completed = 1;
+              // if (collectionAddress != null) {
+                // // Get specific collection metadata
+                // this.sync.section = null;
+                // this.sync.completed = 0;
+                // this.sync.total = 1;
+                // this.sync.section = "Collection Metadata";
+                // let infoUrl = "https://api.reservoir.tools/collection/v2?id=" + collectionAddress;
+                // const reservoirInfo = await fetch(infoUrl)
+                //   .then(handleErrors)
+                //   .then(response => response.json())
+                //   .catch(function(error) {
+                //      console.log("ERROR - doIt: " + error);
+                //      // Want to work around API data unavailablity - state.sync.error = true;
+                //      return [];
+                //   });
+                // this.sync.completed = 1;
 
-                // Get specific collection token metadata
-                this.sync.section = null;
-                this.sync.completed = 0;
-                this.sync.total = null;
-                this.sync.section = "Token Metadata";
-                let continuation = null;
-                let tokens = {};
-                do {
-                  let tokensUrl = "https://api.reservoir.tools/tokens/v5?contract=" + collectionAddress + "&limit=100&includeAttributes=true" +
-                    (continuation != null ? "&continuation=" + continuation : '');
-                  const reservoirTokens = await fetch(tokensUrl)
-                    .then(handleErrors)
-                    .then(response => response.json())
-                    .catch(function(error) {
-                       console.log("ERROR - doIt: " + error);
-                       // Want to work around API data unavailablity - state.sync.error = true;
-                       return [];
-                    });
-                  continuation = reservoirTokens.continuation;
-                  if (reservoirTokens && reservoirTokens.tokens) {
-                    for (const token of reservoirTokens.tokens) {
-                      let price = null;
-                      let validUntil = null;
-                      let source = null;
-                      if (token.market.floorAsk.price) {
-                        price = token.market.floorAsk.price.amount.native;
-                        validUntil = token.market.floorAsk.validUntil;
-                        source = token.market.floorAsk.source.name;
-                      }
-                      tokens[token.token.tokenId] = {
-                        tokenId: token.token.tokenId,
-                        owner: token.token.owner && ethers.utils.getAddress(token.token.owner) || null,
-                        name: token.token.name || null,
-                        image: token.token.image || null,
-                        attributes: token.token.attributes.map(e => ({ key: e.key, value: e.value })) || [],
-                        price,
-                        validUntil,
-                        source,
-                        lastSell: token.token.lastSell,
-                        rarity: token.token.rarity || null,
-                        rarityRank: token.token.rarityRank || null,
-                      };
-                    }
-                    this.sync.completed = Object.keys(tokens).length;
-                  }
-                } while (continuation != null /*&& !state.halt && !state.sync.error */);
+                // // Get specific collection token metadata
+                // this.sync.section = null;
+                // this.sync.completed = 0;
+                // this.sync.total = null;
+                // this.sync.section = "Token Metadata";
+                // let continuation = null;
+                // let tokens = {};
+                // do {
+                //   let tokensUrl = "https://api.reservoir.tools/tokens/v5?contract=" + collectionAddress + "&limit=100&includeAttributes=true" +
+                //     (continuation != null ? "&continuation=" + continuation : '');
+                //   const reservoirTokens = await fetch(tokensUrl)
+                //     .then(handleErrors)
+                //     .then(response => response.json())
+                //     .catch(function(error) {
+                //        console.log("ERROR - doIt: " + error);
+                //        // Want to work around API data unavailablity - state.sync.error = true;
+                //        return [];
+                //     });
+                //   continuation = reservoirTokens.continuation;
+                //   if (reservoirTokens && reservoirTokens.tokens) {
+                //     for (const token of reservoirTokens.tokens) {
+                //       let price = null;
+                //       let validUntil = null;
+                //       let source = null;
+                //       if (token.market.floorAsk.price) {
+                //         price = token.market.floorAsk.price.amount.native;
+                //         validUntil = token.market.floorAsk.validUntil;
+                //         source = token.market.floorAsk.source.name;
+                //       }
+                //       tokens[token.token.tokenId] = {
+                //         tokenId: token.token.tokenId,
+                //         owner: token.token.owner && ethers.utils.getAddress(token.token.owner) || null,
+                //         name: token.token.name || null,
+                //         image: token.token.image || null,
+                //         attributes: token.token.attributes.map(e => ({ key: e.key, value: e.value })) || [],
+                //         price,
+                //         validUntil,
+                //         source,
+                //         lastSell: token.token.lastSell,
+                //         rarity: token.token.rarity || null,
+                //         rarityRank: token.token.rarityRank || null,
+                //       };
+                //     }
+                //     this.sync.completed = Object.keys(tokens).length;
+                //   }
+                // } while (continuation != null /*&& !state.halt && !state.sync.error */);
 
-                // Get specific collection token owners
-                this.sync.section = null;
-                this.sync.completed = 0;
-                const tokenIds = Object.keys(tokens);
-                this.sync.total = tokenIds.length;
-                this.sync.section = "Token Owners";
-                const NFTOWNERBATCHSIZE = 200; // 500 OK
-                for (let i = 0; i < tokenIds.length; i += NFTOWNERBATCHSIZE) {
-                  const batch = tokenIds.slice(i, parseInt(i) + NFTOWNERBATCHSIZE);
-                  const ownersResult = await erc721Helper.ownersByTokenIds(collectionAddress, batch);
-                  for (let j = 0; j < ownersResult[0].length; j++) {
-                    tokens[batch[j]].owner = ownersResult[1][j];
-                  }
-                  this.sync.completed = parseInt(this.sync.completed) + batch.length;
-                }
-                this.collection.tokens = tokens;
+                // // Get specific collection token owners
+                // this.sync.section = null;
+                // this.sync.completed = 0;
+                // const tokenIds = Object.keys(tokens);
+                // this.sync.total = tokenIds.length;
+                // this.sync.section = "Token Owners";
+                // const NFTOWNERBATCHSIZE = 200; // 500 OK
+                // for (let i = 0; i < tokenIds.length; i += NFTOWNERBATCHSIZE) {
+                //   const batch = tokenIds.slice(i, parseInt(i) + NFTOWNERBATCHSIZE);
+                //   const ownersResult = await erc721Helper.ownersByTokenIds(collectionAddress, batch);
+                //   for (let j = 0; j < ownersResult[0].length; j++) {
+                //     tokens[batch[j]].owner = ownersResult[1][j];
+                //   }
+                //   this.sync.completed = parseInt(this.sync.completed) + batch.length;
+                // }
+                // this.collection.tokens = tokens;
 
-                // Get specific collection owner reverse ENS names
-                this.sync.section = null;
-                this.sync.completed = 0;
-                const ensMap = {};
-                for (const [tokenId, token] of Object.entries(tokens)) {
-                  if (!ensMap[token.owner]) {
-                    ensMap[token.owner] = token.owner;
-                  }
-                }
-                const addresses = Object.keys(ensMap);
-                this.sync.total = addresses.length;
-                this.sync.section = "ENS Names";
-                for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
-                  const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
-                  const allnames = await ensReverseRecordsContract.getNames(batch);
-                  for (let j = 0; j < batch.length; j++) {
-                    const address = batch[j];
-                    const name = allnames[j];
-                    ensMap[address] = name != null && name.length > 0 ? name : address;
-                    // const normalized = normalize(address);
-                  }
-                  this.sync.completed = parseInt(this.sync.completed) + batch.length;
-                }
-                this.collection.ensMap = ensMap;
+                // // Get specific collection owner reverse ENS names
+                // this.sync.section = null;
+                // this.sync.completed = 0;
+                // const ensMap = {};
+                // for (const [tokenId, token] of Object.entries(tokens)) {
+                //   if (!ensMap[token.owner]) {
+                //     ensMap[token.owner] = token.owner;
+                //   }
+                // }
+                // const addresses = Object.keys(ensMap);
+                // this.sync.total = addresses.length;
+                // this.sync.section = "ENS Names";
+                // for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
+                //   const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
+                //   const allnames = await ensReverseRecordsContract.getNames(batch);
+                //   for (let j = 0; j < batch.length; j++) {
+                //     const address = batch[j];
+                //     const name = allnames[j];
+                //     ensMap[address] = name != null && name.length > 0 ? name : address;
+                //     // const normalized = normalize(address);
+                //   }
+                //   this.sync.completed = parseInt(this.sync.completed) + batch.length;
+                // }
+                // this.collection.ensMap = ensMap;
 
-                // Aggregate attributes for filter
-                const tokenAttributes = {};
-                for (const [tokenId, token] of Object.entries(tokens)) {
-                  for (let attribute of token.attributes) {
-                      const key = attribute.key;
-                      const value = attribute.value;
-                      if (!tokenAttributes[key]) {
-                        tokenAttributes[key] = {};
-                      }
-                      if (!tokenAttributes[key][value]) {
-                        tokenAttributes[key][value] = [token.tokenId];
-                      } else {
-                        tokenAttributes[key][value].push(token.tokenId);
-                      }
-                  }
-                }
-                // console.log("tokenAttributes: " + JSON.stringify(tokenAttributes, null, 2));
-                this.collection.tokenAttributes = tokenAttributes;
+                // // Aggregate attributes for filter
+                // const tokenAttributes = {};
+                // for (const [tokenId, token] of Object.entries(tokens)) {
+                //   for (let attribute of token.attributes) {
+                //       const key = attribute.key;
+                //       const value = attribute.value;
+                //       if (!tokenAttributes[key]) {
+                //         tokenAttributes[key] = {};
+                //       }
+                //       if (!tokenAttributes[key][value]) {
+                //         tokenAttributes[key][value] = [token.tokenId];
+                //       } else {
+                //         tokenAttributes[key][value].push(token.tokenId);
+                //       }
+                //   }
+                // }
+                // // console.log("tokenAttributes: " + JSON.stringify(tokenAttributes, null, 2));
+                // this.collection.tokenAttributes = tokenAttributes;
 
-                // Saving metadata
-                if (reservoirInfo && reservoirInfo.collection) {
-                  // console.log(JSON.stringify(reservoirInfo.collection, null, 2));
-                  this.collection.address = collectionAddress;
-                  this.collection.symbol = reservoirInfo.collection.symbol || null;
-                  this.collection.name = reservoirInfo.collection.name || null;
-                  this.collection.slug = reservoirInfo.collection.slug || null;
-                  this.collection.imageUrl = reservoirInfo.collection.metadata.imageUrl || null;
-                  this.collection.blockNumber = blockNumber;
-                  this.collection.timestamp = timestamp;
-                }
-                // TODO console.log(JSON.stringify(this.collection, null, 2));
-                await db0.collection.put(this.collection).then (function() {
-                }).catch(function(error) {
-                  console.log("error: " + error);
-                });
-              }
+                // // Saving metadata
+                // if (reservoirInfo && reservoirInfo.collection) {
+                //   // console.log(JSON.stringify(reservoirInfo.collection, null, 2));
+                //   this.collection.address = collectionAddress;
+                //   this.collection.symbol = reservoirInfo.collection.symbol || null;
+                //   this.collection.name = reservoirInfo.collection.name || null;
+                //   this.collection.slug = reservoirInfo.collection.slug || null;
+                //   this.collection.imageUrl = reservoirInfo.collection.metadata.imageUrl || null;
+                //   this.collection.blockNumber = blockNumber;
+                //   this.collection.timestamp = timestamp;
+                // }
+                // // TODO console.log(JSON.stringify(this.collection, null, 2));
+                // await db0.collection.put(this.collection).then (function() {
+                // }).catch(function(error) {
+                //   console.log("error: " + error);
+                // });
+              // }
               db0.close();
               this.sync.section = null;
             }
@@ -2196,8 +2308,8 @@
               console.log("swapIt error: " + JSON.stringify(e));
             });
           },
-          async processIt() {
-            console.log("processIt");
+          async processItX() {
+            console.log("processItX");
             // this.newUmswap.txHash = null;
             // this.newUmswap.error = null;
             const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -2304,24 +2416,9 @@
           (async() => {
             const db0 = new Dexie(this.db.name);
             db0.version(this.db.version).stores(this.db.schemaDefinition);
-            const collections = await db0.cache.where("objectName").equals('collections').toArray();
-            if (collections.length == 1) {
-              this.collections = collections[0].object;
-            }
-            const umswapEvents = await db0.cache.where("objectName").equals('umswapEvents').toArray();
-            if (umswapEvents.length == 1) {
-              this.umswapEvents = umswapEvents[0].object;
-            }
-            const globalENSMap = await db0.cache.where("objectName").equals('globalENSMap').toArray();
-            if (globalENSMap.length == 1) {
-              this.globalENSMap = globalENSMap[0].object;
-            }
-            if (window.location.href.indexOf("0x") >= 0) {
-              this.selectedCollection = window.location.href.replace(/^.*0x/, "0x");
-              const records = await db0.collection.where("address").equals(this.selectedCollection).toArray();
-              if (records.length == 1) {
-                this.collection = records[0];
-              }
+            const txHashes = await db0.cache.where("objectName").equals('txHashes').toArray();
+            if (txHashes.length == 1) {
+              this.txHashes = txHashes[0].object;
             }
             db0.close();
           })();
