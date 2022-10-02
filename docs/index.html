@@ -68,7 +68,13 @@
 
             <div class="d-flex flex-wrap m-0 p-0">
               <div class="mt-0 pr-1">
-                <b-button size="sm" @click="processIt('retrieveData')" variant="primary" style="min-width: 40px;" v-b-popover.hover.top="'Retrieve tx data via web3. Import your tx hashes if you have not already done so'"><b-icon-cloud-download shift-v="+1" font-scale="0.9"></b-icon-cloud-download></b-button>
+                <b-button size="sm" :pressed.sync="showImport" variant="link" v-b-popover.hover.top="'Show import dialog'"><span v-if="showImport"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
+              </div>
+              <div class="mt-0 pr-1">
+                <b-button size="sm" :disabled="sync.section != null" @click="processIt('retrieveData')" variant="primary" style="min-width: 40px;" v-b-popover.hover.top="'Retrieve tx data via web3. Import your tx hashes if you have not already done so'"><b-icon-cloud-download shift-v="+1" font-scale="0.9"></b-icon-cloud-download></b-button>
+              </div>
+              <div class="mt-0 pr-1">
+                <b-form-select size="sm" v-model="txs.period" :options="txsPeriodOptions" v-b-popover.hover.top="'Period'"></b-form-select>
               </div>
               <div class="mt-0">
                 <b-button-group>
@@ -76,10 +82,10 @@
                   <b-button size="sm" @click="toggleTxs(filteredSortedTxs)" variant="link" v-b-popover.hover.top="'Toggle selection for all from all pages'"><b-icon-check-all shift-v="+1" font-scale="1.0"></b-icon-check-all></b-button>
                 </b-button-group>
               </div>
-              <div class="mt-0 flex-grow-1">
-              </div>
               <div class="mt-0 pr-1">
-                <b-button size="sm" :pressed.sync="showImport" variant="link" v-b-popover.hover.top="'Show import dialog'"><span v-if="showImport"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
+                <b-button size="sm" :disabled="sync.section != null" @click="processIt('compute')" variant="link" v-b-popover.hover.top="'Perform computations on selected items'"><b-icon-caret-right-square shift-v="+1" font-scale="0.9"></b-icon-caret-right-square></b-button>
+              </div>
+              <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
@@ -704,6 +710,7 @@
           coinbase: null,
 
           txs: {
+            period: 'fym5', // TODO: null,
             currentPage: 1,
             pageSize: 100,
             sortOption: 'timeasc',
@@ -930,13 +937,31 @@
 
         // --- COMPUTED ---
         computed: {
+          txsPeriodOptions() {
+            const results = [];
+            results.push({ value: null, text: "(select period)", data: null });
+
+            const startMonth = "Jul";
+            const now = moment();
+            let currentStartPeriod = moment(now).month(startMonth).startOf('month');
+            if (currentStartPeriod > now) {
+              currentStartPeriod = currentStartPeriod.subtract(1, 'year');
+            }
+            for (let year = 0; year < 7; year++) {
+              const startPeriod = moment(currentStartPeriod).subtract(year, 'year');
+              const endPeriod = moment(startPeriod).add(1, 'year').subtract(1, 'second');
+              results.push({ value: "fym" + year, text: startPeriod.format('MMM DD YYYY') + " to " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
+            }
+            results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
+            return results;
+          },
           filteredTxs() {
             const results = this.collectionsSortOption ? [] : [];
             // const searchLower = this.searchCollections && this.searchCollections.toLowerCase() || null;
             let i = 0;
             for (const [k, v] of Object.entries(this.txHashes)) {
               if (i < 1) {
-                console.log(JSON.stringify(v, null, 2));
+                // console.log(JSON.stringify(v, null, 2));
               }
             //   if (searchLower == null ||
             //     (v.symbol && v.symbol.toLowerCase().includes(searchLower)) ||
@@ -972,6 +997,8 @@
           pagedFilteredSortedTxs() {
             return this.filteredSortedTxs.slice((this.txs.currentPage - 1) * this.txs.pageSize, this.txs.currentPage * this.txs.pageSize);
           },
+
+
 
           umswapFactoryAddress() {
             return UMSWAPFACTORYADDRESS;
@@ -1650,6 +1677,7 @@
                 this.sync.section = "Retrieve Data";
                 // console.log("txHashesToProcess: " + txHashesToProcess);
 
+                let i = 0;
                 for (const txHash of txHashesToProcess) {
                   // console.log(txHash + " " + this.txHashes[txHash].timestamp);
                   const tx = await provider.getTransaction(txHash);
@@ -1681,6 +1709,13 @@
                   this.txHashes[txHash].data.ethBalancePreviousBlock = ethBalancePreviousBlock;
                   // console.log(JSON.stringify(this.txHashes[txHash], null, 2));
                   this.sync.completed = parseInt(this.sync.completed) + 1;
+                  i++;
+                  if ((i % 10) == 9) {
+                    await db0.cache.put({ objectName: 'txHashes', object: this.txHashes }).then (function() {
+                    }).catch(function(error) {
+                      console.log("error: " + error);
+                    });
+                  }
                   if (this.sync.halt) {
                     break;
                   }
