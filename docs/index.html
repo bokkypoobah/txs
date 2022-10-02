@@ -73,7 +73,7 @@
                 <b-button size="sm" :disabled="sync.section != null" @click="processIt('retrieveData')" variant="primary" style="min-width: 40px;" v-b-popover.hover.top="'Retrieve tx data via web3 for your imported tx hashes'"><b-icon-cloud-download shift-v="+1" font-scale="0.9"></b-icon-cloud-download></b-button>
               </div>
               <div class="mt-0 pr-1">
-                <b-form-select size="sm" v-model="txs.period" :options="txsPeriodOptions" v-b-popover.hover.top="'Period'"></b-form-select>
+                <b-form-select size="sm" v-model="txs.period" :options="txsPeriodOptions" @change="periodUpdated" v-b-popover.hover.top="'Period'"></b-form-select>
               </div>
               <div class="mt-0">
                 <b-button-group>
@@ -101,7 +101,7 @@
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 pr-1">
-                <b-button size="sm" :pressed.sync="showAddressBook" variant="link" v-b-popover.hover.top="'Show address book'"><span v-if="showAddressBook"><b-icon-people-fill shift-v="+1" font-scale="1.0"></b-icon-people-fill></span><span v-else><b-icon-people shift-v="+1" font-scale="1.0"></b-icon-people></span></b-button>
+                <b-button size="sm" :pressed.sync="showAddresses" variant="link" v-b-popover.hover.top="'Show address book'"><span v-if="showAddresses"><b-icon-people-fill shift-v="+1" font-scale="1.0"></b-icon-people-fill></span><span v-else><b-icon-people shift-v="+1" font-scale="1.0"></b-icon-people></span></b-button>
               </div>
               <div class="mt-0 pr-1">
                 <b-form-select size="sm" v-model="txs.sortOption" :options="txsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
@@ -130,7 +130,7 @@
               </b-card-body>
             </b-card>
 
-            <b-card v-if="showAddressBook" class="mx-0 my-1" body-class="m-1 p-0" header-class="m-0 p-2">
+            <b-card v-if="showAddresses" class="mx-0 my-1" body-class="m-1 p-0" header-class="m-0 p-2">
               <template #header>
                 Address Book
               </template>
@@ -144,22 +144,23 @@
                 <div class="mt-0 flex-grow-1">
                 </div>
                 <div class="mt-0 pr-1">
-                  <b-form-select size="sm" v-model="addressBook.sortOption" :options="addressBookSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+                  <b-form-select size="sm" v-model="addresses.sortOption" :options="addressesSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
                 </div>
                 <div class="mt-0 pr-1">
-                  <font size="-2" v-b-popover.hover.top="'# txs'">{{ filteredSortedTxs.length }}</font>
+                  <font size="-2" v-b-popover.hover.top="'# txs'">{{ filteredSortedAddresses.length }}</font>
                 </div>
                 <div class="mt-0 pr-1">
-                  <b-pagination size="sm" v-model="txs.currentPage" :total-rows="filteredSortedTxs.length" :per-page="txs.pageSize" style="height: 0;"></b-pagination>
+                  <b-pagination size="sm" v-model="addresses.currentPage" :total-rows="filteredSortedAddresses.length" :per-page="addresses.pageSize" style="height: 0;"></b-pagination>
                 </div>
                 <div class="mt-0 pl-1">
-                  <b-form-select size="sm" v-model="addressBook.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
+                  <b-form-select size="sm" v-model="addresses.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
                 </div>
               </div>
-              <b-card-text>
+              <b-card-text v-if="pagedFilteredSortedAddresses.length == 0">
                 Empty
               </b-card-text>
-              <!-- b-table -->
+              <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1"> -->
+              </b-table>
             </b-card>
 
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
@@ -204,17 +205,17 @@
         data: {
           coinbase: null,
           txs: {
-            period: 'fym5', // TODO: null,
+            period: null,
             currentPage: 1,
             pageSize: 100,
             sortOption: 'timeasc',
           },
           showImport: false,
-          showAddressBook: false,
-          addressBook: {
+          showAddresses: true, // TODO false,
+          addresses: {
             currentPage: 1,
             pageSize: 10,
-            sortOption: 'nameasc',
+            sortOption: 'groupasc',
           },
           sync: {
             section: null,
@@ -229,9 +230,11 @@
           ensMap: {},
           selectedTxs: {},
 
-          addressBookSortOptions: [
-            { value: 'nameasc', text: '▲ Name' },
-            { value: 'namedsc', text: '▼ Name' },
+          addressesSortOptions: [
+            { value: 'groupasc', text: '▲ Group, ▲ Name' },
+            { value: 'groupdsc', text: '▼ Group, ▲ Name' },
+            { value: 'nameasc', text: '▲ Name, ▲ Group' },
+            { value: 'namedsc', text: '▼ Name, ▲ Group' },
           ],
           txsSortOptions: [
             { value: 'timeasc', text: '▲ Time' },
@@ -263,7 +266,14 @@
             // { key: 'balance', label: '∑ Balance', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
             // { key: 'nftsInPool', label: '∑ NFTs', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
           ],
-
+          addressesFields: [
+            // { key: 'number', label: '#', sortable: false, thStyle: 'width: 10%;', thClass: 'text-center', tdClass: 'text-truncate' },
+            { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+            { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+          ],
           db: {
             name: "txs089",
             version: 1,
@@ -351,6 +361,68 @@
           pagedFilteredSortedTxs() {
             return this.filteredSortedTxs.slice((this.txs.currentPage - 1) * this.txs.pageSize, this.txs.currentPage * this.txs.pageSize);
           },
+          filteredAddresses() {
+            const results = [];
+            results.push({ group: "BBB", name: "1AddressBBB1", address: "0xaddress1", ens: "ensname1.eth", notes: "Notes" });
+            results.push({ group: "BBB", name: "AddressBBB2", address: "0xaddress2", ens: "ensname2.eth", notes: "Notes" });
+            results.push({ group: "BBB", name: "3AddressBBB3", address: "0xaddress3", ens: "ensname3.eth", notes: "Notes" });
+            results.push({ group: "AAA", name: "AddressAAA1", address: "0xaddress1", ens: "ensname1.eth", notes: "Notes" });
+            results.push({ group: "AAA", name: "AddressAAA2", address: "0xaddress2", ens: "ensname2.eth", notes: "Notes" });
+            results.push({ group: "AAA", name: "AddressAAA3", address: "0xaddress3", ens: "ensname3.eth", notes: "Notes" });
+            results.push({ group: "CCC", name: "1AddressCCC1", address: "0xaddress1", ens: "ensname1.eth", notes: "Notes" });
+            results.push({ group: "CCC", name: "AddressCCC2", address: "0xaddress2", ens: "ensname2.eth", notes: "Notes" });
+            results.push({ group: "CCC", name: "3AddressCCC3", address: "0xaddress3", ens: "ensname3.eth", notes: "Notes" });
+            results.push({ group: "DDD", name: "AddressDDD1", address: "0xaddress1", ens: "ensname1.eth", notes: "Notes" });
+            results.push({ group: "DDD", name: "AddressDDD2", address: "0xaddress2", ens: "ensname2.eth", notes: "Notes" });
+            results.push({ group: "DDD", name: "AddressDDD3", address: "0xaddress3", ens: "ensname3.eth", notes: "Notes" });
+            return results;
+          },
+          filteredSortedAddresses() {
+            let results = this.filteredAddresses;
+            if (this.addresses.sortOption == 'groupasc') {
+              console.log("groupasc");
+              results.sort((a, b) => {
+                if (('' + a.group).localeCompare(b.group) == 0) {
+                  return ('' + a.name).localeCompare(b.name);
+                } else {
+                  return ('' + a.group).localeCompare(b.group);
+                }
+              });
+            } else if (this.addresses.sortOption == 'groupdsc') {
+              console.log("groupdsc");
+              results.sort((a, b) => {
+                if (('' + a.group).localeCompare(b.group) == 0) {
+                  return ('' + a.name).localeCompare(b.name);
+                } else {
+                  return ('' + b.group).localeCompare(a.group);
+                }
+              });
+            } else if (this.addresses.sortOption == 'nameasc') {
+              console.log("nameasc");
+              results.sort((a, b) => {
+                if (('' + a.name).localeCompare(b.name) == 0) {
+                  return ('' + a.group).localeCompare(b.group);
+                } else {
+                  return ('' + a.name).localeCompare(b.name);
+                }
+              });
+            } else if (this.addresses.sortOption == 'namedsc') {
+              console.log("namedsc");
+              results.sort((a, b) => {
+                if (('' + a.name).localeCompare(b.name) == 0) {
+                  return ('' + a.group).localeCompare(b.group);
+                } else {
+                  return ('' + b.name).localeCompare(a.name);
+                }
+              });
+            }
+            return results;
+          },
+          pagedFilteredSortedAddresses() {
+            // console.log("pagedFilteredSortedAddresses: " + JSON.stringify(this.filteredSortedAddresses));
+            // return this.filteredSortedAddresses.slice(0, 10);
+            return this.filteredSortedAddresses.slice((this.addresses.currentPage - 1) * this.addresses.pageSize, this.addresses.currentPage * this.addresses.pageSize);
+          },
         },
 
         // --- METHODS ---
@@ -400,6 +472,10 @@
             for (const item of txItems) {
               Vue.set(this.selectedTxs, item.txHash, !(someTrue && !someFalse));
             }
+          },
+          periodUpdated() {
+            console.log("periodUpdated: " + this.txs.period);
+            localStorage.txsPeriod = this.txs.period;
           },
           async processIt(action) {
             console.log("processIt: " + JSON.stringify(action));
@@ -569,6 +645,9 @@
         mounted() {
           if ('coinbase' in localStorage) {
             this.coinbase = localStorage.coinbase;
+          }
+          if ('txsPeriod' in localStorage) {
+            this.txs.period = localStorage.txsPeriod;
           }
           (async() => {
             const db0 = new Dexie(this.db.name);
