@@ -107,7 +107,7 @@
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
               <template #cell(txHash)="data">
                 <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View collection in Etherscan.io'" target="_blank">
-                  {{ data.item.txHash }}
+                  {{ data.item.txHash.substring(0, 16) }}
                 </b-link>
               </template>
             </b-table>
