@@ -144,16 +144,16 @@
                 <div class="mt-0 flex-grow-1">
                 </div>
                 <div class="mt-0 pr-1">
-                  <b-form-select size="sm" v-model="addresses.sortOption" :options="addressesSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+                  <b-form-select size="sm" v-model="addressTable.sortOption" :options="addressesSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
                 </div>
                 <div class="mt-0 pr-1">
                   <font size="-2" v-b-popover.hover.top="'# txs'">{{ filteredSortedAddresses.length }}</font>
                 </div>
                 <div class="mt-0 pr-1">
-                  <b-pagination size="sm" v-model="addresses.currentPage" :total-rows="filteredSortedAddresses.length" :per-page="addresses.pageSize" style="height: 0;"></b-pagination>
+                  <b-pagination size="sm" v-model="addressTable.currentPage" :total-rows="filteredSortedAddresses.length" :per-page="addressTable.pageSize" style="height: 0;"></b-pagination>
                 </div>
                 <div class="mt-0 pl-1">
-                  <b-form-select size="sm" v-model="addresses.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
+                  <b-form-select size="sm" v-model="addressTable.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
                 </div>
               </div>
               <b-card-text v-if="pagedFilteredSortedAddresses.length == 0">
@@ -212,7 +212,7 @@
           },
           showImport: false,
           showAddresses: true, // TODO false,
-          addresses: {
+          addressTable: {
             currentPage: 1,
             pageSize: 10,
             sortOption: 'groupasc',
@@ -227,6 +227,7 @@
             hashes: null,
           },
           txHashes: {},
+          addresses: {},
           ensMap: {},
           selectedTxs: {},
 
@@ -379,7 +380,7 @@
           },
           filteredSortedAddresses() {
             let results = this.filteredAddresses;
-            if (this.addresses.sortOption == 'groupasc') {
+            if (this.addressTable.sortOption == 'groupasc') {
               results.sort((a, b) => {
                 if (('' + a.group).localeCompare(b.group) == 0) {
                   return ('' + a.name).localeCompare(b.name);
@@ -387,7 +388,7 @@
                   return ('' + a.group).localeCompare(b.group);
                 }
               });
-            } else if (this.addresses.sortOption == 'groupdsc') {
+            } else if (this.addressTable.sortOption == 'groupdsc') {
               results.sort((a, b) => {
                 if (('' + a.group).localeCompare(b.group) == 0) {
                   return ('' + a.name).localeCompare(b.name);
@@ -395,7 +396,7 @@
                   return ('' + b.group).localeCompare(a.group);
                 }
               });
-            } else if (this.addresses.sortOption == 'nameasc') {
+            } else if (this.addressTable.sortOption == 'nameasc') {
               results.sort((a, b) => {
                 if (('' + a.name).localeCompare(b.name) == 0) {
                   return ('' + a.group).localeCompare(b.group);
@@ -403,7 +404,7 @@
                   return ('' + a.name).localeCompare(b.name);
                 }
               });
-            } else if (this.addresses.sortOption == 'namedsc') {
+            } else if (this.addressTable.sortOption == 'namedsc') {
               results.sort((a, b) => {
                 if (('' + a.name).localeCompare(b.name) == 0) {
                   return ('' + a.group).localeCompare(b.group);
@@ -417,7 +418,7 @@
           pagedFilteredSortedAddresses() {
             // console.log("pagedFilteredSortedAddresses: " + JSON.stringify(this.filteredSortedAddresses));
             // return this.filteredSortedAddresses.slice(0, 10);
-            return this.filteredSortedAddresses.slice((this.addresses.currentPage - 1) * this.addresses.pageSize, this.addresses.currentPage * this.addresses.pageSize);
+            return this.filteredSortedAddresses.slice((this.addressTable.currentPage - 1) * this.addressTable.pageSize, this.addressTable.currentPage * this.addressTable.pageSize);
           },
         },
 
@@ -628,6 +629,13 @@
                 }).catch(function(error) {
                   console.log("error: " + error);
                 });
+
+
+                // await db0.cache.put({ objectName: 'addresses', object: addresses }).then (function() {
+                // }).catch(function(error) {
+                //   console.log("error: " + error);
+                // });
+
               }
 
               db0.close();
@@ -655,6 +663,10 @@
             const ensMap = await db0.cache.where("objectName").equals('ensMap').toArray();
             if (ensMap.length == 1) {
               this.ensMap = ensMap[0].object;
+            }
+            const addresses = await db0.cache.where("objectName").equals('addresses').toArray();
+            if (addresses.length == 1) {
+              this.addresses = addresses[0].object;
             }
             db0.close();
           })();
