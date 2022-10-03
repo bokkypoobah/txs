@@ -372,7 +372,8 @@
                 ensName: item.ensName,
                 group: address.substring(5, 10), // TODO item.group,
                 name: address.substring(15, 20), // TODO item.name,
-                notes: item.notes
+                tags: item.tags,
+                notes: item.notes,
               });
             }
             return results;
@@ -652,6 +653,7 @@
                       ensName: ensName,
                       group: null,
                       name: null,
+                      tags: [],
                       notes: null,
                     }
                   }
