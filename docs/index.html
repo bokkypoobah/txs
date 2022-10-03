@@ -159,7 +159,8 @@
               <b-card-text v-if="pagedFilteredSortedAddresses.length == 0">
                 Empty
               </b-card-text>
-              <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1"> -->
+              <!-- <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1"> -->
+              <b-table small fixed striped selectable responsive hover :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1"> -->
               </b-table>
             </b-card>
 
@@ -364,18 +365,16 @@
           },
           filteredAddresses() {
             const results = [];
-            results.push({ group: "BBB", name: "1AddressBBB1", address: "0xaddress1", ens: "ensname1.eth", notes: "Notes" });
-            results.push({ group: "BBB", name: "AddressBBB2", address: "0xaddress2", ens: "ensname2.eth", notes: "Notes" });
-            results.push({ group: "BBB", name: "3AddressBBB3", address: "0xaddress3", ens: "ensname3.eth", notes: "Notes" });
-            results.push({ group: "AAA", name: "AddressAAA1", address: "0xaddress1", ens: "ensname1.eth", notes: "Notes" });
-            results.push({ group: "AAA", name: "AddressAAA2", address: "0xaddress2", ens: "ensname2.eth", notes: "Notes" });
-            results.push({ group: "AAA", name: "AddressAAA3", address: "0xaddress3", ens: "ensname3.eth", notes: "Notes" });
-            results.push({ group: "CCC", name: "1AddressCCC1", address: "0xaddress1", ens: "ensname1.eth", notes: "Notes" });
-            results.push({ group: "CCC", name: "AddressCCC2", address: "0xaddress2", ens: "ensname2.eth", notes: "Notes" });
-            results.push({ group: "CCC", name: "3AddressCCC3", address: "0xaddress3", ens: "ensname3.eth", notes: "Notes" });
-            results.push({ group: "DDD", name: "AddressDDD1", address: "0xaddress1", ens: "ensname1.eth", notes: "Notes" });
-            results.push({ group: "DDD", name: "AddressDDD2", address: "0xaddress2", ens: "ensname2.eth", notes: "Notes" });
-            results.push({ group: "DDD", name: "AddressDDD3", address: "0xaddress3", ens: "ensname3.eth", notes: "Notes" });
+            console.log(JSON.stringify(this.addresses, null, 2));
+            for (const [address, item] of Object.entries(this.addresses)) {
+              results.push({
+                address,
+                ensName: item.ensName,
+                group: address.substring(5, 10), // TODO item.group,
+                name: address.substring(15, 20), // TODO item.name,
+                notes: item.notes
+              });
+            }
             return results;
           },
           filteredSortedAddresses() {
@@ -383,7 +382,11 @@
             if (this.addressTable.sortOption == 'groupasc') {
               results.sort((a, b) => {
                 if (('' + a.group).localeCompare(b.group) == 0) {
-                  return ('' + a.name).localeCompare(b.name);
+                  if (('' + a.name).localeCompare(b.name) == 0) {
+                    return ('' + a.address).localeCompare(b.address);
+                  } else {
+                    return ('' + a.name).localeCompare(b.name);
+                  }
                 } else {
                   return ('' + a.group).localeCompare(b.group);
                 }
@@ -391,7 +394,11 @@
             } else if (this.addressTable.sortOption == 'groupdsc') {
               results.sort((a, b) => {
                 if (('' + a.group).localeCompare(b.group) == 0) {
-                  return ('' + a.name).localeCompare(b.name);
+                  if (('' + a.name).localeCompare(b.name) == 0) {
+                    return ('' + a.address).localeCompare(b.address);
+                  } else {
+                    return ('' + a.name).localeCompare(b.name);
+                  }
                 } else {
                   return ('' + b.group).localeCompare(a.group);
                 }
@@ -399,7 +406,11 @@
             } else if (this.addressTable.sortOption == 'nameasc') {
               results.sort((a, b) => {
                 if (('' + a.name).localeCompare(b.name) == 0) {
-                  return ('' + a.group).localeCompare(b.group);
+                  if (('' + a.group).localeCompare(b.group) == 0) {
+                    return ('' + a.address).localeCompare(b.address);
+                  } else {
+                    return ('' + a.group).localeCompare(b.group);
+                  }
                 } else {
                   return ('' + a.name).localeCompare(b.name);
                 }
@@ -407,7 +418,11 @@
             } else if (this.addressTable.sortOption == 'namedsc') {
               results.sort((a, b) => {
                 if (('' + a.name).localeCompare(b.name) == 0) {
-                  return ('' + a.group).localeCompare(b.group);
+                  if (('' + a.group).localeCompare(b.group) == 0) {
+                    return ('' + a.address).localeCompare(b.address);
+                  } else {
+                    return ('' + a.group).localeCompare(b.group);
+                  }
                 } else {
                   return ('' + b.name).localeCompare(a.name);
                 }
@@ -416,8 +431,6 @@
             return results;
           },
           pagedFilteredSortedAddresses() {
-            // console.log("pagedFilteredSortedAddresses: " + JSON.stringify(this.filteredSortedAddresses));
-            // return this.filteredSortedAddresses.slice(0, 10);
             return this.filteredSortedAddresses.slice((this.addressTable.currentPage - 1) * this.addressTable.pageSize, this.addressTable.currentPage * this.addressTable.pageSize);
           },
         },
@@ -630,12 +643,24 @@
                   console.log("error: " + error);
                 });
 
-
-                // await db0.cache.put({ objectName: 'addresses', object: addresses }).then (function() {
-                // }).catch(function(error) {
-                //   console.log("error: " + error);
-                // });
-
+                for (const [address, ensName] of Object.entries(ensMap)) {
+                  if (address in this.addresses) {
+                    this.addresses[address].ensName = ensName;
+                  } else {
+                    this.addresses[address] = {
+                      address: address,
+                      ensName: ensName,
+                      group: null,
+                      name: null,
+                      notes: null,
+                    }
+                  }
+                }
+                console.log(JSON.stringify(this.addresses))
+                await db0.cache.put({ objectName: 'addresses', object: this.addresses }).then (function() {
+                }).catch(function(error) {
+                  console.log("error: " + error);
+                });
               }
 
               db0.close();
