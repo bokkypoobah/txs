@@ -436,7 +436,6 @@
           },
           filteredSortedAddresses() {
             let results = this.filteredAddresses;
-
             if (this.addressTable.sortOption == 'addressasc') {
               results.sort((a, b) => {
                 return ('' + a.address).localeCompare(b.address);
