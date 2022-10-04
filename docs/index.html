@@ -138,6 +138,9 @@
 
           <b-card-body class="m-0 px-1 py-0 pt-1">
             <div class="d-flex flex-wrap m-0 p-0">
+              <div class="mt-0 pr-1">
+                <b-form-input type="text" size="sm" v-model.trim="searchTxs" debounce="600" v-b-popover.hover.top="'Filter by partial tx hash, address, name'" placeholder="🔍 {txHash|addr|name} "></b-form-input>
+              </div>
               <div class="mt-0 pr-0">
                 <b-button size="sm" :pressed.sync="showImport" variant="link" v-b-popover.hover.top="'Show import dialog to import hashes'"><span v-if="showImport"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
               </div>
@@ -264,6 +267,7 @@
           showAddresses: true, // TODO false,
           searchAddresses: null,
           editAddresses: false,
+          searchTxs: null,
           addressTable: {
             currentPage: 1,
             pageSize: 10,
@@ -360,6 +364,7 @@
             const results = this.collectionsSortOption ? [] : [];
             let startPeriod = null;
             let endPeriod = null;
+            const searchTxsLower = this.searchTxs && this.searchTxs.toLowerCase() || null;
             if (this.txs.period != null && this.txs.period != "nodata") {
               const periodRecords = this.txsPeriodOptions.filter(e => e.value == this.txs.period);
               startPeriod = periodRecords[0].data.startPeriod;
@@ -376,8 +381,18 @@
                 if (startPeriod != null && v.timestamp < startPeriod.unix()) {
                   include = false;
                 }
-                if (endPeriod != null && v.timestamp > endPeriod.unix()) {
+                if (include && endPeriod != null && v.timestamp > endPeriod.unix()) {
                   include = false;
+                }
+                if (include && searchTxsLower != null) {
+                  if (!
+                    (v.txHash && v.txHash.toLowerCase().includes(searchTxsLower)) ||
+                    (v.from && v.from.toLowerCase().includes(searchTxsLower)) ||
+                    (v.to && v.to.toLowerCase().includes(searchTxsLower)) // ||
+                    // (v.notes && v.notes.toLowerCase().includes(searchTxsLower))
+                  ) {
+                    include = false;
+                  }
                 }
               }
               if (include) {
