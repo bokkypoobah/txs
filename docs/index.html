@@ -159,8 +159,29 @@
               <b-card-text v-if="pagedFilteredSortedAddresses.length == 0">
                 Empty
               </b-card-text>
-              <!-- <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1"> -->
-              <b-table small fixed striped selectable responsive hover :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1"> -->
+              <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1">
+                <template #cell(number)="data">
+                  {{ parseInt(data.index) + ((addressTable.currentPage - 1) * addressTable.pageSize) + 1 }}
+                </template>
+                <template #cell(address)="data">
+                  <b-link :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
+                    {{ data.item.address }}
+                  </b-link>
+                </template>
+                <template #cell(ens)="data">
+                  <b-link v-if="ensOrAddress(data.item.address, 42) != data.item.address" :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
+                    {{ ensOrAddress(data.item.address) }}
+                  </b-link>
+                </template>
+                <template #cell(group)="data">
+                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].group" @change="addressUpdated" debounce="600"></b-form-input>
+                </template>
+                <template #cell(name)="data">
+                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].name" @change="addressUpdated" debounce="600"></b-form-input>
+                </template>
+                <template #cell(notes)="data">
+                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressUpdated" debounce="600"></b-form-input>
+                </template>
               </b-table>
             </b-card>
 
@@ -216,7 +237,7 @@
           addressTable: {
             currentPage: 1,
             pageSize: 10,
-            sortOption: 'groupasc',
+            sortOption: 'addressasc',
           },
           sync: {
             section: null,
@@ -233,6 +254,8 @@
           selectedTxs: {},
 
           addressesSortOptions: [
+            { value: 'addressasc', text: '▲ Address' },
+            { value: 'addressdsc', text: '▼ Address' },
             { value: 'groupasc', text: '▲ Group, ▲ Name' },
             { value: 'groupdsc', text: '▼ Group, ▲ Name' },
             { value: 'nameasc', text: '▲ Name, ▲ Group' },
@@ -263,18 +286,14 @@
             { key: 'to', label: 'To', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'blah', label: 'Blah', thStyle: 'width: 35%;', tdClass: 'text-truncate' },
             { key: 'txHash', label: 'Transactions', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            // { key: 'collection', label: '', thStyle: 'width: 52%;', tdClass: 'text-truncate' },
-            // { key: 'pools', label: '# Pools', thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
-            // { key: 'balance', label: '∑ Balance', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
-            // { key: 'nftsInPool', label: '∑ NFTs', thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
           ],
           addressesFields: [
-            // { key: 'number', label: '#', sortable: false, thStyle: 'width: 10%;', thClass: 'text-center', tdClass: 'text-truncate' },
+            { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', thClass: 'text-left', tdClass: 'text-truncate' },
+            { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+            { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-            { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+            { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 30%;', tdClass: 'text-truncate' },
           ],
           db: {
             name: "txs089",
@@ -365,13 +384,12 @@
           },
           filteredAddresses() {
             const results = [];
-            console.log(JSON.stringify(this.addresses, null, 2));
             for (const [address, item] of Object.entries(this.addresses)) {
               results.push({
                 address,
                 ensName: item.ensName,
-                group: address.substring(5, 10), // TODO item.group,
-                name: address.substring(15, 20), // TODO item.name,
+                group: item.group,
+                name: item.name,
                 tags: item.tags,
                 notes: item.notes,
               });
@@ -380,7 +398,16 @@
           },
           filteredSortedAddresses() {
             let results = this.filteredAddresses;
-            if (this.addressTable.sortOption == 'groupasc') {
+
+            if (this.addressTable.sortOption == 'addressasc') {
+              results.sort((a, b) => {
+                return ('' + a.address).localeCompare(b.address);
+              });
+            } else if (this.addressTable.sortOption == 'addressdsc') {
+              results.sort((a, b) => {
+                return ('' + b.address).localeCompare(a.address);
+              });
+            } else if (this.addressTable.sortOption == 'groupasc') {
               results.sort((a, b) => {
                 if (('' + a.group).localeCompare(b.group) == 0) {
                   if (('' + a.name).localeCompare(b.name) == 0) {
@@ -487,6 +514,18 @@
           periodUpdated() {
             console.log("periodUpdated: " + this.txs.period);
             localStorage.txsPeriod = this.txs.period;
+          },
+          async addressUpdated() {
+            console.log("addressUpdated");
+            // localStorage.txsPeriod = this.txs.period;
+            // console.log(JSON.stringify(this.addresses))
+            const db0 = new Dexie(this.db.name);
+            db0.version(this.db.version).stores(this.db.schemaDefinition);
+            await db0.cache.put({ objectName: 'addresses', object: this.addresses }).then (function() {
+            }).catch(function(error) {
+              console.log("error: " + error);
+            });
+            db0.close();
           },
           async processIt(action) {
             console.log("processIt: " + JSON.stringify(action));
@@ -655,6 +694,10 @@
                       name: null,
                       tags: [],
                       notes: null,
+                      contract: {
+                        name: null,
+                        symbol: null,
+                      }
                     }
                   }
                 }
