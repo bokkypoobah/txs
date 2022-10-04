@@ -135,6 +135,9 @@
                 Addresses
               </template>
               <div class="d-flex flex-wrap m-0 p-0">
+                <div class="mt-0 pr-1">
+                  <b-button size="sm" :pressed.sync="editAddresses" :variant="editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="'Edit mode'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
+                </div>
                 <div class="mt-0 flex-grow-1">
                 </div>
                 <div class="mt-0 pr-1">
@@ -174,13 +177,28 @@
                   </b-link>
                 </template>
                 <template #cell(group)="data">
-                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].group" @change="addressUpdated" debounce="600"></b-form-input>
+                  <div v-if="editAddresses">
+                    <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].group" @change="addressUpdated" debounce="600"></b-form-input>
+                  </div>
+                  <div v-else>
+                    {{ data.item.group }}
+                  </div>
                 </template>
                 <template #cell(name)="data">
-                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].name" @change="addressUpdated" debounce="600"></b-form-input>
+                  <div v-if="editAddresses">
+                    <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].name" @change="addressUpdated" debounce="600"></b-form-input>
+                  </div>
+                  <div v-else>
+                    {{ data.item.name }}
+                  </div>
                 </template>
                 <template #cell(notes)="data">
-                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressUpdated" debounce="600"></b-form-input>
+                  <div v-if="editAddresses">
+                    <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressUpdated" debounce="600"></b-form-input>
+                  </div>
+                  <div v-else>
+                    {{ data.item.notes }}
+                  </div>
                 </template>
               </b-table>
             </b-card>
@@ -234,6 +252,7 @@
           },
           showImport: false,
           showAddresses: true, // TODO false,
+          editAddresses: false,
           addressTable: {
             currentPage: 1,
             pageSize: 10,
