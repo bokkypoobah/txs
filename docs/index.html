@@ -64,6 +64,78 @@
             </b-card-text>
           </b-card>
 
+          <b-card v-if="showAddresses" class="mx-2 mt-2 mb-1" body-class="m-1 p-0" header-class="m-0 p-2">
+            <template #header>
+              Addresses
+            </template>
+            <div class="d-flex flex-wrap m-0 p-0">
+              <div class="mt-0 pr-1">
+                <b-form-input type="text" size="sm" v-model.trim="searchAddresses" debounce="600" v-b-popover.hover.top="'Filter by partial address, name'" placeholder="🔍 address"></b-form-input>
+              </div>
+              <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-0 pr-1">
+                <b-button size="sm" :pressed.sync="editAddresses" :variant="editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="'Edit mode'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
+              </div>
+              <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-0 pr-1">
+                <b-form-select size="sm" v-model="addressTable.sortOption" :options="addressesSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+              </div>
+              <div class="mt-0 pr-1">
+                <font size="-2" v-b-popover.hover.top="'# txs'">{{ filteredSortedAddresses.length }}</font>
+              </div>
+              <div class="mt-0 pr-1">
+                <b-pagination size="sm" v-model="addressTable.currentPage" :total-rows="filteredSortedAddresses.length" :per-page="addressTable.pageSize" style="height: 0;"></b-pagination>
+              </div>
+              <div class="mt-0 pl-1">
+                <b-form-select size="sm" v-model="addressTable.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
+              </div>
+            </div>
+            <b-card-text v-if="pagedFilteredSortedAddresses.length == 0">
+              Empty
+            </b-card-text>
+            <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1">
+              <template #cell(number)="data">
+                {{ parseInt(data.index) + ((addressTable.currentPage - 1) * addressTable.pageSize) + 1 }}
+              </template>
+              <template #cell(address)="data">
+                <b-link :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
+                  {{ data.item.address }}
+                </b-link>
+              </template>
+              <template #cell(ens)="data">
+                <b-link v-if="ensOrAddress(data.item.address, 42) != data.item.address" :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
+                  {{ ensOrAddress(data.item.address) }}
+                </b-link>
+              </template>
+              <template #cell(group)="data">
+                <div v-if="editAddresses">
+                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].group" @change="addressUpdated" debounce="600"></b-form-input>
+                </div>
+                <div v-else>
+                  {{ data.item.group }}
+                </div>
+              </template>
+              <template #cell(name)="data">
+                <div v-if="editAddresses">
+                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].name" @change="addressUpdated" debounce="600"></b-form-input>
+                </div>
+                <div v-else>
+                  {{ data.item.name }}
+                </div>
+              </template>
+              <template #cell(notes)="data">
+                <div v-if="editAddresses">
+                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressUpdated" debounce="600"></b-form-input>
+                </div>
+                <div v-else>
+                  {{ data.item.notes }}
+                </div>
+              </template>
+            </b-table>
+          </b-card>
+
           <b-card-body class="m-0 px-1 py-0 pt-1">
             <div class="d-flex flex-wrap m-0 p-0">
               <div class="mt-0 pr-0">
@@ -130,78 +202,6 @@
               </b-card-body>
             </b-card>
 
-            <b-card v-if="showAddresses" class="mx-0 my-1" body-class="m-1 p-0" header-class="m-0 p-2">
-              <template #header>
-                Addresses
-              </template>
-              <div class="d-flex flex-wrap m-0 p-0">
-                <div class="mt-0 pr-1">
-                  <b-button size="sm" :pressed.sync="editAddresses" :variant="editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="'Edit mode'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
-                </div>
-                <div class="mt-0 flex-grow-1">
-                </div>
-                <div class="mt-0 pr-1">
-                  Blah
-                  <!-- <b-form-select :disabled="selectedPool != null" size="sm" v-model="poolsSortOption" :options="poolsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select> -->
-                </div>
-                <div class="mt-0 flex-grow-1">
-                </div>
-                <div class="mt-0 pr-1">
-                  <b-form-select size="sm" v-model="addressTable.sortOption" :options="addressesSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
-                </div>
-                <div class="mt-0 pr-1">
-                  <font size="-2" v-b-popover.hover.top="'# txs'">{{ filteredSortedAddresses.length }}</font>
-                </div>
-                <div class="mt-0 pr-1">
-                  <b-pagination size="sm" v-model="addressTable.currentPage" :total-rows="filteredSortedAddresses.length" :per-page="addressTable.pageSize" style="height: 0;"></b-pagination>
-                </div>
-                <div class="mt-0 pl-1">
-                  <b-form-select size="sm" v-model="addressTable.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
-                </div>
-              </div>
-              <b-card-text v-if="pagedFilteredSortedAddresses.length == 0">
-                Empty
-              </b-card-text>
-              <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1">
-                <template #cell(number)="data">
-                  {{ parseInt(data.index) + ((addressTable.currentPage - 1) * addressTable.pageSize) + 1 }}
-                </template>
-                <template #cell(address)="data">
-                  <b-link :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
-                    {{ data.item.address }}
-                  </b-link>
-                </template>
-                <template #cell(ens)="data">
-                  <b-link v-if="ensOrAddress(data.item.address, 42) != data.item.address" :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
-                    {{ ensOrAddress(data.item.address) }}
-                  </b-link>
-                </template>
-                <template #cell(group)="data">
-                  <div v-if="editAddresses">
-                    <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].group" @change="addressUpdated" debounce="600"></b-form-input>
-                  </div>
-                  <div v-else>
-                    {{ data.item.group }}
-                  </div>
-                </template>
-                <template #cell(name)="data">
-                  <div v-if="editAddresses">
-                    <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].name" @change="addressUpdated" debounce="600"></b-form-input>
-                  </div>
-                  <div v-else>
-                    {{ data.item.name }}
-                  </div>
-                </template>
-                <template #cell(notes)="data">
-                  <div v-if="editAddresses">
-                    <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressUpdated" debounce="600"></b-form-input>
-                  </div>
-                  <div v-else>
-                    {{ data.item.notes }}
-                  </div>
-                </template>
-              </b-table>
-            </b-card>
 
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
               <template #cell(number)="data">
@@ -213,18 +213,28 @@
                 <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">{{ formatTimestamp(data.item.timestamp) }}</b-link>
               </template>
               <template #cell(from)="data">
-                <b-link :href="'https://etherscan.io/address/' + data.item.from" v-b-popover.hover.bottom="'View address in Etherscan.io'" target="_blank">
-                  {{ ensOrAddress(data.item.from) }}
-                </b-link>
+                <div v-if="addressName(data.item.from).type == 'name'">
+                  {{ addressName(data.item.from).name }}
+                </div>
+                <div v-else>
+                  <b-link :href="'https://etherscan.io/address/' + data.item.from" v-b-popover.hover.bottom="'View address in Etherscan.io'" target="_blank">
+                    {{ addressName(data.item.from).name }}
+                  </b-link>
+                </div>
               </template>
               <template #cell(to)="data">
-                <b-link :href="'https://etherscan.io/address/' + data.item.to" v-b-popover.hover.bottom="'View address in Etherscan.io'" target="_blank">
-                  {{ ensOrAddress(data.item.to) }}
-                </b-link>
+                <div v-if="addressName(data.item.to).type == 'name'">
+                  {{ addressName(data.item.to).name }}
+                </div>
+                <div v-else>
+                  <b-link :href="'https://etherscan.io/address/' + data.item.to" v-b-popover.hover.bottom="'View address in Etherscan.io'" target="_blank">
+                    {{ addressName(data.item.to).name }}
+                  </b-link>
+                </div>
               </template>
               <template #cell(txHash)="data">
                 <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View tx in Etherscan.io'" target="_blank">
-                  {{ data.item.txHash.substring(0, 16) }}
+                  {{ data.item.txHash.substring(0, 16).name }}
                 </b-link>
               </template>
             </b-table>
@@ -252,6 +262,7 @@
           },
           showImport: false,
           showAddresses: true, // TODO false,
+          searchAddresses: null,
           editAddresses: false,
           addressTable: {
             currentPage: 1,
@@ -403,15 +414,23 @@
           },
           filteredAddresses() {
             const results = [];
+            const searchAddressesLower = this.searchAddresses && this.searchAddresses.toLowerCase() || null;
             for (const [address, item] of Object.entries(this.addresses)) {
-              results.push({
-                address,
-                ensName: item.ensName,
-                group: item.group,
-                name: item.name,
-                tags: item.tags,
-                notes: item.notes,
-              });
+              if (searchAddressesLower == null ||
+                (item.name && item.name.toLowerCase().includes(searchAddressesLower)) ||
+                (item.group && item.group.toLowerCase().includes(searchAddressesLower)) ||
+                (item.address && item.address.toLowerCase().includes(searchAddressesLower)) ||
+                (item.notes && item.notes.toLowerCase().includes(searchAddressesLower))
+              ) {
+                results.push({
+                  address,
+                  ensName: item.ensName,
+                  group: item.group,
+                  name: item.name,
+                  tags: item.tags,
+                  notes: item.notes,
+                });
+              }
             }
             return results;
           },
@@ -500,6 +519,22 @@
             } catch (err) {
             }
             return e.toFixed(9);
+          },
+          addressName(address, length = 24) {
+            if (address in this.addresses) {
+              // console.log(JSON.stringify(this.addresses[address]));
+              const item = this.addresses[address];
+              if (item.name != null) {
+                if (item.group != null) {
+                  return { name: item.group + ':' + item.name, type: 'name' };
+                } else {
+                  return { name: item.name, type: 'name' };
+                }
+              } else if (item.ensName != null) {
+                return { name: item.ensName, type: 'ens' };
+              }
+            }
+            return address == null ? { name: null, type: 'null' } : { name: address.substring(0, length), type: 'address' };
           },
           ensOrAddress(address, length = 24) {
             if (this.ensMap) {
