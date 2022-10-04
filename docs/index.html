@@ -49,8 +49,8 @@
             <em v-b-popover.hover.bottom="'gm gm gm'">Txs</em>
           </b-navbar-brand>
           <b-navbar-nav class="ml-auto">
-            <!-- <b-avatar v-if="coinbase && coinbase != ensOrAddress(coinbase)" rounded variant="light" size="2.5rem" :src="ensOrAddress(coinbase)"></b-avatar> -->
-            <b-button size="sm" variant="outline-primary" class="ml-1" @click="doIt('syncUmswaps')" v-b-popover.hover.bottom="'Click to update wallet'">{{ coinbase ? ensOrAddress(coinbase) : 'Connect' }}</b-button>
+            <b-avatar v-if="coinbase && coinbase != ensOrAddress(coinbase)" rounded variant="light" size="2.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAddress(coinbase)" v-b-popover.hover="'Your ENS avatar if set'"></b-avatar>
+            <b-button size="sm" disabled variant="link" class="ml-1" @click="doIt('syncUmswaps')" v-b-popover.hover.bottom="'Click to update wallet'">{{ coinbase ? ensOrAddress(coinbase) : 'Connect' }}</b-button>
           </b-navbar-nav>
         </b-navbar>
 
