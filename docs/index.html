@@ -136,6 +136,19 @@
             </b-table>
           </b-card>
 
+          <b-card v-if="showImport" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+            <b-card-body class="m-1 p-1">
+              <b-form-group label-cols-lg="2" label="Import Hashes" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+                <b-form-group label="Hashes:" label-for="importhashes-hashes" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Export from Etherscan.io and paste in the column of Ethereum tx hashes" class="mx-0 my-1 p-0">
+                  <b-form-textarea size="sm" id="importhashes-hashes" v-model.trim="importTxHashes.hashes" rows="1" max-rows="5" class="w-100"></b-form-textarea>
+                </b-form-group>
+                <b-form-group label="" label-for="importhashes-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Tx hashes will be saved into your local browser storage" class="mx-0 my-1 p-0">
+                  <b-button size="sm" id="importhashes-submit" :disabled="importTxHashes.hashes == null || importTxHashes.hashes.length == 0" @click="processIt('importHashes')" variant="warning">Import</b-button>
+                </b-form-group>
+              </b-form-group>
+            </b-card-body>
+          </b-card>
+
           <b-card-body class="m-0 px-1 py-0 pt-1">
             <div class="d-flex flex-wrap m-0 p-0">
               <div class="mt-0 pr-1">
@@ -191,20 +204,6 @@
                 <b-form-select size="sm" v-model="txs.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
               </div>
             </div>
-
-            <b-card v-if="showImport" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
-              <b-card-body class="m-1 p-1">
-                <b-form-group label-cols-lg="2" label="Import Hashes" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
-                  <b-form-group label="Hashes:" label-for="importhashes-hashes" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Export from Etherscan.io and paste in the column of Ethereum tx hashes" class="mx-0 my-1 p-0">
-                    <b-form-textarea size="sm" id="importhashes-hashes" v-model.trim="importTxHashes.hashes" rows="1" max-rows="5" class="w-100"></b-form-textarea>
-                  </b-form-group>
-                  <b-form-group label="" label-for="importhashes-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Tx hashes will be saved into your local browser storage" class="mx-0 my-1 p-0">
-                    <b-button size="sm" id="importhashes-submit" :disabled="importTxHashes.hashes == null || importTxHashes.hashes.length == 0" @click="processIt('importHashes')" variant="warning">Import</b-button>
-                  </b-form-group>
-                </b-form-group>
-              </b-card-body>
-            </b-card>
-
 
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
               <template #cell(number)="data">
@@ -728,14 +727,14 @@
                     }
                   }
                 }
-                console.log("ensMap: " + JSON.stringify(ensMap, null, 2));
+                // console.log("ensMap: " + JSON.stringify(ensMap, null, 2));
                 this.sync.completed = 0;
                 const addresses = Object.keys(ensMap);
                 this.sync.total = addresses.length;
                 this.sync.section = "ENS Names";
                 for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
                   const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
-                  console.log("batch: " + JSON.stringify(batch));
+                  // console.log("batch: " + JSON.stringify(batch));
                   const allnames = await ensReverseRecordsContract.getNames(batch);
                   for (let j = 0; j < batch.length; j++) {
                     const address = batch[j];
@@ -769,7 +768,7 @@
                     }
                   }
                 }
-                console.log(JSON.stringify(this.addresses))
+                // console.log(JSON.stringify(this.addresses));
                 await db0.cache.put({ objectName: 'addresses', object: this.addresses }).then (function() {
                 }).catch(function(error) {
                   console.log("error: " + error);
