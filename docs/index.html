@@ -594,7 +594,11 @@
               }
             }
             for (const item of txItems) {
-              Vue.set(this.selectedTxs, item.txHash, !(someTrue && !someFalse));
+              if (!(someTrue && !someFalse)) {
+                Vue.set(this.selectedTxs, item.txHash, true);
+              } else {
+                Vue.delete(this.selectedTxs, item.txHash);
+              }
             }
           },
           periodUpdated() {
