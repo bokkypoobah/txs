@@ -64,18 +64,18 @@
             </b-card-text>
           </b-card>
 
-          <b-card v-if="showAddresses" class="mx-2 mt-2 mb-1" body-class="m-1 p-0" header-class="m-0 p-2">
+          <b-card v-if="settings.showAddresses" class="mx-2 mt-2 mb-1" body-class="m-1 p-0" header-class="m-0 p-2">
             <template #header>
               Addresses
             </template>
-            <b-card v-if="addAddresses.showDialog" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+            <b-card v-if="settings.addAddresses" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
               <b-card-body class="m-1 p-1">
                 <b-form-group label-cols-lg="2" label="Add Addresses" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
                   <b-form-group label="Addresses:" label-for="addaddresses-hashes" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum addresses" class="mx-0 my-1 p-0">
-                    <b-form-textarea size="sm" id="addaddresses-hashes" v-model.trim="addAddresses.addresses" rows="1" max-rows="5" class="w-100"></b-form-textarea>
+                    <b-form-textarea size="sm" id="addaddresses-hashes" v-model.trim="addressesToAdd" rows="1" max-rows="5" class="w-100"></b-form-textarea>
                   </b-form-group>
                   <b-form-group label="" label-for="addaddresses-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Addresses will be added for editing below" class="mx-0 my-1 p-0">
-                    <b-button size="sm" id="addaddresses-submit" :disabled="addAddresses.addresses == null || addAddresses.addresses.length == 0" @click="processIt('addAddresses')" variant="primary">Add</b-button>
+                    <b-button size="sm" id="addaddresses-submit" :disabled="addressesToAdd == null || addressesToAdd.length == 0" @click="processIt('addAddresses')" variant="primary">Add</b-button>
                   </b-form-group>
                 </b-form-group>
               </b-card-body>
@@ -87,24 +87,24 @@
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 pr-0">
-                <b-button size="sm" :pressed.sync="addAddresses.showDialog" variant="link" v-b-popover.hover.top="'Show dialog to add new address'"><span v-if="addAddresses.showDialog"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
+                <b-button size="sm" :pressed.sync="settings.addAddresses" @click="settingsUpdated" variant="link" v-b-popover.hover.top="'Show dialog to add new address'"><span v-if="settings.addAddresses"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
               </div>
               <div class="mt-0 pr-1">
-                <b-button size="sm" :pressed.sync="editAddresses" :variant="editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="'Edit mode'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
+                <b-button size="sm" :pressed.sync="settings.editAddresses" @click="settingsUpdated" :variant="settings.editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="'Edit mode'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 pr-1">
-                <b-form-select size="sm" v-model="addressTable.sortOption" :options="addressesSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+                <b-form-select size="sm" v-model="settings.addressTable.sortOption" @change="settingsUpdated" :options="addressesSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
               </div>
               <div class="mt-0 pr-1">
                 <font size="-2" v-b-popover.hover.top="'# txs'">{{ filteredSortedAddresses.length }}</font>
               </div>
               <div class="mt-0 pr-1">
-                <b-pagination size="sm" v-model="addressTable.currentPage" :total-rows="filteredSortedAddresses.length" :per-page="addressTable.pageSize" style="height: 0;"></b-pagination>
+                <b-pagination size="sm" v-model="settings.addressTable.currentPage" @input="settingsUpdated" :total-rows="filteredSortedAddresses.length" :per-page="settings.addressTable.pageSize" style="height: 0;"></b-pagination>
               </div>
               <div class="mt-0 pl-1">
-                <b-form-select size="sm" v-model="addressTable.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
+                <b-form-select size="sm" v-model="settings.addressTable.pageSize" @change="settingsUpdated" :options="pageSizes" v-b-popover.hover.top="'Addresses page size'"></b-form-select>
               </div>
             </div>
             <b-card-text v-if="pagedFilteredSortedAddresses.length == 0">
@@ -112,7 +112,7 @@
             </b-card-text>
             <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1">
               <template #cell(number)="data">
-                {{ parseInt(data.index) + ((addressTable.currentPage - 1) * addressTable.pageSize) + 1 }}
+                {{ parseInt(data.index) + ((settings.addressTable.currentPage - 1) * settings.addressTable.pageSize) + 1 }}
               </template>
               <template #cell(address)="data">
                 <b-link :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
@@ -125,7 +125,7 @@
                 </b-link>
               </template>
               <template #cell(group)="data">
-                <div v-if="editAddresses">
+                <div v-if="settings.editAddresses">
                   <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].group" @change="addressUpdated" debounce="600"></b-form-input>
                 </div>
                 <div v-else>
@@ -133,7 +133,7 @@
                 </div>
               </template>
               <template #cell(name)="data">
-                <div v-if="editAddresses">
+                <div v-if="settings.editAddresses">
                   <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].name" @change="addressUpdated" debounce="600"></b-form-input>
                 </div>
                 <div v-else>
@@ -141,7 +141,7 @@
                 </div>
               </template>
               <template #cell(notes)="data">
-                <div v-if="editAddresses">
+                <div v-if="settings.editAddresses">
                   <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressUpdated" debounce="600"></b-form-input>
                 </div>
                 <div v-else>
@@ -151,14 +151,14 @@
             </b-table>
           </b-card>
 
-          <b-card v-if="showImport" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+          <b-card v-if="settings.showImport" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
             <b-card-body class="m-1 p-1">
               <b-form-group label-cols-lg="2" label="Import Hashes" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
                 <b-form-group label="Hashes:" label-for="importhashes-hashes" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Export from Etherscan.io and paste in the column of Ethereum tx hashes" class="mx-0 my-1 p-0">
-                  <b-form-textarea size="sm" id="importhashes-hashes" v-model.trim="importTxHashes.hashes" rows="1" max-rows="5" class="w-100"></b-form-textarea>
+                  <b-form-textarea size="sm" id="importhashes-hashes" v-model.trim="hashesToImport" rows="1" max-rows="5" class="w-100"></b-form-textarea>
                 </b-form-group>
                 <b-form-group label="" label-for="importhashes-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Tx hashes will be saved into your local browser storage" class="mx-0 my-1 p-0">
-                  <b-button size="sm" id="importhashes-submit" :disabled="importTxHashes.hashes == null || importTxHashes.hashes.length == 0" @click="processIt('importHashes')" variant="warning">Import</b-button>
+                  <b-button size="sm" id="importhashes-submit" :disabled="hashesToImport == null || hashesToImport.length == 0" @click="processIt('importHashes')" variant="warning">Import</b-button>
                 </b-form-group>
               </b-form-group>
             </b-card-body>
@@ -170,13 +170,13 @@
                 <b-form-input type="text" size="sm" v-model.trim="searchTxs" debounce="600" v-b-popover.hover.top="'Filter by partial tx hash, address, name'" placeholder="🔍 {txHash|addr|name} "></b-form-input>
               </div>
               <div class="mt-0 pr-0">
-                <b-button size="sm" :pressed.sync="showImport" variant="link" v-b-popover.hover.top="'Show import dialog to import hashes'"><span v-if="showImport"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
+                <b-button size="sm" :pressed.sync="settings.showImport" @change="settingsUpdated" variant="link" v-b-popover.hover.top="'Show import dialog to import hashes'"><span v-if="settings.showImport"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
               </div>
               <div class="mt-0 pr-1">
                 <b-button size="sm" :disabled="sync.section != null" @click="processIt('retrieveData')" variant="primary" style="min-width: 40px;" v-b-popover.hover.top="'Retrieve tx data via web3 for your imported tx hashes'"><b-icon-cloud-download shift-v="+1" font-scale="0.9"></b-icon-cloud-download></b-button>
               </div>
               <div class="mt-0 pr-1">
-                <b-form-select size="sm" v-model="txs.period" :options="txsPeriodOptions" @change="periodUpdated" v-b-popover.hover.top="'Period'"></b-form-select>
+                <b-form-select size="sm" v-model="settings.txs.period" :options="txsPeriodOptions" @change="settingsUpdated" v-b-popover.hover.top="'Period'"></b-form-select>
               </div>
               <div class="mt-0">
                 <b-button-group>
@@ -204,26 +204,26 @@
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 pr-1">
-                <b-button size="sm" :pressed.sync="showAddresses" variant="link" v-b-popover.hover.top="'Show addresses'"><span v-if="showAddresses"><b-icon-people-fill shift-v="+1" font-scale="1.0"></b-icon-people-fill></span><span v-else><b-icon-people shift-v="+1" font-scale="1.0"></b-icon-people></span></b-button>
+                <b-button size="sm" :pressed.sync="settings.showAddresses" @click="settingsUpdated" variant="link" v-b-popover.hover.top="'Show addresses'"><span v-if="settings.showAddresses"><b-icon-people-fill shift-v="+1" font-scale="1.0"></b-icon-people-fill></span><span v-else><b-icon-people shift-v="+1" font-scale="1.0"></b-icon-people></span></b-button>
               </div>
               <div class="mt-0 pr-1">
-                <b-form-select size="sm" v-model="txs.sortOption" :options="txsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+                <b-form-select size="sm" v-model="settings.txs.sortOption" @change="settingsUpdated" :options="txsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
               </div>
               <div class="mt-0 pr-1">
                 <font size="-2" v-b-popover.hover.top="'# txs'">{{ filteredSortedTxs.length }}</font>
               </div>
               <div class="mt-0 pr-1">
-                <b-pagination size="sm" v-model="txs.currentPage" :total-rows="filteredSortedTxs.length" :per-page="txs.pageSize" style="height: 0;"></b-pagination>
+                <b-pagination size="sm" v-model="settings.txs.currentPage" @input="settingsUpdated" :total-rows="filteredSortedTxs.length" :per-page="settings.txs.pageSize" style="height: 0;"></b-pagination>
               </div>
               <div class="mt-0 pl-1">
-                <b-form-select size="sm" v-model="txs.pageSize" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
+                <b-form-select size="sm" v-model="settings.txs.pageSize" @change="settingsUpdated" :options="pageSizes" v-b-popover.hover.top="'Transactions page size'"></b-form-select>
               </div>
             </div>
 
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
               <template #cell(number)="data">
                 <b-form-checkbox size="sm" :checked="selectedTxs[data.item.txHash] ? 1 : 0" value="1" @change="toggleTx(data.item.txHash)">
-                  {{ parseInt(data.index) + ((txs.currentPage - 1) * txs.pageSize) + 1 }}
+                  {{ parseInt(data.index) + ((settings.txs.currentPage - 1) * settings.txs.pageSize) + 1 }}
                 </b-form-checkbox>
               </template>
               <template #cell(timestamp)="data">
@@ -271,34 +271,32 @@
         // --- DATA ---
         data: {
           coinbase: null,
-          txs: {
-            period: null,
-            currentPage: 1,
-            pageSize: 100,
-            sortOption: 'timeasc',
+          settings: {
+            showImport: false,
+            showAddresses: false,
+            addAddresses: false,
+            editAddresses: false,
+            txs: {
+              period: null,
+              currentPage: 1, // NOTE Does not get restored correctly
+              pageSize: 100,
+              sortOption: 'timeasc',
+            },
+            addressTable: {
+              currentPage: 1, // NOTE Does not get restored correctly
+              pageSize: 10,
+              sortOption: 'addressasc',
+            },
           },
-          showImport: false,
-          showAddresses: true, // TODO false,
           searchAddresses: null,
-          editAddresses: false,
+          addressesToAdd: null,
+          hashesToImport: null,
           searchTxs: null,
-          addressTable: {
-            currentPage: 1,
-            pageSize: 10,
-            sortOption: 'addressasc',
-          },
-          addAddresses: {
-            showDialog: false,
-            addresses: null,
-          },
           sync: {
             section: null,
             total: null,
             completed: null,
             halt: false,
-          },
-          importTxHashes: {
-            hashes: null,
           },
           txHashes: {},
           addresses: {},
@@ -383,15 +381,15 @@
             let startPeriod = null;
             let endPeriod = null;
             const searchTxsLower = this.searchTxs && this.searchTxs.toLowerCase() || null;
-            if (this.txs.period != null && this.txs.period != "nodata") {
-              const periodRecords = this.txsPeriodOptions.filter(e => e.value == this.txs.period);
+            if (this.settings.txs.period != null && this.settings.txs.period != "nodata") {
+              const periodRecords = this.txsPeriodOptions.filter(e => e.value == this.settings.txs.period);
               startPeriod = periodRecords[0].data.startPeriod;
               endPeriod = periodRecords[0].data.endPeriod;
             }
             let i = 0;
             for (const [k, v] of Object.entries(this.txHashes)) {
               let include = true;
-              if (this.txs.period == "nodata") {
+              if (this.settings.txs.period == "nodata") {
                 if (v.timestamp != null) {
                   include = false;
                 }
@@ -427,23 +425,23 @@
           },
           filteredSortedTxs() {
             let results = this.filteredTxs;
-            if (this.txs.sortOption == 'timeasc') {
+            if (this.settings.txs.sortOption == 'timeasc') {
               results.sort((a, b) => a.timestamp - b.timestamp);
-            } else if (this.txs.sortOption == 'timedsc') {
+            } else if (this.settings.txs.sortOption == 'timedsc') {
               results.sort((a, b) => b.timestamp - a.timestamp);
-            } else if (this.txs.sortOption == 'fromasc') {
+            } else if (this.settings.txs.sortOption == 'fromasc') {
               results.sort((a, b) => ('' + a.from.toString()).localeCompare(b.from.toString()))
-            } else if (this.txs.sortOption == 'fromdsc') {
+            } else if (this.settings.txs.sortOption == 'fromdsc') {
               results.sort((a, b) => ('' + b.from.toString()).localeCompare(a.from.toString()))
-            } else if (this.txs.sortOption == 'toasc') {
+            } else if (this.settings.txs.sortOption == 'toasc') {
               results.sort((a, b) => ('' + (a.to && a.to.toString() || '')).localeCompare((b.to && b.to.toString() || '')))
-            } else if (this.txs.sortOption == 'todsc') {
+            } else if (this.settings.txs.sortOption == 'todsc') {
               results.sort((a, b) => ('' + (b.to && b.to.toString() || '')).localeCompare((a.to && a.to.toString() || '')))
             }
             return results;
           },
           pagedFilteredSortedTxs() {
-            return this.filteredSortedTxs.slice((this.txs.currentPage - 1) * this.txs.pageSize, this.txs.currentPage * this.txs.pageSize);
+            return this.filteredSortedTxs.slice((this.settings.txs.currentPage - 1) * this.settings.txs.pageSize, this.settings.txs.currentPage * this.settings.txs.pageSize);
           },
           filteredAddresses() {
             const results = [];
@@ -469,15 +467,15 @@
           },
           filteredSortedAddresses() {
             let results = this.filteredAddresses;
-            if (this.addressTable.sortOption == 'addressasc') {
+            if (this.settings.addressTable.sortOption == 'addressasc') {
               results.sort((a, b) => {
                 return ('' + a.address).localeCompare(b.address);
               });
-            } else if (this.addressTable.sortOption == 'addressdsc') {
+            } else if (this.settings.addressTable.sortOption == 'addressdsc') {
               results.sort((a, b) => {
                 return ('' + b.address).localeCompare(a.address);
               });
-            } else if (this.addressTable.sortOption == 'groupasc') {
+            } else if (this.settings.addressTable.sortOption == 'groupasc') {
               results.sort((a, b) => {
                 if (('' + a.group).localeCompare(b.group) == 0) {
                   if (('' + a.name).localeCompare(b.name) == 0) {
@@ -489,7 +487,7 @@
                   return ('' + a.group).localeCompare(b.group);
                 }
               });
-            } else if (this.addressTable.sortOption == 'groupdsc') {
+            } else if (this.settings.addressTable.sortOption == 'groupdsc') {
               results.sort((a, b) => {
                 if (('' + a.group).localeCompare(b.group) == 0) {
                   if (('' + a.name).localeCompare(b.name) == 0) {
@@ -501,7 +499,7 @@
                   return ('' + b.group).localeCompare(a.group);
                 }
               });
-            } else if (this.addressTable.sortOption == 'nameasc') {
+            } else if (this.settings.addressTable.sortOption == 'nameasc') {
               results.sort((a, b) => {
                 if (('' + a.name).localeCompare(b.name) == 0) {
                   if (('' + a.group).localeCompare(b.group) == 0) {
@@ -513,7 +511,7 @@
                   return ('' + a.name).localeCompare(b.name);
                 }
               });
-            } else if (this.addressTable.sortOption == 'namedsc') {
+            } else if (this.settings.addressTable.sortOption == 'namedsc') {
               results.sort((a, b) => {
                 if (('' + a.name).localeCompare(b.name) == 0) {
                   if (('' + a.group).localeCompare(b.group) == 0) {
@@ -529,7 +527,7 @@
             return results;
           },
           pagedFilteredSortedAddresses() {
-            return this.filteredSortedAddresses.slice((this.addressTable.currentPage - 1) * this.addressTable.pageSize, this.addressTable.currentPage * this.addressTable.pageSize);
+            return this.filteredSortedAddresses.slice((this.settings.addressTable.currentPage - 1) * this.settings.addressTable.pageSize, this.settings.addressTable.currentPage * this.settings.addressTable.pageSize);
           },
         },
 
@@ -601,13 +599,13 @@
               }
             }
           },
-          periodUpdated() {
-            console.log("periodUpdated: " + this.txs.period);
-            localStorage.txsPeriod = this.txs.period;
+          settingsUpdated() {
+            console.log("settingsUpdated: " + JSON.stringify(this.settings, null, 2));
+            localStorage.settings = JSON.stringify(this.settings);
           },
           async addressUpdated() {
             console.log("addressUpdated");
-            // localStorage.txsPeriod = this.txs.period;
+            // localStorage.txsPeriod = this.settings.txs.period;
             // console.log(JSON.stringify(this.addresses))
             const db0 = new Dexie(this.db.name);
             db0.version(this.db.version).stores(this.db.schemaDefinition);
@@ -649,11 +647,11 @@
               db0.version(this.db.version).stores(this.db.schemaDefinition);
 
               if (action == "importHashes") {
-                const importTxHashes = this.importTxHashes.hashes == null ? [] : this.importTxHashes.hashes.split(/[, \t\n]+/).filter(name => (name.length == 66 && name.substring(0, 2) == '0x'));
-                console.log(JSON.stringify(importTxHashes, null, 2));
+                const hashesToImport = this.hashesToImport == null ? [] : this.hashesToImport.split(/[, \t\n]+/).filter(name => (name.length == 66 && name.substring(0, 2) == '0x'));
+                console.log(JSON.stringify(hashesToImport, null, 2));
                 let importOrder = 0;
-                for (const txHash of importTxHashes) {
-                  if (!(txHash in this.importTxHashes)) {
+                for (const txHash of hashesToImport) {
+                  if (!(txHash in this.hashesToImport)) {
                     this.txHashes[txHash] = {
                       txHash,
                       timestamp: null,
@@ -678,7 +676,7 @@
               }
 
               if (action == "addAddresses") {
-                const addAddresses = this.addAddresses.addresses == null ? [] : this.addAddresses.addresses.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
+                const addAddresses = this.addressesToAdd == null ? [] : this.addressesToAdd.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
                 console.log(JSON.stringify(addAddresses, null, 2));
                 for (let address of addAddresses) {
                   if (!(address in this.addresses)) {
@@ -845,8 +843,11 @@
           if ('coinbase' in localStorage) {
             this.coinbase = localStorage.coinbase;
           }
-          if ('txsPeriod' in localStorage) {
-            this.txs.period = localStorage.txsPeriod;
+          if ('settings' in localStorage) {
+            // console.log("mounted - before - this.settings: " + JSON.stringify(this.settings, null, 2));
+            // console.log("mounted - before - localStorage.settings: " + localStorage.settings);
+            this.settings = { ...this.settings, ...JSON.parse(localStorage.settings) };
+            // console.log("mounted - after: " + JSON.stringify(this.settings, null, 2));
           }
           (async() => {
             const db0 = new Dexie(this.db.name);
