@@ -68,11 +68,26 @@
             <template #header>
               Addresses
             </template>
+            <b-card v-if="addAddresses.showDialog" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+              <b-card-body class="m-1 p-1">
+                <b-form-group label-cols-lg="2" label="Add Addresses" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+                  <b-form-group label="Addresses:" label-for="addaddresses-hashes" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum addresses" class="mx-0 my-1 p-0">
+                    <b-form-textarea size="sm" id="addaddresses-hashes" v-model.trim="addAddresses.addresses" rows="1" max-rows="5" class="w-100"></b-form-textarea>
+                  </b-form-group>
+                  <b-form-group label="" label-for="addaddresses-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Addresses will be added for editing below" class="mx-0 my-1 p-0">
+                    <b-button size="sm" id="addaddresses-submit" :disabled="addAddresses.addresses == null || addAddresses.addresses.length == 0" @click="processIt('addAddresses')" variant="primary">Add</b-button>
+                  </b-form-group>
+                </b-form-group>
+              </b-card-body>
+            </b-card>
             <div class="d-flex flex-wrap m-0 p-0">
               <div class="mt-0 pr-1">
                 <b-form-input type="text" size="sm" v-model.trim="searchAddresses" debounce="600" v-b-popover.hover.top="'Filter by partial address, name'" placeholder="🔍 address"></b-form-input>
               </div>
               <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-0 pr-0">
+                <b-button size="sm" :pressed.sync="addAddresses.showDialog" variant="link" v-b-popover.hover.top="'Show dialog to add new address'"><span v-if="addAddresses.showDialog"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
               </div>
               <div class="mt-0 pr-1">
                 <b-button size="sm" :pressed.sync="editAddresses" :variant="editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="'Edit mode'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
@@ -271,6 +286,10 @@
             currentPage: 1,
             pageSize: 10,
             sortOption: 'addressasc',
+          },
+          addAddresses: {
+            showDialog: false,
+            addresses: null,
           },
           sync: {
             section: null,
@@ -654,6 +673,32 @@
                 });
               }
 
+              if (action == "addAddresses") {
+                const addAddresses = this.addAddresses.addresses == null ? [] : this.addAddresses.addresses.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
+                console.log(JSON.stringify(addAddresses, null, 2));
+                for (let address of addAddresses) {
+                  if (!(address in this.addresses)) {
+                    this.addresses[address] = {
+                      address,
+                      ensName: null,
+                      group: null,
+                      name: null,
+                      tags: [],
+                      notes: null,
+                      contract: {
+                        name: null,
+                        symbol: null,
+                      }
+                    }
+                  }
+                }
+                // console.log(JSON.stringify(this.addresses));
+                await db0.cache.put({ objectName: 'addresses', object: this.addresses }).then (function() {
+                }).catch(function(error) {
+                  console.log("error: " + error);
+                });
+              }
+
               if (action == "retrieveData") {
                 console.log("Retrieving data");
                 const txHashesToProcess = [];
@@ -712,7 +757,9 @@
                   console.log("error: " + error);
                 });
                 this.sync.section = null;
+              }
 
+              if (action == "addAddresses" || action == "retrieveData") {
                 const ensMap = {};
                 ensMap[this.coinbase] = this.coinbase;
                 for (const txItem of Object.values(this.txHashes)) {
@@ -728,6 +775,13 @@
                   }
                 }
                 // console.log("ensMap: " + JSON.stringify(ensMap, null, 2));
+
+                for (const addressItem of Object.values(this.addresses)) {
+                  if (addressItem.address && !ensMap[addressItem.address]) {
+                    ensMap[addressItem.address] = addressItem.address;
+                  }
+                }
+
                 this.sync.completed = 0;
                 const addresses = Object.keys(ensMap);
                 this.sync.total = addresses.length;
