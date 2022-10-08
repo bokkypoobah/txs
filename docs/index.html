@@ -21,6 +21,7 @@
     <script src="js/dexie.js"></script>
     <script src="globals.js"></script>
     <script src="deploymentData.js"></script>
+    <script src="txparser.js"></script>
 
     <link rel="apple-touch-icon" sizes="57x57" href="images/apple-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="images/apple-icon-60x60.png">
@@ -867,6 +868,11 @@
 
               if (action == "compute") {
                 console.log("compute: " + JSON.stringify(Object.keys(this.selectedTxs)));
+                for (let txHash of Object.keys(this.selectedTxs)) {
+                  const txItem = this.txHashes[txHash];
+                  console.log(JSON.stringify(txItem, null, 2));
+                  parseTx(txItem, provider);
+                }
               }
 
               if (action == "computeAddresses") {
