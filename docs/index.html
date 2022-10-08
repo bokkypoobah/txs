@@ -870,7 +870,7 @@
                 console.log("compute: " + JSON.stringify(Object.keys(this.selectedTxs)));
                 for (let txHash of Object.keys(this.selectedTxs)) {
                   const txItem = this.txHashes[txHash];
-                  console.log(JSON.stringify(txItem, null, 2));
+                  // console.log(JSON.stringify(txItem, null, 2));
                   parseTx(txItem, provider);
                 }
               }
