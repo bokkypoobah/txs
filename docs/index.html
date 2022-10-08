@@ -86,11 +86,21 @@
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
+              <div class="mt-0 pr-1">
+                <b-button size="sm" :disabled="sync.section != null" @click="processIt('computeAddresses')" variant="link" v-b-popover.hover.top="'Perform computations on addresses'"><b-icon-caret-right-square shift-v="+1" font-scale="0.9"></b-icon-caret-right-square></b-button>
+              </div>
+              <div class="mt-0 flex-grow-1">
+              </div>
               <div class="mt-0 pr-0">
                 <b-button size="sm" :pressed.sync="settings.addAddresses" @click="settingsUpdated" variant="link" v-b-popover.hover.top="'Show dialog to add new address'"><span v-if="settings.addAddresses"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
               </div>
               <div class="mt-0 pr-1">
                 <b-button size="sm" :pressed.sync="settings.editAddresses" @click="settingsUpdated" :variant="settings.editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="'Edit mode'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
+              </div>
+              <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-0 pr-1">
+                <b-button size="sm" @click="exportAddresses" variant="link">Export</b-button>
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
@@ -189,8 +199,6 @@
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
-              <div class="mt-0 flex-grow-1">
-              </div>
               <div class="mt-1" style="width: 200px;">
                 <b-progress v-if="sync.section != null" height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click the button on the right to stop. This process can be continued later'">
                   <b-progress-bar :value="sync.completed">
@@ -200,6 +208,11 @@
               </div>
               <div class="ml-0 mt-1">
                 <b-button v-if="sync.section != null" size="sm" @click="halt" variant="link" v-b-popover.hover.top="'Click to stop. This process can be continued later'"><b-icon-stop-fill shift-v="+1" font-scale="1.0"></b-icon-stop-fill></b-button>
+              </div>
+              <div class="mt-0 flex-grow-1">
+              </div>
+              <div class="mt-0 pr-1">
+                <b-button size="sm" @click="exportTxHashes" variant="link">Export</b-button>
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
@@ -580,6 +593,7 @@
             } else {
               Vue.delete(this.selectedTxs, txHash);
             }
+            localStorage.selectedTxs = JSON.stringify(this.selectedTxs);
           },
           toggleTxs(txItems) {
             let someFalse = false;
@@ -598,6 +612,7 @@
                 Vue.delete(this.selectedTxs, item.txHash);
               }
             }
+            localStorage.selectedTxs = JSON.stringify(this.selectedTxs);
           },
           settingsUpdated() {
             console.log("settingsUpdated: " + JSON.stringify(this.settings, null, 2));
@@ -614,6 +629,24 @@
               console.log("error: " + error);
             });
             db0.close();
+          },
+          exportTxHashes() {
+            console.log("exportTxHashes");
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.txHashes));
+            var link = document.createElement("a");
+            link.setAttribute("href", dataStr);
+            link.setAttribute("download", "txhashes.json");
+            document.body.appendChild(link); // Required for FF
+            link.click();
+          },
+          exportAddresses() {
+            console.log("exportAddresses");
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.addresses));
+            var link = document.createElement("a");
+            link.setAttribute("href", dataStr);
+            link.setAttribute("download", "addresses.json");
+            document.body.appendChild(link); // Required for FF
+            link.click();
           },
           async processIt(action) {
             console.log("processIt: " + JSON.stringify(action));
@@ -635,6 +668,7 @@
               const provider = new ethers.providers.Web3Provider(window.ethereum);
               const signer = provider.getSigner();
               const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
+              const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider);
               this.coinbase = await signer.getAddress();
               localStorage.coinbase = this.coinbase;
               const network = await provider.getNetwork();
@@ -651,7 +685,7 @@
                 console.log(JSON.stringify(hashesToImport, null, 2));
                 let importOrder = 0;
                 for (const txHash of hashesToImport) {
-                  if (!(txHash in this.hashesToImport)) {
+                  if (!(txHash in this.txHashes)) {
                     this.txHashes[txHash] = {
                       txHash,
                       timestamp: null,
@@ -831,6 +865,36 @@
                 });
               }
 
+              if (action == "compute") {
+                console.log("compute: " + JSON.stringify(Object.keys(this.selectedTxs)));
+              }
+
+              if (action == "computeAddresses") {
+                console.log("computeAddresses");
+                const exclude = []; // ["0x5c40eF6f527f4FbA68368774E6130cE6515123f2", "0x755cdba6AE4F479f7164792B318b2a06c759833B", "0x5F0281910Af44bFb5fC7e86A404d0304B0e042F1", "0xe36f573DbeCDdBbcb72dD6270aF7978963F4C2D3", "0x60E112d4E585bba817Dc513bF9a03cd9b5A46Fc9", "0xcAFFa1d66eaE19887319ab9AECA5bd9aEB9D2DDE"];
+                const ADDRESSESBATCHSIZE = 1;
+                const addresses = Object.keys(this.addresses).filter(e => !exclude.includes(e));
+                // console.log("addresses: " + JSON.stringify(addresses));
+
+                for (let i = 0; i < addresses.length; i += ADDRESSESBATCHSIZE) {
+                  const batch = addresses.slice(i, parseInt(i) + ADDRESSESBATCHSIZE);
+                  console.log("batch: " + JSON.stringify(batch));
+
+                  const tokenInfos = await erc721Helper.tokenInfo(batch, { gasLimit: 100000000 });
+                  console.log("tokenInfos: " + JSON.stringify(tokenInfos));
+                  // const tokenContracts = {};
+                  // for (let i = 0; i < tokenInfos[0].length; i++) {
+                  //   const mask = ethers.BigNumber.from(tokenInfos[0][i]).toString();
+                  //   if (mask > 0) {
+                  //     const symbol = tokenInfos[1][i];
+                  //     const name = tokenInfos[2][i];
+                  //     const totalSupply = ethers.BigNumber.from(tokenInfos[3][i]).toString();
+                  //     tokenContracts[contractAddresses[i].toLowerCase()] = { mask, symbol, name, totalSupply };
+                  //   }
+                  // }
+                }
+              }
+
               db0.close();
               this.sync.section = null;
               this.sync.halt = false;
@@ -842,6 +906,9 @@
         mounted() {
           if ('coinbase' in localStorage) {
             this.coinbase = localStorage.coinbase;
+          }
+          if ('selectedTxs' in localStorage) {
+            this.selectedTxs = JSON.parse(localStorage.selectedTxs);
           }
           if ('settings' in localStorage) {
             // console.log("mounted - before - this.settings: " + JSON.stringify(this.settings, null, 2));
