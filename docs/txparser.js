@@ -1,5 +1,10 @@
 function parseTxForContract(erc721Interface, contract, txItem) {
-  console.log("  parseTxForContract.process(): " + contract.name + " " + txItem.txHash);
+  console.log("  parseTxForContract.process(): " + (contract && contract.name || "(no contract)") + " " + txItem.txHash);
+
+  console.log("txItem: " + JSON.stringify(txItem, null, 2));
+
+  // console.log("    ethBalance: " + txItem.data.ethBalance);
+
 
   const msgValue = txItem.data.tx.value;
   console.log("    msgValue: " + ethers.utils.formatEther(msgValue) + " ETH");
@@ -9,11 +14,16 @@ function parseTxForContract(erc721Interface, contract, txItem) {
   console.log("    effectiveGasPrice: " + ethers.utils.formatUnits(effectiveGasPrice, "gwei") + " gwei");
   const txFee = gasUsed.mul(effectiveGasPrice);
   console.log("    txFee: " + ethers.utils.formatEther(txFee) + " ETH");
+  console.log("    ethBalancePreviousBlock: " + ethers.utils.formatEther(txItem.data.ethBalancePreviousBlock) + " ETH");
+  console.log("    ethBalance: " + ethers.utils.formatEther(txItem.data.ethBalance) + " ETH");
+  let expectedETHBalance = ethers.BigNumber.from(txItem.data.ethBalancePreviousBlock);
+  expectedETHBalance = expectedETHBalance.sub(msgValue).sub(txFee);
+  console.log("    expectedETHBalance: " + ethers.utils.formatEther(expectedETHBalance) + " ETH");
+  const diff = expectedETHBalance.sub(txItem.data.ethBalance);
+  console.log("    diff: " + ethers.utils.formatEther(diff) + " ETH");
 
   let interface = null;
-  if (!contract.abi) {
-    console.log("    No ABI available for " + contract.name + " @ " + txItem.data.tx.to);
-  } else {
+  if (contract && contract.abi) {
     interface = new ethers.utils.Interface(contract.abi);
     let decodedData = interface.parseTransaction({ data: txItem.data.tx.data, value: txItem.data.tx.value });
     // console.log(JSON.stringify(decodedData, null, 2));
@@ -33,6 +43,12 @@ function parseTxForContract(erc721Interface, contract, txItem) {
           console.log("      " + i + " " + c.name + " " + c.type + " " + decodedData.args[0][i]);
         }
       }
+    }
+  } else {
+    if (contract) {
+      console.log("    No ABI available for " + contract.name + " @ " + txItem.data.tx.to);
+    } else {
+      console.log("    No recognised contract for " + txItem.data.tx.to);
     }
   }
   for (const event of txItem.data.txReceipt.logs) {
@@ -79,18 +95,19 @@ function parseTx(txItem, provider) {
 
   const to = txItem.data.tx.to || null;
   const contract = to && _CONTRACTS[txItem.data.tx.to] || null;
-  if (contract) {
-    // console.log("Contract: " + contract.name);
-    // if (contract.abi) {
-      parseTxForContract(erc721Interface, contract, txItem);
-    // } else {
-    //   console.log("No ABI available for " + contract.name + " @ " + to);
-    // }
-    // TODO: Handle ENS refund
-    // contract.process(txItem);
-  } else {
-    console.log("Unknown to: " + to);
-  }
+  parseTxForContract(erc721Interface, contract, txItem);
+  // if (contract) {
+  //   // console.log("Contract: " + contract.name);
+  //   // if (contract.abi) {
+  //     parseTxForContract(erc721Interface, contract, txItem);
+  //   // } else {
+  //   //   console.log("No ABI available for " + contract.name + " @ " + to);
+  //   // }
+  //   // TODO: Handle ENS refund
+  //   // contract.process(txItem);
+  // } else {
+  //   console.log("Unknown to: " + to);
+  // }
   if (false && txItem.data.tx.to == "0x00000000006c3852cbEf3e08E8dF289169EdE581") {
     const interface = new ethers.utils.Interface(contract.abi);
     let decodedData = interface.parseTransaction({ data: txItem.data.tx.data, value: txItem.data.tx.value });
