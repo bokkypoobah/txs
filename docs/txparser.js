@@ -1,22 +1,11 @@
 function parseTxForContract(erc721Interface, contract, txItem) {
   console.log("  parseTxForContract.process(): " + (contract && contract.name || "(no contract)") + " " + txItem.txHash);
 
-  console.log("txItem: " + JSON.stringify(txItem, null, 2));
+  // console.log("txItem: " + JSON.stringify(txItem, null, 2));
 
   // console.log("    ethBalance: " + txItem.data.ethBalance);
 
   const data = {};
-
-  const msgValue = txItem.data.tx.value;
-  data.msgValue = msgValue;
-  console.log("    msgValue: " + ethers.utils.formatEther(msgValue) + " ETH");
-  const gasUsed = ethers.BigNumber.from(txItem.data.txReceipt.gasUsed);
-  console.log("    gasUsed: " + gasUsed.toNumber());
-  const effectiveGasPrice = ethers.BigNumber.from(txItem.data.txReceipt.effectiveGasPrice);
-  console.log("    effectiveGasPrice: " + ethers.utils.formatUnits(effectiveGasPrice, "gwei") + " gwei");
-  const txFee = gasUsed.mul(effectiveGasPrice);
-  data.txFee = txFee;
-  console.log("    txFee: " + ethers.utils.formatEther(txFee) + " ETH");
 
   let interface = null;
   if (contract && contract.abi) {
@@ -97,17 +86,28 @@ function parseTxForContract(erc721Interface, contract, txItem) {
     }
     events.push({ address: event.address, name: eventName, args: eventArgs });
   }
+  const msgValue = txItem.data.tx.value;
+  data.msgValue = msgValue;
+  console.log("    msgValue: " + ethers.utils.formatEther(msgValue) + " ETH");
+  const gasUsed = ethers.BigNumber.from(txItem.data.txReceipt.gasUsed);
+  console.log("    gasUsed: " + gasUsed.toNumber());
+  const effectiveGasPrice = ethers.BigNumber.from(txItem.data.txReceipt.effectiveGasPrice);
+  console.log("    effectiveGasPrice: " + ethers.utils.formatUnits(effectiveGasPrice, "gwei") + " gwei");
+  const txFee = gasUsed.mul(effectiveGasPrice);
+  data.txFee = txFee;
+  console.log("    txFee: " + ethers.utils.formatEther(txFee) + " ETH");
+
   data.events = events;
   if (contract) {
     contract.process(txItem, data);
   }
-  console.log("    data: " + JSON.stringify(data, null, 2));
+  // console.log("    data: " + JSON.stringify(data, null, 2));
   console.log("    ethBalancePreviousBlock: " + ethers.utils.formatEther(txItem.data.ethBalancePreviousBlock) + " ETH");
   console.log("    ethBalance: " + ethers.utils.formatEther(txItem.data.ethBalance) + " ETH");
   let expectedETHBalance = ethers.BigNumber.from(txItem.data.ethBalancePreviousBlock);
   expectedETHBalance = expectedETHBalance.sub(msgValue).sub(txFee);
-  console.log("    refund: " + data.refund || null);
   if (data.refund) {
+    console.log("    refund: " + ethers.utils.formatEther(data.refund));
     expectedETHBalance = expectedETHBalance.add(data.refund);
   }
   console.log("    expectedETHBalance: " + ethers.utils.formatEther(expectedETHBalance) + " ETH");
@@ -232,13 +232,15 @@ const _CONTRACTS = {
       console.log("  ENSRegistratarController.process(): " + txItem.txHash);
       // console.log(JSON.stringify(data.events, null, 2));
       const registration = data.events.filter(e => e.name == "NameRegistered").flat();
-      console.log("registration: " + JSON.stringify(registration, null, 2));
+      // console.log("registration: " + JSON.stringify(registration, null, 2));
       const costRecord = registration && registration.length > 0 && registration[0].args.filter(e => e.name == "cost").flat() || null;
-      console.log("costRecord: " + JSON.stringify(costRecord, null, 2));
+      // console.log("costRecord: " + JSON.stringify(costRecord, null, 2));
       const cost = costRecord && costRecord[0].data || null;
-      console.log("cost: " + JSON.stringify(cost, null, 2));
+      // console.log("cost: " + JSON.stringify(cost, null, 2));
       const refund = cost && ethers.BigNumber.from(data.msgValue).sub(cost) || null;
-      console.log("refund: " + JSON.stringify(refund, null, 2));
+      // if (refund) {
+      //   console.log("refund: " + JSON.stringify(refund, null, 2));
+      // }
       data.refund = refund;
     }
   },
