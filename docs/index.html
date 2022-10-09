@@ -123,7 +123,9 @@
             </b-card-text>
             <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1">
               <template #cell(number)="data">
-                {{ parseInt(data.index) + ((settings.addressTable.currentPage - 1) * settings.addressTable.pageSize) + 1 }}
+                <b-form-checkbox size="sm" :checked="selectedAddresses[data.item.address] ? 1 : 0" value="1" @change="toggleAddress(data.item.address)">
+                  {{ parseInt(data.index) + ((settings.addressTable.currentPage - 1) * settings.addressTable.pageSize) + 1 }}
+                </b-form-checkbox>
               </template>
               <template #cell(address)="data">
                 <b-link :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
@@ -315,6 +317,7 @@
           txHashes: {},
           addresses: {},
           ensMap: {},
+          selectedAddresses: {},
           selectedTxs: {},
 
           addressesSortOptions: [
@@ -343,6 +346,14 @@
             { value: 2500, text: '2.5k' },
             { value: 10000, text: '10k' },
           ],
+          addressesFields: [
+            { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
+            { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+            { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+            { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 30%;', tdClass: 'text-truncate' },
+          ],
           txsFields: [
             { key: 'number', label: '#', thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
             { key: 'timestamp', label: 'Timestamp', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
@@ -350,14 +361,6 @@
             { key: 'to', label: 'To', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'blah', label: 'Blah', thStyle: 'width: 35%;', tdClass: 'text-truncate' },
             { key: 'txHash', label: 'Transactions', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-          ],
-          addressesFields: [
-            { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', thClass: 'text-left', tdClass: 'text-truncate' },
-            { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
-            { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
-            { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 30%;', tdClass: 'text-truncate' },
           ],
           db: {
             name: "txs089",
@@ -401,6 +404,7 @@
               endPeriod = periodRecords[0].data.endPeriod;
             }
             let i = 0;
+            const hasAddressesFilter = Object.keys(this.selectedAddresses).length > 0;
             for (const [k, v] of Object.entries(this.txHashes)) {
               let include = true;
               if (this.settings.txs.period == "nodata") {
@@ -414,12 +418,17 @@
                 if (include && endPeriod != null && v.timestamp > endPeriod.unix()) {
                   include = false;
                 }
+                if (include && hasAddressesFilter) {
+                  if (!this.selectedAddresses[v.data.tx.from] && !(v.data.tx.to && this.selectedAddresses[v.data.tx.to])) {
+                    include = false;
+                  }
+                }
                 if (include && searchTxsLower != null) {
-                  if (!
-                    (v.txHash && v.txHash.toLowerCase().includes(searchTxsLower)) ||
-                    (v.from && v.from.toLowerCase().includes(searchTxsLower)) ||
-                    (v.to && v.to.toLowerCase().includes(searchTxsLower)) // ||
-                    // (v.notes && v.notes.toLowerCase().includes(searchTxsLower))
+                  // console.log("searchTxsLower: " + searchTxsLower + " vs " + v.data.tx.from + " check " + v.data.tx.from.toLowerCase().includes(searchTxsLower));
+                  if (
+                    !(v.txHash.includes(searchTxsLower)) &&
+                    !(v.data.tx.from.toLowerCase().includes(searchTxsLower)) &&
+                    !(v.data.tx.to && v.data.tx.to.toLowerCase().includes(searchTxsLower))
                   ) {
                     include = false;
                   }
@@ -434,6 +443,10 @@
                 });
               }
               i++;
+              // // TODO
+              // if (i > 1000) {
+              //   break;
+              // }
             }
             return results;
           },
@@ -587,6 +600,15 @@
               }
             }
             return address == null ? null : address.substring(0, length);
+          },
+          toggleAddress(address) {
+            if (!this.selectedAddresses[address]) {
+              Vue.set(this.selectedAddresses, address, true);
+            } else {
+              Vue.delete(this.selectedAddresses, address);
+            }
+            localStorage.selectedAddresses = JSON.stringify(this.selectedAddresses);
+            console.log("toggleAddress: " + JSON.stringify(this.selectedAddresses));
           },
           toggleTx(txHash) {
             if (!this.selectedTxs[txHash]) {
@@ -913,6 +935,9 @@
           if ('coinbase' in localStorage) {
             this.coinbase = localStorage.coinbase;
           }
+          if ('selectedAddresses' in localStorage) {
+            this.selectedAddresses = JSON.parse(localStorage.selectedAddresses);
+          }
           if ('selectedTxs' in localStorage) {
             this.selectedTxs = JSON.parse(localStorage.selectedTxs);
           }
@@ -920,6 +945,13 @@
             // console.log("mounted - before - this.settings: " + JSON.stringify(this.settings, null, 2));
             // console.log("mounted - before - localStorage.settings: " + localStorage.settings);
             this.settings = { ...this.settings, ...JSON.parse(localStorage.settings) };
+
+            if (this.settings.txs.currentPage > 1) {
+              this.settings.txs.currentPage = 1;
+            }
+            if (this.settings.txs.addressTable > 1) {
+              this.settings.txs.addressTable = 1;
+            }
             // console.log("mounted - after: " + JSON.stringify(this.settings, null, 2));
           }
           (async() => {
