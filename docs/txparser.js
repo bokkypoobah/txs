@@ -107,7 +107,7 @@ function parseTxForContract(erc721Interface, contract, txItem) {
   console.log("    expectedETHBalance: " + ethers.utils.formatEther(expectedETHBalance) + " ETH");
   const diff = expectedETHBalance.sub(txItem.data.ethBalance);
   console.log("    diff: " + ethers.utils.formatEther(diff) + " ETH");
-  console.log("data: " + JSON.stringify(data, null, 2));
+  console.log("    data: " + JSON.stringify(data, null, 2));
 }
 
 
@@ -228,7 +228,7 @@ const _CONTRACTS = {
       const registration = data.events.filter(e => e.name == "NameRegistered").flat();
       const costRecord = registration && registration.length > 0 && registration[0].args.filter(e => e.name == "cost").flat() || null;
       const cost = costRecord && costRecord[0].data || null;
-      const refund = cost && ethers.BigNumber.from(data.msgValue).sub(cost) || null;
+      const refund = cost && ethers.BigNumber.from(txItem.data.tx.value).sub(cost) || null;
       data.refund = refund;
     }
   },
