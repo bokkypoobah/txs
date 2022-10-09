@@ -1,33 +1,23 @@
 function parseTxForContract(erc721Interface, contract, txItem) {
   console.log("  parseTxForContract.process(): " + (contract && contract.name || "(no contract)") + " " + txItem.txHash);
-
-  // console.log("txItem: " + JSON.stringify(txItem, null, 2));
-
-  // console.log("    ethBalance: " + txItem.data.ethBalance);
-
   const data = {};
-
   let interface = null;
   if (contract && contract.abi) {
     interface = new ethers.utils.Interface(contract.abi);
     let decodedData = interface.parseTransaction({ data: txItem.data.tx.data, value: txItem.data.tx.value });
-    // console.log(JSON.stringify(decodedData, null, 2));
-    console.log("    function: " + decodedData.functionFragment.name);
-    // console.log("  decodedData.functionFragment.inputs.length: " + decodedData.functionFragment.inputs.length);
+    // console.log("    function: " + decodedData.functionFragment.name);
     const args = [];
     if (decodedData.functionFragment.inputs.length > 0) {
       if (decodedData.functionFragment.inputs[0].components == null) {
         for (let i in decodedData.functionFragment.inputs) {
           const input = decodedData.functionFragment.inputs[i];
-          console.log("      " + input.name + " " + input.type + " " + decodedData.args[i]);
+          // console.log("      " + input.name + " " + input.type + " " + decodedData.args[i]);
           args.push({ name: input.name, type: input.type, data: decodedData.args[i] });
         }
       } else {
-        // console.log("  decodedData.functionFragment.inputs[0]: " + JSON.stringify(decodedData.functionFragment.inputs[0]));
         for (let i in decodedData.functionFragment.inputs) {
           const c = decodedData.functionFragment.inputs[0].components[i];
-          // console.log("  c: " + JSON.stringify(c));
-          console.log("      " + i + " " + c.name + " " + c.type + " " + decodedData.args[0][i]);
+          // console.log("      " + i + " " + c.name + " " + c.type + " " + decodedData.args[0][i]);
           args.push({ name: c.name, type: c.type, data: decodedData.args[i] });
         }
       }
@@ -58,7 +48,7 @@ function parseTxForContract(erc721Interface, contract, txItem) {
         eventName = logData.eventFragment.name;
         for (let i in logData.eventFragment.inputs) {
           const inp = logData.eventFragment.inputs[i];
-          console.log("      " + i + " " + inp.name + " " + inp.type + " " + logData.args[i]);
+          // console.log("      " + i + " " + inp.name + " " + inp.type + " " + logData.args[i]);
           eventArgs.push({ name: inp.name, type: inp.type, data: logData.args[i] });
         }
       }
@@ -68,7 +58,7 @@ function parseTxForContract(erc721Interface, contract, txItem) {
       eventName = txData.eventFragment.name;
       for (let i in txData.eventFragment.inputs) {
         const inp = txData.eventFragment.inputs[i];
-        console.log("      " + i + " " + inp.name + " " + inp.type + " " + txData.args[i]);
+        // console.log("      " + i + " " + inp.name + " " + inp.type + " " + txData.args[i]);
         eventArgs.push({ name: inp.name, type: inp.type, data: txData.args[i] });
       }
       // console.log(JSON.stringify(event, null, 2));
@@ -78,7 +68,7 @@ function parseTxForContract(erc721Interface, contract, txItem) {
       eventName = txData.eventFragment.name;
       for (let i in txData.eventFragment.inputs) {
         const inp = txData.eventFragment.inputs[i];
-        console.log("      " + i + " " + inp.name + " " + inp.type + " " + txData.args[i]);
+        // console.log("      " + i + " " + inp.name + " " + inp.type + " " + txData.args[i]);
         eventArgs.push({ name: inp.name, type: inp.type, data: txData.args[i] });
       }
     } else {
@@ -117,6 +107,7 @@ function parseTxForContract(erc721Interface, contract, txItem) {
   console.log("    expectedETHBalance: " + ethers.utils.formatEther(expectedETHBalance) + " ETH");
   const diff = expectedETHBalance.sub(txItem.data.ethBalance);
   console.log("    diff: " + ethers.utils.formatEther(diff) + " ETH");
+  console.log("data: " + JSON.stringify(data, null, 2));
 }
 
 
