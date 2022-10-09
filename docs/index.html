@@ -734,24 +734,27 @@
 
               if (action == "addAddresses") {
                 const addAddresses = this.addressesToAdd == null ? [] : this.addressesToAdd.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
-                console.log(JSON.stringify(addAddresses, null, 2));
                 for (let address of addAddresses) {
-                  if (!(address in this.addresses)) {
-                    this.addresses[address] = {
-                      address,
-                      ensName: null,
-                      group: null,
-                      name: null,
-                      tags: [],
-                      notes: null,
-                      contract: {
+                  try {
+                    const checksummedAddress = ethers.utils.getAddress(address);
+                    if (checksummedAddress && !(checksummedAddress in this.addresses)) {
+                      this.addresses[checksummedAddress] = {
+                        address: checksummedAddress,
+                        ensName: null,
+                        group: null,
                         name: null,
-                        symbol: null,
+                        tags: [],
+                        notes: null,
+                        contract: {
+                          name: null,
+                          symbol: null,
+                        }
                       }
                     }
+                  } catch (e) {
+                    console.log(e.toString());
                   }
                 }
-                // console.log(JSON.stringify(this.addresses));
                 await db0.cache.put({ objectName: 'addresses', object: this.addresses }).then (function() {
                 }).catch(function(error) {
                   console.log("error: " + error);
