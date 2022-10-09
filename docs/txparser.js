@@ -1,26 +1,36 @@
 function parseTxForContract(erc721Interface, contract, txItem) {
   console.log("  parseTxForContract.process(): " + contract.name + " " + txItem.txHash);
+
+  const msgValue = txItem.data.tx.value;
+  console.log("    msgValue: " + ethers.utils.formatEther(msgValue) + " ETH");
+  const gasUsed = ethers.BigNumber.from(txItem.data.txReceipt.gasUsed);
+  console.log("    gasUsed: " + gasUsed.toNumber());
+  const effectiveGasPrice = ethers.BigNumber.from(txItem.data.txReceipt.effectiveGasPrice);
+  console.log("    effectiveGasPrice: " + ethers.utils.formatUnits(effectiveGasPrice, "gwei") + " gwei");
+  const txFee = gasUsed.mul(effectiveGasPrice);
+  console.log("    txFee: " + ethers.utils.formatEther(txFee) + " ETH");
+
   let interface = null;
   if (!contract.abi) {
-    console.log("  No ABI available for " + contract.name + " @ " + txItem.data.tx.to);
+    console.log("    No ABI available for " + contract.name + " @ " + txItem.data.tx.to);
   } else {
     interface = new ethers.utils.Interface(contract.abi);
     let decodedData = interface.parseTransaction({ data: txItem.data.tx.data, value: txItem.data.tx.value });
     // console.log(JSON.stringify(decodedData, null, 2));
-    console.log("  function: " + decodedData.functionFragment.name);
+    console.log("    function: " + decodedData.functionFragment.name);
     // console.log("  decodedData.functionFragment.inputs.length: " + decodedData.functionFragment.inputs.length);
     if (decodedData.functionFragment.inputs.length > 0) {
       if (decodedData.functionFragment.inputs[0].components == null) {
         for (let i in decodedData.functionFragment.inputs) {
           const input = decodedData.functionFragment.inputs[i];
-          console.log("    " + input.name + " " + input.type + " " + decodedData.args[i]);
+          console.log("      " + input.name + " " + input.type + " " + decodedData.args[i]);
         }
       } else {
         // console.log("  decodedData.functionFragment.inputs[0]: " + JSON.stringify(decodedData.functionFragment.inputs[0]));
         for (let i in decodedData.functionFragment.inputs) {
           const c = decodedData.functionFragment.inputs[0].components[i];
           // console.log("  c: " + JSON.stringify(c));
-          console.log("    " + i + " " + c.name + " " + c.type + " " + decodedData.args[0][i]);
+          console.log("      " + i + " " + c.name + " " + c.type + " " + decodedData.args[0][i]);
         }
       }
     }
@@ -28,29 +38,29 @@ function parseTxForContract(erc721Interface, contract, txItem) {
   for (const event of txItem.data.txReceipt.logs) {
     if (event.address == txItem.data.tx.to) {
       if (!interface) {
-        console.log("  event has no ABI");
+        console.log("    event has no ABI");
       } else {
         const logData = interface.parseLog(event);
-        console.log("  event: " + logData.eventFragment.name);
+        console.log("    event: " + logData.eventFragment.name);
         for (let i in logData.eventFragment.inputs) {
           const inp = logData.eventFragment.inputs[i];
-          console.log("    " + i + " " + inp.name + " " + inp.type + " " + logData.args[i]);
+          console.log("      " + i + " " + inp.name + " " + inp.type + " " + logData.args[i]);
         }
       }
     } else if (event.topics[0] == '0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925' && event.topics.length == 4) {
       const txData = erc721Interface.parseLog(event);
-      console.log("  erc721.Approval event: " + txData.eventFragment.name);
+      console.log("    erc721.Approval event: " + txData.eventFragment.name);
       for (let i in txData.eventFragment.inputs) {
         const inp = txData.eventFragment.inputs[i];
-        console.log("    " + i + " " + inp.name + " " + inp.type + " " + txData.args[i]);
+        console.log("      " + i + " " + inp.name + " " + inp.type + " " + txData.args[i]);
       }
       // console.log(JSON.stringify(event, null, 2));
     } else if (event.topics[0] == '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef' && event.topics.length > 3) {
       const txData = erc721Interface.parseLog(event);
-      console.log("  erc721.Transfer event: " + txData.eventFragment.name);
+      console.log("    erc721.Transfer event: " + txData.eventFragment.name);
       for (let i in txData.eventFragment.inputs) {
         const inp = txData.eventFragment.inputs[i];
-        console.log("    " + i + " " + inp.name + " " + inp.type + " " + txData.args[i]);
+        console.log("      " + i + " " + inp.name + " " + inp.type + " " + txData.args[i]);
       }
     } else {
       // console.log("  unhandled event: " + JSON.stringify(event));
@@ -76,6 +86,7 @@ function parseTx(txItem, provider) {
     // } else {
     //   console.log("No ABI available for " + contract.name + " @ " + to);
     // }
+    // TODO: Handle ENS refund
     // contract.process(txItem);
   } else {
     console.log("Unknown to: " + to);
