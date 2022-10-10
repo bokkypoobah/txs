@@ -130,6 +130,9 @@
                   {{ parseInt(data.index) + ((settings.addressTable.currentPage - 1) * settings.addressTable.pageSize) + 1 }}
                 </b-form-checkbox>
               </template>
+              <template #cell(type)="data">
+                <b-form-select size="sm" :disabled="!settings.editAddresses" v-model="data.item.type" @change="addressUpdated" :options="addressTypes" v-b-popover.hover.top="'Address type'"></b-form-select>
+              </template>
               <template #cell(address)="data">
                 <b-link :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
                   {{ data.item.address }}
@@ -350,6 +353,14 @@
             { value: 2500, text: '2.5k' },
             { value: 10000, text: '10k' },
           ],
+          addressTypes: [
+            { value: null, text: '(unknown)' },
+            { value: 'eoa', text: 'EOA' },
+            { value: 'contract', text: 'Contract' },
+            { value: 'erc721', text: 'ERC-721' },
+            { value: 'erc1155', text: 'ERC-1155' },
+            { value: 'erc20', text: 'ERC-20' },
+          ],
           addressesFields: [
             { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
             { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
@@ -487,6 +498,7 @@
               ) {
                 results.push({
                   address,
+                  type: item.type,
                   ensName: item.ensName,
                   group: item.group,
                   name: item.name,
@@ -930,7 +942,8 @@
                 this.sync.completed = 0;
                 const exclude = []; // ["0x5c40eF6f527f4FbA68368774E6130cE6515123f2", "0x755cdba6AE4F479f7164792B318b2a06c759833B", "0x5F0281910Af44bFb5fC7e86A404d0304B0e042F1", "0xe36f573DbeCDdBbcb72dD6270aF7978963F4C2D3", "0x60E112d4E585bba817Dc513bF9a03cd9b5A46Fc9", "0xcAFFa1d66eaE19887319ab9AECA5bd9aEB9D2DDE"];
                 const ADDRESSESBATCHSIZE = 1;
-                const addresses = Object.keys(this.addresses).filter(e => !exclude.includes(e));
+                const addresses = Object.keys(this.selectedAddresses);
+                // const addresses = Object.keys(this.addresses).filter(e => !exclude.includes(e));
                 // console.log("addresses: " + JSON.stringify(addresses));
                 this.sync.total = addresses.length;
                 this.sync.section = "Addresses";
@@ -942,6 +955,23 @@
                   try {
                     const tokenInfos = await erc721Helper.tokenInfo(batch, { gasLimit: 100000000 });
                     console.log("tokenInfos: " + JSON.stringify(tokenInfos));
+                    for (let i = 0; i < tokenInfos[0].length; i++) {
+                      // const mask = ethers.BigNumber.from(tokenInfos[0][i]).toString();
+                      const mask = tokenInfos[0][i].toNumber();
+                      console.log("mask: " + JSON.stringify(mask));
+                      if (mask == 1) {
+                        Vue.set(this.addresses[batch[0]], "type", "eoa");
+                      } else if ((mask & MASK_ISERC721) == MASK_ISERC721) {
+                        console.log("mask: erc721");
+                        Vue.set(this.addresses[batch[0]], "type", "erc721");
+                      }
+                      if (mask > 0) {
+                        // const symbol = tokenInfos[1][i];
+                        // const name = tokenInfos[2][i];
+                    //     const totalSupply = ethers.BigNumber.from(tokenInfos[3][i]).toString();
+                    //     tokenContracts[contractAddresses[i].toLowerCase()] = { mask, symbol, name, totalSupply };
+                      }
+                    }
                   } catch (e) {
                     console.log("error: " + e.message);
                   }
@@ -957,6 +987,11 @@
                   //   }
                   // }
                 }
+                // console.log(JSON.stringify(this.addresses));
+                await db0.cache.put({ objectName: 'addresses', object: this.addresses }).then (function() {
+                }).catch(function(error) {
+                  console.log("error: " + error);
+                });
               }
 
               db0.close();
