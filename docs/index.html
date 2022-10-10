@@ -87,6 +87,12 @@
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
+              <div class="mt-0">
+                <b-button-group>
+                  <b-button size="sm" @click="toggleAddresses(pagedFilteredSortedAddresses)" variant="link" v-b-popover.hover.top="'Toggle selection for all from current page'"><b-icon-check shift-v="+1" font-scale="1.0"></b-icon-check></b-button>
+                  <b-button size="sm" @click="toggleAddresses(filteredSortedAddresses)" variant="link" v-b-popover.hover.top="'Toggle selection for all from all pages'"><b-icon-check-all shift-v="+1" font-scale="1.0"></b-icon-check-all></b-button>
+                </b-button-group>
+              </div>
               <div class="mt-0 pr-1">
                 <b-button size="sm" :disabled="sync.section != null" @click="processIt('computeAddresses')" variant="link" v-b-popover.hover.top="'Perform computations on addresses'"><b-icon-caret-right-square shift-v="+1" font-scale="0.9"></b-icon-caret-right-square></b-button>
               </div>
@@ -118,10 +124,7 @@
                 <b-form-select size="sm" v-model="settings.addressTable.pageSize" @change="settingsUpdated" :options="pageSizes" v-b-popover.hover.top="'Addresses page size'"></b-form-select>
               </div>
             </div>
-            <b-card-text v-if="pagedFilteredSortedAddresses.length == 0">
-              Empty
-            </b-card-text>
-            <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" head-variant="light" class="m-0 mt-1">
+            <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" show-empty head-variant="light" class="m-0 mt-1">
               <template #cell(number)="data">
                 <b-form-checkbox size="sm" :checked="selectedAddresses[data.item.address] ? 1 : 0" value="1" @change="toggleAddress(data.item.address)">
                   {{ parseInt(data.index) + ((settings.addressTable.currentPage - 1) * settings.addressTable.pageSize) + 1 }}
@@ -236,7 +239,7 @@
               </div>
             </div>
 
-            <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" head-variant="light" class="m-0 mt-1">
+            <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" show-empty head-variant="light" class="m-0 mt-1">
               <template #cell(number)="data">
                 <b-form-checkbox size="sm" :checked="selectedTxs[data.item.txHash] ? 1 : 0" value="1" @change="toggleTx(data.item.txHash)">
                   {{ parseInt(data.index) + ((settings.txs.currentPage - 1) * settings.txs.pageSize) + 1 }}
@@ -337,6 +340,7 @@
             { value: 'todsc', text: '▼ To' },
           ],
           pageSizes: [
+            { value: 5, text: '5' },
             { value: 10, text: '10' },
             { value: 25, text: '25' },
             { value: 50, text: '50' },
@@ -349,10 +353,11 @@
           addressesFields: [
             { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
             { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+            { key: 'type', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 30%;', tdClass: 'text-truncate' },
+            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
           ],
           txsFields: [
             { key: 'number', label: '#', thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
@@ -608,7 +613,25 @@
               Vue.delete(this.selectedAddresses, address);
             }
             localStorage.selectedAddresses = JSON.stringify(this.selectedAddresses);
-            console.log("toggleAddress: " + JSON.stringify(this.selectedAddresses));
+          },
+          toggleAddresses(items) {
+            let someFalse = false;
+            let someTrue = false;
+            for (const item of items) {
+              if (this.selectedAddresses[item.address]) {
+                someTrue = true;
+              } else {
+                someFalse = true;
+              }
+            }
+            for (const item of items) {
+              if (!(someTrue && !someFalse)) {
+                Vue.set(this.selectedAddresses, item.address, true);
+              } else {
+                Vue.delete(this.selectedAddresses, item.address);
+              }
+            }
+            localStorage.selectedAddresses = JSON.stringify(this.selectedAddresses);
           },
           toggleTx(txHash) {
             if (!this.selectedTxs[txHash]) {
@@ -740,6 +763,7 @@
                     if (checksummedAddress && !(checksummedAddress in this.addresses)) {
                       this.addresses[checksummedAddress] = {
                         address: checksummedAddress,
+                        type: null,
                         ensName: null,
                         group: null,
                         name: null,
@@ -848,7 +872,7 @@
                 const addresses = Object.keys(ensMap);
                 this.sync.total = addresses.length;
                 this.sync.section = "ENS Names";
-                for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
+                for (let i = 0; i < addresses.length & !this.sync.halt; i += ENSOWNERBATCHSIZE) {
                   const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
                   // console.log("batch: " + JSON.stringify(batch));
                   const allnames = await ensReverseRecordsContract.getNames(batch);
@@ -872,6 +896,7 @@
                   } else {
                     this.addresses[address] = {
                       address: address,
+                      type: null,
                       ensName: ensName,
                       group: null,
                       name: null,
@@ -902,17 +927,25 @@
 
               if (action == "computeAddresses") {
                 console.log("computeAddresses");
+                this.sync.completed = 0;
                 const exclude = []; // ["0x5c40eF6f527f4FbA68368774E6130cE6515123f2", "0x755cdba6AE4F479f7164792B318b2a06c759833B", "0x5F0281910Af44bFb5fC7e86A404d0304B0e042F1", "0xe36f573DbeCDdBbcb72dD6270aF7978963F4C2D3", "0x60E112d4E585bba817Dc513bF9a03cd9b5A46Fc9", "0xcAFFa1d66eaE19887319ab9AECA5bd9aEB9D2DDE"];
                 const ADDRESSESBATCHSIZE = 1;
                 const addresses = Object.keys(this.addresses).filter(e => !exclude.includes(e));
                 // console.log("addresses: " + JSON.stringify(addresses));
+                this.sync.total = addresses.length;
+                this.sync.section = "Addresses";
 
-                for (let i = 0; i < addresses.length; i += ADDRESSESBATCHSIZE) {
+                for (let i = 0; i < addresses.length & !this.sync.halt; i += ADDRESSESBATCHSIZE) {
                   const batch = addresses.slice(i, parseInt(i) + ADDRESSESBATCHSIZE);
                   console.log("batch: " + JSON.stringify(batch));
 
-                  const tokenInfos = await erc721Helper.tokenInfo(batch, { gasLimit: 100000000 });
-                  console.log("tokenInfos: " + JSON.stringify(tokenInfos));
+                  try {
+                    const tokenInfos = await erc721Helper.tokenInfo(batch, { gasLimit: 100000000 });
+                    console.log("tokenInfos: " + JSON.stringify(tokenInfos));
+                  } catch (e) {
+                    console.log("error: " + e.message);
+                  }
+                  this.sync.completed++;
                   // const tokenContracts = {};
                   // for (let i = 0; i < tokenInfos[0].length; i++) {
                   //   const mask = ethers.BigNumber.from(tokenInfos[0][i]).toString();
@@ -971,6 +1004,12 @@
             const addresses = await db0.cache.where("objectName").equals('addresses').toArray();
             if (addresses.length == 1) {
               this.addresses = addresses[0].object;
+              for (const [k, v] of Object.entries(this.addresses)) {
+                if (!('type' in v)) {
+                  v.type = null;
+                }
+                // console.log("mount addresses: " + k + " => " + JSON.stringify(v));
+              }
             }
             db0.close();
           })();
