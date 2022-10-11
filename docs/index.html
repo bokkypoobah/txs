@@ -83,7 +83,7 @@
             </b-card>
             <div class="d-flex flex-wrap m-0 p-0">
               <div class="mt-0 pr-1">
-                <b-form-input type="text" size="sm" v-model.trim="searchAddresses" debounce="600" v-b-popover.hover.top="'Filter by partial address, name'" placeholder="🔍 address"></b-form-input>
+                <b-form-input type="text" size="sm" v-model.trim="settings.addressTable.searchAddresses" @change="settingsUpdated" debounce="600" v-b-popover.hover.top="'Filter by partial address, name'" placeholder="🔍 address"></b-form-input>
               </div>
               <div class="mt-0 pr-1">
                 <b-form-select size="sm" v-model="settings.addressTable.addressTypeFilter" @change="settingsUpdated" :options="addressTypeFilters" v-b-popover.hover.top="'Filter by address types'"></b-form-select>
@@ -313,13 +313,13 @@
               sortOption: 'timeasc',
             },
             addressTable: {
+              searchAddresses: null,
               addressTypeFilter: null,
               currentPage: 1, // NOTE Does not get restored correctly
               pageSize: 10,
               sortOption: 'addressasc',
             },
           },
-          searchAddresses: null,
           addressesToAdd: null,
           hashesToImport: null,
           searchTxs: null,
@@ -506,7 +506,7 @@
           },
           filteredAddresses() {
             const results = [];
-            const searchAddressesLower = this.searchAddresses && this.searchAddresses.toLowerCase() || null;
+            const searchAddressesLower = this.settings.addressTable.searchAddresses && this.settings.addressTable.searchAddresses.toLowerCase() || null;
             for (const [address, item] of Object.entries(this.addresses)) {
               let include = searchAddressesLower == null ||
                 (item.name && item.name.toLowerCase().includes(searchAddressesLower)) ||
@@ -968,51 +968,114 @@
                 console.log("computeAddresses");
                 this.sync.completed = 0;
                 const exclude = []; // ["0x5c40eF6f527f4FbA68368774E6130cE6515123f2", "0x755cdba6AE4F479f7164792B318b2a06c759833B", "0x5F0281910Af44bFb5fC7e86A404d0304B0e042F1", "0xe36f573DbeCDdBbcb72dD6270aF7978963F4C2D3", "0x60E112d4E585bba817Dc513bF9a03cd9b5A46Fc9", "0xcAFFa1d66eaE19887319ab9AECA5bd9aEB9D2DDE"];
-                const ADDRESSESBATCHSIZE = 1;
                 const addresses = Object.keys(this.selectedAddresses);
                 // const addresses = Object.keys(this.addresses).filter(e => !exclude.includes(e));
                 // console.log("addresses: " + JSON.stringify(addresses));
                 this.sync.total = addresses.length;
                 this.sync.section = "Addresses";
 
-                for (let i = 0; i < addresses.length & !this.sync.halt; i += ADDRESSESBATCHSIZE) {
-                  const batch = addresses.slice(i, parseInt(i) + ADDRESSESBATCHSIZE);
-                  console.log("batch: " + JSON.stringify(batch));
+                const SPECIALS = {
+                  "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85": {
+                    mask: MASK_ISERC721,
+                    type: "erc721",
+                    symbol: "ENS",
+                    name: "Ethereum Name Service",
+                  },
+                  "0xB22c1C159d12461EA124b0deb4b5b93020E6Ad16": {
+                    mask: MASK_ISCONTRACT,
+                    type: "contract",
+                    symbol: "ENS",
+                    name: "Old ETH Registrar Controller 2",
+                  },
+                };
 
-                  try {
-                    const tokenInfos = await erc721Helper.tokenInfo(batch, { gasLimit: 100000000 });
-                    console.log("tokenInfos: " + JSON.stringify(tokenInfos));
-                    for (let i = 0; i < tokenInfos[0].length; i++) {
-                      // const mask = ethers.BigNumber.from(tokenInfos[0][i]).toString();
-                      const mask = tokenInfos[0][i].toNumber();
-                      const symbol = tokenInfos[1][i];
-                      const name = tokenInfos[2][i];
-                      console.log("mask: " + JSON.stringify(mask));
-                      if ((mask & MASK_ISEOA) == MASK_ISEOA) {
-                        Vue.set(this.addresses[batch[0]], "type", "eoa");
-                      } else if ((mask & MASK_ISERC721) == MASK_ISERC721) {
-                        console.log("mask: erc721");
-                        Vue.set(this.addresses[batch[0]], "type", "erc721");
-                        Vue.set(this.addresses[batch[0]], "name", symbol + ': ' + name);
-                        Vue.set(this.addresses[batch[0]], "contract", { name, symbol });
-                      } else if ((mask & MASK_ISERC20) == MASK_ISERC20) {
-                        console.log("mask: erc20");
-                        Vue.set(this.addresses[batch[0]], "type", "erc20");
-                        Vue.set(this.addresses[batch[0]], "name", symbol + ': ' + name);
-                        Vue.set(this.addresses[batch[0]], "contract", { name, symbol });
-                      } else if ((mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
-                        console.log("mask: contract");
-                        Vue.set(this.addresses[batch[0]], "type", "contract");
+                for (let i = 0; i < addresses.length & !this.sync.halt; i++) {
+                  const address = addresses[i];
+                  console.log("address: " + JSON.stringify(address));
+
+                  let mask = null;
+                  let type = null;
+                  let symbol = null;
+                  let name = null;
+
+                  if (address in SPECIALS) {
+                    mask = SPECIALS[address].mask;
+                    type = SPECIALS[address].type;
+                    symbol = SPECIALS[address].symbol;
+                    name = SPECIALS[address].name;
+                    console.log("SPECIAL " + address + " - mask: " + mask + ", type: " + type + ", symbol: " + symbol + ", name: " + name);
+                  } else {
+                    try {
+                      const tokenInfos = await erc721Helper.tokenInfo([address], { gasLimit: 100000000 });
+                      for (let i = 0; i < tokenInfos[0].length; i++) {
+                        const mask = tokenInfos[0][i].toNumber();
+                        const symbol = tokenInfos[1][i];
+                        const name = tokenInfos[2][i];
                       }
-                      if (mask > 0) {
-                    //     const totalSupply = ethers.BigNumber.from(tokenInfos[3][i]).toString();
-                    //     tokenContracts[contractAddresses[i].toLowerCase()] = { mask, symbol, name, totalSupply };
-                      }
+                      console.log("tokenInfo OK " + address + " - mask: " + mask + ", type: " + type + ", symbol: " + symbol + ", name: " + name);
+                    } catch (e) {
+                      console.log("tokenInfo ERROR - address: " + address + ", message: " + e.message);
                     }
-                  } catch (e) {
-                    console.log("error: " + e.message);
                   }
+
+                  if ((mask & MASK_ISEOA) == MASK_ISEOA) {
+                    Vue.set(this.addresses[address], "type", "eoa");
+                  } else if ((mask & MASK_ISERC721) == MASK_ISERC721) {
+                    console.log("mask: erc721");
+                    Vue.set(this.addresses[address], "type", "erc721");
+                    Vue.set(this.addresses[address], "name", symbol + ': ' + name);
+                    Vue.set(this.addresses[address], "contract", { name, symbol });
+                  } else if ((mask & MASK_ISERC20) == MASK_ISERC20) {
+                    console.log("mask: erc20");
+                    Vue.set(this.addresses[address], "type", "erc20");
+                    Vue.set(this.addresses[address], "name", symbol + ': ' + name);
+                    Vue.set(this.addresses[address], "contract", { name, symbol });
+                  } else if ((mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
+                    console.log("mask: contract");
+                    Vue.set(this.addresses[address], "type", "contract");
+                    if (symbol && symbol.length > 0 || name && name.length > 0) {
+                      Vue.set(this.addresses[address], "name", symbol + ': ' + name);
+                      Vue.set(this.addresses[address], "contract", { name, symbol });
+                    }
+                  }
+
                   this.sync.completed++;
+
+                  // try {
+                  //   const tokenInfos = await erc721Helper.tokenInfo([address], { gasLimit: 100000000 });
+                  //   console.log("tokenInfos: " + JSON.stringify(tokenInfos));
+                  //   for (let i = 0; i < tokenInfos[0].length; i++) {
+                  //     // const mask = ethers.BigNumber.from(tokenInfos[0][i]).toString();
+                  //     const mask = tokenInfos[0][i].toNumber();
+                  //     const symbol = tokenInfos[1][i];
+                  //     const name = tokenInfos[2][i];
+                  //     console.log("mask: " + JSON.stringify(mask));
+                  //     if ((mask & MASK_ISEOA) == MASK_ISEOA) {
+                  //       Vue.set(this.addresses[address], "type", "eoa");
+                  //     } else if ((mask & MASK_ISERC721) == MASK_ISERC721) {
+                  //       console.log("mask: erc721");
+                  //       Vue.set(this.addresses[address], "type", "erc721");
+                  //       Vue.set(this.addresses[address], "name", symbol + ': ' + name);
+                  //       Vue.set(this.addresses[address], "contract", { name, symbol });
+                  //     } else if ((mask & MASK_ISERC20) == MASK_ISERC20) {
+                  //       console.log("mask: erc20");
+                  //       Vue.set(this.addresses[address], "type", "erc20");
+                  //       Vue.set(this.addresses[address], "name", symbol + ': ' + name);
+                  //       Vue.set(this.addresses[address], "contract", { name, symbol });
+                  //     } else if ((mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
+                  //       console.log("mask: contract");
+                  //       Vue.set(this.addresses[address], "type", "contract");
+                  //     }
+                  //     if (mask > 0) {
+                  //   //     const totalSupply = ethers.BigNumber.from(tokenInfos[3][i]).toString();
+                  //   //     tokenContracts[contractAddresses[i].toLowerCase()] = { mask, symbol, name, totalSupply };
+                  //     }
+                  //   }
+                  // } catch (e) {
+                  //   console.log("error: " + e.message);
+                  // }
+
+                  // this.sync.completed++;
                   // const tokenContracts = {};
                   // for (let i = 0; i < tokenInfos[0].length; i++) {
                   //   const mask = ethers.BigNumber.from(tokenInfos[0][i]).toString();
@@ -1063,6 +1126,10 @@
             if (!('addressTypeFilter' in this.settings.addressTable)) {
               console.log("Adding addressTypeFilter");
               this.settings.addressTable.addressTypeFilter = null;
+            }
+            if (!('searchAddresses' in this.settings.addressTable)) {
+              console.log("Adding searchAddresses");
+              this.settings.addressTable.searchAddresses = null;
             }
             // console.log("mounted - after: " + JSON.stringify(this.settings, null, 2));
           }
