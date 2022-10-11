@@ -508,12 +508,21 @@
             const results = [];
             const searchAddressesLower = this.searchAddresses && this.searchAddresses.toLowerCase() || null;
             for (const [address, item] of Object.entries(this.addresses)) {
-              if (searchAddressesLower == null ||
+              let include = searchAddressesLower == null ||
                 (item.name && item.name.toLowerCase().includes(searchAddressesLower)) ||
                 (item.group && item.group.toLowerCase().includes(searchAddressesLower)) ||
                 (item.address && item.address.toLowerCase().includes(searchAddressesLower)) ||
-                (item.notes && item.notes.toLowerCase().includes(searchAddressesLower))
-              ) {
+                (item.notes && item.notes.toLowerCase().includes(searchAddressesLower));
+
+              if (include && this.settings.addressTable.addressTypeFilter != null) {
+                if (this.settings.addressTable.addressTypeFilter == 'unknown' && item.type == null) {
+                } else if (this.settings.addressTable.addressTypeFilter == item.type) {
+                } else {
+                  include = false;
+                }
+              }
+
+              if (include) {
                 results.push({
                   address,
                   type: item.type,
