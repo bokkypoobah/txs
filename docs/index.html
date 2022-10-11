@@ -131,7 +131,12 @@
                 </b-form-checkbox>
               </template>
               <template #cell(type)="data">
-                <b-form-select size="sm" :disabled="!settings.editAddresses" v-model="data.item.type" @change="addressUpdated" :options="addressTypes" v-b-popover.hover.top="'Address type'"></b-form-select>
+                <div v-if="settings.editAddresses">
+                  <b-form-select size="sm" :disabled="!settings.editAddresses" v-model="data.item.type" @change="addressUpdated" :options="addressTypes" v-b-popover.hover.top="'Address type'"></b-form-select>
+                </div>
+                <div v-else>
+                  {{ addressTypes.find(e => e.value == data.item.type).text }}
+                </div>
               </template>
               <template #cell(address)="data">
                 <b-link :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
@@ -958,16 +963,26 @@
                     for (let i = 0; i < tokenInfos[0].length; i++) {
                       // const mask = ethers.BigNumber.from(tokenInfos[0][i]).toString();
                       const mask = tokenInfos[0][i].toNumber();
+                      const symbol = tokenInfos[1][i];
+                      const name = tokenInfos[2][i];
                       console.log("mask: " + JSON.stringify(mask));
-                      if (mask == 1) {
+                      if ((mask & MASK_ISEOA) == MASK_ISEOA) {
                         Vue.set(this.addresses[batch[0]], "type", "eoa");
                       } else if ((mask & MASK_ISERC721) == MASK_ISERC721) {
                         console.log("mask: erc721");
                         Vue.set(this.addresses[batch[0]], "type", "erc721");
+                        Vue.set(this.addresses[batch[0]], "name", symbol + ': ' + name);
+                        Vue.set(this.addresses[batch[0]], "contract", { name, symbol });
+                      } else if ((mask & MASK_ISERC20) == MASK_ISERC20) {
+                        console.log("mask: erc20");
+                        Vue.set(this.addresses[batch[0]], "type", "erc20");
+                        Vue.set(this.addresses[batch[0]], "name", symbol + ': ' + name);
+                        Vue.set(this.addresses[batch[0]], "contract", { name, symbol });
+                      } else if ((mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
+                        console.log("mask: contract");
+                        Vue.set(this.addresses[batch[0]], "type", "contract");
                       }
                       if (mask > 0) {
-                        // const symbol = tokenInfos[1][i];
-                        // const name = tokenInfos[2][i];
                     //     const totalSupply = ethers.BigNumber.from(tokenInfos[3][i]).toString();
                     //     tokenContracts[contractAddresses[i].toLowerCase()] = { mask, symbol, name, totalSupply };
                       }
