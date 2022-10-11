@@ -85,6 +85,9 @@
               <div class="mt-0 pr-1">
                 <b-form-input type="text" size="sm" v-model.trim="searchAddresses" debounce="600" v-b-popover.hover.top="'Filter by partial address, name'" placeholder="🔍 address"></b-form-input>
               </div>
+              <div class="mt-0 pr-1">
+                <b-form-select size="sm" v-model="settings.addressTable.addressTypeFilter" @change="settingsUpdated" :options="addressTypeFilters" v-b-popover.hover.top="'Filter by address types'"></b-form-select>
+              </div>
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0">
@@ -310,6 +313,7 @@
               sortOption: 'timeasc',
             },
             addressTable: {
+              addressTypeFilter: null,
               currentPage: 1, // NOTE Does not get restored correctly
               pageSize: 10,
               sortOption: 'addressasc',
@@ -365,6 +369,15 @@
             { value: 'erc721', text: 'ERC-721' },
             { value: 'erc1155', text: 'ERC-1155' },
             { value: 'erc20', text: 'ERC-20' },
+          ],
+          addressTypeFilters: [
+            { value: null, text: '(all)' },
+            { value: 'eoa', text: 'EOA' },
+            { value: 'contract', text: 'Contract' },
+            { value: 'erc721', text: 'ERC-721' },
+            { value: 'erc1155', text: 'ERC-1155' },
+            { value: 'erc20', text: 'ERC-20' },
+            { value: 'unknown', text: '(unknown)' },
           ],
           addressesFields: [
             { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
@@ -1035,8 +1048,12 @@
             if (this.settings.txs.currentPage > 1) {
               this.settings.txs.currentPage = 1;
             }
-            if (this.settings.txs.addressTable > 1) {
-              this.settings.txs.addressTable = 1;
+            if (this.settings.addressTable.currentPage > 1) {
+              this.settings.addressTable.currentPage = 1;
+            }
+            if (!('addressTypeFilter' in this.settings.addressTable)) {
+              console.log("Adding addressTypeFilter");
+              this.settings.addressTable.addressTypeFilter = null;
             }
             // console.log("mounted - after: " + JSON.stringify(this.settings, null, 2));
           }
