@@ -306,19 +306,19 @@
             showAddresses: false,
             addAddresses: false,
             editAddresses: false,
-            txs: {
-              searchTxs: null,
-              period: null,
-              currentPage: 1, // NOTE Does not get restored correctly
-              pageSize: 100,
-              sortOption: 'timeasc',
-            },
             addressTable: {
               searchAddresses: null,
               addressTypeFilter: null,
-              currentPage: 1, // NOTE Does not get restored correctly
+              currentPage: 1,
               pageSize: 10,
               sortOption: 'addressasc',
+            },
+            txs: {
+              searchTxs: null,
+              period: null,
+              currentPage: 1,
+              pageSize: 100,
+              sortOption: 'timeasc',
             },
           },
           addressesToAdd: null,
