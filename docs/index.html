@@ -284,6 +284,12 @@
                   {{ data.item.txHash.substring(0, 16).name }}
                 </b-link>
               </template>
+              <template #cell(balance)="data">
+                <font size="-2">
+                  <b-badge variant="default" v-b-popover.hover.bottom="'From account balance, previous block'">{{ formatETH(data.item.ethBalancePreviousBlock) }}</b-badge>
+                </font>
+                <b-badge variant="default" v-b-popover.hover.bottom="'From account balance'">{{ formatETH(data.item.ethBalance) }}</b-badge>
+              </template>
             </b-table>
           </b-card-body>
         </b-card>
@@ -393,8 +399,9 @@
             { key: 'timestamp', label: 'Timestamp', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'from', label: 'From', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'to', label: 'To', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            { key: 'blah', label: 'Blah', thStyle: 'width: 35%;', tdClass: 'text-truncate' },
+            { key: 'blah', label: 'Blah', thStyle: 'width: 25%;', tdClass: 'text-truncate' },
             { key: 'txHash', label: 'Transactions', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'balance', label: 'Balance', /*sortable: true,*/ thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
           ],
           db: {
             name: "txs089",
@@ -474,6 +481,8 @@
                   timestamp: v.timestamp,
                   from: v.data.tx && v.data.tx.from || null,
                   to: v.data.tx && v.data.tx.to || null,
+                  ethBalance: v.data.ethBalance || null,
+                  ethBalancePreviousBlock: v.data.ethBalancePreviousBlock || null,
                 });
               }
               i++;
