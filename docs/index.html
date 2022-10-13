@@ -90,12 +90,12 @@
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
-              <div class="mt-0">
+              <!-- <div class="mt-0">
                 <b-button-group>
                   <b-button size="sm" @click="toggleAddresses(pagedFilteredSortedAddresses)" variant="link" v-b-popover.hover.top="'Toggle selection for all from current page'"><b-icon-check shift-v="+1" font-scale="1.0"></b-icon-check></b-button>
                   <b-button size="sm" @click="toggleAddresses(filteredSortedAddresses)" variant="link" v-b-popover.hover.top="'Toggle selection for all from all pages'"><b-icon-check-all shift-v="+1" font-scale="1.0"></b-icon-check-all></b-button>
                 </b-button-group>
-              </div>
+              </div> -->
               <div class="mt-0 pr-1">
                 <b-button size="sm" :disabled="sync.section != null" @click="processIt('computeAddresses')" variant="link" v-b-popover.hover.top="'Perform computations on addresses'"><b-icon-caret-right-square shift-v="+1" font-scale="0.9"></b-icon-caret-right-square></b-button>
               </div>
@@ -128,6 +128,16 @@
               </div>
             </div>
             <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" show-empty head-variant="light" class="m-0 mt-1">
+              <template #head(number)="data">
+                <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
+                  <template #button-content>
+                    <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
+                  </template>
+                  <b-dropdown-item href="#" @click="toggleAddresses(pagedFilteredSortedAddresses)">Toggle selection for all addresses on this page</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="toggleAddresses(filteredSortedAddresses)">Toggle selection for all addresses on all pages</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="clearAddresses()">Clear selection</b-dropdown-item>
+                </b-dropdown>
+              </template>
               <template #cell(number)="data">
                 <b-form-checkbox size="sm" :checked="selectedAddresses[data.item.address] ? 1 : 0" value="1" @change="toggleAddress(data.item.address)">
                   {{ parseInt(data.index) + ((settings.addressTable.currentPage - 1) * settings.addressTable.pageSize) + 1 }}
@@ -215,12 +225,12 @@
               <div class="mt-0 pr-1">
                 <b-form-select size="sm" v-model="settings.txs.period" :options="txsPeriodOptions" @change="settingsUpdated" v-b-popover.hover.top="'Period'"></b-form-select>
               </div>
-              <div class="mt-0">
+              <!-- <div class="mt-0">
                 <b-button-group>
                   <b-button size="sm" @click="toggleTxs(pagedFilteredSortedTxs)" variant="link" v-b-popover.hover.top="'Toggle selection for all from current page'"><b-icon-check shift-v="+1" font-scale="1.0"></b-icon-check></b-button>
                   <b-button size="sm" @click="toggleTxs(filteredSortedTxs)" variant="link" v-b-popover.hover.top="'Toggle selection for all from all pages'"><b-icon-check-all shift-v="+1" font-scale="1.0"></b-icon-check-all></b-button>
                 </b-button-group>
-              </div>
+              </div> -->
               <div class="mt-0 pr-1">
                 <b-button size="sm" :disabled="sync.section != null" @click="processIt('compute')" variant="link" v-b-popover.hover.top="'Perform computations on selected items'"><b-icon-caret-right-square shift-v="+1" font-scale="0.9"></b-icon-caret-right-square></b-button>
               </div>
@@ -261,6 +271,16 @@
             </div>
 
             <b-table small fixed striped selectable responsive hover :fields="txsFields" :items="pagedFilteredSortedTxs" show-empty head-variant="light" class="m-0 mt-1">
+              <template #head(number)="data">
+                <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
+                  <template #button-content>
+                    <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
+                  </template>
+                  <b-dropdown-item href="#" @click="toggleTxs(pagedFilteredSortedTxs)">Toggle selection for all transactions on this page</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="toggleTxs(filteredSortedTxs)">Toggle selection for all transactions on all pages</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="clearTxs()">Clear selection</b-dropdown-item>
+                </b-dropdown>
+              </template>
               <template #cell(number)="data">
                 <b-form-checkbox size="sm" :checked="selectedTxs[data.item.txHash] ? 1 : 0" value="1" @change="toggleTx(data.item.txHash)">
                   {{ parseInt(data.index) + ((settings.txs.currentPage - 1) * settings.txs.pageSize) + 1 }}
@@ -396,7 +416,7 @@
             { value: 'unknown', text: '(unknown)' },
           ],
           addressesFields: [
-            { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
+            { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
             { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'type', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'mine', label: 'Mine', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
@@ -406,7 +426,7 @@
             { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
           ],
           txsFields: [
-            { key: 'number', label: '#', thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
+            { key: 'number', label: '#', thStyle: 'width: 5%;', tdClass: 'text-truncate' },
             { key: 'timestamp', label: 'Timestamp', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'from', label: 'From', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'to', label: 'To', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
@@ -693,6 +713,10 @@
             }
             localStorage.selectedAddresses = JSON.stringify(this.selectedAddresses);
           },
+          clearAddresses() {
+            this.selectedAddresses = {};
+            localStorage.selectedAddresses = JSON.stringify(this.selectedAddresses);
+          },
           async toggleAddressMine(address) {
             if (!this.addresses[address].mine) {
               Vue.set(this.addresses[address], 'mine', true);
@@ -733,6 +757,10 @@
                 Vue.delete(this.selectedTxs, item.txHash);
               }
             }
+            localStorage.selectedTxs = JSON.stringify(this.selectedTxs);
+          },
+          clearTxs() {
+            this.selectedTxs = {};
             localStorage.selectedTxs = JSON.stringify(this.selectedTxs);
           },
           settingsUpdated() {
