@@ -88,6 +88,9 @@
               <div class="mt-0 pr-1">
                 <b-form-select size="sm" v-model="settings.addressTable.addressTypeFilter" @change="settingsUpdated" :options="addressTypeFilters" v-b-popover.hover.top="'Filter by address types'"></b-form-select>
               </div>
+              <div class="mt-0 pr-1">
+                <b-form-select size="sm" v-model="settings.addressTable.addressMineFilter" @change="settingsUpdated" :options="addressMineFilters" v-b-popover.hover.top="'Filter for my addresses, or not'"></b-form-select>
+              </div>
               <div class="mt-0 flex-grow-1">
               </div>
               <div class="mt-0 pr-1">
@@ -333,6 +336,7 @@
             addressTable: {
               searchAddresses: null,
               addressTypeFilter: null,
+              addressMineFilter: null,
               currentPage: 1,
               pageSize: 10,
               sortOption: 'addressasc',
@@ -403,6 +407,11 @@
             { value: 'erc20', text: 'ERC-20' },
             { value: 'unknown', text: '(unknown)' },
           ],
+          addressMineFilters: [
+            { value: null, text: '(any)' },
+            { value: 'mine', text: 'Mine' },
+            { value: 'notmine', text: 'Not Mine' },
+          ],
           addressesFields: [
             { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
             { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
@@ -463,6 +472,13 @@
                 (item.address && item.address.toLowerCase().includes(searchAddressesLower)) ||
                 (item.notes && item.notes.toLowerCase().includes(searchAddressesLower) ||
                 (ensName != null && ensName.toLowerCase().includes(searchAddressesLower)));
+              if (include && this.settings.addressTable.addressMineFilter != null) {
+                if (this.settings.addressTable.addressMineFilter == 'mine' && item.mine) {
+                } else if (this.settings.addressTable.addressMineFilter == 'notmine' && !item.mine) {
+                } else {
+                  include = false;
+                }
+              }
               if (include && this.settings.addressTable.addressTypeFilter != null) {
                 if (this.settings.addressTable.addressTypeFilter == 'unknown' && item.type == null) {
                 } else if (this.settings.addressTable.addressTypeFilter == item.type) {
@@ -1178,6 +1194,10 @@
             if (!('searchAddresses' in this.settings.addressTable)) {
               console.log("Adding settings.addressTable.searchAddresses");
               this.settings.addressTable.searchAddresses = null;
+            }
+            if (!('addressMineFilter' in this.settings.addressTable)) {
+              console.log("Adding addressMineFilter");
+              this.settings.addressTable.addressMineFilter = null;
             }
             if (!('searchTxs' in this.settings.txs)) {
               console.log("Adding settings.txs.searchTxs");
