@@ -141,6 +141,16 @@
                   {{ addressTypes.find(e => e.value == data.item.type).text }}
                 </div>
               </template>
+              <template #cell(mine)="data">
+                <div v-if="settings.editAddresses">
+                  <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAddressMine(data.item.address)">
+                  </b-form-checkbox>
+                </div>
+                <div v-else>
+                  <b-form-checkbox size="sm" disabled :checked="data.item.mine ? 1 : 0" value="1">
+                  </b-form-checkbox>
+                </div>
+              </template>
               <template #cell(address)="data">
                 <b-link :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
                   {{ data.item.address }}
@@ -389,10 +399,11 @@
             { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
             { key: 'address', label: 'Address', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'type', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+            { key: 'mine', label: 'Mine', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+            { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
           ],
           txsFields: [
             { key: 'number', label: '#', thStyle: 'width: 5%;', thClass: 'text-center', tdClass: 'text-truncate' },
@@ -535,6 +546,7 @@
                 results.push({
                   address,
                   type: item.type,
+                  mine: item.mine,
                   ensName: item.ensName,
                   group: item.group,
                   name: item.name,
@@ -681,6 +693,21 @@
             }
             localStorage.selectedAddresses = JSON.stringify(this.selectedAddresses);
           },
+          async toggleAddressMine(address) {
+            if (!this.addresses[address].mine) {
+              Vue.set(this.addresses[address], 'mine', true);
+            } else {
+              Vue.set(this.addresses[address], 'mine', false);
+            }
+            // console.log("toggleAddressMine: " + JSON.stringify(this.addresses, null, 2));
+            const db0 = new Dexie(this.db.name);
+            db0.version(this.db.version).stores(this.db.schemaDefinition);
+            await db0.cache.put({ objectName: 'addresses', object: this.addresses }).then (function() {
+            }).catch(function(error) {
+              console.log("error: " + error);
+            });
+            db0.close();
+          },
           toggleTx(txHash) {
             if (!this.selectedTxs[txHash]) {
               Vue.set(this.selectedTxs, txHash, true);
@@ -713,9 +740,9 @@
             localStorage.settings = JSON.stringify(this.settings);
           },
           async addressUpdated() {
-            console.log("addressUpdated");
+            // console.log("addressUpdated");
             // localStorage.txsPeriod = this.settings.txs.period;
-            // console.log(JSON.stringify(this.addresses))
+            // console.log("addressUpdated: " + JSON.stringify(this.addresses, null, 2));
             const db0 = new Dexie(this.db.name);
             db0.version(this.db.version).stores(this.db.schemaDefinition);
             await db0.cache.put({ objectName: 'addresses', object: this.addresses }).then (function() {
@@ -945,6 +972,7 @@
                     this.addresses[address] = {
                       address: address,
                       type: null,
+                      mine: false,
                       ensName: ensName,
                       group: null,
                       name: null,
@@ -995,6 +1023,18 @@
                     type: "contract",
                     symbol: "ENS",
                     name: "Old ETH Registrar Controller 2",
+                  },
+                  "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413": {
+                    mask: MASK_ISERC20,
+                    type: "erc20",
+                    symbol: "DAO",
+                    name: "The DAO",
+                  },
+                  "0xBf4eD7b27F1d666546E30D74d50d173d20bca754": {
+                    mask: MASK_ISERC20,
+                    type: "erc20",
+                    symbol: "WithdrawDAO",
+                    name: "WithdrawDAO",
                   },
                 };
 
@@ -1163,6 +1203,9 @@
               for (const [k, v] of Object.entries(this.addresses)) {
                 if (!('type' in v)) {
                   v.type = null;
+                }
+                if (!('mine' in v)) {
+                  v.mine = false;
                 }
                 // console.log("mount addresses: " + k + " => " + JSON.stringify(v));
               }
