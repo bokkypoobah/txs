@@ -90,12 +90,6 @@
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
-              <!-- <div class="mt-0">
-                <b-button-group>
-                  <b-button size="sm" @click="toggleAddresses(pagedFilteredSortedAddresses)" variant="link" v-b-popover.hover.top="'Toggle selection for all from current page'"><b-icon-check shift-v="+1" font-scale="1.0"></b-icon-check></b-button>
-                  <b-button size="sm" @click="toggleAddresses(filteredSortedAddresses)" variant="link" v-b-popover.hover.top="'Toggle selection for all from all pages'"><b-icon-check-all shift-v="+1" font-scale="1.0"></b-icon-check-all></b-button>
-                </b-button-group>
-              </div> -->
               <div class="mt-0 pr-1">
                 <b-button size="sm" :disabled="sync.section != null" @click="processIt('computeAddresses')" variant="link" v-b-popover.hover.top="'Perform computations on addresses'"><b-icon-caret-right-square shift-v="+1" font-scale="0.9"></b-icon-caret-right-square></b-button>
               </div>
@@ -133,19 +127,19 @@
                   <template #button-content>
                     <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
                   </template>
-                  <b-dropdown-item href="#" @click="toggleAddresses(pagedFilteredSortedAddresses)">Toggle selection for all addresses on this page</b-dropdown-item>
-                  <b-dropdown-item href="#" @click="toggleAddresses(filteredSortedAddresses)">Toggle selection for all addresses on all pages</b-dropdown-item>
-                  <b-dropdown-item href="#" @click="clearAddresses()">Clear selection</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="toggleSelectedAddresses(pagedFilteredSortedAddresses)">Toggle selection for all addresses on this page</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="toggleSelectedAddresses(filteredSortedAddresses)">Toggle selection for all addresses on all pages</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="clearSelectedAddresses()">Clear selection</b-dropdown-item>
                 </b-dropdown>
               </template>
               <template #cell(number)="data">
-                <b-form-checkbox size="sm" :checked="selectedAddresses[data.item.address] ? 1 : 0" value="1" @change="toggleAddress(data.item.address)">
+                <b-form-checkbox size="sm" :checked="selectedAddresses[data.item.address] ? 1 : 0" value="1" @change="toggleSelectedAddresses([data.item])">
                   {{ parseInt(data.index) + ((settings.addressTable.currentPage - 1) * settings.addressTable.pageSize) + 1 }}
                 </b-form-checkbox>
               </template>
               <template #cell(type)="data">
                 <div v-if="settings.editAddresses">
-                  <b-form-select size="sm" :disabled="!settings.editAddresses" v-model="data.item.type" @change="addressUpdated" :options="addressTypes" v-b-popover.hover.top="'Address type'"></b-form-select>
+                  <b-form-select size="sm" :disabled="!settings.editAddresses" v-model="data.item.type" @change="addressesUpdated" :options="addressTypes" v-b-popover.hover.top="'Address type'"></b-form-select>
                 </div>
                 <div v-else>
                   {{ addressTypes.find(e => e.value == data.item.type).text }}
@@ -173,7 +167,7 @@
               </template>
               <template #cell(group)="data">
                 <div v-if="settings.editAddresses">
-                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].group" @change="addressUpdated" debounce="600"></b-form-input>
+                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].group" @change="addressesUpdated" debounce="600"></b-form-input>
                 </div>
                 <div v-else>
                   {{ data.item.group }}
@@ -181,7 +175,7 @@
               </template>
               <template #cell(name)="data">
                 <div v-if="settings.editAddresses">
-                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].name" @change="addressUpdated" debounce="600"></b-form-input>
+                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].name" @change="addressesUpdated" debounce="600"></b-form-input>
                 </div>
                 <div v-else>
                   {{ data.item.name }}
@@ -189,7 +183,7 @@
               </template>
               <template #cell(notes)="data">
                 <div v-if="settings.editAddresses">
-                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressUpdated" debounce="600"></b-form-input>
+                  <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressesUpdated" debounce="600"></b-form-input>
                 </div>
                 <div v-else>
                   {{ data.item.notes }}
@@ -225,12 +219,6 @@
               <div class="mt-0 pr-1">
                 <b-form-select size="sm" v-model="settings.txs.period" :options="txsPeriodOptions" @change="settingsUpdated" v-b-popover.hover.top="'Period'"></b-form-select>
               </div>
-              <!-- <div class="mt-0">
-                <b-button-group>
-                  <b-button size="sm" @click="toggleTxs(pagedFilteredSortedTxs)" variant="link" v-b-popover.hover.top="'Toggle selection for all from current page'"><b-icon-check shift-v="+1" font-scale="1.0"></b-icon-check></b-button>
-                  <b-button size="sm" @click="toggleTxs(filteredSortedTxs)" variant="link" v-b-popover.hover.top="'Toggle selection for all from all pages'"><b-icon-check-all shift-v="+1" font-scale="1.0"></b-icon-check-all></b-button>
-                </b-button-group>
-              </div> -->
               <div class="mt-0 pr-1">
                 <b-button size="sm" :disabled="sync.section != null" @click="processIt('compute')" variant="link" v-b-popover.hover.top="'Perform computations on selected items'"><b-icon-caret-right-square shift-v="+1" font-scale="0.9"></b-icon-caret-right-square></b-button>
               </div>
@@ -276,13 +264,13 @@
                   <template #button-content>
                     <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
                   </template>
-                  <b-dropdown-item href="#" @click="toggleTxs(pagedFilteredSortedTxs)">Toggle selection for all transactions on this page</b-dropdown-item>
-                  <b-dropdown-item href="#" @click="toggleTxs(filteredSortedTxs)">Toggle selection for all transactions on all pages</b-dropdown-item>
-                  <b-dropdown-item href="#" @click="clearTxs()">Clear selection</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="toggleSelectedTxs(pagedFilteredSortedTxs)">Toggle selection for all transactions on this page</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="toggleSelectedTxs(filteredSortedTxs)">Toggle selection for all transactions on all pages</b-dropdown-item>
+                  <b-dropdown-item href="#" @click="clearSelectedTxs()">Clear selection</b-dropdown-item>
                 </b-dropdown>
               </template>
               <template #cell(number)="data">
-                <b-form-checkbox size="sm" :checked="selectedTxs[data.item.txHash] ? 1 : 0" value="1" @change="toggleTx(data.item.txHash)">
+                <b-form-checkbox size="sm" :checked="selectedTxs[data.item.txHash] ? 1 : 0" value="1" @change="toggleSelectedTxs([data.item])">
                   {{ parseInt(data.index) + ((settings.txs.currentPage - 1) * settings.txs.pageSize) + 1 }}
                 </b-form-checkbox>
               </template>
@@ -686,15 +674,7 @@
             }
             return address == null ? null : address.substring(0, length);
           },
-          toggleAddress(address) {
-            if (!this.selectedAddresses[address]) {
-              Vue.set(this.selectedAddresses, address, true);
-            } else {
-              Vue.delete(this.selectedAddresses, address);
-            }
-            localStorage.selectedAddresses = JSON.stringify(this.selectedAddresses);
-          },
-          toggleAddresses(items) {
+          toggleSelectedAddresses(items) {
             let someFalse = false;
             let someTrue = false;
             for (const item of items) {
@@ -713,7 +693,7 @@
             }
             localStorage.selectedAddresses = JSON.stringify(this.selectedAddresses);
           },
-          clearAddresses() {
+          clearSelectedAddresses() {
             this.selectedAddresses = {};
             localStorage.selectedAddresses = JSON.stringify(this.selectedAddresses);
           },
@@ -732,15 +712,7 @@
             });
             db0.close();
           },
-          toggleTx(txHash) {
-            if (!this.selectedTxs[txHash]) {
-              Vue.set(this.selectedTxs, txHash, true);
-            } else {
-              Vue.delete(this.selectedTxs, txHash);
-            }
-            localStorage.selectedTxs = JSON.stringify(this.selectedTxs);
-          },
-          toggleTxs(txItems) {
+          toggleSelectedTxs(txItems) {
             let someFalse = false;
             let someTrue = false;
             for (const item of txItems) {
@@ -759,7 +731,7 @@
             }
             localStorage.selectedTxs = JSON.stringify(this.selectedTxs);
           },
-          clearTxs() {
+          clearSelectedTxs() {
             this.selectedTxs = {};
             localStorage.selectedTxs = JSON.stringify(this.selectedTxs);
           },
@@ -767,10 +739,10 @@
             console.log("settingsUpdated: " + JSON.stringify(this.settings, null, 2));
             localStorage.settings = JSON.stringify(this.settings);
           },
-          async addressUpdated() {
-            // console.log("addressUpdated");
+          async addressesUpdated() {
+            // console.log("addressesUpdated");
             // localStorage.txsPeriod = this.settings.txs.period;
-            // console.log("addressUpdated: " + JSON.stringify(this.addresses, null, 2));
+            // console.log("addressesUpdated: " + JSON.stringify(this.addresses, null, 2));
             const db0 = new Dexie(this.db.name);
             db0.version(this.db.version).stores(this.db.schemaDefinition);
             await db0.cache.put({ objectName: 'addresses', object: this.addresses }).then (function() {
