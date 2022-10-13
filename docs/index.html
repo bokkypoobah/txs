@@ -353,8 +353,8 @@
             completed: null,
             halt: false,
           },
-          txHashes: {},
           addresses: {},
+          txHashes: {},
           ensMap: {},
           selectedAddresses: {},
           selectedTxs: {},
@@ -438,7 +438,6 @@
           txsPeriodOptions() {
             const results = [];
             results.push({ value: null, text: "(select period)", data: null });
-
             const startMonth = "Jul";
             const now = moment();
             let currentStartPeriod = moment(now).month(startMonth).startOf('month');
@@ -452,6 +451,103 @@
             }
             results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
             return results;
+          },
+          filteredAddresses() {
+            const results = [];
+            const searchAddressesLower = this.settings.addressTable.searchAddresses && this.settings.addressTable.searchAddresses.toLowerCase() || null;
+            for (const [address, item] of Object.entries(this.addresses)) {
+              const ensName = this.ensMap[address] || null;
+              let include = searchAddressesLower == null ||
+                (item.name && item.name.toLowerCase().includes(searchAddressesLower)) ||
+                (item.group && item.group.toLowerCase().includes(searchAddressesLower)) ||
+                (item.address && item.address.toLowerCase().includes(searchAddressesLower)) ||
+                (item.notes && item.notes.toLowerCase().includes(searchAddressesLower) ||
+                (ensName != null && ensName.toLowerCase().includes(searchAddressesLower)));
+              if (include && this.settings.addressTable.addressTypeFilter != null) {
+                if (this.settings.addressTable.addressTypeFilter == 'unknown' && item.type == null) {
+                } else if (this.settings.addressTable.addressTypeFilter == item.type) {
+                } else {
+                  include = false;
+                }
+              }
+              if (include) {
+                results.push({
+                  address,
+                  type: item.type,
+                  mine: item.mine,
+                  ensName: item.ensName,
+                  group: item.group,
+                  name: item.name,
+                  tags: item.tags,
+                  notes: item.notes,
+                });
+              }
+            }
+            return results;
+          },
+          filteredSortedAddresses() {
+            let results = this.filteredAddresses;
+            if (this.settings.addressTable.sortOption == 'addressasc') {
+              results.sort((a, b) => {
+                return ('' + a.address).localeCompare(b.address);
+              });
+            } else if (this.settings.addressTable.sortOption == 'addressdsc') {
+              results.sort((a, b) => {
+                return ('' + b.address).localeCompare(a.address);
+              });
+            } else if (this.settings.addressTable.sortOption == 'groupasc') {
+              results.sort((a, b) => {
+                if (('' + a.group).localeCompare(b.group) == 0) {
+                  if (('' + a.name).localeCompare(b.name) == 0) {
+                    return ('' + a.address).localeCompare(b.address);
+                  } else {
+                    return ('' + a.name).localeCompare(b.name);
+                  }
+                } else {
+                  return ('' + a.group).localeCompare(b.group);
+                }
+              });
+            } else if (this.settings.addressTable.sortOption == 'groupdsc') {
+              results.sort((a, b) => {
+                if (('' + a.group).localeCompare(b.group) == 0) {
+                  if (('' + a.name).localeCompare(b.name) == 0) {
+                    return ('' + a.address).localeCompare(b.address);
+                  } else {
+                    return ('' + a.name).localeCompare(b.name);
+                  }
+                } else {
+                  return ('' + b.group).localeCompare(a.group);
+                }
+              });
+            } else if (this.settings.addressTable.sortOption == 'nameasc') {
+              results.sort((a, b) => {
+                if (('' + a.name).localeCompare(b.name) == 0) {
+                  if (('' + a.group).localeCompare(b.group) == 0) {
+                    return ('' + a.address).localeCompare(b.address);
+                  } else {
+                    return ('' + a.group).localeCompare(b.group);
+                  }
+                } else {
+                  return ('' + a.name).localeCompare(b.name);
+                }
+              });
+            } else if (this.settings.addressTable.sortOption == 'namedsc') {
+              results.sort((a, b) => {
+                if (('' + a.name).localeCompare(b.name) == 0) {
+                  if (('' + a.group).localeCompare(b.group) == 0) {
+                    return ('' + a.address).localeCompare(b.address);
+                  } else {
+                    return ('' + a.group).localeCompare(b.group);
+                  }
+                } else {
+                  return ('' + b.name).localeCompare(a.name);
+                }
+              });
+            }
+            return results;
+          },
+          pagedFilteredSortedAddresses() {
+            return this.filteredSortedAddresses.slice((this.settings.addressTable.currentPage - 1) * this.settings.addressTable.pageSize, this.settings.addressTable.currentPage * this.settings.addressTable.pageSize);
           },
           filteredTxs() {
             const results = [];
@@ -531,103 +627,6 @@
           },
           pagedFilteredSortedTxs() {
             return this.filteredSortedTxs.slice((this.settings.txs.currentPage - 1) * this.settings.txs.pageSize, this.settings.txs.currentPage * this.settings.txs.pageSize);
-          },
-          filteredAddresses() {
-            const results = [];
-            const searchAddressesLower = this.settings.addressTable.searchAddresses && this.settings.addressTable.searchAddresses.toLowerCase() || null;
-            for (const [address, item] of Object.entries(this.addresses)) {
-              let include = searchAddressesLower == null ||
-                (item.name && item.name.toLowerCase().includes(searchAddressesLower)) ||
-                (item.group && item.group.toLowerCase().includes(searchAddressesLower)) ||
-                (item.address && item.address.toLowerCase().includes(searchAddressesLower)) ||
-                (item.notes && item.notes.toLowerCase().includes(searchAddressesLower));
-
-              if (include && this.settings.addressTable.addressTypeFilter != null) {
-                if (this.settings.addressTable.addressTypeFilter == 'unknown' && item.type == null) {
-                } else if (this.settings.addressTable.addressTypeFilter == item.type) {
-                } else {
-                  include = false;
-                }
-              }
-
-              if (include) {
-                results.push({
-                  address,
-                  type: item.type,
-                  mine: item.mine,
-                  ensName: item.ensName,
-                  group: item.group,
-                  name: item.name,
-                  tags: item.tags,
-                  notes: item.notes,
-                });
-              }
-            }
-            return results;
-          },
-          filteredSortedAddresses() {
-            let results = this.filteredAddresses;
-            if (this.settings.addressTable.sortOption == 'addressasc') {
-              results.sort((a, b) => {
-                return ('' + a.address).localeCompare(b.address);
-              });
-            } else if (this.settings.addressTable.sortOption == 'addressdsc') {
-              results.sort((a, b) => {
-                return ('' + b.address).localeCompare(a.address);
-              });
-            } else if (this.settings.addressTable.sortOption == 'groupasc') {
-              results.sort((a, b) => {
-                if (('' + a.group).localeCompare(b.group) == 0) {
-                  if (('' + a.name).localeCompare(b.name) == 0) {
-                    return ('' + a.address).localeCompare(b.address);
-                  } else {
-                    return ('' + a.name).localeCompare(b.name);
-                  }
-                } else {
-                  return ('' + a.group).localeCompare(b.group);
-                }
-              });
-            } else if (this.settings.addressTable.sortOption == 'groupdsc') {
-              results.sort((a, b) => {
-                if (('' + a.group).localeCompare(b.group) == 0) {
-                  if (('' + a.name).localeCompare(b.name) == 0) {
-                    return ('' + a.address).localeCompare(b.address);
-                  } else {
-                    return ('' + a.name).localeCompare(b.name);
-                  }
-                } else {
-                  return ('' + b.group).localeCompare(a.group);
-                }
-              });
-            } else if (this.settings.addressTable.sortOption == 'nameasc') {
-              results.sort((a, b) => {
-                if (('' + a.name).localeCompare(b.name) == 0) {
-                  if (('' + a.group).localeCompare(b.group) == 0) {
-                    return ('' + a.address).localeCompare(b.address);
-                  } else {
-                    return ('' + a.group).localeCompare(b.group);
-                  }
-                } else {
-                  return ('' + a.name).localeCompare(b.name);
-                }
-              });
-            } else if (this.settings.addressTable.sortOption == 'namedsc') {
-              results.sort((a, b) => {
-                if (('' + a.name).localeCompare(b.name) == 0) {
-                  if (('' + a.group).localeCompare(b.group) == 0) {
-                    return ('' + a.address).localeCompare(b.address);
-                  } else {
-                    return ('' + a.group).localeCompare(b.group);
-                  }
-                } else {
-                  return ('' + b.name).localeCompare(a.name);
-                }
-              });
-            }
-            return results;
-          },
-          pagedFilteredSortedAddresses() {
-            return this.filteredSortedAddresses.slice((this.settings.addressTable.currentPage - 1) * this.settings.addressTable.pageSize, this.settings.addressTable.currentPage * this.settings.addressTable.pageSize);
           },
         },
 
