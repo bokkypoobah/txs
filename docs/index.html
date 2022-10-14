@@ -314,16 +314,33 @@
                   </b-link>
                 </div>
               </template>
+              <template #cell(blah)="data">
+                <!-- Blah -->
+              </template>
               <template #cell(txHash)="data">
-                <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View tx in Etherscan.io'" target="_blank">
-                  {{ data.item.txHash.substring(0, 16).name }}
-                </b-link>
+                <!-- <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View tx in Etherscan.io'" target="_blank">
+                  {{ data.item.txHash.substring(0, 16) }}
+                </b-link> -->
+                <b-button size="sm" @click="toggleTxsDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
               </template>
               <template #cell(balance)="data">
                 <font size="-2">
                   <b-badge variant="default" v-b-popover.hover.bottom="'From account balance, previous block'">{{ formatETH(data.item.ethBalancePreviousBlock) }}</b-badge>
                 </font>
                 <b-badge variant="default" v-b-popover.hover.bottom="'From account balance'">{{ formatETH(data.item.ethBalance) }}</b-badge>
+              </template>
+              <template #row-details="data">
+                <b-card>
+                  <b-row class="mb-2">
+                    <b-col sm="3" class="text-sm-right"><b>Tx Hash:</b></b-col>
+                    <b-col>{{ data.item.txHash }}</b-col>
+                  </b-row>
+                  <b-row class="mb-2">
+                    <b-col sm="3" class="text-sm-right"><b>From:</b></b-col>
+                    <b-col>{{ ensOrAddress(data.item.from) }}</b-col>
+                  </b-row>
+                  <b-button size="sm" @click="toggleTxsDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
+                </b-card>
               </template>
             </b-table>
           </b-card-body>
@@ -359,6 +376,7 @@
             txs: {
               searchTxs: null,
               period: null,
+              showDetails: {},
               currentPage: 1,
               pageSize: 100,
               sortOption: 'timeasc',
@@ -502,7 +520,6 @@
                 }
               }
               if (include) {
-                const _showDetails = this.settings.addressTable.showDetails[address] || false;
                 results.push({
                   address,
                   type: item.type,
@@ -512,7 +529,7 @@
                   name: item.name,
                   tags: item.tags,
                   notes: item.notes,
-                  _showDetails,
+                  _showDetails: this.settings.addressTable.showDetails[address] || false,
                 });
               }
             }
@@ -631,6 +648,7 @@
                   to: v.data.tx && v.data.tx.to || null,
                   ethBalance: v.data.ethBalance || null,
                   ethBalancePreviousBlock: v.data.ethBalancePreviousBlock || null,
+                  _showDetails: this.settings.txs.showDetails[k] || false,
                 });
               }
               i++;
@@ -776,6 +794,16 @@
           clearSelectedTxs() {
             this.selectedTxs = {};
             localStorage.selectedTxs = JSON.stringify(this.selectedTxs);
+          },
+          toggleTxsDetails(data) {
+            console.log("toggleTxsDetails: " + JSON.stringify(data, null, 2));
+            const currentState = this.settings.txs.showDetails[data.item.txHash] || false;
+            if (!currentState) {
+              Vue.set(this.settings.txs.showDetails, data.item.txHash, !currentState);
+            } else {
+              Vue.delete(this.settings.txs.showDetails, data.item.txHash);
+            }
+            this.settingsUpdated();
           },
           settingsUpdated() {
             console.log("settingsUpdated: " + JSON.stringify(this.settings, null, 2));
@@ -1227,12 +1255,16 @@
               this.settings.addressTable.addressMineFilter = null;
             }
             if (!('showDetails' in this.settings.addressTable)) {
-              console.log("Adding showDetails");
+              console.log("Adding addressTable.showDetails");
               this.settings.addressTable.showDetails = {};
             }
             if (!('searchTxs' in this.settings.txs)) {
               console.log("Adding settings.txs.searchTxs");
               this.settings.txs.searchTxs = null;
+            }
+            if (!('showDetails' in this.settings.txs)) {
+              console.log("Adding txs.showDetails");
+              this.settings.txs.showDetails = {};
             }
 
             console.log("mounted - after: " + JSON.stringify(this.settings, null, 2));
