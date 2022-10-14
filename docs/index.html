@@ -185,12 +185,14 @@
                 </div>
               </template>
               <template #cell(notes)="data">
-                <!-- <div v-if="settings.editAddresses">
+                <div v-if="settings.editAddresses">
                   <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressesUpdated" debounce="600"></b-form-input>
                 </div>
                 <div v-else>
                   {{ data.item.notes }}
-                </div> -->
+                </div>
+              </template>
+              <template #cell(end)="data">
                 <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
               </template>
               <template #row-details="data">
@@ -203,7 +205,7 @@
                     <b-col sm="3" class="text-sm-right"><b>ENS:</b></b-col>
                     <b-col>{{ ensOrAddress(data.item.address) }}</b-col>
                   </b-row>
-                  <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
+                  <!-- <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button> -->
                 </b-card>
               </template>
             </b-table>
@@ -321,13 +323,16 @@
                 <!-- <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" v-b-popover.hover.bottom="'View tx in Etherscan.io'" target="_blank">
                   {{ data.item.txHash.substring(0, 16) }}
                 </b-link> -->
-                <b-button size="sm" @click="toggleTxsDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
+                <!-- <b-button size="sm" @click="toggleTxsDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button> -->
               </template>
               <template #cell(balance)="data">
                 <font size="-2">
                   <b-badge variant="default" v-b-popover.hover.bottom="'From account balance, previous block'">{{ formatETH(data.item.ethBalancePreviousBlock) }}</b-badge>
                 </font>
                 <b-badge variant="default" v-b-popover.hover.bottom="'From account balance'">{{ formatETH(data.item.ethBalance) }}</b-badge>
+              </template>
+              <template #cell(end)="data">
+                <b-button size="sm" @click="toggleTxsDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
               </template>
               <template #row-details="data">
                 <b-card>
@@ -339,7 +344,7 @@
                     <b-col sm="3" class="text-sm-right"><b>From:</b></b-col>
                     <b-col>{{ ensOrAddress(data.item.from) }}</b-col>
                   </b-row>
-                  <b-button size="sm" @click="toggleTxsDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
+                  <!-- <b-button size="sm" @click="toggleTxsDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button> -->
                 </b-card>
               </template>
             </b-table>
@@ -453,16 +458,18 @@
             { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+            { key: 'end', label: '', sortable: false, thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
           ],
           txsFields: [
             { key: 'number', label: '#', thStyle: 'width: 5%;', tdClass: 'text-truncate' },
             { key: 'timestamp', label: 'Timestamp', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'from', label: 'From', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'to', label: 'To', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-            { key: 'blah', label: 'Blah', thStyle: 'width: 25%;', tdClass: 'text-truncate' },
+            { key: 'blah', label: 'Blah', thStyle: 'width: 20%;', tdClass: 'text-truncate' },
             { key: 'txHash', label: 'Transactions', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'balance', label: 'Balance', /*sortable: true,*/ thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+            { key: 'end', label: '', sortable: false, thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
           ],
           db: {
             name: "txs089",
