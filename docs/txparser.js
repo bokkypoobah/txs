@@ -43,6 +43,7 @@ function parseTxForContract(erc721Interface, contract, txItem) {
 
   const data = {};
   let interface = null;
+
   if (contract && contract.abi) {
     interface = new ethers.utils.Interface(contract.abi);
     let decodedData = interface.parseTransaction({ data: txItem.data.tx.data, value: txItem.data.tx.value });

@@ -185,12 +185,26 @@
                 </div>
               </template>
               <template #cell(notes)="data">
-                <div v-if="settings.editAddresses">
+                <!-- <div v-if="settings.editAddresses">
                   <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].notes" @change="addressesUpdated" debounce="600"></b-form-input>
                 </div>
                 <div v-else>
                   {{ data.item.notes }}
-                </div>
+                </div> -->
+                <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
+              </template>
+              <template #row-details="data">
+                <b-card>
+                  <b-row class="mb-2">
+                    <b-col sm="3" class="text-sm-right"><b>Address:</b></b-col>
+                    <b-col>{{ data.item.address }}</b-col>
+                  </b-row>
+                  <b-row class="mb-2">
+                    <b-col sm="3" class="text-sm-right"><b>ENS:</b></b-col>
+                    <b-col>{{ ensOrAddress(data.item.address) }}</b-col>
+                  </b-row>
+                  <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
+                </b-card>
               </template>
             </b-table>
           </b-card>
@@ -337,6 +351,7 @@
               searchAddresses: null,
               addressTypeFilter: null,
               addressMineFilter: null,
+              showDetails: {},
               currentPage: 1,
               pageSize: 10,
               sortOption: 'addressasc',
@@ -487,6 +502,7 @@
                 }
               }
               if (include) {
+                const _showDetails = this.settings.addressTable.showDetails[address] || false;
                 results.push({
                   address,
                   type: item.type,
@@ -496,6 +512,7 @@
                   name: item.name,
                   tags: item.tags,
                   notes: item.notes,
+                  _showDetails,
                 });
               }
             }
@@ -726,6 +743,16 @@
               console.log("error: " + error);
             });
             db0.close();
+          },
+          toggleAddressDetails(data) {
+            // console.log("toggleAddressDetails: " + JSON.stringify(data, null, 2));
+            const currentState = this.settings.addressTable.showDetails[data.item.address] || false;
+            if (!currentState) {
+              Vue.set(this.settings.addressTable.showDetails, data.item.address, !currentState);
+            } else {
+              Vue.delete(this.settings.addressTable.showDetails, data.item.address);
+            }
+            this.settingsUpdated();
           },
           toggleSelectedTxs(txItems) {
             let someFalse = false;
@@ -996,7 +1023,7 @@
                       contract: {
                         name: null,
                         symbol: null,
-                      }
+                      },
                     }
                   }
                 }
@@ -1199,11 +1226,16 @@
               console.log("Adding addressMineFilter");
               this.settings.addressTable.addressMineFilter = null;
             }
+            if (!('showDetails' in this.settings.addressTable)) {
+              console.log("Adding showDetails");
+              this.settings.addressTable.showDetails = {};
+            }
             if (!('searchTxs' in this.settings.txs)) {
               console.log("Adding settings.txs.searchTxs");
               this.settings.txs.searchTxs = null;
             }
-            // console.log("mounted - after: " + JSON.stringify(this.settings, null, 2));
+
+            console.log("mounted - after: " + JSON.stringify(this.settings, null, 2));
           }
           (async() => {
             const db0 = new Dexie(this.db.name);
