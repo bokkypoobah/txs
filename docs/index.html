@@ -51,7 +51,7 @@
           </b-navbar-brand>
           <b-navbar-nav class="ml-auto">
             <b-avatar v-if="coinbase && coinbase != ensOrAddress(coinbase)" rounded variant="light" size="2.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAddress(coinbase)" v-b-popover.hover="'Your ENS avatar if set'"></b-avatar>
-            <b-button size="sm" disabled variant="link" class="ml-1" @click="doIt('syncUmswaps')" v-b-popover.hover.bottom="'Click to update wallet'">{{ coinbase ? ensOrAddress(coinbase) : 'Connect' }}</b-button>
+            <b-button size="sm" variant="link" class="ml-1" @click="processIt('connect')" v-b-popover.hover.bottom="'Click to update wallet'">{{ coinbase ? ensOrAddress(coinbase) : 'Connect' }}</b-button>
           </b-navbar-nav>
         </b-navbar>
 
@@ -65,7 +65,7 @@
             </b-card-text>
           </b-card>
 
-          <b-card v-if="settings.showAddresses" class="mx-2 mt-2 mb-1" body-class="m-1 p-0" header-class="m-0 p-2">
+          <b-card class="mx-1 mt-1 mb-1" body-class="m-1 p-0" header-class="m-0 p-2">
             <template #header>
               Addresses
             </template>
@@ -205,6 +205,10 @@
                     <b-col sm="3" class="text-sm-right"><b>ENS:</b></b-col>
                     <b-col>{{ ensOrAddress(data.item.address) }}</b-col>
                   </b-row>
+                  <b-row class="mb-2">
+                    <b-col sm="3" class="text-sm-right"><b>Import transactions:</b></b-col>
+                    <b-col><b-button size="sm" @click="processIt('importFromEtherscan', data.item.address)" variant="primary" v-b-popover.hover.top="'Import from Etherscan, rate limited to 1 request every 5 seconds'">Import</b-button></b-col>
+                  </b-row>
                   <!-- <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" v-b-popover.hover.top="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button> -->
                 </b-card>
               </template>
@@ -260,9 +264,9 @@
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
-              <div class="mt-0 pr-1">
+              <!-- <div class="mt-0 pr-1">
                 <b-button size="sm" :pressed.sync="settings.showAddresses" @click="settingsUpdated" variant="link" v-b-popover.hover.top="'Show addresses'"><span v-if="settings.showAddresses"><b-icon-people-fill shift-v="+1" font-scale="1.0"></b-icon-people-fill></span><span v-else><b-icon-people shift-v="+1" font-scale="1.0"></b-icon-people></span></b-button>
-              </div>
+              </div> -->
               <div class="mt-0 pr-1">
                 <b-form-select size="sm" v-model="settings.txs.sortOption" @change="settingsUpdated" :options="txsSortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
               </div>
@@ -366,7 +370,6 @@
           coinbase: null,
           settings: {
             showImport: false,
-            showAddresses: false,
             addAddresses: false,
             editAddresses: false,
             addressTable: {
@@ -659,10 +662,6 @@
                 });
               }
               i++;
-              // // TODO
-              // if (i > 1000) {
-              //   break;
-              // }
             }
             return results;
           },
@@ -846,8 +845,8 @@
             document.body.appendChild(link); // Required for FF
             link.click();
           },
-          async processIt(action) {
-            console.log("processIt: " + JSON.stringify(action));
+          async processIt(action, parameters = null) {
+            console.log("processIt - action: " + action + ", parameters: " + parameters);
             let connected = true;
             if (!window.ethereum) {
               connected = false;
@@ -873,10 +872,15 @@
               const block = await provider.getBlock("latest");
               const blockNumber = block.number;
               const timestamp = block.timestamp;
-              const ENSOWNERBATCHSIZE = 100; // TODO 200; // 500 fails occassionally
+              const ENSOWNERBATCHSIZE = 100; // 500 fails occassionally
 
               const db0 = new Dexie(this.db.name);
               db0.version(this.db.version).stores(this.db.schemaDefinition);
+
+              // TODO
+              if (action == "importFromEtherscan") {
+
+              }
 
               if (action == "importHashes") {
                 const hashesToImport = this.hashesToImport == null ? [] : this.hashesToImport.split(/[, \t\n]+/).filter(name => (name.length == 66 && name.substring(0, 2) == '0x'));
@@ -997,7 +1001,7 @@
                 this.sync.section = null;
               }
 
-              if (action == "addAddresses" || action == "retrieveData") {
+              if (action == "addAddresses" || action == "retrieveData" || action == "connect") {
                 const ensMap = {};
                 ensMap[this.coinbase] = this.coinbase;
                 for (const txItem of Object.values(this.txHashes)) {
@@ -1044,12 +1048,14 @@
 
                 for (const [address, ensName] of Object.entries(ensMap)) {
                   if (address in this.addresses) {
-                    this.addresses[address].ensName = ensName;
+                    if (this.addresses[address].ensName != ensName) {
+                      Vue.set(this.addresses[address], 'ensName', ensName);
+                    }
                   } else {
-                    this.addresses[address] = {
+                    Vue.set(this.addresses, address, {
                       address: address,
-                      type: null,
-                      mine: false,
+                      type: address == this.coinbase ? "eoa" : null,
+                      mine: address == this.coinbase ? true : false,
                       ensName: ensName,
                       group: null,
                       name: null,
@@ -1059,7 +1065,7 @@
                         name: null,
                         symbol: null,
                       },
-                    }
+                    });
                   }
                 }
                 // console.log(JSON.stringify(this.addresses));
@@ -1273,7 +1279,10 @@
               console.log("Adding txs.showDetails");
               this.settings.txs.showDetails = {};
             }
-
+            if ('showAddresses' in this.settings) {
+              console.log("Removing showAddresses");
+              delete this.settings['showAddresses'];
+            }
             console.log("mounted - after: " + JSON.stringify(this.settings, null, 2));
           }
           (async() => {
