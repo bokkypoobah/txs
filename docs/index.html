@@ -90,7 +90,7 @@
                 <b-button size="sm" :pressed.sync="settings.addAddresses" @click="settingsUpdated" variant="link" v-b-popover.hover.top="'Add addresses, tx hashes, Etherscan API key'"><span v-if="settings.addAddresses"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
               </div>
               <div class="mt-0 pr-1">
-                <b-button size="sm" :pressed.sync="settings.editAddresses" @click="settingsUpdated" :variant="settings.editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="'Edit mode'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
+                <b-button size="sm" :pressed.sync="settings.editAddresses" @click="settingsUpdated" :variant="settings.editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="settings.editAddresses ? 'End editing address attributes' : 'Edit address attributes'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
               </div>
               <div class="mt-0 flex-grow-1">
               </div>
@@ -183,6 +183,19 @@
                 <b-link v-if="ensOrAddress(data.item.address, 42) != data.item.address" :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
                   {{ ensOrAddress(data.item.address) }}
                 </b-link>
+                <b-button class="sm" :id="'popover-target-' + data.item.address" variant="link" class="m-0 p-0">
+                  <b-icon-caret-right shift-v="+5" font-scale="0.8"></b-icon-caret-right>
+                </b-button>
+                <b-popover :target="'popover-target-' + data.item.address" placement="right">
+                  <template #title>{{ ensOrAddress(data.item.address, 42) }}</template>
+                  <b-button size="sm" @click="copyToClipboard(data.item.address);" variant="link" class="m-0 p-0">Copy address to clipboard</b-button>
+                  <br />
+                  <b-button v-if="ensOrAddress(data.item.address, 42) != data.item.address" size="sm" @click="copyToClipboard(ensOrAddress(data.item.address, 1000));" variant="link" class="m-0 p-0">Copy ENS to clipboard</b-button>
+                  <br />
+                  <b-link :href="'https://etherscan.io/address/' + data.item.address" target="_blank">View account in etherscan.io</b-link>
+                  <br />
+                  <b-link :href="'https://opensea.io/' + data.item.address" target="_blank">View account in opensea.io</b-link>
+                </b-popover>
               </template>
               <template #cell(group)="data">
                 <div v-if="settings.editAddresses">
@@ -862,6 +875,26 @@
             link.setAttribute("download", "addresses.json");
             document.body.appendChild(link); // Required for FF
             link.click();
+          },
+          copyToClipboard(str) {
+            // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/copyToClipboard.md
+            const el = document.createElement('textarea');
+            el.value = str;
+            el.setAttribute('readonly', '');
+            el.style.position = 'absolute';
+            el.style.left = '-9999px';
+            document.body.appendChild(el);
+            const selected =
+              document.getSelection().rangeCount > 0
+                ? document.getSelection().getRangeAt(0)
+                : false;
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            if (selected) {
+              document.getSelection().removeAllRanges();
+              document.getSelection().addRange(selected);
+            }
           },
           async processIt(action, parameters = null) {
             console.log("processIt - action: " + action + ", parameters: " + parameters);
