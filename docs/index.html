@@ -188,9 +188,11 @@
                 </b-button>
                 <b-popover :target="'popover-target-' + data.item.address" placement="right">
                   <template #title>{{ ensOrAddress(data.item.address, 42) }}</template>
-                  <b-button size="sm" @click="copyToClipboard(data.item.address);" variant="link" class="m-0 p-0">Copy address to clipboard</b-button>
-                  <br />
-                  <b-button v-if="ensOrAddress(data.item.address, 42) != data.item.address" size="sm" @click="copyToClipboard(ensOrAddress(data.item.address, 1000));" variant="link" class="m-0 p-0">Copy ENS to clipboard</b-button>
+                  <b-link @click="copyToClipboard(data.item.address);">Copy address to clipboard</b-link>
+                  <span v-if="ensOrAddress(data.item.address, 42) != data.item.address">
+                    <br />
+                    <b-link @click="copyToClipboard(ensOrAddress(data.item.address, 1000));">Copy ENS name to clipboard</b-link>
+                  </span>
                   <br />
                   <b-link :href="'https://etherscan.io/address/' + data.item.address" target="_blank">View account in etherscan.io</b-link>
                   <br />
