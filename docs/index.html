@@ -51,7 +51,7 @@
           </b-navbar-brand>
           <b-navbar-nav class="ml-auto">
             <b-avatar v-if="coinbase && coinbase != ensOrAddress(coinbase)" rounded variant="light" size="2.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAddress(coinbase)" v-b-popover.hover="'Your ENS avatar if set'"></b-avatar>
-            <b-button size="sm" variant="link" class="ml-1" @click="processIt('connect')" v-b-popover.hover.bottom="'Click to update wallet'">{{ coinbase ? ensOrAddress(coinbase) : 'Connect' }}</b-button>
+            <b-button size="sm" variant="primary" class="ml-1" @click="processIt('connect')" v-b-popover.hover.bottom="'Click to update wallet'">{{ coinbase ? ensOrAddress(coinbase, 32) : 'Connect' }}</b-button>
           </b-navbar-nav>
         </b-navbar>
 
@@ -115,10 +115,10 @@
             <b-card v-if="settings.addAddresses" no-body no-header bg-variant="light" class="m-1 p-1">
               <b-card-body class="m-1 p-1">
                 <b-form-group label-cols-lg="2" label="Add Addresses" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
-                  <b-form-group label="Addresses:" label-for="addaddresses-hashes" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum addresses" class="mx-0 my-1 p-0">
+                  <b-form-group label="Addresses:" label-for="addaddresses-hashes" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum addresses. These will be saved in your local browser storage and will be used in web3 and Etherscan API calls" class="mx-0 my-1 p-0">
                     <b-form-textarea size="sm" id="addaddresses-hashes" v-model.trim="addressesToAdd" rows="1" max-rows="5" class="w-75"  placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
                   </b-form-group>
-                  <b-form-group label="" label-for="addaddresses-submit" label-size="sm" label-cols-sm="2" label-cols-sm="2" label-align-sm="right" description="Valid addresses will be added below. You can then import your transactions using the Import buttons in the table below" class="mx-0 my-1 p-0">
+                  <b-form-group label="" label-for="addaddresses-submit" label-size="sm" label-cols-sm="2" label-cols-sm="2" label-align-sm="right" description="Valid addresses will be added below. Click the + to the right to show details and click Import" class="mx-0 my-1 p-0">
                     <b-button size="sm" id="addaddresses-submit" :disabled="addressesToAdd == null || addressesToAdd.length == 0" @click="processIt('addAddresses')" variant="primary">Add</b-button>
                   </b-form-group>
                 </b-form-group>
@@ -140,7 +140,7 @@
 
               </b-card-body>
             </b-card>
-            <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" show-empty empty-text="Click the + button above to add addresses and Ethereum transaction hashes, and set your Etherscan API key for imports. Click on your address on the top right to add your address" head-variant="light" class="m-0 mt-1">
+            <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAddresses" show-empty empty-html="Click [+] above to add addresses and Ethereum transaction hashes, and set your Etherscan API key for imports. Click on your address on the top right to add it" head-variant="light" class="m-0 mt-1">
               <template #head(number)="data">
                 <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
                   <template #button-content>
