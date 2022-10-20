@@ -13,6 +13,7 @@
     <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css" />
     <link type="text/css" rel="stylesheet" href="css/bootstrap-vue.min.css"/>
     <link type="text/css" rel="stylesheet" href="css/bootstrap-vue-icons.min.css"/>
+    <link type="text/css" rel="stylesheet" href="css/app.css" />
     <script src="js/vue.js"></script>
     <script src="js/bootstrap-vue.min.js"></script>
     <script src="js/bootstrap-vue-icons.min.js"></script>
@@ -183,21 +184,6 @@
                 <b-link v-if="ensOrAddress(data.item.address, 42) != data.item.address" :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
                   {{ ensOrAddress(data.item.address) }}
                 </b-link>
-                <b-button class="sm" :id="'popover-target-' + data.item.address" variant="link" class="m-0 p-0">
-                  <b-icon-caret-right shift-v="+5" font-scale="0.8"></b-icon-caret-right>
-                </b-button>
-                <b-popover :target="'popover-target-' + data.item.address" placement="right">
-                  <template #title>{{ ensOrAddress(data.item.address, 42) }}</template>
-                  <b-link @click="copyToClipboard(data.item.address);">Copy address to clipboard</b-link>
-                  <span v-if="ensOrAddress(data.item.address, 42) != data.item.address">
-                    <br />
-                    <b-link @click="copyToClipboard(ensOrAddress(data.item.address, 1000));">Copy ENS name to clipboard</b-link>
-                  </span>
-                  <br />
-                  <b-link :href="'https://etherscan.io/address/' + data.item.address" target="_blank">View account in etherscan.io</b-link>
-                  <br />
-                  <b-link :href="'https://opensea.io/' + data.item.address" target="_blank">View account in opensea.io</b-link>
-                </b-popover>
               </template>
               <template #cell(group)="data">
                 <div v-if="settings.editAddresses">
@@ -225,6 +211,29 @@
               </template>
               <template #cell(end)="data">
                 <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" v-b-popover.hover="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
+                <b-button class="sm" :id="'popover-target-' + data.item.address" variant="link" class="m-0 p-0">
+                  <b-icon-caret-right shift-v="+5" font-scale="0.8"></b-icon-caret-right>
+                </b-button>
+                <b-popover :target="'popover-target-' + data.item.address" placement="right" custom-class="popover-max-width">
+                  <template #title>{{ ensOrAddress(data.item.address, 42) }}</template>
+                  <b-link @click="copyToClipboard(data.item.address);">Copy address to clipboard</b-link>
+                  <span v-if="ensOrAddress(data.item.address, 42) != data.item.address">
+                    <br />
+                    <b-link @click="copyToClipboard(ensOrAddress(data.item.address, 1000));">Copy ENS name to clipboard</b-link>
+                  </span>
+                  <br />
+                  <b-link :href="'https://etherscan.io/address/' + data.item.address" target="_blank">View account in etherscan.io</b-link>
+                  <br />
+                  <b-link :href="'https://opensea.io/' + data.item.address" target="_blank">View account in opensea.io</b-link>
+                  <br />
+                  <b-link :href="'https://opensea.io/' + data.item.address + '?tab=bids'" target="_blank">View offers received in opensea.io</b-link>
+                  <br />
+                  <b-link :href="'https://looksrare.org/accounts/' + data.item.address + '#owned'" target="_blank">View account in looksrare.org</b-link>
+                  <br />
+                  <b-link :href="'https://x2y2.io/user/' + data.item.address + '/items'" target="_blank">View account in x2y2.io</b-link>
+                  <br />
+                  <b-link :href="'https://www.gem.xyz/profile/' + data.item.address" target="_blank">View account in gem.xyz</b-link>
+                </b-popover>
               </template>
               <template #row-details="data">
                 <b-card>
@@ -492,10 +501,10 @@
             { key: 'type', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'mine', label: 'Mine', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
-            { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+            { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
             { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
             { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
-            { key: 'end', label: '', sortable: false, thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
+            { key: 'end', label: '', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
           ],
           txsFields: [
             { key: 'number', label: '#', thStyle: 'width: 5%;', tdClass: 'text-truncate' },
