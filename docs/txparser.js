@@ -1,3 +1,73 @@
+const _CUSTOMADDRESSES = {
+  "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85": {
+    mask: MASK_ISERC721,
+    symbol: "ENS",
+    name: "Ethereum Name Service",
+    decimals: null,
+  },
+  "0xB22c1C159d12461EA124b0deb4b5b93020E6Ad16": {
+    mask: MASK_ISCONTRACT,
+    symbol: "ENS",
+    name: "Old ETH Registrar Controller 2",
+    decimals: null,
+  },
+  "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413": {
+    mask: MASK_ISERC20,
+    symbol: "DAO",
+    name: "The DAO",
+    decimals: 16,
+  },
+  "0xBf4eD7b27F1d666546E30D74d50d173d20bca754": {
+    mask: MASK_ISERC20,
+    symbol: "WithdrawDAO",
+    name: "WithdrawDAO",
+    decimals: 16,
+  },
+};
+
+async function getAddressInfo(address, erc721Helper, provider) {
+  console.log("getAddressInfo - address: " + address);
+  const results = {};
+  if (address in _CUSTOMADDRESSES) {
+    results.mask = _CUSTOMADDRESSES[address].mask;
+    results.symbol = _CUSTOMADDRESSES[address].symbol;
+    results.name = _CUSTOMADDRESSES[address].name;
+    results.decimals = _CUSTOMADDRESSES[address].decimals;
+  } else {
+    try {
+      const tokenInfos = await erc721Helper.tokenInfo([address], { gasLimit: 100000000 });
+      for (let i = 0; i < tokenInfos[0].length; i++) {
+        results.mask = tokenInfos[0][i].toNumber();
+        results.symbol = tokenInfos[1][i];
+        results.name = tokenInfos[2][i];
+      }
+    } catch (e) {
+      console.log("getAddressInfo ERROR - address: " + address + ", message: " + e.message);
+    }
+    results.decimals = null;
+    if ((results.mask & MASK_ISERC20) == MASK_ISERC20) {
+      const erc20 = new ethers.Contract(address, ERC20ABI, provider);
+      try {
+        results.decimals = await erc20.decimals();
+      } catch (e) {
+        console.log("getAddressInfo ERROR - decimals - address: " + address + ", message: " + e.message);
+      }
+    }
+  }
+  if ((results.mask & MASK_ISEOA) == MASK_ISEOA) {
+    results.type = "eoa";
+  } else if ((results.mask & MASK_ISERC721) == MASK_ISERC721) {
+    results.type = "erc721";
+  } else if ((results.mask & MASK_ISERC20) == MASK_ISERC20) {
+    results.type = "erc20";
+  } else if ((results.mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
+    results.type = "contract";
+  }
+  console.log("results: " + JSON.stringify(results, null, 2));
+  return results;
+}
+
+
 function parseTxForContract(erc721Interface, contract, txItem) {
   console.log("  parseTxForContract.process(): " + (contract && contract.name || "(no contract)") + " " + txItem.txHash);
 

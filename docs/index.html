@@ -217,7 +217,7 @@
                 </div>
               </template>
               <template #cell(end)="data">
-                <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" v-b-popover.hover="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-dash shift-v="+1" font-scale="1.0"></b-icon-dash></span><span v-else><b-icon-plus shift-v="+1" font-scale="1.0"></b-icon-plus></span></b-button>
+                <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" class="m-0 p-0" v-b-popover.hover="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-arrows-angle-contract shift-v="+1" font-scale="0.9"></b-icon-arrows-angle-contract></span><span v-else><b-icon-arrows-angle-expand shift-v="+1" font-scale="0.9"></b-icon-arrows-angle-expand></span></b-button>
                 <b-button class="sm" :id="'popover-target-' + data.item.address" variant="link" class="m-0 p-0">
                   <b-icon-caret-right shift-v="+5" font-scale="0.8"></b-icon-caret-right>
                 </b-button>
@@ -1003,25 +1003,30 @@
                 });
               }
 
-              if (action == "addAddresses") {
-                const addAddresses = this.addressesToAdd == null ? [] : this.addressesToAdd.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
+              if (action == "connect" || action == "addAddresses") {
+                const addAddresses = (action == "connect") ? [this.coinbase] : (this.addressesToAdd == null ? [] : this.addressesToAdd.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x')));
                 for (let address of addAddresses) {
                   try {
+                    console.log("Processing address: " + address);
                     const checksummedAddress = ethers.utils.getAddress(address);
                     if (checksummedAddress && !(checksummedAddress in this.addresses)) {
-                      this.addresses[checksummedAddress] = {
+                      const info = await getAddressInfo(checksummedAddress, erc721Helper, provider);
+                      console.log("info: " + JSON.stringify(info, null, 2));
+                      Vue.set(this.addresses, checksummedAddress, {
                         address: checksummedAddress,
-                        type: null,
+                        type: info && info.type || null,
+                        mine: address == this.coinbase,
                         ensName: null,
                         group: null,
-                        name: null,
+                        name: info && info.symbol && info.name && (info.symbol + ': ' + info.name) || null,
                         tags: [],
                         notes: null,
                         contract: {
-                          name: null,
-                          symbol: null,
+                          name: info && info.name || null,
+                          symbol: info && info.symbol || null,
+                          decimals: info && info.decimals || null,
                         }
-                      }
+                      });
                     }
                   } catch (e) {
                     console.log(e.toString());
@@ -1095,19 +1100,20 @@
 
               if (action == "addAddresses" || action == "retrieveData" || action == "connect") {
                 const ensMap = {};
-                ensMap[this.coinbase] = this.coinbase;
-                for (const txItem of Object.values(this.txHashes)) {
-                  if (txItem.timestamp != null) {
-                    const from = txItem.data.tx && txItem.data.tx.from || null;
-                    if (from && !ensMap[from]) {
-                      ensMap[from] = from;
-                    }
-                    const to = txItem.data.tx && txItem.data.tx.to || null;
-                    if (to && !ensMap[to]) {
-                      ensMap[to] = to;
-                    }
-                  }
-                }
+                // TODO
+                // ensMap[this.coinbase] = this.coinbase;
+                // for (const txItem of Object.values(this.txHashes)) {
+                //   if (txItem.timestamp != null) {
+                //     const from = txItem.data.tx && txItem.data.tx.from || null;
+                //     if (from && !ensMap[from]) {
+                //       ensMap[from] = from;
+                //     }
+                //     const to = txItem.data.tx && txItem.data.tx.to || null;
+                //     if (to && !ensMap[to]) {
+                //       ensMap[to] = to;
+                //     }
+                //   }
+                // }
                 // console.log("ensMap: " + JSON.stringify(ensMap, null, 2));
 
                 for (const addressItem of Object.values(this.addresses)) {
