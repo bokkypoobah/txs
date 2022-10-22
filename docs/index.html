@@ -51,7 +51,7 @@
             <em v-b-popover.hover.bottom="'gm gm gm'">Txs</em>
           </b-navbar-brand>
           <b-navbar-nav class="ml-auto">
-            <b-avatar v-if="coinbase && coinbase != ensOrAddress(coinbase)" rounded variant="light" size="2.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAddress(coinbase, 1000)" v-b-popover.hover="'Your ENS avatar if set'"></b-avatar>
+            <b-avatar v-if="coinbase && coinbase != ensOrAddress(coinbase)" rounded variant="light" size="2.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAddress(coinbase)" v-b-popover.hover="'Your ENS avatar if set'"></b-avatar>
             <b-button size="sm" variant="primary" class="ml-1" @click="processIt('connect')" v-b-popover.hover.bottom="'Click to update wallet'">{{ coinbase ? ensOrAddress(coinbase, 32) : 'Connect' }}</b-button>
           </b-navbar-nav>
         </b-navbar>
@@ -158,12 +158,37 @@
                 </b-form-checkbox>
               </template>
               <template #cell(type)="data">
-                <div v-if="settings.editAddresses">
+                <b-button class="sm" :id="'popover-target-' + data.item.address" variant="link" class="m-0 p-0">
+                  <b-icon-caret-right shift-v="+5" font-scale="0.8"></b-icon-caret-right>
+                </b-button>
+                <b-popover :target="'popover-target-' + data.item.address" placement="right" custom-class="popover-max-width">
+                  <template #title>{{ ensOrAddress(data.item.address) }}</template>
+                  <b-link @click="copyToClipboard(data.item.address);">Copy address to clipboard</b-link>
+                  <span v-if="ensOrAddress(data.item.address) != data.item.address">
+                    <br />
+                    <b-link @click="copyToClipboard(ensOrAddress(data.item.address));">Copy ENS name to clipboard</b-link>
+                    <br />
+                    <b-link :href="'https://app.ens.domains/name/' + ensOrAddress(data.item.address)" target="_blank">View ENS name in app.ens.domains</b-link>
+                  </span>
+                  <br />
+                  <b-link :href="'https://etherscan.io/address/' + data.item.address" target="_blank">View account in etherscan.io</b-link>
+                  <br />
+                  <b-link :href="'https://opensea.io/' + data.item.address" target="_blank">View account in opensea.io</b-link>
+                  <br />
+                  <b-link :href="'https://opensea.io/' + data.item.address + '?tab=bids'" target="_blank">View offers received in opensea.io</b-link>
+                  <br />
+                  <b-link :href="'https://looksrare.org/accounts/' + data.item.address + '#owned'" target="_blank">View account in looksrare.org</b-link>
+                  <br />
+                  <b-link :href="'https://x2y2.io/user/' + data.item.address + '/items'" target="_blank">View account in x2y2.io</b-link>
+                  <br />
+                  <b-link :href="'https://www.gem.xyz/profile/' + data.item.address" target="_blank">View account in gem.xyz</b-link>
+                </b-popover>
+                <!-- <div v-if="settings.editAddresses">
                   <b-form-select size="sm" :disabled="!settings.editAddresses" v-model="data.item.type" @change="addressesUpdated" :options="addressTypes" v-b-popover.hover.top="'Address type'"></b-form-select>
                 </div>
                 <div v-else>
                   {{ addressTypes.find(e => e.value == data.item.type).text }}
-                </div>
+                </div> -->
               </template>
               <template #cell(mine)="data">
                 <div v-if="settings.editAddresses">
@@ -178,20 +203,20 @@
               <template #cell(address)="data">
                 <div class="d-flex flex-row">
                   <div style="min-width: 3.0rem;">
-                    <b-avatar v-if="ensOrAddress(data.item.address, 42) != data.item.address" rounded variant="light" size="3.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAddress(data.item.address, 1000)" v-b-popover.hover="'Your ENS avatar if set'"></b-avatar>
+                    <b-avatar v-if="ensOrAddress(data.item.address) != data.item.address" rounded variant="light" size="3.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAddress(data.item.address)" v-b-popover.hover="'Your ENS avatar if set'"></b-avatar>
                   </div>
                   <div>
                     <b-badge variant="default">{{ data.item.address }}</b-badge>
                     <br />
-                    <b-badge v-if="ensOrAddress(data.item.address, 42) != data.item.address" variant="default">{{ ensOrAddress(data.item.address, 64) }}</b-badge>
+                    <b-badge v-if="ensOrAddress(data.item.address) != data.item.address" variant="default">{{ ensOrAddress(data.item.address) }}</b-badge>
                   </div>
                 </div>
               </template>
-              <template #cell(ens)="data">
-                <b-link v-if="ensOrAddress(data.item.address, 42) != data.item.address" :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
+              <!-- <template #cell(ens)="data">
+                <b-link v-if="ensOrAddress(data.item.address) != data.item.address" :href="'https://etherscan.io/address/' + data.item.address" v-b-popover.hover.bottom="'View in Etherscan.io'" target="_blank">
                   {{ ensOrAddress(data.item.address) }}
                 </b-link>
-              </template>
+              </template> -->
               <template #cell(group)="data">
                 <div v-if="settings.editAddresses">
                   <b-form-input type="text" size="sm" v-model.trim="addresses[data.item.address].group" @change="addressesUpdated" debounce="600"></b-form-input>
@@ -218,29 +243,6 @@
               </template>
               <template #cell(end)="data">
                 <b-button size="sm" @click="toggleAddressDetails(data)" variant="link" class="m-0 p-0" v-b-popover.hover="data.item._showDetails ? 'Hide details' : 'Show details'"><span v-if="data.item._showDetails"><b-icon-arrows-angle-contract shift-v="+1" font-scale="0.9"></b-icon-arrows-angle-contract></span><span v-else><b-icon-arrows-angle-expand shift-v="+1" font-scale="0.9"></b-icon-arrows-angle-expand></span></b-button>
-                <b-button class="sm" :id="'popover-target-' + data.item.address" variant="link" class="m-0 p-0">
-                  <b-icon-caret-right shift-v="+5" font-scale="0.8"></b-icon-caret-right>
-                </b-button>
-                <b-popover :target="'popover-target-' + data.item.address" placement="right" custom-class="popover-max-width">
-                  <template #title>{{ ensOrAddress(data.item.address, 42) }}</template>
-                  <b-link @click="copyToClipboard(data.item.address);">Copy address to clipboard</b-link>
-                  <span v-if="ensOrAddress(data.item.address, 42) != data.item.address">
-                    <br />
-                    <b-link @click="copyToClipboard(ensOrAddress(data.item.address, 1000));">Copy ENS name to clipboard</b-link>
-                  </span>
-                  <br />
-                  <b-link :href="'https://etherscan.io/address/' + data.item.address" target="_blank">View account in etherscan.io</b-link>
-                  <br />
-                  <b-link :href="'https://opensea.io/' + data.item.address" target="_blank">View account in opensea.io</b-link>
-                  <br />
-                  <b-link :href="'https://opensea.io/' + data.item.address + '?tab=bids'" target="_blank">View offers received in opensea.io</b-link>
-                  <br />
-                  <b-link :href="'https://looksrare.org/accounts/' + data.item.address + '#owned'" target="_blank">View account in looksrare.org</b-link>
-                  <br />
-                  <b-link :href="'https://x2y2.io/user/' + data.item.address + '/items'" target="_blank">View account in x2y2.io</b-link>
-                  <br />
-                  <b-link :href="'https://www.gem.xyz/profile/' + data.item.address" target="_blank">View account in gem.xyz</b-link>
-                </b-popover>
               </template>
               <template #row-details="data">
                 <b-card>
@@ -771,13 +773,13 @@
             }
             return address == null ? { name: null, type: 'null' } : { name: address.substring(0, length), type: 'address' };
           },
-          ensOrAddress(address, length = 24) {
+          ensOrAddress(address, length = 0) {
             if (this.ensMap) {
               if (address in this.ensMap) {
-                return this.ensMap[address].substring(0, length);
+                return length == 0 ? this.ensMap[address] : this.ensMap[address].substring(0, length);
               }
             }
-            return address == null ? null : address.substring(0, length);
+            return address == null ? null : (length == 0 ? address : address.substring(0, length));
           },
           toggleSelectedAddresses(items) {
             let someFalse = false;
