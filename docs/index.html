@@ -958,7 +958,7 @@
                   .then(handleErrors)
                   .then(response => response.json())
                   .catch(function(error) {
-                     console.log("ERROR - doIt: " + error);
+                     console.log("ERROR - processIt: " + error);
                      // Want to work around API data unavailablity - state.sync.error = true;
                      return [];
                   });
