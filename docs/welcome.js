@@ -5,14 +5,14 @@ const Welcome = {
       <b-card no-body header="Welcome" class="border-0" header-class="p-1">
         <b-card no-body class="border-0 m-0 mt-2">
 
-          <b-card class="my-3" header-class="warningheader" header="Web3 Connection And/Or Incorrect Network Detected" v-if="!powerOn || (network.chainId != 1 && network.chainId != 4)">
+          <b-card class="my-3" header-class="warningheader" header="Web3 Connection And/Or Incorrect Network Detected" v-if="false && (!powerOn || (network.chainId != 1 && network.chainId != 4))">
             <b-card-text>
               Please install the MetaMask extension, connect to the Rinkeby network and refresh this page. Then click the [Power] button on the top right.
             </b-card-text>
           </b-card>
 
           <b-card-body class="p-0">
-            <b-card class="mb-2">
+            <b-card v-if="false" class="mb-2">
 
               <b-card class="my-3" header-class="warningheader" header="Mainnet Warning" v-if="network.chainId == 1">
                 <b-card-text>

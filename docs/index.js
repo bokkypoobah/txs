@@ -61,6 +61,7 @@ const store = new Vuex.Store({
     weth: wethModule,
     admin: adminModule,
     collections: collectionsModule,
+    config: configModule,
   }
 });
 
