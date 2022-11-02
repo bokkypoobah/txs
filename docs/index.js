@@ -5,6 +5,7 @@ Vue.use(Vuex);
 
 // Vue.component('apexchart', VueApexCharts);
 Vue.component('connection', Connection);
+Vue.component('coredata', Data);
 // Vue.component('tokens', Tokens);
 Vue.component('nixdata', NixData);
 Vue.component('collectiondata', CollectionData);
