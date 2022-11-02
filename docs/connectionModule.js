@@ -205,7 +205,7 @@ const Connection = {
             </b-col>
           </b-row>
           <b-row>
-            <b-col cols="4" class="small">Account</b-col>
+            <b-col cols="4" class="small">Coinbase</b-col>
             <b-col class="small truncate" cols="8">
               <b-link :href="network.explorer + 'address/' + coinbase" class="card-link" target="_blank">{{ coinbase == null ? '' : (coinbase.substring(0, 20) + '...') }}</b-link><span class="float-right"><b-link v-b-popover.hover="'View on OpenSea.io'" :href="network.opensea + 'accounts/'+ coinbase" target="_blank"><img src="images/381114e-opensea-logomark-flat-colored-blue.png" width="20px" /></b-link></span>
             </b-col>
@@ -223,33 +223,9 @@ const Connection = {
             </b-col>
           </b-row>
           <b-row>
-            <b-col cols="4" class="small">Nix WETH Allow</b-col>
-            <b-col class="small truncate" cols="8">
-              <b-link :href="network.explorer + 'address/' + network.wethAddress + '#events'" class="card-link" target="_blank">{{ formatETH(wethAllowanceToNix) }}</b-link>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col cols="4" class="small">Nix</b-col>
-            <b-col class="small truncate" cols="8">
-              <b-link :href="network.explorer + 'address/' + network.nixAddress + '#code'" class="card-link" target="_blank">{{ network.nixAddress == null ? '' : (network.nixAddress.substring(0, 20) + '...') }}</b-link>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col cols="4" class="small">Nix Helper</b-col>
-            <b-col class="small truncate" cols="8">
-              <b-link :href="network.explorer + 'address/' + network.nixHelperAddress + '#code'" class="card-link" target="_blank">{{ network.nixHelperAddress == null ? '' : (network.nixHelperAddress.substring(0, 20) + '...') }}</b-link>
-            </b-col>
-          </b-row>
-          <b-row>
             <b-col cols="4" class="small">WETH</b-col>
             <b-col class="small truncate" cols="8">
               <b-link :href="network.explorer + 'token/' + network.wethAddress" class="card-link" target="_blank">{{ network.wethAddress == null ? '' : (network.wethAddress.substring(0, 20) + '...') }}</b-link>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col cols="4" class="small">Royalty Engine</b-col>
-            <b-col class="small truncate" cols="8">
-              <b-link :href="network.explorer + 'address/' + network.royaltyEngineAddress + '#code'" class="card-link" target="_blank">{{ network.royaltyEngineAddress == null ? '' : (network.royaltyEngineAddress.substring(0, 20) + '...') }}</b-link>
             </b-col>
           </b-row>
           <b-row>
