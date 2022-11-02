@@ -92,8 +92,6 @@ const Config = {
   },
   mounted() {
     logDebug("Config", "mounted() $route: " + JSON.stringify(this.$route.params));
-    // store.dispatch('config/setEtherscanAPIKey', "Blah");
-    // store.dispatch('config/setPeriodStart', "Bluh");
     store.dispatch('config/restoreState');
     this.reschedule = true;
     logDebug("Config", "Calling timeoutCallback()");
@@ -128,11 +126,6 @@ const configModule = {
         results.push({ value: "y" + moment(startPeriod).year(), text: startPeriod.format('MMM DD YYYY') + " to " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
         startPeriod = moment(startPeriod).subtract(1, 'year');
       }
-      // for (let year = 0; year < 7; year++) {
-      //   const startPeriod = moment(currentStartPeriod).subtract(year, 'year');
-      //   const endPeriod = moment(startPeriod).add(1, 'year').subtract(1, 'second');
-      //   results.push({ value: "fym" + year, text: startPeriod.format('MMM DD YYYY') + " to " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
-      // }
       // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
       return results;
     },
