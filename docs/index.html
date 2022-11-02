@@ -61,6 +61,7 @@
     <script src="deploymentData.js"></script>
     <script src="functions.js"></script>
     <script src="config.js"></script>
+    <script src="data.js"></script>
     <script src="connectionModule.js"></script>
     <script src="nixDataModule.js"></script>
     <script src="collectionDataModule.js"></script>
@@ -105,6 +106,7 @@
               <b-nav-item size="sm" to="/weth" active-class="active" v-b-popover.hover="'Wrap/Unwrap Wrapped ETH For Trading'">WETH</b-nav-item>
               <b-nav-item size="sm" to="/admin" active-class="active" v-b-popover.hover="'Admin Functions'">Admin</b-nav-item> -->
               <b-nav-item size="sm" to="/accounts" active-class="active" v-b-popover.hover="'View/edit accounts'">Accounts</b-nav-item>
+              <b-nav-item size="sm" to="/data" active-class="active" v-b-popover.hover="'View/edit data'">Data</b-nav-item>
               <b-nav-item size="sm" to="/config" active-class="active" v-b-popover.hover="'Configuration'">Config</b-nav-item>
               <b-nav-form>
                 <b-button size="sm" variant="link" class="ml-4" v-b-popover.hover="'Power up this app'" @click="setPowerOn();" v-if="!powerOn"><b-icon-power shift-v="-1" font-scale="1.5"></b-icon-power></b-button>

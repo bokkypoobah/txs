@@ -1,17 +1,17 @@
-const Config = {
+const Data = {
   template: `
     <div class="mt-5 pt-3">
       <b-card no-body no-header class="border-0">
 
         <b-card no-body no-header bg-variant="light" class="m-1 p-1 w-75">
           <b-card-body class="m-1 p-1">
-            <b-form-group label-cols-lg="2" label="Import Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+            <b-form-group label-cols-lg="2" label="DATA Import Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Etherscan API Key:" label-for="etherscan-apikey" label-size="sm" label-cols-sm="2" label-align-sm="right" description="This key is stored in your local browser storage and is sent with Etherscan API requests. If not supplied, imports from Etherscan will be rate limited to 1 request every 5 seconds" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="etherscan-apikey" :value="etherscanAPIKey" @change="setEtherscanAPIKey($event)" placeholder="See https://docs.etherscan.io/ to obtain an API key" class="w-75"></b-form-input>
               </b-form-group>
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Reporting Period" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
-              <b-form-group label="Period Start:" label-for="period-start" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Current reporting period: ' + periodOptions[0].text" class="mx-0 my-1 p-0">
+              <b-form-group label="Period Start:" label-for="period-start" label-size="sm" label-cols-sm="2" label-align-sm="right" description="This key is stored in your local browser storage and is sent with Etherscan API requests. If not supplied, imports from Etherscan will be rate limited to 1 request every 5 seconds" class="mx-0 my-1 p-0">
                 <b-form-select size="sm" :value="periodStart" @change="setPeriodStart($event)" :options="periodStartOptions" class="w-25"></b-form-select>
               </b-form-group>
             </b-form-group>
@@ -58,13 +58,13 @@ const Config = {
       return store.getters['connection/network'];
     },
     etherscanAPIKey() {
-      return store.getters['config/etherscanAPIKey'];
+      return store.getters['data/etherscanAPIKey'];
     },
     periodStart() {
-      return store.getters['config/periodStart'];
+      return store.getters['data/periodStart'];
     },
     periodOptions() {
-      return store.getters['config/periodOptions'];
+      return store.getters['data/periodOptions'];
     },
   },
   methods: {
@@ -77,7 +77,7 @@ const Config = {
       store.dispatch('config/setPeriodStart', p);
     },
     async timeoutCallback() {
-      logDebug("Config", "timeoutCallback() count: " + this.count);
+      logDebug("Data", "timeoutCallback() count: " + this.count);
       this.count++;
       var t = this;
       if (this.reschedule) {
@@ -88,13 +88,13 @@ const Config = {
     },
   },
   beforeDestroy() {
-    logDebug("Config", "beforeDestroy()");
+    logDebug("Data", "beforeDestroy()");
   },
   mounted() {
-    logDebug("Config", "mounted() $route: " + JSON.stringify(this.$route.params));
+    logDebug("Data", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('config/restoreState');
     this.reschedule = true;
-    logDebug("Config", "Calling timeoutCallback()");
+    logDebug("Data", "Calling timeoutCallback()");
     this.timeoutCallback();
   },
   destroyed() {
@@ -102,11 +102,11 @@ const Config = {
   },
 };
 
-const configModule = {
+const dataModule = {
   namespaced: true,
   state: {
     etherscanAPIKey: null,
-    periodStart: 'jul',
+    periodStart: null,
   },
   getters: {
     etherscanAPIKey: state => state.etherscanAPIKey,
@@ -131,32 +131,32 @@ const configModule = {
   },
   mutations: {
     setEtherscanAPIKey(state, p) {
-      // logInfo("configModule", "mutations.setEtherscanAPIKey('" + p + "')")
+      // logInfo("dataModule", "mutations.setEtherscanAPIKey('" + p + "')")
       state.etherscanAPIKey = p;
     },
     setPeriodStart(state, p) {
-      // logInfo("configModule", "mutations.setPeriodStart('" + p + "')")
+      // logInfo("dataModule", "mutations.setPeriodStart('" + p + "')")
       state.periodStart = p;
     },
   },
   actions: {
     restoreState(context) {
-      // logInfo("configModule", "actions.restoreState()");
+      // logInfo("dataModule", "actions.restoreState()");
       if ('txsEtherscanAPIKey' in localStorage) {
         context.commit('setEtherscanAPIKey', localStorage.txsEtherscanAPIKey);
       }
       if ('txsPeriodStart' in localStorage) {
         context.commit('setPeriodStart', localStorage.txsPeriodStart);
       }
-      logInfo("configModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
+      logInfo("dataModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
     },
     setEtherscanAPIKey(context, p) {
-      // logInfo("configModule", "actions.setEtherscanAPIKey(" + JSON.stringify(p) + ")");
+      // logInfo("dataModule", "actions.setEtherscanAPIKey(" + JSON.stringify(p) + ")");
       context.commit('setEtherscanAPIKey', p);
       localStorage.txsEtherscanAPIKey = p;
     },
     setPeriodStart(context, p) {
-      // logInfo("configModule", "actions.setPeriodStart(" + JSON.stringify(p) + ")");
+      // logInfo("dataModule", "actions.setPeriodStart(" + JSON.stringify(p) + ")");
       context.commit('setPeriodStart', p);
       localStorage.txsPeriodStart = p;
     },
