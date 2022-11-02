@@ -16,7 +16,7 @@ const Config = {
               </b-form-group>
             </b-form-group>
 
-            {{ periodOptions }}
+            <!-- {{ periodOptions }} -->
           </b-card-body>
         </b-card>
 
