@@ -1,24 +1,23 @@
 const Config = {
   template: `
     <div class="mt-5 pt-3">
-      <b-card class="mt-5" header-class="warningheader" header="Web3 Connection And/Or Incorrect Network Detected" v-if="!powerOn || (network.chainId != 1 && network.chainId != 4)">
-        <b-card-text>
-          Please install the MetaMask extension, connect to the Rinkeby network and refresh this page. Then click the [Power] button on the top right.
-        </b-card-text>
-      </b-card>
+      <b-card no-body no-header class="border-0">
 
-      <b-card no-body header="Config" class="border-0" header-class="p-1" v-if="network.chainId == 1 || network.chainId == 4">
-        <b-card no-body class="border-0 m-0 mt-2">
-          <b-card-body class="p-0">
-
-            <div>
-              <b-card no-body class="mt-2">
-              Blah
-              </b-card>
-            </div>
-
+        <b-card no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+          <b-card-body class="m-1 p-1">
+            <b-form-group label-cols-lg="2" label="Import Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Etherscan API Key:" label-for="etherscan-apikey" label-size="sm" label-cols-sm="2" label-align-sm="right" description="This key is stored in your local browser storage and is sent with Etherscan API requests. If not supplied, imports from Etherscan will be rate limited to 1 request every 5 seconds" class="mx-0 my-1 p-0">
+                <b-form-input type="text" size="sm" id="etherscan-apikey" :value="etherscanAPIKey" @change="setEtherscanAPIKey($event)" placeholder="See https://docs.etherscan.io/ to obtain an API key" class="w-75"></b-form-input>
+              </b-form-group>
+            </b-form-group>
+            <b-form-group label-cols-lg="2" label="Reporting Period" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Period Start:" label-for="period-start" label-size="sm" label-cols-sm="2" label-align-sm="right" description="This key is stored in your local browser storage and is sent with Etherscan API requests. If not supplied, imports from Etherscan will be rate limited to 1 request every 5 seconds" class="mx-0 my-1 p-0">
+                <b-form-select size="sm" :value="periodStart" @change="setPeriodStart($event)" :options="periodStartOptions" class="w-25"></b-form-select>
+              </b-form-group>
+            </b-form-group>
           </b-card-body>
         </b-card>
+
       </b-card>
     </div>
   `,
@@ -26,6 +25,20 @@ const Config = {
     return {
       count: 0,
       reschedule: true,
+      periodStartOptions: [
+        { value: null, text: '(select ▼)' },
+        { value: 'jan', text: 'January' },
+        { value: 'feb', text: 'February' },
+        { value: 'mar', text: 'March' },
+        { value: 'apr', text: 'April' },
+        { value: 'may', text: 'May' },
+        { value: 'jun', text: 'June' },
+        { value: 'jul', text: 'July' },
+        { value: 'sep', text: 'September' },
+        { value: 'oct', text: 'October' },
+        { value: 'nov', text: 'November' },
+        { value: 'dec', text: 'December' },
+      ],
     }
   },
   computed: {
@@ -49,98 +62,16 @@ const Config = {
     },
   },
   methods: {
-
-    //
-    // async checkTestToadzRoyalty() {
-    //   event.preventDefault();
-    //   const provider = new ethers.providers.Web3Provider(window.ethereum);
-    //   const nix = new ethers.Contract(store.getters['connection/network'].nixAddress, NIXABI, provider);
-    //   const nixRoyaltyEngine = await nix.royaltyEngine();
-    //   this.testToadz.nixRoyaltyEngine = nixRoyaltyEngine;
-    //   const royaltyEngine = new ethers.Contract(nixRoyaltyEngine, ROYALTYENGINEABI, provider);
-    //   const royaltyPayments = [];
-    //   try {
-    //     const results = await royaltyEngine.getRoyaltyView(TESTTOADZADDRESS, this.testToadz.royaltyTokenId, ethers.utils.parseEther(this.testToadz.royaltyAmount));
-    //     for (let i = 0; i < results[0].length; i++) {
-    //       royaltyPayments.push({ payTo: results[0][i], payAmount: results[1][i] });
-    //     }
-    //   } catch (e) {
-    //     royaltyPayments.push({ payTo: "Error", payAmount: "Error" });
-    //   }
-    //   this.testToadz.royaltyPayments = royaltyPayments;
-    // },
-
-    // approveTestToadzToNix(approved) {
-    //   console.log("approveTestToadzToNix(" + approved + ")");
-    //   this.$bvModal.msgBoxConfirm(approved ? 'Approve TestToadz for Nix trading?' : 'Revoke TestToadz approval for Nix trading?', {
-    //       title: 'Please Confirm',
-    //       size: 'sm',
-    //       buttonSize: 'sm',
-    //       okVariant: 'danger',
-    //       okTitle: 'Yes',
-    //       cancelTitle: 'No',
-    //       footerClass: 'p-2',
-    //       hideHeaderClose: false,
-    //       centered: true
-    //     })
-    //     .then(async value1 => {
-    //       if (value1) {
-    //         event.preventDefault();
-    //         const provider = new ethers.providers.Web3Provider(window.ethereum);
-    //         const testToadz = new ethers.Contract(TESTTOADZADDRESS, TESTTOADZABI, provider);
-    //         const testToadzSigner = testToadz.connect(provider.getSigner());
-    //         try {
-    //           const tx = await testToadzSigner.setApprovalForAll(store.getters['connection/network'].nixAddress, approved);
-    //           this.testToadz.approvalMessage = tx.hash;
-    //           console.log("tx: " + JSON.stringify(tx));
-    //         } catch (e) {
-    //           this.testToadz.approvalMessage = e.message.toString();
-    //           console.log("error: " + e.toString());
-    //         }
-    //       }
-    //     })
-    //     .catch(err => {
-    //       // An error occurred
-    //     });
-    // },
-
-    // mintTestToadz() {
-    //   console.log("mintTestToadz()");
-    //   this.$bvModal.msgBoxConfirm('Mint ' + this.testToadz.mintNumber + ' TestToadz?', {
-    //       title: 'Please Confirm',
-    //       size: 'sm',
-    //       buttonSize: 'sm',
-    //       okVariant: 'danger',
-    //       okTitle: 'Yes',
-    //       cancelTitle: 'No',
-    //       footerClass: 'p-2',
-    //       hideHeaderClose: false,
-    //       centered: true
-    //     })
-    //     .then(async value1 => {
-    //       if (value1) {
-    //         event.preventDefault();
-    //         const provider = new ethers.providers.Web3Provider(window.ethereum);
-    //         const testToadz = new ethers.Contract(TESTTOADZADDRESS, TESTTOADZABI, provider);
-    //         const testToadzSigner = testToadz.connect(provider.getSigner());
-    //         try {
-    //           const tx = await testToadzSigner.mint(this.testToadz.mintNumber);
-    //           this.testToadz.mintMessage = tx.hash;
-    //           console.log("tx: " + JSON.stringify(tx));
-    //         } catch (e) {
-    //           this.testToadz.mintMessage = e.message.toString();
-    //           console.log("error: " + e.toString());
-    //         }
-    //       }
-    //     })
-    //     .catch(err => {
-    //       // An error occurred
-    //     });
-    // },
-
+    setEtherscanAPIKey(p) {
+      console.log("setEtherscanAPIKey(): " + p);
+      store.dispatch('config/setEtherscanAPIKey', p);
+    },
+    setPeriodStart(p) {
+      console.log("setPeriodStart(): " + p);
+      store.dispatch('config/setPeriodStart', p);
+    },
     async timeoutCallback() {
       logDebug("Config", "timeoutCallback() count: " + this.count);
-
       this.count++;
       var t = this;
       if (this.reschedule) {
@@ -161,7 +92,6 @@ const Config = {
     this.reschedule = true;
     logDebug("Config", "Calling timeoutCallback()");
     this.timeoutCallback();
-    // this.loadNFTs();
   },
   destroyed() {
     this.reschedule = false;
