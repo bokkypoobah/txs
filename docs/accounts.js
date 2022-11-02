@@ -1,11 +1,11 @@
-const Data = {
+const Accounts = {
   template: `
     <div class="mt-5 pt-3">
       <b-card no-body no-header class="border-0">
 
         <b-card no-body no-header bg-variant="light" class="m-1 p-1 w-75">
           <b-card-body class="m-1 p-1">
-            <b-form-group label-cols-lg="2" label="DATA Import Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+            <b-form-group label-cols-lg="2" label="ACCOUNTS Import Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Etherscan API Key:" label-for="etherscan-apikey" label-size="sm" label-cols-sm="2" label-align-sm="right" description="This key is stored in your local browser storage and is sent with Etherscan API requests. If not supplied, imports from Etherscan will be rate limited to 1 request every 5 seconds" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="etherscan-apikey" :value="etherscanAPIKey" @change="setEtherscanAPIKey($event)" placeholder="See https://docs.etherscan.io/ to obtain an API key" class="w-75"></b-form-input>
               </b-form-group>
@@ -68,16 +68,16 @@ const Data = {
     },
   },
   methods: {
-    setEtherscanAPIKey(p) {
-      console.log("setEtherscanAPIKey(): " + p);
-      store.dispatch('config/setEtherscanAPIKey', p);
-    },
-    setPeriodStart(p) {
-      console.log("setPeriodStart(): " + p);
-      store.dispatch('config/setPeriodStart', p);
-    },
+    // setEtherscanAPIKey(p) {
+    //   console.log("setEtherscanAPIKey(): " + p);
+    //   store.dispatch('config/setEtherscanAPIKey', p);
+    // },
+    // setPeriodStart(p) {
+    //   console.log("setPeriodStart(): " + p);
+    //   store.dispatch('config/setPeriodStart', p);
+    // },
     async timeoutCallback() {
-      logDebug("Data", "timeoutCallback() count: " + this.count);
+      logDebug("Accounts", "timeoutCallback() count: " + this.count);
       this.count++;
       var t = this;
       if (this.reschedule) {
@@ -88,13 +88,13 @@ const Data = {
     },
   },
   beforeDestroy() {
-    logDebug("Data", "beforeDestroy()");
+    logDebug("Accounts", "beforeDestroy()");
   },
   mounted() {
-    logDebug("Data", "mounted() $route: " + JSON.stringify(this.$route.params));
-    store.dispatch('config/restoreState');
+    logDebug("Accounts", "mounted() $route: " + JSON.stringify(this.$route.params));
+    store.dispatch('data/restoreState');
     this.reschedule = true;
-    logDebug("Data", "Calling timeoutCallback()");
+    logDebug("Accounts", "Calling timeoutCallback()");
     this.timeoutCallback();
   },
   destroyed() {
@@ -102,50 +102,50 @@ const Data = {
   },
 };
 
-const dataModule = {
+const accountsModule = {
   namespaced: true,
   state: {
-    accounts: {},
-    txs: {},
-    assets: {}, // ChainId/Contract/TokenId/Number
-    ensMap: {},
+    // accounts: {},
+    // txs: {},
+    // assets: {}, // ChainId/Contract/TokenId/Number
+    // ensMap: {},
   },
   getters: {
-    accounts: state => state.accounts,
-    txs: state => state.txs,
-    assets: state => state.assets,
-    ensMap: state => state.ensMap,
+    // accounts: state => state.accounts,
+    // txs: state => state.txs,
+    // assets: state => state.assets,
+    // ensMap: state => state.ensMap,
   },
   mutations: {
-    setEtherscanAPIKey(state, p) {
-      // logInfo("dataModule", "mutations.setEtherscanAPIKey('" + p + "')")
-      state.etherscanAPIKey = p;
-    },
-    setPeriodStart(state, p) {
-      // logInfo("dataModule", "mutations.setPeriodStart('" + p + "')")
-      state.periodStart = p;
-    },
+    // setEtherscanAPIKey(state, p) {
+    //   // logInfo("accountsModule", "mutations.setEtherscanAPIKey('" + p + "')")
+    //   state.etherscanAPIKey = p;
+    // },
+    // setPeriodStart(state, p) {
+    //   // logInfo("accountsModule", "mutations.setPeriodStart('" + p + "')")
+    //   state.periodStart = p;
+    // },
   },
   actions: {
-    restoreState(context) {
-      // logInfo("dataModule", "actions.restoreState()");
-      if ('txsEtherscanAPIKey' in localStorage) {
-        context.commit('setEtherscanAPIKey', JSON.parse(localStorage.txsEtherscanAPIKey));
-      }
-      if ('txsPeriodStart' in localStorage) {
-        context.commit('setPeriodStart', JSON.parse(localStorage.txsPeriodStart));
-      }
-      logInfo("dataModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
-    },
-    setEtherscanAPIKey(context, p) {
-      // logInfo("dataModule", "actions.setEtherscanAPIKey(" + JSON.stringify(p) + ")");
-      context.commit('setEtherscanAPIKey', p);
-      localStorage.txsEtherscanAPIKey = JSON.stringify(p);
-    },
-    setPeriodStart(context, p) {
-      // logInfo("dataModule", "actions.setPeriodStart(" + JSON.stringify(p) + ")");
-      context.commit('setPeriodStart', p);
-      localStorage.txsPeriodStart = JSON.stringify(p);
-    },
+    // restoreState(context) {
+    //   // logInfo("accountsModule", "actions.restoreState()");
+    //   if ('txsEtherscanAPIKey' in localStorage) {
+    //     context.commit('setEtherscanAPIKey', localStorage.txsEtherscanAPIKey);
+    //   }
+    //   if ('txsPeriodStart' in localStorage) {
+    //     context.commit('setPeriodStart', localStorage.txsPeriodStart);
+    //   }
+    //   logInfo("accountsModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
+    // },
+    // setEtherscanAPIKey(context, p) {
+    //   // logInfo("accountsModule", "actions.setEtherscanAPIKey(" + JSON.stringify(p) + ")");
+    //   context.commit('setEtherscanAPIKey', p);
+    //   localStorage.txsEtherscanAPIKey = p;
+    // },
+    // setPeriodStart(context, p) {
+    //   // logInfo("accountsModule", "actions.setPeriodStart(" + JSON.stringify(p) + ")");
+    //   context.commit('setPeriodStart', p);
+    //   localStorage.txsPeriodStart = p;
+    // },
   },
 };

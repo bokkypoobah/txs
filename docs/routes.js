@@ -3,6 +3,10 @@ const routes = [{
     component: Config,
     name: 'Config',
   }, {
+    path: '/accounts',
+    component: Accounts,
+    name: 'Accounts',
+  }, {
     path: '/data',
     component: Data,
     name: 'Data',

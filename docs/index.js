@@ -63,6 +63,7 @@ const store = new Vuex.Store({
     collections: collectionsModule,
     config: configModule,
     data: dataModule,
+    accounts: accountsModule,
   }
 });
 

@@ -11,7 +11,7 @@ const Config = {
               </b-form-group>
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Reporting Period" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
-              <b-form-group label="Period Start:" label-for="period-start" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Current reporting period: ' + periodOptions[0].text" class="mx-0 my-1 p-0">
+              <b-form-group label="Period Start:" label-for="period-start" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reporting periods: [' + periodOptions.map(e => e.text).join(', ') + ']'" class="mx-0 my-1 p-0">
                 <b-form-select size="sm" :value="periodStart" @change="setPeriodStart($event)" :options="periodStartOptions" class="w-25"></b-form-select>
               </b-form-group>
             </b-form-group>
@@ -114,7 +114,7 @@ const configModule = {
     periodOptions(state) {
       const results = [];
       // results.push({ value: null, text: "(select period)", data: null });
-      const startMonth = state.periodStart || "jul";
+      const startMonth = state.periodStart && state.periodStart.length > 0 && state.periodStart || "jul";
       const now = moment();
       let startPeriod = moment(now).month(startMonth).startOf('month');
       if (startPeriod > now) {
@@ -122,7 +122,7 @@ const configModule = {
       }
       while (moment(startPeriod).year() >= 2015) {
         const endPeriod = moment(startPeriod).add(1, 'year').subtract(1, 'second');
-        results.push({ value: "y" + moment(startPeriod).year(), text: startPeriod.format('MMM DD YYYY') + " to " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
+        results.push({ value: "y" + moment(startPeriod).year(), text: startPeriod.format('MMM DD YYYY') + " - " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
         startPeriod = moment(startPeriod).subtract(1, 'year');
       }
       // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
@@ -143,22 +143,22 @@ const configModule = {
     restoreState(context) {
       // logInfo("configModule", "actions.restoreState()");
       if ('txsEtherscanAPIKey' in localStorage) {
-        context.commit('setEtherscanAPIKey', localStorage.txsEtherscanAPIKey);
+        context.commit('setEtherscanAPIKey', JSON.parse(localStorage.txsEtherscanAPIKey));
       }
       if ('txsPeriodStart' in localStorage) {
-        context.commit('setPeriodStart', localStorage.txsPeriodStart);
+        context.commit('setPeriodStart', JSON.parse(localStorage.txsPeriodStart));
       }
       logInfo("configModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
     },
     setEtherscanAPIKey(context, p) {
       // logInfo("configModule", "actions.setEtherscanAPIKey(" + JSON.stringify(p) + ")");
       context.commit('setEtherscanAPIKey', p);
-      localStorage.txsEtherscanAPIKey = p;
+      localStorage.txsEtherscanAPIKey = JSON.stringify(p);
     },
     setPeriodStart(context, p) {
       // logInfo("configModule", "actions.setPeriodStart(" + JSON.stringify(p) + ")");
       context.commit('setPeriodStart', p);
-      localStorage.txsPeriodStart = p;
+      localStorage.txsPeriodStart = JSON.stringify(p);
     },
   },
 };
