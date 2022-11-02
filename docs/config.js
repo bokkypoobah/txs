@@ -120,7 +120,6 @@ const configModule = {
       if (startPeriod > now) {
         startPeriod = startPeriod.subtract(1, 'year');
       }
-      console.log("startPeriod: " + JSON.stringify(startPeriod));
       while (moment(startPeriod).year() >= 2015) {
         const endPeriod = moment(startPeriod).add(1, 'year').subtract(1, 'second');
         results.push({ value: "y" + moment(startPeriod).year(), text: startPeriod.format('MMM DD YYYY') + " to " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
