@@ -15,6 +15,8 @@ const Config = {
                 <b-form-select size="sm" :value="periodStart" @change="setPeriodStart($event)" :options="periodStartOptions" class="w-25"></b-form-select>
               </b-form-group>
             </b-form-group>
+
+            {{ periodOptions }}
           </b-card-body>
         </b-card>
 
@@ -34,6 +36,7 @@ const Config = {
         { value: 'may', text: 'May' },
         { value: 'jun', text: 'June' },
         { value: 'jul', text: 'July' },
+        { value: 'aug', text: 'August' },
         { value: 'sep', text: 'September' },
         { value: 'oct', text: 'October' },
         { value: 'nov', text: 'November' },
@@ -59,6 +62,9 @@ const Config = {
     },
     periodStart() {
       return store.getters['config/periodStart'];
+    },
+    periodOptions() {
+      return store.getters['config/periodOptions'];
     },
   },
   methods: {
@@ -107,6 +113,29 @@ const configModule = {
   getters: {
     etherscanAPIKey: state => state.etherscanAPIKey,
     periodStart: state => state.periodStart,
+    periodOptions(state) {
+      const results = [];
+      // results.push({ value: null, text: "(select period)", data: null });
+      const startMonth = state.periodStart || "jul";
+      const now = moment();
+      let startPeriod = moment(now).month(startMonth).startOf('month');
+      if (startPeriod > now) {
+        startPeriod = startPeriod.subtract(1, 'year');
+      }
+      console.log("startPeriod: " + JSON.stringify(startPeriod));
+      while (moment(startPeriod).year() >= 2015) {
+        const endPeriod = moment(startPeriod).add(1, 'year').subtract(1, 'second');
+        results.push({ value: "y" + moment(startPeriod).year(), text: startPeriod.format('MMM DD YYYY') + " to " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
+        startPeriod = moment(startPeriod).subtract(1, 'year');
+      }
+      // for (let year = 0; year < 7; year++) {
+      //   const startPeriod = moment(currentStartPeriod).subtract(year, 'year');
+      //   const endPeriod = moment(startPeriod).add(1, 'year').subtract(1, 'second');
+      //   results.push({ value: "fym" + year, text: startPeriod.format('MMM DD YYYY') + " to " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
+      // }
+      // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
+      return results;
+    },
   },
   mutations: {
     setEtherscanAPIKey(state, p) {
