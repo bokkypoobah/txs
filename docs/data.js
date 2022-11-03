@@ -139,31 +139,24 @@ const dataModule = {
       });
     },
     addENSName(state, nameInfo) {
-      // logInfo("dataModule", "mutations.addENSName(" + JSON.stringify(nameInfo) + ")")
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
     },
     toggleAccountMine(state, key) {
-      // logInfo("dataModule", "mutations.toggleAccountMine - key: " + JSON.stringify(key));
       Vue.set(state.accounts[key], 'mine', !state.accounts[key].mine);
     },
     toggleAccountSync(state, key) {
-      // logInfo("dataModule", "mutations.toggleAccountSync - key: " + JSON.stringify(key));
       Vue.set(state.accounts[key], 'sync', !state.accounts[key].sync);
     },
     setAccountType(state, info) {
-      // logInfo("dataModule", "mutations.setAccountType - info: " + JSON.stringify(info));
       Vue.set(state.accounts[info.key], 'type', info.accountType);
     },
     setGroup(state, info) {
-      // logInfo("dataModule", "mutations.setGroup - info: " + JSON.stringify(info));
       Vue.set(state.accounts[info.key], 'group', info.group);
     },
     setName(state, info) {
-      // logInfo("dataModule", "mutations.setName - info: " + JSON.stringify(info));
       Vue.set(state.accounts[info.key], 'name', info.name);
     },
     setNotes(state, info) {
-      // logInfo("dataModule", "mutations.setNotes - info: " + JSON.stringify(info));
       Vue.set(state.accounts[info.key], 'notes', info.notes);
     },
   },
@@ -204,20 +197,14 @@ const dataModule = {
           context.commit('addENSName', { account, name });
         }
       }
-      context.dispatch('saveData', 'all');
+      context.dispatch('saveData', ['accounts', 'ensMap']);
     },
-    async saveData(context, type) {
-      // logInfo("dataModule", "actions.saveData - type: " + type);
+    async saveData(context, types) {
+      // logInfo("dataModule", "actions.saveData - types: " + JSON.stringify(types));
       const db0 = new Dexie(context.state.db.name);
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-      if (type == 'accounts' || type == 'all') {
-        await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
-        }).catch(function(error) {
-          console.log("error: " + error);
-        });
-      }
-      if (type == 'ensMap' || type == 'all') {
-        await db0.cache.put({ objectName: 'ensMap', object: context.state.ensMap }).then (function() {
+      for (let type of types) {
+        await db0.cache.put({ objectName: type, object: context.state[type] }).then (function() {
         }).catch(function(error) {
           console.log("error: " + error);
         });
@@ -225,34 +212,28 @@ const dataModule = {
       db0.close();
     },
     async toggleAccountMine(context, key) {
-      // logInfo("dataModule", "actions.toggleAccountMine - key: " + key);
       context.commit('toggleAccountMine', key);
-      context.dispatch('saveData', 'accounts');
+      context.dispatch('saveData', ['accounts']);
     },
     async toggleAccountSync(context, key) {
-      // logInfo("dataModule", "actions.toggleAccountSync - key: " + key);
       context.commit('toggleAccountSync', key);
-      context.dispatch('saveData', 'accounts');
+      context.dispatch('saveData', ['accounts']);
     },
     async setAccountType(context, info) {
-      // logInfo("dataModule", "actions.setAccountType - info: " + JSON.stringify(info));
       context.commit('setAccountType', info);
-      context.dispatch('saveData', 'accounts');
+      context.dispatch('saveData', ['accounts']);
     },
     async setGroup(context, info) {
-      // logInfo("dataModule", "actions.setGroup - info: " + JSON.stringify(info));
       context.commit('setGroup', info);
-      context.dispatch('saveData', 'accounts');
+      context.dispatch('saveData', ['accounts']);
     },
     async setName(context, info) {
-      // logInfo("dataModule", "actions.setName - info: " + JSON.stringify(info));
       context.commit('setName', info);
-      context.dispatch('saveData', 'accounts');
+      context.dispatch('saveData', ['accounts']);
     },
     async setNotes(context, info) {
-      // logInfo("dataModule", "actions.setNotes - info: " + JSON.stringify(info));
       context.commit('setNotes', info);
-      context.dispatch('saveData', 'accounts');
+      context.dispatch('saveData', ['accounts']);
     },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {
