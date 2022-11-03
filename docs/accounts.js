@@ -108,10 +108,18 @@ const Accounts = {
                 </div>
                 <div v-if="data.item.mine || settings.editAccounts" class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountMine(data.item.key)">Mine</b-form-checkbox>
+                    <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountMine(data.item.key)" v-b-popover.hover="'My account?'">Mine</b-form-checkbox>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.mine" variant="primary" v-b-popover.hover="'My account'">Mine</b-badge>
+                  </span>
+                </div>
+                <div v-if="data.item.sync || settings.editAccounts" class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editAccounts">
+                    <b-form-checkbox size="sm" :checked="data.item.sync ? 1 : 0" value="1" @change="toggleAccountSync(data.item.key)" v-b-popover.hover="'Include in update process?'">Sync</b-form-checkbox>
+                  </span>
+                  <span v-if="!settings.editAccounts">
+                    <b-badge v-if="data.item.sync" variant="primary" v-b-popover.hover="'Will be included in the update process'">Sync</b-badge>
                   </span>
                 </div>
                 <div class="m-0 pt-1 pr-1">
@@ -349,6 +357,7 @@ const Accounts = {
             name: data.name,
             type: data.type,
             mine: data.mine,
+            sync: data.sync,
             tags: data.tags,
             notes: data.notes,
             contract: data.contract,
@@ -463,6 +472,9 @@ const Accounts = {
     },
     async toggleAccountMine(key) {
       store.dispatch('data/toggleAccountMine', key);
+    },
+    async toggleAccountSync(key) {
+      store.dispatch('data/toggleAccountSync', key);
     },
     async setAccountType(key, accountType) {
       store.dispatch('data/setAccountType', { key, accountType });

@@ -146,6 +146,10 @@ const dataModule = {
       // logInfo("dataModule", "mutations.toggleAccountMine - key: " + JSON.stringify(key));
       Vue.set(state.accounts[key], 'mine', !state.accounts[key].mine);
     },
+    toggleAccountSync(state, key) {
+      // logInfo("dataModule", "mutations.toggleAccountSync - key: " + JSON.stringify(key));
+      Vue.set(state.accounts[key], 'sync', !state.accounts[key].sync);
+    },
     setAccountType(state, info) {
       // logInfo("dataModule", "mutations.setAccountType - info: " + JSON.stringify(info));
       Vue.set(state.accounts[info.key], 'type', info.accountType);
@@ -223,6 +227,11 @@ const dataModule = {
     async toggleAccountMine(context, key) {
       // logInfo("dataModule", "actions.toggleAccountMine - key: " + key);
       context.commit('toggleAccountMine', key);
+      context.dispatch('saveData', 'accounts');
+    },
+    async toggleAccountSync(context, key) {
+      // logInfo("dataModule", "actions.toggleAccountSync - key: " + key);
+      context.commit('toggleAccountSync', key);
       context.dispatch('saveData', 'accounts');
     },
     async setAccountType(context, info) {
