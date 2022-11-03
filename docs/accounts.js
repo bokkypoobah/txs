@@ -121,7 +121,7 @@ const Accounts = {
                 </div>
                 <div class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-input type="text" size="sm" v-model.trim="data.item.group" @change="setGroup(data.item.key, data.item.group)" debounce="600"></b-form-input>
+                    <b-form-input type="text" size="sm" v-model.trim="data.item.group" @change="setGroup(data.item.key, data.item.group)" debounce="600" placeholder="group"></b-form-input>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.group && data.item.group.length > 0" variant="dark" v-b-popover.hover="'Group'">{{ data.item.group }}</b-badge>
@@ -186,9 +186,17 @@ const Accounts = {
               <b-badge variant="secondary">{{ data.item.group }}</b-badge>
             </font>
             -->
-            {{ data.item.name }}
-            <br />
-            <b-form-textarea size="sm" v-model.trim="data.item.notes" placeholder="notes" rows="2" max-rows="20"></b-form-textarea>
+            <span v-if="settings.editAccounts">
+              <b-form-input type="text" size="sm" v-model.trim="data.item.name" @change="setName(data.item.key, data.item.name)" debounce="600" placeholder="name"></b-form-input>
+              <b-form-textarea size="sm" v-model.trim="data.item.notes" @change="setNotes(data.item.key, data.item.notes)" placeholder="notes" rows="2" max-rows="20" class="mt-1"></b-form-textarea>
+            </span>
+            <span v-if="!settings.editAccounts">
+              {{ data.item.name }}
+              <br />
+              <font size="-1">
+                {{ data.item.notes }}
+              </font>
+            </span>
           </template>
         </b-table>
 
@@ -331,7 +339,7 @@ const Accounts = {
             chainId,
             account,
             group: data.group,
-            name: 'The quick brown fox jumps', // TODO data.name,
+            name: data.name,
             type: data.type,
             mine: data.mine,
             tags: data.tags,
@@ -447,12 +455,16 @@ const Accounts = {
       store.dispatch('data/toggleAccountMine', key);
     },
     async setAccountType(key, accountType) {
-      console.log("setAccountType - key: " + key + ", accountType: " + accountType);
       store.dispatch('data/setAccountType', { key, accountType });
     },
     async setGroup(key, group) {
-      console.log("setGroup - key: " + key + ", group: " + group);
       store.dispatch('data/setGroup', { key, group });
+    },
+    async setName(key, name) {
+      store.dispatch('data/setName', { key, name });
+    },
+    async setNotes(key, notes) {
+      store.dispatch('data/setNotes', { key, notes });
     },
     ensOrAccount(account, length = 0) {
       let result = null;

@@ -108,7 +108,7 @@ const dataModule = {
   },
   mutations: {
     addNewAccount(state, accountInfo) {
-      logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(accountInfo) + ")")
+      // logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(accountInfo) + ")")
       const block = store.getters['connection/block'];
       const network = store.getters['connection/network'];
       const chainId = network.chainId;
@@ -137,28 +137,30 @@ const dataModule = {
           blockNumber: null,
         },
       });
-      logInfo("dataModule", JSON.stringify(key) + " => " + JSON.stringify(state.accounts[key], null, 2));
     },
     addENSName(state, nameInfo) {
-      logInfo("dataModule", "mutations.addENSName(" + JSON.stringify(nameInfo) + ")")
+      // logInfo("dataModule", "mutations.addENSName(" + JSON.stringify(nameInfo) + ")")
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
-      logInfo("dataModule", "mutations.addENSName - ensMap: " + JSON.stringify(state.ensMap));
     },
     toggleAccountMine(state, key) {
-      logInfo("dataModule", "mutations.toggleAccountMine - key: " + JSON.stringify(key));
-      // console.log(JSON.stringify(state.accounts[key], null, 2));
+      // logInfo("dataModule", "mutations.toggleAccountMine - key: " + JSON.stringify(key));
       Vue.set(state.accounts[key], 'mine', !state.accounts[key].mine);
-      // logInfo("dataModule", "mutations.toggleAccountMine - account: " + JSON.stringify(state.accounts[key], null, 2));
     },
     setAccountType(state, info) {
-      logInfo("dataModule", "mutations.setAccountType - info: " + JSON.stringify(info));
+      // logInfo("dataModule", "mutations.setAccountType - info: " + JSON.stringify(info));
       Vue.set(state.accounts[info.key], 'type', info.accountType);
-      // logInfo("dataModule", "mutations.setAccountType - account: " + JSON.stringify(state.accounts[info.key], null, 2));
     },
     setGroup(state, info) {
-      logInfo("dataModule", "mutations.setGroup - info: " + JSON.stringify(info));
+      // logInfo("dataModule", "mutations.setGroup - info: " + JSON.stringify(info));
       Vue.set(state.accounts[info.key], 'group', info.group);
-      // logInfo("dataModule", "mutations.setAccountType - account: " + JSON.stringify(state.accounts[info.key], null, 2));
+    },
+    setName(state, info) {
+      // logInfo("dataModule", "mutations.setName - info: " + JSON.stringify(info));
+      Vue.set(state.accounts[info.key], 'name', info.name);
+    },
+    setNotes(state, info) {
+      // logInfo("dataModule", "mutations.setNotes - info: " + JSON.stringify(info));
+      Vue.set(state.accounts[info.key], 'notes', info.notes);
     },
   },
   actions: {
@@ -183,7 +185,7 @@ const dataModule = {
       }
     },
     async addNewAccounts(context, newAccounts) {
-      logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
+      // logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
       const accounts = newAccounts == null ? [] : newAccounts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
@@ -198,50 +200,50 @@ const dataModule = {
           context.commit('addENSName', { account, name });
         }
       }
+      context.dispatch('saveData', 'all');
+    },
+    async saveData(context, type) {
+      // logInfo("dataModule", "actions.saveData - type: " + type);
       const db0 = new Dexie(context.state.db.name);
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-      await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
-      }).catch(function(error) {
-        console.log("error: " + error);
-      });
-      await db0.cache.put({ objectName: 'ensMap', object: context.state.ensMap }).then (function() {
-      }).catch(function(error) {
-        console.log("error: " + error);
-      });
+      if (type == 'accounts' || type == 'all') {
+        await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
+        }).catch(function(error) {
+          console.log("error: " + error);
+        });
+      }
+      if (type == 'ensMap' || type == 'all') {
+        await db0.cache.put({ objectName: 'ensMap', object: context.state.ensMap }).then (function() {
+        }).catch(function(error) {
+          console.log("error: " + error);
+        });
+      }
       db0.close();
     },
     async toggleAccountMine(context, key) {
-      logInfo("dataModule", "actions.toggleAccountMine - key: " + key);
+      // logInfo("dataModule", "actions.toggleAccountMine - key: " + key);
       context.commit('toggleAccountMine', key);
-      const db0 = new Dexie(context.state.db.name);
-      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-      await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
-      }).catch(function(error) {
-        console.log("error: " + error);
-      });
-      db0.close();
+      context.dispatch('saveData', 'accounts');
     },
     async setAccountType(context, info) {
-      logInfo("dataModule", "actions.setAccountType - info: " + JSON.stringify(info));
+      // logInfo("dataModule", "actions.setAccountType - info: " + JSON.stringify(info));
       context.commit('setAccountType', info);
-      const db0 = new Dexie(context.state.db.name);
-      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-      await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
-      }).catch(function(error) {
-        console.log("error: " + error);
-      });
-      db0.close();
+      context.dispatch('saveData', 'accounts');
     },
     async setGroup(context, info) {
-      logInfo("dataModule", "actions.setGroup - info: " + JSON.stringify(info));
+      // logInfo("dataModule", "actions.setGroup - info: " + JSON.stringify(info));
       context.commit('setGroup', info);
-      // const db0 = new Dexie(context.state.db.name);
-      // db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-      // await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
-      // }).catch(function(error) {
-      //   console.log("error: " + error);
-      // });
-      // db0.close();
+      context.dispatch('saveData', 'accounts');
+    },
+    async setName(context, info) {
+      // logInfo("dataModule", "actions.setName - info: " + JSON.stringify(info));
+      context.commit('setName', info);
+      context.dispatch('saveData', 'accounts');
+    },
+    async setNotes(context, info) {
+      // logInfo("dataModule", "actions.setNotes - info: " + JSON.stringify(info));
+      context.commit('setNotes', info);
+      context.dispatch('saveData', 'accounts');
     },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {
