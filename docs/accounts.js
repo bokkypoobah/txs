@@ -95,6 +95,7 @@ const Accounts = {
             <br />
             <font size="-1">
               <b-badge variant="info">{{ data.item.type }}</b-badge>
+              <b-badge v-if="data.item.mine" variant="warning">Mine</b-badge>
               <span v-if="data.item.type != 'erc721'">
                 {{ ensOrNull(data.item.account) }}
               </span>
