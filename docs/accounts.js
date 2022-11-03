@@ -4,6 +4,9 @@ const Accounts = {
       <b-card no-body no-header class="border-0">
 
         <div class="d-flex flex-wrap m-0 p-0">
+          <div class="mt-0 pr-1">
+            <b-form-input type="text" size="sm" v-model.trim="settings.filter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by address fragment'" placeholder="🔍 address"></b-form-input>
+          </div>
           <!--
           <div class="mt-0 pr-1">
             <b-form-input type="text" size="sm" v-model.trim="settings.addressTable.searchAddresses" @change="settingsUpdated" debounce="600" v-b-popover.hover.top="'Filter by partial address, name'" placeholder="🔍 address"></b-form-input>
@@ -23,7 +26,7 @@ const Accounts = {
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-0">
-            <b-button size="sm" :pressed.sync="showNewAccounts" @click="saveSettings" variant="link" v-b-popover.hover.top="'Add new accounts'"><span v-if="showNewAccounts"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
+            <b-button size="sm" :pressed.sync="settings.showNewAccounts" @click="saveSettings" variant="link" v-b-popover.hover.top="'Add new accounts'"><span v-if="settings.showNewAccounts"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
           </div>
           <!--
           <div class="mt-0 pr-1">
@@ -38,27 +41,27 @@ const Accounts = {
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-1">
-            <b-form-select size="sm" v-model="sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+            <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
             <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedAccounts.length }}</font>
           </div>
           <div class="mt-0 pr-1">
-            <b-pagination size="sm" v-model="currentPage" @input="saveSettings" :total-rows="filteredSortedAccounts.length" :per-page="pageSize" style="height: 0;"></b-pagination>
+            <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedAccounts.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
           </div>
           <div class="mt-0 pl-1">
-            <b-form-select size="sm" v-model="pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
+            <b-form-select size="sm" v-model="settings.pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
           </div>
         </div>
 
-        <b-card v-if="showNewAccounts" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+        <b-card v-if="settings.showNewAccounts" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
           <b-card-body class="m-1 p-1">
             <b-form-group label-cols-lg="2" label="New Accounts" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
               <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and will be transmitted in web3 and Etherscan API calls" class="mx-0 my-1 p-0">
-                <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="newAccounts" rows="1" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
+                <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="settings.newAccounts" rows="1" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
               </b-form-group>
               <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added below. Click the + to the right to show details and click Import" class="mx-0 my-1 p-0">
-                <b-button size="sm" id="newaccounts-submit" :disabled="newAccounts == null || newAccounts.length == 0" @click="addNewAccounts" variant="primary">Add</b-button>
+                <b-button size="sm" id="newaccounts-submit" :disabled="settings.newAccounts == null || settings.newAccounts.length == 0" @click="addNewAccounts" variant="primary">Add</b-button>
               </b-form-group>
             </b-form-group>
 
@@ -77,15 +80,14 @@ const Accounts = {
     return {
       count: 0,
       reschedule: true,
-
-      currentPage: 1,
-      pageSize: 10,
-      sortOption: 'accountasc',
-
-      showNewAccounts: true, // TODO false,
-
-      newAccounts: "0x9126b817ccca682beaa9f4eae734948ee1166af1", // TODO null,
-
+      settings: {
+        filter: null,
+        showNewAccounts: false,
+        newAccounts: "0x9126B817CCca682BeaA9f4EaE734948EE1166Af1", // TODO null,
+        currentPage: 1,
+        pageSize: 10,
+        sortOption: 'accountasc',
+      },
       sortOptions: [
         { value: 'accountasc', text: '▲ Account' },
         { value: 'accountdsc', text: '▼ Account' },
@@ -94,7 +96,6 @@ const Accounts = {
         { value: 'nameasc', text: '▲ Name, ▲ Group' },
         { value: 'namedsc', text: '▼ Name, ▲ Group' },
       ],
-
       pageSizes: [
         { value: 1, text: '1' },
         { value: 5, text: '5' },
@@ -134,28 +135,39 @@ const Accounts = {
     ensMap() {
       return store.getters['data/ensMap'];
     },
-    etherscanAPIKey() {
-      return store.getters['data/etherscanAPIKey'];
-    },
-    periodStart() {
-      return store.getters['data/periodStart'];
-    },
-    periodOptions() {
-      return store.getters['data/periodOptions'];
-    },
+    // etherscanAPIKey() {
+    //   return store.getters['data/etherscanAPIKey'];
+    // },
+    // periodStart() {
+    //   return store.getters['data/periodStart'];
+    // },
+    // periodOptions() {
+    //   return store.getters['data/periodOptions'];
+    // },
     filteredAccounts() {
       const results = [];
+      const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
+      console.log("filterLower: " + filterLower);
       for (const [account, data] of Object.entries(this.accounts)) {
-        results.push({
-          account,
-          group: data.group,
-          name: data.name,
-          type: data.type,
-          mine: data.mine,
-          tags: data.tags,
-          notes: data.notes,
-          contract: data.contract,
-        });
+        // const ensName = this.ensMap[address] || null;
+        let include = filterLower == null ||
+          (account.toLowerCase().includes(filterLower)) ||
+          (data.name && data.name.toLowerCase().includes(filterLower)) ||
+          (data.group && data.group.toLowerCase().includes(filterLower)) ||
+          (data.notes && data.notes.toLowerCase().includes(filterLower));
+          // (ensName != null && ensName.toLowerCase().includes(searchAddressesLower)));
+        if (include) {
+          results.push({
+            account,
+            group: data.group,
+            name: data.name,
+            type: data.type,
+            mine: data.mine,
+            tags: data.tags,
+            notes: data.notes,
+            contract: data.contract,
+          });
+        }
       }
       return results;
     },
@@ -221,7 +233,7 @@ const Accounts = {
       return results;
     },
     pagedFilteredSortedAccounts() {
-      return this.filteredSortedAccounts.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize);
+      return this.filteredSortedAccounts.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
     },
   },
   methods: {
@@ -229,17 +241,8 @@ const Accounts = {
       console.log("saveSettings: TODO");
     },
     addNewAccounts() {
-      console.log("addNewAccounts: TODO");
-      store.dispatch('data/addNewAccounts', this.newAccounts);
+      store.dispatch('data/addNewAccounts', this.settings.newAccounts);
     },
-    // setEtherscanAPIKey(p) {
-    //   console.log("setEtherscanAPIKey(): " + p);
-    //   store.dispatch('config/setEtherscanAPIKey', p);
-    // },
-    // setPeriodStart(p) {
-    //   console.log("setPeriodStart(): " + p);
-    //   store.dispatch('config/setPeriodStart', p);
-    // },
     async timeoutCallback() {
       logDebug("Accounts", "timeoutCallback() count: " + this.count);
       this.count++;

@@ -130,6 +130,7 @@ const dataModule = {
           symbol: accountInfo && accountInfo.symbol || null,
           decimals: accountInfo && accountInfo.decimals || null,
         },
+        collection: accountInfo && accountInfo.collection || {},
         created: {
           timestamp: block && block.timestamp || null,
           blockNumber: block && block.number || null,
@@ -139,12 +140,12 @@ const dataModule = {
           blockNumber: null,
         },
       });
-      logInfo("dataModule", "accounts: " + JSON.stringify(state.accounts, null, 2));
+      logInfo("dataModule", "account: " + JSON.stringify(state.accounts[accountInfo.account], null, 2));
     },
   },
   actions: {
     async restoreState(context) {
-      logInfo("dataModule", "actions.restoreState()");
+      // logInfo("dataModule", "actions.restoreState()");
       const db0 = new Dexie(context.state.db.name);
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
       const accounts = await db0.cache.where("objectName").equals('accounts').toArray();
@@ -163,7 +164,7 @@ const dataModule = {
       if (ensMap.length == 1) {
         context.state.ensMap = ensMap[0].object;
       }
-      logInfo("dataModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
+      // logInfo("dataModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
     },
     async addNewAccounts(context, newAccounts) {
       logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");

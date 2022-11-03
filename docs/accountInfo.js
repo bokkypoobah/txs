@@ -38,6 +38,31 @@ async function getAccountInfo(address, provider) {
           console.log("getAccountInfo ERROR - decimals - account: " + account + ", message: " + e.message);
         }
       }
+      if ((results.mask & MASK_ISERC721) == MASK_ISERC721) {
+        let url = "https://api.reservoir.tools/collections/v5?contract=" + account;
+        console.log("url: " + url);
+        const data = await fetch(url)
+          .then(handleErrors)
+          .then(response => response.json())
+          .catch(function(error) {
+             console.log("ERROR - updateCollection: " + error);
+             // state.sync.error = true;
+             return [];
+          });
+        if (data && data.collections && data.collections.length == 1) {
+          // console.log("data: " + JSON.stringify(data, null, 2));
+          const collectionInfo = data.collections[0];
+          results.collection = {
+            name: collectionInfo.name,
+            slug: collectionInfo.slug,
+            image: collectionInfo.image,
+            tokenCount: parseInt(collectionInfo.tokenCount),
+            onSaleCount: parseInt(collectionInfo.onSaleCount),
+            volume: collectionInfo.volume,
+            openseaVerificationStatus: collectionInfo.openseaVerificationStatus,
+          };
+        }
+      }
     }
     if ((results.mask & MASK_ISEOA) == MASK_ISEOA) {
       results.type = "eoa";
@@ -49,7 +74,6 @@ async function getAccountInfo(address, provider) {
       results.type = "contract";
     }
   }
-
   console.log("results: " + JSON.stringify(results, null, 2));
   return results;
 }
