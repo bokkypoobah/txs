@@ -84,7 +84,7 @@ const Accounts = {
 
       showNewAccounts: true, // TODO false,
 
-      newAccounts: null,
+      newAccounts: "0x000001f568875F378Bf6d170B790967FE429C81A", // null,
 
       sortOptions: [
         { value: 'accountasc', text: '▲ Account' },

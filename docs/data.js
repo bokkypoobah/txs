@@ -131,8 +131,22 @@ const dataModule = {
     ensMap: state => state.ensMap,
   },
   mutations: {
-    addNewAccounts(state, p) {
-      logInfo("dataModule", "mutations.addNewAccounts('" + p + "')")
+    addNewAccount(state, account) {
+      logInfo("dataModule", "mutations.addNewAccount('" + account + "')")
+      Vue.set(state.accounts, account, {
+        group: null,
+        name: null,
+        type: null,
+        mine: false, // TODO: account == this.coinbase,
+        tags: [],
+        notes: null,
+        contract: {
+          name: null,
+          symbol: null,
+          decimals: null,
+        }
+      });
+
       // state.etherscanAPIKey = p;
     },
   },
@@ -149,8 +163,17 @@ const dataModule = {
     },
     addNewAccounts(context, newAccounts) {
       logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
-
-
+      const accounts = newAccounts == null ? [] : newAccounts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
+      // console.log("accounts: " + JSON.stringify(accounts));
+      for (let account of accounts) {
+        try {
+          const checksummed = ethers.utils.getAddress(account);
+          // console.log("checksummed: " + checksummed);
+          context.commit('addNewAccount', account);
+        } catch (e) {
+          console.log(e.toString());
+        }
+      }
 
       // const addAddresses = (action == "connect") ? [this.coinbase] : (this.addressesToAdd == null ? [] : this.addressesToAdd.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x')));
       // for (let address of addAddresses) {
@@ -183,7 +206,7 @@ const dataModule = {
 
 
 
-      context.commit('addNewAccounts', p);
+      // context.commit('addNewAccounts', accounts);
       // localStorage.txsEtherscanAPIKey = JSON.stringify(p);
     },
     // Called by Connection.execWeb3()
