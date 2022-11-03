@@ -105,6 +105,11 @@ const dataModule = {
         contract: {
           symbol: "Contract Symbol",
           name: "Contract Name",
+          decimals: null,
+        },
+        updated: {
+          timestamp: null,
+          blockNumber: null,
         },
       },
       "0x23456789" : {
@@ -117,6 +122,11 @@ const dataModule = {
         contract: {
           symbol: "Contract Symbol",
           name: "Contract Name",
+          decimals: null,
+        },
+        updated: {
+          timestamp: null,
+          blockNumber: null,
         },
       },
     },
@@ -144,7 +154,11 @@ const dataModule = {
           name: null,
           symbol: null,
           decimals: null,
-        }
+        },
+        updated: {
+          timestamp: null,
+          blockNumber: null,
+        },
       });
 
       // state.etherscanAPIKey = p;

@@ -55,7 +55,7 @@ const Accounts = {
           <b-card-body class="m-1 p-1">
             <b-form-group label-cols-lg="2" label="New Accounts" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
               <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and will be transmitted in web3 and Etherscan API calls" class="mx-0 my-1 p-0">
-                <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="newAccounts" rows="1" max-rows="5" class="w-75"  placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
+                <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="newAccounts" rows="1" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
               </b-form-group>
               <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added below. Click the + to the right to show details and click Import" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="newaccounts-submit" :disabled="newAccounts == null || newAccounts.length == 0" @click="addNewAccounts" variant="primary">Add</b-button>
@@ -84,7 +84,7 @@ const Accounts = {
 
       showNewAccounts: true, // TODO false,
 
-      newAccounts: "0x000001f568875F378Bf6d170B790967FE429C81A", // null,
+      newAccounts: null,
 
       sortOptions: [
         { value: 'accountasc', text: '▲ Account' },

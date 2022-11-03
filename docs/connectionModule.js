@@ -34,7 +34,7 @@ var networks = {
     "nixHelperAddress": "0x76f910c835b5a06CD465657f1a71153e2B6B2C0B",
     "wethAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     "royaltyEngineAddress": "0x0385603ab55642cb4Dd5De3aE9e306809991804f",
-    "erc721HelperAddress": "0x1CB0bA2E867549Aa7485a91dD90C454C2121b975",
+    "erc721HelperAddress": "0x0eE1d7943890D8335110B879C25271e864Ee7CA8",
     "explorer": "https://etherscan.io/",
     "opensea": "https://opensea.io/",
     "faucets": {}
@@ -216,12 +216,14 @@ const Connection = {
               <b-link :href="network.explorer + 'address/' + coinbase" class="card-link" target="_blank">{{ formatETH(balance) }}</b-link>
             </b-col>
           </b-row>
+          <!--
           <b-row>
             <b-col cols="4" class="small">WETH Balance</b-col>
             <b-col class="small truncate" cols="8">
               <b-link :href="network.explorer + 'token/' + network.wethAddress + '?=' + coinbase" class="card-link" target="_blank">{{ formatETH(wethBalance) }}</b-link>
             </b-col>
           </b-row>
+          -->
           <b-row>
             <b-col cols="4" class="small">WETH</b-col>
             <b-col class="small truncate" cols="8">
