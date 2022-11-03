@@ -75,6 +75,8 @@ store.subscribe((mutation, state) => {
 		version: storeVersion,
 		state: state,
 	};
+  // console.log("store.subscribe - mutation.type: " + mutation.type);
+  // console.log("store.subscribe - mutation.payload: " + mutation.payload);
   // logDebug("store.updated", JSON.stringify(store, null, 4));
 	// TODO: Save to IndexedDB here? localStorage.setItem('store', JSON.stringify(store));
 });
