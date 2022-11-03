@@ -73,6 +73,13 @@ async function getAccountInfo(address, provider) {
     } else if ((results.mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
       results.type = "contract";
     }
+    const ethBalance = await provider.getBalance(account);
+    const weth = new ethers.Contract(WETHADDRESS, WETHABI, provider); // network.wethAddress
+    const wethBalance = await weth.balanceOf(account);
+    results.balances = {
+      "eth": ethBalance,
+      "weth": wethBalance,
+    };
   }
   console.log("results: " + JSON.stringify(results, null, 2));
   return results;

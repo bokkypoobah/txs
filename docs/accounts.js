@@ -323,6 +323,7 @@ const Accounts = {
             notes: data.notes,
             contract: data.contract,
             collection: data.collection,
+            balances: data.balances,
             created: data.created,
             updated: data.updated,
           });

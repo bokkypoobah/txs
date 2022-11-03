@@ -91,7 +91,7 @@ const dataModule = {
     assets: {}, // TODO: ChainId/Contract/TokenId/Number
     ensMap: {},
     db: {
-      name: "txs090a",
+      name: "txs090b",
       version: 1,
       schemaDefinition: {
         cache: '&objectName',
@@ -118,6 +118,7 @@ const dataModule = {
         name: null,
         type: accountInfo && accountInfo.type || null,
         mine: accountInfo.account == store.getters['connection/coinbase'],
+        sync: false,
         tags: [],
         notes: null,
         contract: {
@@ -126,6 +127,7 @@ const dataModule = {
           decimals: accountInfo && accountInfo.decimals || null,
         },
         collection: accountInfo && accountInfo.collection || {},
+        balances: accountInfo && accountInfo.balances || {},
         created: {
           timestamp: block && block.timestamp || null,
           blockNumber: block && block.number || null,
