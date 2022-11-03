@@ -93,12 +93,15 @@ const Accounts = {
               {{ data.item.account }}
             </b-link>
             <br />
-            <span v-if="data.item.type != 'erc721'">
-              {{ ensOrNull(data.item.account) }}
-            </span>
-            <span v-if="data.item.type == 'erc721'">
-              {{ data.item.collection.name }}
-            </span>
+            <font size="-1">
+              <b-badge variant="info">{{ data.item.type }}</b-badge>
+              <span v-if="data.item.type != 'erc721'">
+                {{ ensOrNull(data.item.account) }}
+              </span>
+              <span v-if="data.item.type == 'erc721'">
+                {{ data.item.collection.name }}
+              </span>
+            </font>
             <b-popover :target="'popover-target-' + data.item.account" placement="right" custom-class="popover-max-width">
               <template #title>
                 <span v-if="data.item.type != 'erc721'">
