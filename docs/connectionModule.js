@@ -565,7 +565,7 @@ const connectionModule = {
       state.connectionError = error;
     },
     setNetwork(state, network) {
-      logDebug("connectionModule", "mutations.setNetwork() - network.chainId: " + network.chainId);
+      // logInfo("connectionModule", "mutations.setNetwork() - network.chainId: " + network.chainId);
       if (state.network.chainId != network.chainId) {
         state.network.chainId = network.chainId;
         var networkDetails = getNetworkDetails(network.chainId);
@@ -579,7 +579,7 @@ const connectionModule = {
         state.network.opensea = networkDetails.opensea;
         state.network.faucets = networkDetails.faucets;
         state.network.updated = true;
-        logDebug("connectionModule", "state.network: " + JSON.stringify(state.network));
+        logInfo("connectionModule", "state.network: " + JSON.stringify(state.network));
       } else {
         if (state.network.updated) {
           state.network.updated = false;

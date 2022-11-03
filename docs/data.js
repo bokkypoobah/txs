@@ -94,42 +94,7 @@ const Data = {
 const dataModule = {
   namespaced: true,
   state: {
-    accounts: {
-      "0x12345678" : {
-        group: "Group",
-        name: "Name",
-        type: "eoa",
-        mine: true,
-        tags: [],
-        notes: null,
-        contract: {
-          symbol: "Contract Symbol",
-          name: "Contract Name",
-          decimals: null,
-        },
-        updated: {
-          timestamp: null,
-          blockNumber: null,
-        },
-      },
-      "0x23456789" : {
-        group: "Group",
-        name: "Name",
-        type: "eoa",
-        mine: true,
-        tags: [],
-        notes: null,
-        contract: {
-          symbol: "Contract Symbol",
-          name: "Contract Name",
-          decimals: null,
-        },
-        updated: {
-          timestamp: null,
-          blockNumber: null,
-        },
-      },
-    },
+    accounts: {},
     txs: {},
     assets: {}, // ChainId/Contract/TokenId/Number
     ensMap: {},
@@ -141,27 +106,27 @@ const dataModule = {
     ensMap: state => state.ensMap,
   },
   mutations: {
-    addNewAccount(state, account) {
-      logInfo("dataModule", "mutations.addNewAccount('" + account + "')")
-      Vue.set(state.accounts, account, {
+    addNewAccount(state, accountInfo) {
+      logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(accountInfo) + ")")
+      const block = store.getters['connection/block'];
+      Vue.set(state.accounts, accountInfo.account, {
         group: null,
         name: null,
-        type: null,
-        mine: false, // TODO: account == this.coinbase,
+        type: accountInfo && accountInfo.type || null,
+        mine: accountInfo.account == store.getters['connection/coinbase'],
         tags: [],
         notes: null,
         contract: {
-          name: null,
-          symbol: null,
-          decimals: null,
+          name: accountInfo && accountInfo.name || null,
+          symbol: accountInfo && accountInfo.symbol || null,
+          decimals: accountInfo && accountInfo.decimals || null,
         },
         updated: {
-          timestamp: null,
-          blockNumber: null,
+          timestamp: block && block.timestamp || null, // TODO: Set to null and use for incremental syncs
+          blockNumber: block && block.number || null, // TODO: Set to null and use for incremental syncs
         },
       });
-
-      // state.etherscanAPIKey = p;
+      logInfo("dataModule", "accounts: " + JSON.stringify(state.accounts, null, 2));
     },
   },
   actions: {
@@ -175,50 +140,17 @@ const dataModule = {
       // }
       logInfo("dataModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
     },
-    addNewAccounts(context, newAccounts) {
+    async addNewAccounts(context, newAccounts) {
       logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
       const accounts = newAccounts == null ? [] : newAccounts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
-      // console.log("accounts: " + JSON.stringify(accounts));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       for (let account of accounts) {
-        try {
-          const checksummed = ethers.utils.getAddress(account);
-          // console.log("checksummed: " + checksummed);
-          context.commit('addNewAccount', account);
-        } catch (e) {
-          console.log(e.toString());
+        const accountInfo = await getAccountInfo(account, provider)
+        console.log("accountInfo: " + JSON.stringify(accountInfo));
+        if (accountInfo.account) {
+          context.commit('addNewAccount', accountInfo);
         }
       }
-
-      // const addAddresses = (action == "connect") ? [this.coinbase] : (this.addressesToAdd == null ? [] : this.addressesToAdd.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x')));
-      // for (let address of addAddresses) {
-      //   try {
-      //     console.log("Processing address: " + address);
-      //     const checksummedAddress = ethers.utils.getAddress(address);
-      //     if (checksummedAddress && !(checksummedAddress in this.addresses)) {
-      //       const info = await getAddressInfo(checksummedAddress, erc721Helper, provider);
-      //       console.log("info: " + JSON.stringify(info, null, 2));
-      //       Vue.set(this.addresses, checksummedAddress, {
-      //         address: checksummedAddress,
-      //         type: info && info.type || null,
-      //         mine: address == this.coinbase,
-      //         ensName: null,
-      //         group: null,
-      //         name: info && info.symbol && info.name && (info.symbol + ': ' + info.name) || null,
-      //         tags: [],
-      //         notes: null,
-      //         contract: {
-      //           name: info && info.name || null,
-      //           symbol: info && info.symbol || null,
-      //           decimals: info && info.decimals || null,
-      //         }
-      //       });
-      //     }
-      //   } catch (e) {
-      //     console.log(e.toString());
-      //   }
-
-
-
 
       // context.commit('addNewAccounts', accounts);
       // localStorage.txsEtherscanAPIKey = JSON.stringify(p);
