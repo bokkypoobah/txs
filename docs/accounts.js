@@ -5,7 +5,7 @@ const Accounts = {
 
         <div class="d-flex flex-wrap m-0 p-0">
           <div class="mt-0 pr-1">
-            <b-form-input type="text" size="sm" v-model.trim="settings.filter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by address fragment'" placeholder="🔍 address"></b-form-input>
+            <b-form-input type="text" size="sm" v-model.trim="settings.filter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by address or ENS name fragment'" placeholder="🔍 address / ens name"></b-form-input>
           </div>
           <div class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
@@ -61,13 +61,39 @@ const Accounts = {
                 <b-button size="sm" id="newaccounts-submit" :disabled="settings.newAccounts == null || settings.newAccounts.length == 0" @click="addNewAccounts" variant="primary">Add</b-button>
               </b-form-group>
             </b-form-group>
-
           </b-card-body>
         </b-card>
 
-        <!-- <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add addresses and Ethereum transaction hashes, and set your Etherscan API key for imports. Click on your address on the top right to add it" head-variant="light" class="m-0 mt-1"> -->
-        <b-table small fixed striped selectable responsive hover :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts. Click on your account on the top right to add it" head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped selectable responsive hover :fields="accountsFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
+          <template #head(number)="data">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
+              <template #button-content>
+                <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
+              </template>
+              <b-dropdown-item href="#" @click="toggleSelectedAccounts(pagedFilteredSortedAccounts)">Toggle selection for all accounts on this page</b-dropdown-item>
+              <b-dropdown-item href="#" @click="toggleSelectedAccounts(filteredSortedAccounts)">Toggle selection for all accounts on all pages</b-dropdown-item>
+              <b-dropdown-item href="#" @click="clearSelectedAccounts()">Clear selection</b-dropdown-item>
+            </b-dropdown>
+          </template>
+          <template #cell(number)="data">
+            <b-form-checkbox size="sm" :checked="settings.selectedAccounts[data.item.account] ? 1 : 0" value="1" @change="toggleSelectedAccounts([data.item])">
+              {{ parseInt(data.index) + ((settings.currentPage - 1) * settings.pageSize) + 1 }}
+            </b-form-checkbox>
+          </template>
+          <template #cell(image)="data">
+
+          </template>
+          <template #cell(account)="data">
+          {{ data.item.account }}
+          <br />
+          </template>
         </b-table>
+
+        <!--
+        <br />
+        <b-table small fixed striped selectable responsive hover :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
+        </b-table>
+        -->
 
       </b-card>
     </div>
@@ -82,6 +108,7 @@ const Accounts = {
         accountMineFilter: null,
         showNewAccounts: false,
         newAccounts: null,
+        selectedAccounts: {},
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
@@ -120,6 +147,18 @@ const Accounts = {
         { value: 2500, text: '2.5k' },
         { value: 10000, text: '10k' },
       ],
+      accountsFields: [
+        { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
+        { key: 'image', label: '', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 50%;', tdClass: 'text-truncate' },
+        // { key: 'type', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        // { key: 'mine', label: 'Mine', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        // { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        // { key: 'end', label: '', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+      ],
     }
   },
   computed: {
@@ -147,27 +186,19 @@ const Accounts = {
     ensMap() {
       return store.getters['data/ensMap'];
     },
-    // etherscanAPIKey() {
-    //   return store.getters['data/etherscanAPIKey'];
-    // },
-    // periodStart() {
-    //   return store.getters['data/periodStart'];
-    // },
-    // periodOptions() {
-    //   return store.getters['data/periodOptions'];
-    // },
     filteredAccounts() {
       const results = [];
       const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
       for (const [key, data] of Object.entries(this.accounts)) {
-        // const ensName = this.ensMap[address] || null;
         const [chainId, account] = key.split(':');
+        const ensName = this.ensMap[account] || null;
+        console.log(account + " => " + ensName);
         let include = filterLower == null ||
           (account.toLowerCase().includes(filterLower)) ||
           (data.name && data.name.toLowerCase().includes(filterLower)) ||
           (data.group && data.group.toLowerCase().includes(filterLower)) ||
-          (data.notes && data.notes.toLowerCase().includes(filterLower));
-          // (ensName != null && ensName.toLowerCase().includes(searchAddressesLower)));
+          (data.notes && data.notes.toLowerCase().includes(filterLower)) ||
+          (ensName != null && ensName.toLowerCase().includes(filterLower));
         if (include && this.settings.accountMineFilter != null) {
           if (this.settings.accountMineFilter == 'mine' && data.mine) {
           } else if (this.settings.accountMineFilter == 'notmine' && !data.mine) {
@@ -193,9 +224,13 @@ const Accounts = {
             tags: data.tags,
             notes: data.notes,
             contract: data.contract,
+            collection: data.collection,
+            created: data.created,
+            updated: data.updated,
           });
         }
       }
+      console.log("filteredAccounts: " + JSON.stringify(results, null, 2));
       return results;
     },
     filteredSortedAccounts() {
@@ -269,6 +304,30 @@ const Accounts = {
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
+    },
+    toggleSelectedAccounts(items) {
+      let someFalse = false;
+      let someTrue = false;
+      for (const item of items) {
+        if (this.settings.selectedAccounts[item.account]) {
+          someTrue = true;
+        } else {
+          someFalse = true;
+        }
+      }
+      for (const item of items) {
+        if (!(someTrue && !someFalse)) {
+          Vue.set(this.settings.selectedAccounts, item.account, true);
+        } else {
+          Vue.delete(this.settings.selectedAccounts, item.account);
+        }
+      }
+      console.log("toggleSelectedAccounts: " + JSON.stringify(this.settings.selectedAccounts));
+      // localStorage.selectedAccounts = JSON.stringify(this.settings.selectedAccounts);
+    },
+    clearSelectedAccounts() {
+      this.settings.selectedAccounts = {};
+      // localStorage.selectedAccounts = JSON.stringify(this.settings.selectedAccounts);
     },
     async timeoutCallback() {
       logDebug("Accounts", "timeoutCallback() count: " + this.count);
