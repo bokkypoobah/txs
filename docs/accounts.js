@@ -13,13 +13,6 @@ const Accounts = {
           <div class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts, or not'"></b-form-select>
           </div>
-          <!--
-          <div class="mt-0 flex-grow-1">
-          </div>
-          <div class="mt-0 pr-1">
-            <b-button size="sm" :disabled="sync.section != null" @click="processIt('computeAddresses')" variant="link" v-b-popover.hover.top="'Perform computations on addresses'"><b-icon-caret-right-square shift-v="+1" font-scale="0.9"></b-icon-caret-right-square></b-button>
-          </div>
-          -->
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-0">
@@ -27,6 +20,11 @@ const Accounts = {
           </div>
           <div class="mt-0 pr-1">
             <b-button size="sm" :pressed.sync="settings.editAccounts" @click="saveSettings" :variant="settings.editAccounts ? 'danger' : 'link'" v-b-popover.hover.top="settings.editAccounts ? 'End editing account attributes' : 'Edit account attributes'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
+          </div>
+          <div class="mt-0 flex-grow-1">
+          </div>
+          <div class="mt-0 pr-1">
+            <b-button size="sm" :disabled="sync.section != null" @click="syncIt" variant="link" v-b-popover.hover.top="'Sync accounts'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
           </div>
           <!--
           <div class="mt-0 flex-grow-1">
@@ -235,6 +233,12 @@ const Accounts = {
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
+      },
+      sync: {
+        section: null,
+        total: null,
+        completed: null,
+        halt: false,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -487,6 +491,9 @@ const Accounts = {
     },
     async setNotes(key, notes) {
       store.dispatch('data/setNotes', { key, notes });
+    },
+    async syncIt() {
+      store.dispatch('data/syncIt');
     },
     ensOrAccount(account, length = 0) {
       let result = null;

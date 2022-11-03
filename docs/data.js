@@ -235,6 +235,11 @@ const dataModule = {
       context.commit('setNotes', info);
       context.dispatch('saveData', ['accounts']);
     },
+    async syncIt(context) {
+      logInfo("dataModule", "actions.syncIt");
+      // context.commit('setNotes', info);
+      // context.dispatch('saveData', ['accounts']);
+    },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {
       logInfo("dataModule", "execWeb3() start[" + count + ", " + listenersInstalled + ", " + JSON.stringify(rootState.route.params) + "]");
