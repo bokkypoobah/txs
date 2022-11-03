@@ -116,7 +116,15 @@ const Accounts = {
                     <b-badge v-if="hasENS(data.item.account)" variant="secondary" v-b-popover.hover="'ENS name if set'">{{ ensOrNull(data.item.account) }}</b-badge>
                   </span>
                   <span v-if="data.item.type == 'erc721'">
-                    <b-badge variant="secondary">{{ data.item.collection.name }}</b-badge>
+                    <b-badge variant="secondary" v-b-popover.hover="'ERC-721 collection name'">{{ data.item.collection.name }}</b-badge>
+                  </span>
+                </div>
+                <div class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editAccounts">
+                    <b-form-input type="text" size="sm" v-model.trim="data.item.group" @change="setGroup(data.item.key, data.item.group)" debounce="600"></b-form-input>
+                  </span>
+                  <span v-if="!settings.editAccounts">
+                    <b-badge v-if="data.item.group && data.item.group.length > 0" variant="dark" v-b-popover.hover="'Group'">{{ data.item.group }}</b-badge>
                   </span>
                 </div>
               </div>
@@ -161,19 +169,26 @@ const Accounts = {
                 <br />
                 <b-link :href="'https://opensea.io/collection/' + data.item.collection.slug" target="_blank">View ERC-721 NFT collection in opensea.io</b-link>
                 <br />
-
                 <b-link :href="'https://looksrare.org/collections/' + data.item.account" target="_blank">View ERC-721 NFT collection in looksrare.org</b-link>
                 <br />
-
                 <b-link :href="'https://x2y2.io/collection/' + data.item.collection.slug + '/items'" target="_blank">View ERC-721 NFT collection in x2y2.io</b-link>
                 <br />
-
                 <b-link :href="'https://www.gem.xyz/collection/' + data.item.collection.slug" target="_blank">View ERC-721 NFT collection in gem.xyz</b-link>
                 <br />
                 <b-link :href="'https://blur.io/collection/' + data.item.collection.slug" target="_blank">View ERC-721 NFT collection in blur.io</b-link>
                 <br />
               </span>
             </b-popover>
+          </template>
+          <template #cell(name)="data">
+            <!--
+            <font size="-1">
+              <b-badge variant="secondary">{{ data.item.group }}</b-badge>
+            </font>
+            -->
+            {{ data.item.name }}
+            <br />
+            <b-form-textarea size="sm" v-model.trim="data.item.notes" placeholder="notes" rows="2" max-rows="20"></b-form-textarea>
           </template>
         </b-table>
 
@@ -252,8 +267,8 @@ const Accounts = {
         // { key: 'mine', label: 'Mine', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
         // { key: 'ens', label: 'ENS', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
         // { key: 'group', label: 'Group', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
-        { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 25%;', tdClass: 'text-truncate' },
-        { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 30%;', tdClass: 'text-truncate' },
+        { key: 'name', label: 'Name', sortable: false, thStyle: 'width: 45%;', tdClass: 'text-truncate' },
+        // { key: 'notes', label: 'Notes', sortable: false, thStyle: 'width: 30%;', tdClass: 'text-truncate' },
         { key: 'end', label: 'Info', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
     }
@@ -316,7 +331,7 @@ const Accounts = {
             chainId,
             account,
             group: data.group,
-            name: data.name,
+            name: 'The quick brown fox jumps', // TODO data.name,
             type: data.type,
             mine: data.mine,
             tags: data.tags,
@@ -434,6 +449,10 @@ const Accounts = {
     async setAccountType(key, accountType) {
       console.log("setAccountType - key: " + key + ", accountType: " + accountType);
       store.dispatch('data/setAccountType', { key, accountType });
+    },
+    async setGroup(key, group) {
+      console.log("setGroup - key: " + key + ", group: " + group);
+      store.dispatch('data/setGroup', { key, group });
     },
     ensOrAccount(account, length = 0) {
       let result = null;

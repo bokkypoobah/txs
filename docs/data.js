@@ -155,6 +155,11 @@ const dataModule = {
       Vue.set(state.accounts[info.key], 'type', info.accountType);
       // logInfo("dataModule", "mutations.setAccountType - account: " + JSON.stringify(state.accounts[info.key], null, 2));
     },
+    setGroup(state, info) {
+      logInfo("dataModule", "mutations.setGroup - info: " + JSON.stringify(info));
+      Vue.set(state.accounts[info.key], 'group', info.group);
+      // logInfo("dataModule", "mutations.setAccountType - account: " + JSON.stringify(state.accounts[info.key], null, 2));
+    },
   },
   actions: {
     async restoreState(context) {
@@ -226,6 +231,17 @@ const dataModule = {
         console.log("error: " + error);
       });
       db0.close();
+    },
+    async setGroup(context, info) {
+      logInfo("dataModule", "actions.setGroup - info: " + JSON.stringify(info));
+      context.commit('setGroup', info);
+      // const db0 = new Dexie(context.state.db.name);
+      // db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
+      // await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
+      // }).catch(function(error) {
+      //   console.log("error: " + error);
+      // });
+      // db0.close();
     },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {
