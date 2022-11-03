@@ -94,20 +94,32 @@ const Accounts = {
             </b-link>
             <br />
             <font size="-1">
-              <span v-if="settings.editAccounts">
-                <b-form-select size="sm" v-model="data.item.type" @change="setAccountType(data.item.key, $event)" :options="accountTypes" v-b-popover.hover.top="'Select type'" class="w-25"></b-form-select>
-                <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountMine(data.item.key)">Mine</b-form-checkbox>
-              </span>
-              <span v-if="!settings.editAccounts">
-                <b-badge variant="info">{{ data.item.type }}</b-badge>
-                <b-badge v-if="data.item.mine" variant="warning">Mine</b-badge>
-              </span>
-              <span v-if="data.item.type != 'erc721'">
-                {{ ensOrNull(data.item.account) }}
-              </span>
-              <span v-if="data.item.type == 'erc721'">
-                {{ data.item.collection.name }}
-              </span>
+              <div class="d-flex flex-row">
+                <div class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editAccounts">
+                    <b-form-select size="sm" v-model="data.item.type" @change="setAccountType(data.item.key, $event)" :options="accountTypes" v-b-popover.hover.top="'Select type'"></b-form-select>
+                  </span>
+                  <span v-if="!settings.editAccounts">
+                    <b-badge variant="info">{{ data.item.type }}</b-badge>
+                  </span>
+                </div>
+                <div class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editAccounts">
+                    <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountMine(data.item.key)">Mine</b-form-checkbox>
+                  </span>
+                  <span v-if="!settings.editAccounts">
+                    <b-badge v-if="data.item.mine" variant="warning">Mine</b-badge>
+                  </span>
+                </div>
+                <div class="m-0 pt-1 pr-1">
+                  <span v-if="data.item.type != 'erc721'">
+                    <b-badge variant="default">{{ ensOrNull(data.item.account) }}</b-badge>
+                  </span>
+                  <span v-if="data.item.type == 'erc721'">
+                    <b-badge variant="default">{{ data.item.collection.name }}</b-badge>
+                  </span>
+                </div>
+              </div>
             </font>
             <b-popover :target="'popover-target-' + data.item.account" placement="right" custom-class="popover-max-width">
               <template #title>
@@ -183,7 +195,7 @@ const Accounts = {
         accountTypeFilter: null,
         accountMineFilter: null,
         showNewAccounts: false,
-        editAccounts: true, // TODO false,
+        editAccounts: false,
         newAccounts: null,
         selectedAccounts: {},
         currentPage: 1,
