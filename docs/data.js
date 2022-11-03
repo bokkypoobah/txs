@@ -57,14 +57,6 @@ const Data = {
     },
   },
   methods: {
-    // setEtherscanAPIKey(p) {
-    //   console.log("setEtherscanAPIKey(): " + p);
-    //   store.dispatch('config/setEtherscanAPIKey', p);
-    // },
-    // setPeriodStart(p) {
-    //   console.log("setPeriodStart(): " + p);
-    //   store.dispatch('config/setPeriodStart', p);
-    // },
     async timeoutCallback() {
       logDebug("Data", "timeoutCallback() count: " + this.count);
       this.count++;
@@ -94,12 +86,12 @@ const Data = {
 const dataModule = {
   namespaced: true,
   state: {
-    accounts: {},
+    accounts: {}, // TODO: Add chainId
     txs: {},
-    assets: {}, // ChainId/Contract/TokenId/Number
+    assets: {}, // TODO: ChainId/Contract/TokenId/Number
     ensMap: {},
     db: {
-      name: "txs090",
+      name: "txs090a",
       version: 1,
       schemaDefinition: {
         cache: '&objectName',
@@ -118,7 +110,10 @@ const dataModule = {
     addNewAccount(state, accountInfo) {
       logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(accountInfo) + ")")
       const block = store.getters['connection/block'];
-      Vue.set(state.accounts, accountInfo.account, {
+      const network = store.getters['connection/network'];
+      const chainId = network.chainId;
+      const key = chainId + ':' + accountInfo.account;
+      Vue.set(state.accounts, key, {
         group: null,
         name: null,
         type: accountInfo && accountInfo.type || null,
@@ -140,7 +135,7 @@ const dataModule = {
           blockNumber: null,
         },
       });
-      logInfo("dataModule", "account: " + JSON.stringify(state.accounts[accountInfo.account], null, 2));
+      logInfo("dataModule", JSON.stringify(key) + " => " + JSON.stringify(state.accounts[key], null, 2));
     },
   },
   actions: {
@@ -184,9 +179,6 @@ const dataModule = {
         console.log("error: " + error);
       });
       db0.close();
-
-      // context.commit('addNewAccounts', accounts);
-      // localStorage.txsEtherscanAPIKey = JSON.stringify(p);
     },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {

@@ -83,7 +83,7 @@ const Accounts = {
       settings: {
         filter: null,
         showNewAccounts: false,
-        newAccounts: "0x9126B817CCca682BeaA9f4EaE734948EE1166Af1", // TODO null,
+        newAccounts: null,
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
@@ -147,9 +147,9 @@ const Accounts = {
     filteredAccounts() {
       const results = [];
       const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
-      console.log("filterLower: " + filterLower);
-      for (const [account, data] of Object.entries(this.accounts)) {
+      for (const [key, data] of Object.entries(this.accounts)) {
         // const ensName = this.ensMap[address] || null;
+        const [chainId, account] = key.split(':');
         let include = filterLower == null ||
           (account.toLowerCase().includes(filterLower)) ||
           (data.name && data.name.toLowerCase().includes(filterLower)) ||
@@ -158,6 +158,7 @@ const Accounts = {
           // (ensName != null && ensName.toLowerCase().includes(searchAddressesLower)));
         if (include) {
           results.push({
+            chainId,
             account,
             group: data.group,
             name: data.name,
