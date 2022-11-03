@@ -89,14 +89,68 @@ const Accounts = {
             </div>
           </template>
           <template #cell(account)="data">
-            <b-button class="sm" :id="'popover-target-' + data.item.account" variant="link" class="m-0 p-0">
+            <b-link class="sm" :id="'popover-target-' + data.item.account">
               {{ data.item.account }}
-            </b-button>
+            </b-link>
             <br />
-            {{ ensOrNull(data.item.account) }}
-            <br />
+            <span v-if="data.item.type != 'erc721'">
+              {{ ensOrNull(data.item.account) }}
+            </span>
+            <span v-if="data.item.type == 'erc721'">
+              {{ data.item.collection.name }}
+            </span>
             <b-popover :target="'popover-target-' + data.item.account" placement="right" custom-class="popover-max-width">
-              <template #title>{{ ensOrAccount(data.item.account) }}</template>
+              <template #title>
+                <span v-if="data.item.type != 'erc721'">
+                  {{ ensOrAccount(data.item.account) }}
+                </span>
+                <span v-if="data.item.type == 'erc721'">
+                  {{ data.item.collection.name }}
+                </span>
+              </template>
+              <span v-if="data.item.type != 'erc721'">
+                <b-link @click="copyToClipboard(data.item.account);">Copy account to clipboard</b-link>
+                <br />
+                <span v-if="ensOrNull(data.item.account) != null && ensOrNull(data.item.account).length > 0">
+                  <b-link @click="copyToClipboard(ensOrNull(data.item.account));">Copy ENS name to clipboard</b-link>
+                  <br />
+                  <b-link :href="'https://app.ens.domains/name/' + ensOrNull(data.item.account)" target="_blank">View ENS name in app.ens.domains</b-link>
+                  <br />
+                </span>
+                <b-link :href="'https://etherscan.io/address/' + data.item.account" target="_blank">View account in etherscan.io</b-link>
+                <br />
+                <b-link :href="'https://opensea.io/' + data.item.account" target="_blank">View account in opensea.io</b-link>
+                <br />
+                <b-link :href="'https://opensea.io/' + data.item.account + '?tab=bids'" target="_blank">View offers received in opensea.io</b-link>
+                <br />
+                <b-link :href="'https://looksrare.org/accounts/' + data.item.account + '#owned'" target="_blank">View account in looksrare.org</b-link>
+                <br />
+                <b-link :href="'https://x2y2.io/user/' + data.item.account + '/items'" target="_blank">View account in x2y2.io</b-link>
+                <br />
+                <b-link :href="'https://www.gem.xyz/profile/' + data.item.account" target="_blank">View account in gem.xyz</b-link>
+                <br />
+                <b-link :href="'https://blur.io/' + data.item.account" target="_blank">View account in blur.io</b-link>
+                <br />
+              </span>
+              <span v-if="data.item.type == 'erc721'">
+                <b-link @click="copyToClipboard(data.item.account);">Copy ERC-721 NFT collection address to clipboard</b-link>
+                <br />
+                <b-link :href="'https://etherscan.io/token/' + data.item.account + '#balances'" target="_blank">View ERC-721 NFT collection in etherscan.io</b-link>
+                <br />
+                <b-link :href="'https://opensea.io/collection/' + data.item.collection.slug" target="_blank">View ERC-721 NFT collection in opensea.io</b-link>
+                <br />
+
+                <b-link :href="'https://looksrare.org/collections/' + data.item.account" target="_blank">View ERC-721 NFT collection in looksrare.org</b-link>
+                <br />
+
+                <b-link :href="'https://x2y2.io/collection/' + data.item.collection.slug + '/items'" target="_blank">View ERC-721 NFT collection in x2y2.io</b-link>
+                <br />
+
+                <b-link :href="'https://www.gem.xyz/collection/' + data.item.collection.slug" target="_blank">View ERC-721 NFT collection in gem.xyz</b-link>
+                <br />
+                <b-link :href="'https://blur.io/collection/' + data.item.collection.slug" target="_blank">View ERC-721 NFT collection in blur.io</b-link>
+                <br />
+              </span>
             </b-popover>
           </template>
         </b-table>
@@ -343,22 +397,42 @@ const Accounts = {
     },
     ensOrAccount(account, length = 0) {
       let result = null;
-      if (this.ensMap && (account in this.ensMap)) {
+      if (this.ensMap && account in this.ensMap) {
         result = this.ensMap[account];
       }
       if (result == null || result.length == 0) {
         result = account;
       }
-      return result == null ? null : (length == 0 ? result : result.substring(0, length));
+      return result == null || result.length == 0 ? null : (length == 0 ? result : result.substring(0, length));
     },
     ensOrNull(account, length = 0) {
       let result = null;
-      if (this.ensMap && (account in this.ensMap)) {
+      if (this.ensMap && account in this.ensMap) {
         result = this.ensMap[account];
       } else {
         result = account;
       }
-      return result == null ? null : (length == 0 ? result : result.substring(0, length));
+      return result == null || result.length == 0 ? null : (length == 0 ? result : result.substring(0, length));
+    },
+    copyToClipboard(str) {
+      // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/copyToClipboard.md
+      const el = document.createElement('textarea');
+      el.value = str;
+      el.setAttribute('readonly', '');
+      el.style.position = 'absolute';
+      el.style.left = '-9999px';
+      document.body.appendChild(el);
+      const selected =
+        document.getSelection().rangeCount > 0
+          ? document.getSelection().getRangeAt(0)
+          : false;
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      if (selected) {
+        document.getSelection().removeAllRanges();
+        document.getSelection().addRange(selected);
+      }
     },
     async timeoutCallback() {
       logDebug("Accounts", "timeoutCallback() count: " + this.count);
