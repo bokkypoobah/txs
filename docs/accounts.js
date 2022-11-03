@@ -19,11 +19,13 @@ const Accounts = {
           <div class="mt-0 pr-1">
             <b-button size="sm" :disabled="sync.section != null" @click="processIt('computeAddresses')" variant="link" v-b-popover.hover.top="'Perform computations on addresses'"><b-icon-caret-right-square shift-v="+1" font-scale="0.9"></b-icon-caret-right-square></b-button>
           </div>
+          -->
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-0">
-            <b-button size="sm" :pressed.sync="settings.addAddresses" @click="settingsUpdated" variant="link" v-b-popover.hover.top="'Add addresses, tx hashes, Etherscan API key'"><span v-if="settings.addAddresses"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
+            <b-button size="sm" :pressed.sync="showNewAccounts" @click="saveSettings" variant="link" v-b-popover.hover.top="'Add new accounts'"><span v-if="showNewAccounts"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
           </div>
+          <!--
           <div class="mt-0 pr-1">
             <b-button size="sm" :pressed.sync="settings.editAddresses" @click="settingsUpdated" :variant="settings.editAddresses ? 'danger' : 'link'" v-b-popover.hover.top="settings.editAddresses ? 'End editing address attributes' : 'Edit address attributes'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
           </div>
@@ -49,6 +51,21 @@ const Accounts = {
           </div>
         </div>
 
+        <b-card v-if="showNewAccounts" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+          <b-card-body class="m-1 p-1">
+            <b-form-group label-cols-lg="2" label="New Accounts" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+              <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and will be transmitted in web3 and Etherscan API calls" class="mx-0 my-1 p-0">
+                <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="newAccounts" rows="1" max-rows="5" class="w-75"  placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
+              </b-form-group>
+              <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added below. Click the + to the right to show details and click Import" class="mx-0 my-1 p-0">
+                <b-button size="sm" id="newaccounts-submit" :disabled="newAccounts == null || newAccounts.length == 0" @click="addNewAccounts" variant="primary">Add</b-button>
+              </b-form-group>
+            </b-form-group>
+
+          </b-card-body>
+        </b-card>
+
+
         <!-- <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add addresses and Ethereum transaction hashes, and set your Etherscan API key for imports. Click on your address on the top right to add it" head-variant="light" class="m-0 mt-1"> -->
         <b-table small fixed striped selectable responsive hover :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts. Click on your account on the top right to add it" head-variant="light" class="m-0 mt-1">
         </b-table>
@@ -64,6 +81,10 @@ const Accounts = {
       currentPage: 1,
       pageSize: 10,
       sortOption: 'accountasc',
+
+      showNewAccounts: true, // TODO false,
+
+      newAccounts: null,
 
       sortOptions: [
         { value: 'accountasc', text: '▲ Account' },
@@ -206,6 +227,10 @@ const Accounts = {
   methods: {
     saveSettings() {
       console.log("saveSettings: TODO");
+    },
+    addNewAccounts() {
+      console.log("addNewAccounts: TODO");
+      store.dispatch('data/addNewAccounts', this.newAccounts);
     },
     // setEtherscanAPIKey(p) {
     //   console.log("setEtherscanAPIKey(): " + p);

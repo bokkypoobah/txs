@@ -410,7 +410,7 @@ const Connection = {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const network = await provider.getNetwork();
             store.dispatch('connection/setNetwork', network);
-            logInfo("Connection", "execWeb3() network: " + JSON.stringify(this.network));
+            // logInfo("Connection", "execWeb3() network: " + JSON.stringify(this.network));
             const block = await provider.getBlock();
             store.dispatch('connection/setBlock', block);
             const signer = provider.getSigner()
@@ -444,10 +444,10 @@ const Connection = {
         }
       }
 
-      if (this.connected && this.network && this.network.chainId == 4) {
-        store.dispatch('nixData/execWeb3', { count: this.count, listenersInstalled: this.listenersInstalled });
+      if (this.connected && this.network && this.network.chainId == 1) {
+        store.dispatch('data/execWeb3', { count: this.count, listenersInstalled: this.listenersInstalled });
         // console.log("1");
-        await store.dispatch('collectionData/execWeb3', { count: this.count, listenersInstalled: this.listenersInstalled });
+        // await store.dispatch('collectionData/execWeb3', { count: this.count, listenersInstalled: this.listenersInstalled });
         // console.log("2");
         // console.log("3");
       }
@@ -563,21 +563,21 @@ const connectionModule = {
       state.connectionError = error;
     },
     setNetwork(state, network) {
-      logInfo("connectionModule", "mutations.setNetwork() - network.chainId: " + network.chainId);
+      logDebug("connectionModule", "mutations.setNetwork() - network.chainId: " + network.chainId);
       if (state.network.chainId != network.chainId) {
         state.network.chainId = network.chainId;
         var networkDetails = getNetworkDetails(network.chainId);
         state.network.name = networkDetails.name;
-        state.network.nixAddress = networkDetails.nixAddress;
-        state.network.nixHelperAddress = networkDetails.nixHelperAddress;
+        // state.network.nixAddress = networkDetails.nixAddress;
+        // state.network.nixHelperAddress = networkDetails.nixHelperAddress;
         state.network.wethAddress = networkDetails.wethAddress;
-        state.network.royaltyEngineAddress = networkDetails.royaltyEngineAddress;
+        // state.network.royaltyEngineAddress = networkDetails.royaltyEngineAddress;
         state.network.erc721HelperAddress = networkDetails.erc721HelperAddress;
         state.network.explorer = networkDetails.explorer;
         state.network.opensea = networkDetails.opensea;
         state.network.faucets = networkDetails.faucets;
         state.network.updated = true;
-        logInfo("connectionModule", "state.network: " + JSON.stringify(state.network));
+        logDebug("connectionModule", "state.network: " + JSON.stringify(state.network));
       } else {
         if (state.network.updated) {
           state.network.updated = false;

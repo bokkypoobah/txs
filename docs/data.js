@@ -57,14 +57,14 @@ const Data = {
     },
   },
   methods: {
-    setEtherscanAPIKey(p) {
-      console.log("setEtherscanAPIKey(): " + p);
-      store.dispatch('config/setEtherscanAPIKey', p);
-    },
-    setPeriodStart(p) {
-      console.log("setPeriodStart(): " + p);
-      store.dispatch('config/setPeriodStart', p);
-    },
+    // setEtherscanAPIKey(p) {
+    //   console.log("setEtherscanAPIKey(): " + p);
+    //   store.dispatch('config/setEtherscanAPIKey', p);
+    // },
+    // setPeriodStart(p) {
+    //   console.log("setPeriodStart(): " + p);
+    //   store.dispatch('config/setPeriodStart', p);
+    // },
     async timeoutCallback() {
       logDebug("Data", "timeoutCallback() count: " + this.count);
       this.count++;
@@ -131,35 +131,64 @@ const dataModule = {
     ensMap: state => state.ensMap,
   },
   mutations: {
-    setEtherscanAPIKey(state, p) {
-      // logInfo("dataModule", "mutations.setEtherscanAPIKey('" + p + "')")
-      state.etherscanAPIKey = p;
-    },
-    setPeriodStart(state, p) {
-      // logInfo("dataModule", "mutations.setPeriodStart('" + p + "')")
-      state.periodStart = p;
+    addNewAccounts(state, p) {
+      logInfo("dataModule", "mutations.addNewAccounts('" + p + "')")
+      // state.etherscanAPIKey = p;
     },
   },
   actions: {
     restoreState(context) {
       // logInfo("dataModule", "actions.restoreState()");
-      if ('txsEtherscanAPIKey' in localStorage) {
-        context.commit('setEtherscanAPIKey', JSON.parse(localStorage.txsEtherscanAPIKey));
-      }
-      if ('txsPeriodStart' in localStorage) {
-        context.commit('setPeriodStart', JSON.parse(localStorage.txsPeriodStart));
-      }
+      // if ('txsEtherscanAPIKey' in localStorage) {
+      //   context.commit('setEtherscanAPIKey', JSON.parse(localStorage.txsEtherscanAPIKey));
+      // }
+      // if ('txsPeriodStart' in localStorage) {
+      //   context.commit('setPeriodStart', JSON.parse(localStorage.txsPeriodStart));
+      // }
       logInfo("dataModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
     },
-    setEtherscanAPIKey(context, p) {
-      // logInfo("dataModule", "actions.setEtherscanAPIKey(" + JSON.stringify(p) + ")");
-      context.commit('setEtherscanAPIKey', p);
-      localStorage.txsEtherscanAPIKey = JSON.stringify(p);
+    addNewAccounts(context, newAccounts) {
+      logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
+
+
+
+      // const addAddresses = (action == "connect") ? [this.coinbase] : (this.addressesToAdd == null ? [] : this.addressesToAdd.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x')));
+      // for (let address of addAddresses) {
+      //   try {
+      //     console.log("Processing address: " + address);
+      //     const checksummedAddress = ethers.utils.getAddress(address);
+      //     if (checksummedAddress && !(checksummedAddress in this.addresses)) {
+      //       const info = await getAddressInfo(checksummedAddress, erc721Helper, provider);
+      //       console.log("info: " + JSON.stringify(info, null, 2));
+      //       Vue.set(this.addresses, checksummedAddress, {
+      //         address: checksummedAddress,
+      //         type: info && info.type || null,
+      //         mine: address == this.coinbase,
+      //         ensName: null,
+      //         group: null,
+      //         name: info && info.symbol && info.name && (info.symbol + ': ' + info.name) || null,
+      //         tags: [],
+      //         notes: null,
+      //         contract: {
+      //           name: info && info.name || null,
+      //           symbol: info && info.symbol || null,
+      //           decimals: info && info.decimals || null,
+      //         }
+      //       });
+      //     }
+      //   } catch (e) {
+      //     console.log(e.toString());
+      //   }
+
+
+
+
+      context.commit('addNewAccounts', p);
+      // localStorage.txsEtherscanAPIKey = JSON.stringify(p);
     },
-    setPeriodStart(context, p) {
-      // logInfo("dataModule", "actions.setPeriodStart(" + JSON.stringify(p) + ")");
-      context.commit('setPeriodStart', p);
-      localStorage.txsPeriodStart = JSON.stringify(p);
+    // Called by Connection.execWeb3()
+    async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {
+      logInfo("dataModule", "execWeb3() start[" + count + ", " + listenersInstalled + ", " + JSON.stringify(rootState.route.params) + "]");
     },
   },
 };
