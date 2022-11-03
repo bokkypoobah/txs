@@ -142,10 +142,20 @@ const dataModule = {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
       logInfo("dataModule", "mutations.addENSName - ensMap: " + JSON.stringify(state.ensMap));
     },
+    toggleAccountMine(state, key) {
+      logInfo("dataModule", "mutations.toggleAccountMine - key: " + JSON.stringify(key));
+      // console.log(JSON.stringify(state.accounts[key], null, 2));
+      Vue.set(state.accounts[key], 'mine', !state.accounts[key].mine);
+      // logInfo("dataModule", "mutations.toggleAccountMine - account: " + JSON.stringify(state.accounts[key], null, 2));
+    },
+    setAccountType(state, info) {
+      logInfo("dataModule", "mutations.setAccountType - info: " + JSON.stringify(info));
+      Vue.set(state.accounts[info.key], 'type', info.accountType);
+      // logInfo("dataModule", "mutations.setAccountType - account: " + JSON.stringify(state.accounts[info.key], null, 2));
+    },
   },
   actions: {
     async restoreState(context) {
-      // logInfo("dataModule", "actions.restoreState()");
       const db0 = new Dexie(context.state.db.name);
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
       const accounts = await db0.cache.where("objectName").equals('accounts').toArray();
@@ -164,7 +174,6 @@ const dataModule = {
       if (ensMap.length == 1) {
         context.state.ensMap = ensMap[0].object;
       }
-      // logInfo("dataModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
     },
     async addNewAccounts(context, newAccounts) {
       logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
@@ -173,16 +182,12 @@ const dataModule = {
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       for (let account of accounts) {
         const accountInfo = await getAccountInfo(account, provider)
-        // console.log("accountInfo: " + JSON.stringify(accountInfo));
         if (accountInfo.account) {
           context.commit('addNewAccount', accountInfo);
         }
         const names = await ensReverseRecordsContract.getNames([account]);
-        // console.log("names: " + JSON.stringify(names));
         const name = names.length == 1 ? names[0] : account;
-        // console.log("name: " + JSON.stringify(name));
         if (!(account in context.state.ensMap)) {
-          console.log("ensMap missing: " + account);
           context.commit('addENSName', { account, name });
         }
       }
@@ -193,6 +198,28 @@ const dataModule = {
         console.log("error: " + error);
       });
       await db0.cache.put({ objectName: 'ensMap', object: context.state.ensMap }).then (function() {
+      }).catch(function(error) {
+        console.log("error: " + error);
+      });
+      db0.close();
+    },
+    async toggleAccountMine(context, key) {
+      logInfo("dataModule", "actions.toggleAccountMine - key: " + key);
+      context.commit('toggleAccountMine', key);
+      const db0 = new Dexie(context.state.db.name);
+      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
+      await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
+      }).catch(function(error) {
+        console.log("error: " + error);
+      });
+      db0.close();
+    },
+    async setAccountType(context, info) {
+      logInfo("dataModule", "actions.setAccountType - info: " + JSON.stringify(info));
+      context.commit('setAccountType', info);
+      const db0 = new Dexie(context.state.db.name);
+      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
+      await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
       }).catch(function(error) {
         console.log("error: " + error);
       });

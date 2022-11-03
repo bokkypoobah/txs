@@ -94,8 +94,14 @@ const Accounts = {
             </b-link>
             <br />
             <font size="-1">
-              <b-badge variant="info">{{ data.item.type }}</b-badge>
-              <b-badge v-if="data.item.mine" variant="warning">Mine</b-badge>
+              <span v-if="settings.editAccounts">
+                <b-form-select size="sm" v-model="data.item.type" @change="setAccountType(data.item.key, $event)" :options="accountTypes" v-b-popover.hover.top="'Select type'" class="w-25"></b-form-select>
+                <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountMine(data.item.key)">Mine</b-form-checkbox>
+              </span>
+              <span v-if="!settings.editAccounts">
+                <b-badge variant="info">{{ data.item.type }}</b-badge>
+                <b-badge v-if="data.item.mine" variant="warning">Mine</b-badge>
+              </span>
               <span v-if="data.item.type != 'erc721'">
                 {{ ensOrNull(data.item.account) }}
               </span>
@@ -177,13 +183,21 @@ const Accounts = {
         accountTypeFilter: null,
         accountMineFilter: null,
         showNewAccounts: false,
-        editAccounts: false,
+        editAccounts: true, // TODO false,
         newAccounts: null,
         selectedAccounts: {},
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
       },
+      accountTypes: [
+        { value: null, text: '(unknown)' },
+        { value: 'eoa', text: 'EOA' },
+        { value: 'contract', text: 'Contract' },
+        { value: 'erc721', text: 'ERC-721' },
+        { value: 'erc1155', text: 'ERC-1155' },
+        { value: 'erc20', text: 'ERC-20' },
+      ],
       accountTypeFilters: [
         { value: null, text: '(all)' },
         { value: 'eoa', text: 'EOA' },
@@ -286,6 +300,7 @@ const Accounts = {
         }
         if (include) {
           results.push({
+            key,
             chainId,
             account,
             group: data.group,
@@ -399,6 +414,13 @@ const Accounts = {
     clearSelectedAccounts() {
       this.settings.selectedAccounts = {};
       // localStorage.selectedAccounts = JSON.stringify(this.settings.selectedAccounts);
+    },
+    async toggleAccountMine(key) {
+      store.dispatch('data/toggleAccountMine', key);
+    },
+    async setAccountType(key, accountType) {
+      console.log("setAccountType - key: " + key + ", accountType: " + accountType);
+      store.dispatch('data/setAccountType', { key, accountType });
     },
     ensOrAccount(account, length = 0) {
       let result = null;
