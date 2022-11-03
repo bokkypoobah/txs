@@ -7,16 +7,13 @@ const Accounts = {
           <div class="mt-0 pr-1">
             <b-form-input type="text" size="sm" v-model.trim="settings.filter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by address fragment'" placeholder="🔍 address"></b-form-input>
           </div>
+          <div class="mt-0 pr-1">
+            <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
+          </div>
+          <div class="mt-0 pr-1">
+            <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts, or not'"></b-form-select>
+          </div>
           <!--
-          <div class="mt-0 pr-1">
-            <b-form-input type="text" size="sm" v-model.trim="settings.addressTable.searchAddresses" @change="settingsUpdated" debounce="600" v-b-popover.hover.top="'Filter by partial address, name'" placeholder="🔍 address"></b-form-input>
-          </div>
-          <div class="mt-0 pr-1">
-            <b-form-select size="sm" v-model="settings.addressTable.addressTypeFilter" @change="settingsUpdated" :options="addressTypeFilters" v-b-popover.hover.top="'Filter by address types'"></b-form-select>
-          </div>
-          <div class="mt-0 pr-1">
-            <b-form-select size="sm" v-model="settings.addressTable.addressMineFilter" @change="settingsUpdated" :options="addressMineFilters" v-b-popover.hover.top="'Filter for my addresses, or not'"></b-form-select>
-          </div>
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-1">
@@ -68,7 +65,6 @@ const Accounts = {
           </b-card-body>
         </b-card>
 
-
         <!-- <b-table small fixed striped selectable responsive hover :fields="addressesFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add addresses and Ethereum transaction hashes, and set your Etherscan API key for imports. Click on your address on the top right to add it" head-variant="light" class="m-0 mt-1"> -->
         <b-table small fixed striped selectable responsive hover :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts. Click on your account on the top right to add it" head-variant="light" class="m-0 mt-1">
         </b-table>
@@ -82,12 +78,28 @@ const Accounts = {
       reschedule: true,
       settings: {
         filter: null,
+        accountTypeFilter: null,
+        accountMineFilter: null,
         showNewAccounts: false,
         newAccounts: null,
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
       },
+      accountTypeFilters: [
+        { value: null, text: '(all)' },
+        { value: 'eoa', text: 'EOA' },
+        { value: 'contract', text: 'Contract' },
+        { value: 'erc721', text: 'ERC-721' },
+        { value: 'erc1155', text: 'ERC-1155' },
+        { value: 'erc20', text: 'ERC-20' },
+        { value: 'unknown', text: '(unknown)' },
+      ],
+      accountMineFilters: [
+        { value: null, text: '(any)' },
+        { value: 'mine', text: 'Mine' },
+        { value: 'notmine', text: 'Not Mine' },
+      ],
       sortOptions: [
         { value: 'accountasc', text: '▲ Account' },
         { value: 'accountdsc', text: '▼ Account' },
@@ -156,6 +168,20 @@ const Accounts = {
           (data.group && data.group.toLowerCase().includes(filterLower)) ||
           (data.notes && data.notes.toLowerCase().includes(filterLower));
           // (ensName != null && ensName.toLowerCase().includes(searchAddressesLower)));
+        if (include && this.settings.accountMineFilter != null) {
+          if (this.settings.accountMineFilter == 'mine' && data.mine) {
+          } else if (this.settings.accountMineFilter == 'notmine' && !data.mine) {
+          } else {
+            include = false;
+          }
+        }
+        if (include && this.settings.accountTypeFilter != null) {
+          if (this.settings.accountTypeFilter == 'unknown' && data.type == null) {
+          } else if (this.settings.accountTypeFilter == data.type) {
+          } else {
+            include = false;
+          }
+        }
         if (include) {
           results.push({
             chainId,

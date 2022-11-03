@@ -137,6 +137,11 @@ const dataModule = {
       });
       logInfo("dataModule", JSON.stringify(key) + " => " + JSON.stringify(state.accounts[key], null, 2));
     },
+    addENSName(state, nameInfo) {
+      logInfo("dataModule", "mutations.addENSName(" + JSON.stringify(nameInfo) + ")")
+      Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
+      logInfo("dataModule", "mutations.addENSName - ensMap: " + JSON.stringify(state.ensMap));
+    },
   },
   actions: {
     async restoreState(context) {
@@ -165,16 +170,29 @@ const dataModule = {
       logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
       const accounts = newAccounts == null ? [] : newAccounts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       for (let account of accounts) {
         const accountInfo = await getAccountInfo(account, provider)
-        console.log("accountInfo: " + JSON.stringify(accountInfo));
+        // console.log("accountInfo: " + JSON.stringify(accountInfo));
         if (accountInfo.account) {
           context.commit('addNewAccount', accountInfo);
+        }
+        const names = await ensReverseRecordsContract.getNames([account]);
+        // console.log("names: " + JSON.stringify(names));
+        const name = names.length == 1 ? names[0] : account;
+        // console.log("name: " + JSON.stringify(name));
+        if (!(account in context.state.ensMap)) {
+          // console.log("ensMap missing: " + account);
+          context.commit('addENSName', { account, name });
         }
       }
       const db0 = new Dexie(context.state.db.name);
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
       await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
+      }).catch(function(error) {
+        console.log("error: " + error);
+      });
+      await db0.cache.put({ objectName: 'ensMap', object: context.state.ensMap }).then (function() {
       }).catch(function(error) {
         console.log("error: " + error);
       });
