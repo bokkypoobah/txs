@@ -94,7 +94,32 @@ const Data = {
 const dataModule = {
   namespaced: true,
   state: {
-    accounts: {},
+    accounts: {
+      "0x12345678" : {
+        group: "Group",
+        name: "Name",
+        type: "eoa",
+        mine: true,
+        tags: [],
+        notes: null,
+        contract: {
+          symbol: "Contract Symbol",
+          name: "Contract Name",
+        },
+      },
+      "0x23456789" : {
+        group: "Group",
+        name: "Name",
+        type: "eoa",
+        mine: true,
+        tags: [],
+        notes: null,
+        contract: {
+          symbol: "Contract Symbol",
+          name: "Contract Name",
+        },
+      },
+    },
     txs: {},
     assets: {}, // ChainId/Contract/TokenId/Number
     ensMap: {},
