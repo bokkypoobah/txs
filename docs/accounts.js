@@ -24,7 +24,7 @@ const Accounts = {
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-1">
-            <b-button size="sm" :disabled="sync.section != null" @click="syncIt" variant="link" v-b-popover.hover.top="'Sync accounts'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
+            <b-button size="sm" :disabled="sync.section != null" @click="syncIt(['importFromEtherscan'])" variant="link" v-b-popover.hover.top="'Sync accounts'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
           </div>
           <!--
           <div class="mt-0 flex-grow-1">
@@ -492,8 +492,8 @@ const Accounts = {
     async setNotes(key, notes) {
       store.dispatch('data/setNotes', { key, notes });
     },
-    async syncIt() {
-      store.dispatch('data/syncIt');
+    async syncIt(sections) {
+      store.dispatch('data/syncIt', sections);
     },
     ensOrAccount(account, length = 0) {
       let result = null;

@@ -235,8 +235,15 @@ const dataModule = {
       context.commit('setNotes', info);
       context.dispatch('saveData', ['accounts']);
     },
-    async syncIt(context) {
-      logInfo("dataModule", "actions.syncIt");
+    async syncIt(context, sections) {
+      logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections));
+
+      for (let section of sections) {
+        if (section == 'importFromEtherscan') {
+          console.log("importFromEtherscan");
+        }
+      }
+
       // context.commit('setNotes', info);
       // context.dispatch('saveData', ['accounts']);
     },
