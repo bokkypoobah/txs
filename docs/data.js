@@ -98,6 +98,15 @@ const dataModule = {
     txs: {},
     assets: {}, // ChainId/Contract/TokenId/Number
     ensMap: {},
+    db: {
+      name: "txs090",
+      version: 1,
+      schemaDefinition: {
+        cache: '&objectName',
+        // collection: '&address',
+      },
+      updated: null,
+    },
   },
   getters: {
     accounts: state => state.accounts,
@@ -121,23 +130,39 @@ const dataModule = {
           symbol: accountInfo && accountInfo.symbol || null,
           decimals: accountInfo && accountInfo.decimals || null,
         },
+        created: {
+          timestamp: block && block.timestamp || null,
+          blockNumber: block && block.number || null,
+        },
         updated: {
-          timestamp: block && block.timestamp || null, // TODO: Set to null and use for incremental syncs
-          blockNumber: block && block.number || null, // TODO: Set to null and use for incremental syncs
+          timestamp: null,
+          blockNumber: null,
         },
       });
       logInfo("dataModule", "accounts: " + JSON.stringify(state.accounts, null, 2));
     },
   },
   actions: {
-    restoreState(context) {
-      // logInfo("dataModule", "actions.restoreState()");
-      // if ('txsEtherscanAPIKey' in localStorage) {
-      //   context.commit('setEtherscanAPIKey', JSON.parse(localStorage.txsEtherscanAPIKey));
-      // }
-      // if ('txsPeriodStart' in localStorage) {
-      //   context.commit('setPeriodStart', JSON.parse(localStorage.txsPeriodStart));
-      // }
+    async restoreState(context) {
+      logInfo("dataModule", "actions.restoreState()");
+      const db0 = new Dexie(context.state.db.name);
+      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
+      const accounts = await db0.cache.where("objectName").equals('accounts').toArray();
+      if (accounts.length == 1) {
+        context.state.accounts = accounts[0].object;
+      }
+      const txs = await db0.cache.where("objectName").equals('txs').toArray();
+      if (txs.length == 1) {
+        context.state.txs = txs[0].object;
+      }
+      const assets = await db0.cache.where("objectName").equals('assets').toArray();
+      if (assets.length == 1) {
+        context.state.assets = assets[0].object;
+      }
+      const ensMap = await db0.cache.where("objectName").equals('ensMap').toArray();
+      if (ensMap.length == 1) {
+        context.state.ensMap = ensMap[0].object;
+      }
       logInfo("dataModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
     },
     async addNewAccounts(context, newAccounts) {
@@ -151,6 +176,13 @@ const dataModule = {
           context.commit('addNewAccount', accountInfo);
         }
       }
+      const db0 = new Dexie(context.state.db.name);
+      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
+      await db0.cache.put({ objectName: 'accounts', object: context.state.accounts }).then (function() {
+      }).catch(function(error) {
+        console.log("error: " + error);
+      });
+      db0.close();
 
       // context.commit('addNewAccounts', accounts);
       // localStorage.txsEtherscanAPIKey = JSON.stringify(p);

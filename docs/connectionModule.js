@@ -579,7 +579,7 @@ const connectionModule = {
         state.network.opensea = networkDetails.opensea;
         state.network.faucets = networkDetails.faucets;
         state.network.updated = true;
-        logInfo("connectionModule", "state.network: " + JSON.stringify(state.network));
+        logDebug("connectionModule", "state.network: " + JSON.stringify(state.network));
       } else {
         if (state.network.updated) {
           state.network.updated = false;
