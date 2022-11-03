@@ -108,7 +108,7 @@ const dataModule = {
   },
   mutations: {
     addNewAccount(state, accountInfo) {
-      // logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(accountInfo) + ")")
+      // logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(accountInfo) + ")");
       const block = store.getters['connection/block'];
       const network = store.getters['connection/network'];
       const chainId = network.chainId;
@@ -159,6 +159,62 @@ const dataModule = {
     setNotes(state, info) {
       Vue.set(state.accounts[info.key], 'notes', info.notes);
     },
+    importEtherscanResults(state, info) {
+      logInfo("dataModule", "mutations.importEtherscanResults - info: " + JSON.stringify(info).substring(0, 1000));
+      const [account, results] = [info.account, info.results];
+
+      // [{"blockNumber":"7346052","timeStamp":"1552283052","hash":"0x81bba8e91ea86b0f8611d5504abf7ac84db1c5844d99205785dd920105a8c1f5",
+      // "nonce":"1057","blockHash":"0x0de73aac8427e3c4f8520e70866865ab9fcb515ad5d16f2f4e0b88f9c375fd21",
+      // "transactionIndex":"24","from":"0x000001f568875f378bf6d170b790967fe429c81a",
+      // "to":"0x07fb31ff47dc15f78c5261eeb3d711fb6ea985d1","value":"30000000000000000","gas":"21000",
+      // "gasPrice":"2200000000","isError":"0","txreceipt_status":"1","input":"0x","contractAddress":"",
+      // "cumulativeGasUsed":"1287390","gasUsed":"21000","confirmations":"8546714","methodId":"0x","functionName":""},
+      const block = store.getters['connection/block'];
+      for (const result of results) {
+        if (!(result.hash in state.txs)) {
+          console.log("Adding " + result.hash);
+          Vue.set(state.txs, result.hash, {
+            blockNumber: result.blockNumber,
+            timestamp: result.timeStamp,
+            nonce: result.nonce,
+            blockHash: result.blockHash,
+            transactionIndex: result.transactionIndex,
+            from: result.from,
+            to: result.to,
+            value: result.value,
+            gas: result.gas,
+            gasPrice: result.gasPrice,
+            isError: result.isError,
+            txReceiptStatus: result.txreceipt_status,
+            input: result.input,
+            contractAddress: result.contractAddress,
+            cumulativeGasUsed: result.cumulativeGasUsed,
+            gasUsed: result.gasUsed,
+            confirmations: result.confirmations,
+            methodId: result.methodId,
+            functionName: result.functionName,
+            etherscanImported: {
+              account,
+              timestamp: block && block.timestamp || null,
+              blockNumber: block && block.number || null,
+            },
+            dataImported: {
+              tx: null,
+              txReceipt: null,
+              balances: {},
+              balancePreviousBlock: {},
+              timestamp: null,
+              blockNumber: null,
+            },
+            computed: {
+              info: {},
+              timestamp: null,
+              blockNumber: null,
+            },
+          });
+        }
+      }
+    }
   },
   actions: {
     async restoreState(context) {
@@ -171,6 +227,7 @@ const dataModule = {
       const txs = await db0.cache.where("objectName").equals('txs').toArray();
       if (txs.length == 1) {
         context.state.txs = txs[0].object;
+        console.log(JSON.stringify(context.state.txs, null, 2).substring(0, 2000));
       }
       const assets = await db0.cache.where("objectName").equals('assets').toArray();
       if (assets.length == 1) {
@@ -237,15 +294,34 @@ const dataModule = {
     },
     async syncIt(context, sections) {
       logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections));
+      const etherscanAPIKey = store.getters['config/etherscanAPIKey'] && store.getters['config/etherscanAPIKey'].length > 0 && store.getters['config/etherscanAPIKey'] || "YourApiKeyToken";
+      const block = store.getters['connection/block'];
+      const blockNumber = block && block.number || 'error!!!';
 
       for (let section of sections) {
         if (section == 'importFromEtherscan') {
-          console.log("importFromEtherscan");
+          for (const [key, item] of Object.entries(context.state.accounts)) {
+            if (item.sync) {
+              const [chainId, account] = key.split(':');
+              console.log("--- Syncing " + account + " --- ");
+              let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=0&endblock=" + blockNumber + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
+              console.log("importUrl: " + importUrl);
+              const importData = await fetch(importUrl)
+                .then(handleErrors)
+                .then(response => response.json())
+                .catch(function(error) {
+                   console.log("ERROR - processIt: " + error);
+                   // Want to work around API data unavailablity - state.sync.error = true;
+                   return [];
+                });
+              if (importData.status == 1) {
+                context.commit('importEtherscanResults', { account, results: importData.result });
+              }
+            }
+          }
+          context.dispatch('saveData', ['txs']);
         }
       }
-
-      // context.commit('setNotes', info);
-      // context.dispatch('saveData', ['accounts']);
     },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {

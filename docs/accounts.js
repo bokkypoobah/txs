@@ -331,7 +331,6 @@ const Accounts = {
       for (const [key, data] of Object.entries(this.accounts)) {
         const [chainId, account] = key.split(':');
         const ensName = this.ensMap[account] || null;
-        console.log(account + " => " + ensName);
         let include = filterLower == null ||
           (account.toLowerCase().includes(filterLower)) ||
           (data.name && data.name.toLowerCase().includes(filterLower)) ||
@@ -372,7 +371,7 @@ const Accounts = {
           });
         }
       }
-      console.log("filteredAccounts: " + JSON.stringify(results, null, 2));
+      // console.log("filteredAccounts: " + JSON.stringify(results, null, 2));
       return results;
     },
     filteredSortedAccounts() {
@@ -467,7 +466,7 @@ const Accounts = {
           Vue.delete(this.settings.selectedAccounts, item.account);
         }
       }
-      console.log("toggleSelectedAccounts: " + JSON.stringify(this.settings.selectedAccounts));
+      // console.log("toggleSelectedAccounts: " + JSON.stringify(this.settings.selectedAccounts));
       // localStorage.selectedAccounts = JSON.stringify(this.settings.selectedAccounts);
     },
     clearSelectedAccounts() {
