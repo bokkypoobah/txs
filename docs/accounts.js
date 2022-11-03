@@ -100,23 +100,23 @@ const Accounts = {
                     <b-form-select size="sm" v-model="data.item.type" @change="setAccountType(data.item.key, $event)" :options="accountTypes" v-b-popover.hover.top="'Select type'"></b-form-select>
                   </span>
                   <span v-if="!settings.editAccounts">
-                    <b-badge variant="info">{{ data.item.type }}</b-badge>
+                    <b-badge variant="info" v-b-popover.hover="'Account type'">{{ data.item.type }}</b-badge>
                   </span>
                 </div>
-                <div class="m-0 pt-1 pr-1">
+                <div v-if="data.item.mine || settings.editAccounts" class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
                     <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountMine(data.item.key)">Mine</b-form-checkbox>
                   </span>
                   <span v-if="!settings.editAccounts">
-                    <b-badge v-if="data.item.mine" variant="warning">Mine</b-badge>
+                    <b-badge v-if="data.item.mine" variant="primary" v-b-popover.hover="'My account'">Mine</b-badge>
                   </span>
                 </div>
                 <div class="m-0 pt-1 pr-1">
                   <span v-if="data.item.type != 'erc721'">
-                    <b-badge variant="default">{{ ensOrNull(data.item.account) }}</b-badge>
+                    <b-badge v-if="hasENS(data.item.account)" variant="secondary" v-b-popover.hover="'ENS name if set'">{{ ensOrNull(data.item.account) }}</b-badge>
                   </span>
                   <span v-if="data.item.type == 'erc721'">
-                    <b-badge variant="default">{{ data.item.collection.name }}</b-badge>
+                    <b-badge variant="secondary">{{ data.item.collection.name }}</b-badge>
                   </span>
                 </div>
               </div>
@@ -445,12 +445,22 @@ const Accounts = {
       }
       return result == null || result.length == 0 ? null : (length == 0 ? result : result.substring(0, length));
     },
+    hasENS(account) {
+      if (this.ensMap && account in this.ensMap) {
+        result = this.ensMap[account];
+        if (result != account) {
+          return true;
+        }
+      }
+      return false;
+    },
     ensOrNull(account, length = 0) {
       let result = null;
       if (this.ensMap && account in this.ensMap) {
         result = this.ensMap[account];
-      } else {
-        result = account;
+        if (result == account) {
+          result = null;
+        }
       }
       return result == null || result.length == 0 ? null : (length == 0 ? result : result.substring(0, length));
     },
