@@ -60,6 +60,9 @@ const Accounts = {
               <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added below" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="newaccounts-submit" :disabled="settings.newAccounts == null || settings.newAccounts.length == 0" @click="addNewAccounts" variant="primary">Add</b-button>
               </b-form-group>
+              <b-form-group label="Coinbase:" label-for="newaccounts-coinbase-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+                <b-button size="sm" id="newaccounts-coinbase-submit" :disabled="coinbaseIncluded" @click="addCoinbase" variant="primary">{{ (coinbaseIncluded ? 'Already added ' : 'Add ') + coinbase }}</b-button>
+              </b-form-group>
             </b-form-group>
           </b-card-body>
         </b-card>
@@ -306,6 +309,10 @@ const Accounts = {
     ensMap() {
       return store.getters['data/ensMap'];
     },
+    coinbaseIncluded() {
+      const key = this.network.chainId + ':' + this.coinbase;
+      return (key in this.accounts);
+    },
     filteredAccounts() {
       const results = [];
       const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
@@ -426,6 +433,9 @@ const Accounts = {
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
+    },
+    addCoinbase() {
+      store.dispatch('data/addNewAccounts', this.coinbase);
     },
     toggleSelectedAccounts(items) {
       let someFalse = false;
