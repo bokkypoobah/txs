@@ -104,3 +104,7 @@ img {
     image-rendering: -o-pixelated;
     image-rendering: pixelated !important;
 }
+
+.popover-max-width {
+  max-width: 600px !important;
+}

@@ -64,7 +64,7 @@ const Accounts = {
           </b-card-body>
         </b-card>
 
-        <b-table small fixed striped selectable responsive hover :fields="accountsFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped responsive hover :fields="accountsFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
           <template #head(number)="data">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
               <template #button-content>
@@ -81,11 +81,23 @@ const Accounts = {
             </b-form-checkbox>
           </template>
           <template #cell(image)="data">
-
+            <div v-if="data.item.type == 'erc721'">
+              <b-avatar rounded variant="light" size="3.0rem" :src="data.item.collection.image" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
+            </div>
+            <div v-else-if="data.item.type == 'eoa' && data.item.account != ensOrAccount(data.item.account)">
+              <b-avatar rounded variant="light" size="3.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAccount(data.item.account)" v-b-popover.hover="'ENS avatar if set'"></b-avatar>
+            </div>
           </template>
           <template #cell(account)="data">
-          {{ data.item.account }}
-          <br />
+            <b-button class="sm" :id="'popover-target-' + data.item.account" variant="link" class="m-0 p-0">
+              {{ data.item.account }}
+            </b-button>
+            <br />
+            {{ ensOrNull(data.item.account) }}
+            <br />
+            <b-popover :target="'popover-target-' + data.item.account" placement="right" custom-class="popover-max-width">
+              <template #title>{{ ensOrAccount(data.item.account) }}</template>
+            </b-popover>
           </template>
         </b-table>
 
@@ -149,7 +161,7 @@ const Accounts = {
       ],
       accountsFields: [
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
-        { key: 'image', label: '', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'image', label: '', sortable: false, thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
         { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 50%;', tdClass: 'text-truncate' },
         // { key: 'type', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
         // { key: 'mine', label: 'Mine', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
@@ -328,6 +340,25 @@ const Accounts = {
     clearSelectedAccounts() {
       this.settings.selectedAccounts = {};
       // localStorage.selectedAccounts = JSON.stringify(this.settings.selectedAccounts);
+    },
+    ensOrAccount(account, length = 0) {
+      let result = null;
+      if (this.ensMap && (account in this.ensMap)) {
+        result = this.ensMap[account];
+      }
+      if (result == null || result.length == 0) {
+        result = account;
+      }
+      return result == null ? null : (length == 0 ? result : result.substring(0, length));
+    },
+    ensOrNull(account, length = 0) {
+      let result = null;
+      if (this.ensMap && (account in this.ensMap)) {
+        result = this.ensMap[account];
+      } else {
+        result = account;
+      }
+      return result == null ? null : (length == 0 ? result : result.substring(0, length));
     },
     async timeoutCallback() {
       logDebug("Accounts", "timeoutCallback() count: " + this.count);

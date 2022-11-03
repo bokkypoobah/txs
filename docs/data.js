@@ -182,7 +182,7 @@ const dataModule = {
         const name = names.length == 1 ? names[0] : account;
         // console.log("name: " + JSON.stringify(name));
         if (!(account in context.state.ensMap)) {
-          // console.log("ensMap missing: " + account);
+          console.log("ensMap missing: " + account);
           context.commit('addENSName', { account, name });
         }
       }
