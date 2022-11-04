@@ -223,16 +223,16 @@ const dataModule = {
       }
     },
     setSyncSection(state, info) {
-      console.log("setSyncSection: " + JSON.stringify(info));
+      // console.log("setSyncSection: " + JSON.stringify(info));
       state.sync.section = info.section;
       state.sync.total = info.total;
     },
     setSyncCompleted(state, completed) {
-      console.log("setSyncCompleted: " + completed);
+      // console.log("setSyncCompleted: " + completed);
       state.sync.completed = completed;
     },
     setSyncHalt(state, halt) {
-      console.log("setSyncHalt: " + halt);
+      // console.log("setSyncHalt: " + halt);
       state.sync.halt = halt;
     },
   },
@@ -342,10 +342,11 @@ const dataModule = {
                   currentDate = Date.now();
                 } while (currentDate - date < milliseconds);
               }
-              context.commit('setSyncSection', { section: 'Pausing', total: keysToSync.length });
+              // context.commit('setSyncSection', { section: 'Pausing', total: keysToSync.length });
               sleep(5000);
-              context.commit('setSyncSection', { section: 'Import', total: keysToSync.length });
+              // context.commit('setSyncSection', { section: 'Import', total: keysToSync.length });
             }
+            context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=0&endblock=" + blockNumber + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
             console.log("importUrl: " + importUrl);
             const importData = await fetch(importUrl)
@@ -365,10 +366,9 @@ const dataModule = {
               pause = true;
             }
             if (context.state.sync.halt) {
-              console.log("Halting");
+              // console.log("Halting");
               break;
             }
-            context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
           }
           context.dispatch('saveData', ['txs']);
           context.commit('setSyncSection', { section: null, total: null });
