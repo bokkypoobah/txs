@@ -7,11 +7,14 @@ const Transactions = {
           <div class="mt-0 pr-1">
             <b-form-input type="text" size="sm" v-model.trim="settings.filter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by address or ENS name fragment'" placeholder="🔍 address / ens name"></b-form-input>
           </div>
-          <div class="mt-0 pr-1">
+          <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
           </div>
-          <div class="mt-0 pr-1">
+          <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts, or not'"></b-form-select>
+          </div>
+          <div class="mt-0 pr-1">
+            <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
@@ -263,6 +266,7 @@ const Transactions = {
         showNewAccounts: false,
         editAccounts: false,
         newAccounts: null,
+        period: null,
         selectedAccounts: {}, // TODO: delete
         selectedTransactions: {},
         currentPage: 1,
@@ -346,6 +350,15 @@ const Transactions = {
     },
     network() {
       return store.getters['connection/network'];
+    },
+    periodOptions() {
+      const results = [];
+      results.push({ value: null, text: "(select period)", data: null });
+      for (const i of store.getters['config/periodOptions']) {
+        results.push(i);
+      }
+      results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
+      return results;
     },
     accounts() {
       return store.getters['data/accounts'];

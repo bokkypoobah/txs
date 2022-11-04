@@ -113,7 +113,6 @@ const configModule = {
     periodStart: state => state.periodStart,
     periodOptions(state) {
       const results = [];
-      // results.push({ value: null, text: "(select period)", data: null });
       const startMonth = state.periodStart && state.periodStart.length > 0 && state.periodStart || "jul";
       const now = moment();
       let startPeriod = moment(now).month(startMonth).startOf('month');
@@ -125,7 +124,6 @@ const configModule = {
         results.push({ value: "y" + moment(startPeriod).year(), text: startPeriod.format('MMM DD YYYY') + " - " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
         startPeriod = moment(startPeriod).subtract(1, 'year');
       }
-      // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
       return results;
     },
   },
