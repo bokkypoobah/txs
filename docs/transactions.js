@@ -4,8 +4,11 @@ const Transactions = {
       <b-card no-body no-header class="border-0">
 
         <div class="d-flex flex-wrap m-0 p-0">
-          <div class="mt-0 pr-1">
-            <b-form-input type="text" size="sm" v-model.trim="settings.filter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash fragment"></b-form-input>
+          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
+            <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input>
+          </div>
+          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
+            <b-form-input type="text" size="sm" v-model.trim="settings.accountFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by address fragment'" placeholder="🔍 address"></b-form-input>
           </div>
           <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
@@ -79,6 +82,16 @@ const Transactions = {
         </b-card>
 
         <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1">
+          <!--
+          <template #thead-top="data">
+            <b-tr>
+              <b-th colspan="2"><span class="sr-only">Name and ID</span></b-th>
+              <b-th variant="secondary">Type 1</b-th>
+              <b-th variant="primary" colspan="3">Type 2</b-th>
+              <b-th variant="danger">Type 3</b-th>
+            </b-tr>
+          </template>
+          -->
           <template #head(number)="data">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
               <template #button-content>
@@ -260,7 +273,8 @@ const Transactions = {
       count: 0,
       reschedule: true,
       settings: {
-        filter: null,
+        txhashFilter: null,
+        accountFilter: null,
         accountTypeFilter: null,
         accountMineFilter: null,
         showNewAccounts: false,
@@ -384,7 +398,8 @@ const Transactions = {
       const results = [];
       let startPeriod = null;
       let endPeriod = null;
-      const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
+      const txhashFilterLower = this.settings.txhashFilter && this.settings.txhashFilter.toLowerCase() || null;
+      const accountFilterLower = this.settings.accountFilter && this.settings.accountFilter.toLowerCase() || null;
       if (this.settings.period != null && this.settings.period != "nodata") {
         const periodRecords = this.periodOptions.filter(e => e.value == this.settings.period);
         startPeriod = periodRecords[0].data.startPeriod;
@@ -398,8 +413,19 @@ const Transactions = {
         if (include && endPeriod != null && item.timestamp > endPeriod.unix()) {
           include = false;
         }
-        if (include && filterLower != null) {
-          if (!(txHash.includes(filterLower))) {
+        if (include && txhashFilterLower != null) {
+          if (!(txHash.includes(txhashFilterLower))) {
+            include = false;
+          }
+        }
+        if (include && accountFilterLower != null) {
+          // const fromENS = this.ensMap[item.from] || '';
+          // console.log(item.from + "=>" + fromENS);
+          if (
+            !(item.from.toLowerCase().includes(accountFilterLower)) &&
+            !(item.to.toLowerCase().includes(accountFilterLower)) // &&
+            // !(fromENS.toLowerCase().includes(accountFilterLower))
+          ) {
             include = false;
           }
         }

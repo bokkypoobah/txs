@@ -169,32 +169,24 @@ const dataModule = {
     importEtherscanResults(state, info) {
       logInfo("dataModule", "mutations.importEtherscanResults - info: " + JSON.stringify(info).substring(0, 1000));
       const [account, results] = [info.account, info.results];
-
-      // [{"blockNumber":"7346052","timeStamp":"1552283052","hash":"0x81bba8e91ea86b0f8611d5504abf7ac84db1c5844d99205785dd920105a8c1f5",
-      // "nonce":"1057","blockHash":"0x0de73aac8427e3c4f8520e70866865ab9fcb515ad5d16f2f4e0b88f9c375fd21",
-      // "transactionIndex":"24","from":"0x000001f568875f378bf6d170b790967fe429c81a",
-      // "to":"0x07fb31ff47dc15f78c5261eeb3d711fb6ea985d1","value":"30000000000000000","gas":"21000",
-      // "gasPrice":"2200000000","isError":"0","txreceipt_status":"1","input":"0x","contractAddress":"",
-      // "cumulativeGasUsed":"1287390","gasUsed":"21000","confirmations":"8546714","methodId":"0x","functionName":""},
       const block = store.getters['connection/block'];
       for (const result of results) {
         if (!(result.hash in state.txs)) {
-          // console.log("Adding " + result.hash);
           Vue.set(state.txs, result.hash, {
             blockNumber: result.blockNumber,
             timestamp: result.timeStamp,
             nonce: result.nonce,
             blockHash: result.blockHash,
             transactionIndex: result.transactionIndex,
-            from: result.from,
-            to: result.to,
+            from: ethers.utils.getAddress(result.from),
+            to: (result.to == null && result.to.length == 0) ? null : ethers.utils.getAddress(result.to),
             value: result.value,
             gas: result.gas,
             gasPrice: result.gasPrice,
             isError: result.isError,
             txReceiptStatus: result.txreceipt_status,
             input: result.input,
-            contractAddress: result.contractAddress,
+            contractAddress: (result.contractAddress == null || result.contractAddress.length == 0) ? null : ethers.utils.getAddress(result.contractAddress),
             cumulativeGasUsed: result.cumulativeGasUsed,
             gasUsed: result.gasUsed,
             confirmations: result.confirmations,
@@ -223,16 +215,13 @@ const dataModule = {
       }
     },
     setSyncSection(state, info) {
-      // console.log("setSyncSection: " + JSON.stringify(info));
       state.sync.section = info.section;
       state.sync.total = info.total;
     },
     setSyncCompleted(state, completed) {
-      // console.log("setSyncCompleted: " + completed);
       state.sync.completed = completed;
     },
     setSyncHalt(state, halt) {
-      // console.log("setSyncHalt: " + halt);
       state.sync.halt = halt;
     },
   },
