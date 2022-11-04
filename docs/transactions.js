@@ -108,7 +108,22 @@ const Transactions = {
             </b-form-checkbox>
           </template>
           <template #cell(timestamp)="data">
-            {{ formatTimestamp(data.item.timestamp) }}
+            <b-link class="sm" :id="'popover-target-' + data.item.txHash">
+              {{ formatTimestamp(data.item.timestamp) }}
+            </b-link>
+            <br />
+            <font size="-1">
+              {{ data.item.txHash.substring(0, 16) + '...' }}
+            </font>
+            <b-popover :target="'popover-target-' + data.item.txHash" placement="right" custom-class="popover-max-width">
+              <template #title>
+                {{ data.item.txHash.substring(0, 16) + '...' }}
+              </template>
+              <b-link @click="copyToClipboard(data.item.txHash);">Copy tx hash to clipboard</b-link>
+              <br />
+              <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" target="_blank">View tx in etherscan.io</b-link>
+              <br />
+            </b-popover>
           </template>
           <template #cell(value)="data">
             {{ formatETH(data.item.value) }}
