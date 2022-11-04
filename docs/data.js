@@ -300,6 +300,11 @@ const dataModule = {
 
       for (let section of sections) {
         if (section == 'importFromEtherscan') {
+
+          // this.sync.total = Object.keys(this.txHashes).length;
+          // this.sync.completed = this.sync.total - txHashesToProcess.length;
+          // this.sync.section = "Retrieve Data";
+          
           const keysToSync = [];
           for (const [key, item] of Object.entries(context.state.accounts)) {
             if (item.sync) {
