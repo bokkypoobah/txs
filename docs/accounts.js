@@ -448,7 +448,7 @@ const Accounts = {
   },
   methods: {
     saveSettings() {
-      console.log("saveSettings: TODO");
+      localStorage.accountSettings = JSON.stringify(this.settings);
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
@@ -473,12 +473,11 @@ const Accounts = {
           Vue.delete(this.settings.selectedAccounts, item.account);
         }
       }
-      // console.log("toggleSelectedAccounts: " + JSON.stringify(this.settings.selectedAccounts));
-      // localStorage.selectedAccounts = JSON.stringify(this.settings.selectedAccounts);
+      this.saveSettings();
     },
     clearSelectedAccounts() {
       this.settings.selectedAccounts = {};
-      // localStorage.selectedAccounts = JSON.stringify(this.settings.selectedAccounts);
+      this.saveSettings();
     },
     async toggleAccountMine(key) {
       store.dispatch('data/toggleAccountMine', key);
@@ -570,6 +569,9 @@ const Accounts = {
   mounted() {
     logDebug("Accounts", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('data/restoreState');
+    if ('accountSettings' in localStorage) {
+      this.settings = JSON.parse(localStorage.accountSettings);
+    }
     this.reschedule = true;
     logDebug("Accounts", "Calling timeoutCallback()");
     this.timeoutCallback();

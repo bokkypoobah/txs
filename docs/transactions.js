@@ -723,7 +723,7 @@ const Transactions = {
       return e.toFixed(9);
     },
     saveSettings() {
-      console.log("saveSettings: TODO");
+      localStorage.transactionsSettings = JSON.stringify(this.settings);
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
@@ -748,13 +748,13 @@ const Transactions = {
           Vue.delete(this.settings.selectedTransactions, item.txHash);
         }
       }
-      console.log("toggleSelectedAccounts: " + JSON.stringify(this.settings.selectedTransactions));
-      // localStorage.selectedTransactions = JSON.stringify(this.settings.selectedTransactions);
+      this.saveSettings();
     },
     clearSelectedTransactions() {
       this.settings.selectedTransactions = {};
-      // localStorage.selectedTransactions = JSON.stringify(this.settings.selectedTransactions);
+      this.saveSettings();
     },
+    // TODO: Delete
     toggleSelectedAccounts(items) {
       let someFalse = false;
       let someTrue = false;
@@ -772,12 +772,12 @@ const Transactions = {
           Vue.delete(this.settings.selectedAccounts, item.account);
         }
       }
-      // console.log("toggleSelectedAccounts: " + JSON.stringify(this.settings.selectedAccounts));
-      // localStorage.selectedAccounts = JSON.stringify(this.settings.selectedAccounts);
+      this.saveSettings();
     },
+    // TODO: Delete
     clearSelectedAccounts() {
       this.settings.selectedAccounts = {};
-      // localStorage.selectedAccounts = JSON.stringify(this.settings.selectedAccounts);
+      this.saveSettings();
     },
     async toggleAccountMine(key) {
       store.dispatch('data/toggleAccountMine', key);
@@ -869,6 +869,9 @@ const Transactions = {
   mounted() {
     logDebug("Transactions", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('data/restoreState');
+    if ('transactionsSettings' in localStorage) {
+      this.settings = JSON.parse(localStorage.transactionsSettings);
+    }
     this.reschedule = true;
     logDebug("Transactions", "Calling timeoutCallback()");
     this.timeoutCallback();
