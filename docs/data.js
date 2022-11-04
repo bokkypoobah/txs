@@ -90,6 +90,12 @@ const dataModule = {
     txs: {},
     assets: {}, // TODO: ChainId/Contract/TokenId/Number
     ensMap: {},
+    sync: {
+      section: null,
+      total: null,
+      completed: null,
+      halt: false,
+    },
     db: {
       name: "txs090b",
       version: 1,
@@ -105,6 +111,7 @@ const dataModule = {
     txs: state => state.txs,
     assets: state => state.assets,
     ensMap: state => state.ensMap,
+    sync: state => state.sync,
   },
   mutations: {
     addNewAccount(state, accountInfo) {
@@ -214,7 +221,20 @@ const dataModule = {
           });
         }
       }
-    }
+    },
+    setSyncSection(state, info) {
+      console.log("setSyncSection: " + JSON.stringify(info));
+      state.sync.section = info.section;
+      state.sync.total = info.total;
+    },
+    setSyncCompleted(state, completed) {
+      console.log("setSyncCompleted: " + completed);
+      state.sync.completed = completed;
+    },
+    setSyncHalt(state, halt) {
+      console.log("setSyncHalt: " + halt);
+      state.sync.halt = halt;
+    },
   },
   actions: {
     async restoreState(context) {
@@ -298,19 +318,16 @@ const dataModule = {
       const block = store.getters['connection/block'];
       const blockNumber = block && block.number || 'error!!!';
 
+      context.commit('setSyncHalt', false);
       for (let section of sections) {
         if (section == 'importFromEtherscan') {
-
-          // this.sync.total = Object.keys(this.txHashes).length;
-          // this.sync.completed = this.sync.total - txHashesToProcess.length;
-          // this.sync.section = "Retrieve Data";
-          
           const keysToSync = [];
           for (const [key, item] of Object.entries(context.state.accounts)) {
             if (item.sync) {
               keysToSync.push(key);
             }
           }
+          context.commit('setSyncSection', { section: 'Import', total: keysToSync.length });
           let pause = false;
           for (const keyIndex in keysToSync) {
             const key = keysToSync[keyIndex];
@@ -325,9 +342,9 @@ const dataModule = {
                   currentDate = Date.now();
                 } while (currentDate - date < milliseconds);
               }
-              console.log("-- Pausing start --");
+              context.commit('setSyncSection', { section: 'Pausing', total: keysToSync.length });
               sleep(5000);
-              console.log("-- Pausing end --");
+              context.commit('setSyncSection', { section: 'Import', total: keysToSync.length });
             }
             let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=0&endblock=" + blockNumber + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
             console.log("importUrl: " + importUrl);
@@ -347,10 +364,19 @@ const dataModule = {
             if (importData.message && importData.message.includes("Missing")) {
               pause = true;
             }
+            if (context.state.sync.halt) {
+              console.log("Halting");
+              break;
+            }
+            context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
           }
           context.dispatch('saveData', ['txs']);
+          context.commit('setSyncSection', { section: null, total: null });
         }
       }
+    },
+    async setSyncHalt(context, halt) {
+      context.commit('setSyncHalt', halt);
     },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {
