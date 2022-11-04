@@ -335,13 +335,6 @@ const dataModule = {
             const [chainId, account] = key.split(':');
             console.log("--- Syncing " + account + " --- ");
             if (pause) {
-              function sleep(milliseconds) {
-                const date = Date.now();
-                let currentDate = null;
-                do {
-                  currentDate = Date.now();
-                } while (currentDate - date < milliseconds);
-              }
               // context.commit('setSyncSection', { section: 'Pausing', total: keysToSync.length });
               sleep(5000);
               // context.commit('setSyncSection', { section: 'Import', total: keysToSync.length });

@@ -1,4 +1,4 @@
-const Accounts = {
+const Transactions = {
   template: `
     <div class="mt-5 pt-3">
       <b-card no-body no-header class="border-0">
@@ -49,17 +49,17 @@ const Accounts = {
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedAccounts.length }}</font>
+            <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedTransactions.length }}</font>
           </div>
           <div class="mt-0 pr-1">
-            <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedAccounts.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
+            <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedTransactions.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
           </div>
           <div class="mt-0 pl-1">
             <b-form-select size="sm" v-model="settings.pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
           </div>
         </div>
 
-        <b-card v-if="settings.showNewAccounts" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+        <b-card v-if="false && settings.showNewAccounts" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
           <b-card-body class="m-1 p-1">
             <b-form-group label-cols-lg="2" label="New Accounts" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
               <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and are used to request information via your web3 connection, or via Etherscan and Reservoir API calls" class="mx-0 my-1 p-0">
@@ -75,7 +75,31 @@ const Accounts = {
           </b-card-body>
         </b-card>
 
-        <b-table small fixed striped responsive hover :fields="accountsFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1">
+          <template #head(number)="data">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
+              <template #button-content>
+                <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
+              </template>
+              <b-dropdown-item href="#" @click="toggleSelectedTransactions(pagedFilteredSortedTransactions)">Toggle selection for all transactions on this page</b-dropdown-item>
+              <b-dropdown-item href="#" @click="toggleSelectedTransactions(filteredSortedTransactions)">Toggle selection for all transactions on all pages</b-dropdown-item>
+              <b-dropdown-item href="#" @click="clearSelectedTransactions()">Clear selection</b-dropdown-item>
+            </b-dropdown>
+          </template>
+          <template #cell(number)="data">
+            <b-form-checkbox size="sm" :checked="settings.selectedTransactions[data.item.txHash] ? 1 : 0" value="1" @change="toggleSelectedTransactions([data.item])">
+              {{ parseInt(data.index) + ((settings.currentPage - 1) * settings.pageSize) + 1 }}
+            </b-form-checkbox>
+          </template>
+          <template #cell(timestamp)="data">
+            {{ formatTimestamp(data.item.timestamp) }}
+          </template>
+          <template #cell(value)="data">
+            {{ formatETH(data.item.value) }}
+          </template>
+        </b-table>
+
+        <b-table v-if="false" small fixed striped responsive hover :fields="accountsFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
           <template #head(number)="data">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
               <template #button-content>
@@ -239,10 +263,11 @@ const Accounts = {
         showNewAccounts: false,
         editAccounts: false,
         newAccounts: null,
-        selectedAccounts: {},
+        selectedAccounts: {}, // TODO: delete
+        selectedTransactions: {},
         currentPage: 1,
-        pageSize: 10,
-        sortOption: 'accountasc',
+        pageSize: 100,
+        sortOption: 'timestampdsc',
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -267,12 +292,14 @@ const Accounts = {
         { value: 'notmine', text: 'Not Mine' },
       ],
       sortOptions: [
-        { value: 'accountasc', text: '▲ Account' },
-        { value: 'accountdsc', text: '▼ Account' },
-        { value: 'groupasc', text: '▲ Group, ▲ Name' },
-        { value: 'groupdsc', text: '▼ Group, ▲ Name' },
-        { value: 'nameasc', text: '▲ Name, ▲ Group' },
-        { value: 'namedsc', text: '▼ Name, ▲ Group' },
+        { value: 'timestampasc', text: '▲ Timestamp' },
+        { value: 'timestampdsc', text: '▼ Timestamp' },
+        { value: 'blocknumberasc', text: '▲ Block Number' },
+        { value: 'blocknumberdsc', text: '▼ Block Number' },
+        // { value: 'groupasc', text: '▲ Group, ▲ Name' },
+        // { value: 'groupdsc', text: '▼ Group, ▲ Name' },
+        // { value: 'nameasc', text: '▲ Name, ▲ Group' },
+        // { value: 'namedsc', text: '▼ Name, ▲ Group' },
       ],
       pageSizes: [
         { value: 1, text: '1' },
@@ -285,6 +312,13 @@ const Accounts = {
         { value: 1000, text: '1k' },
         { value: 2500, text: '2.5k' },
         { value: 10000, text: '10k' },
+      ],
+      transactionsFields: [
+        { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
+        { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        { key: 'from', label: 'From', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+        { key: 'to', label: 'To', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+        // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
       ],
       accountsFields: [
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
@@ -331,6 +365,88 @@ const Accounts = {
     coinbaseIncluded() {
       const key = this.network.chainId + ':' + this.coinbase;
       return (key in this.accounts);
+    },
+    filteredTransactions() {
+      const results = [];
+      for (const [txHash, item] of Object.entries(this.txs)) {
+        results.push({
+          txHash,
+          blockNumber: item.blockNumber,
+          transactionIndex: item.transactionIndex,
+          timestamp: item.timestamp,
+          from: item.from,
+          to: item.to,
+          value: item.value,
+        });
+      }
+      // Vue.set(state.txs, result.hash, {
+      //   blockNumber: result.blockNumber,
+      //   timestamp: result.timeStamp,
+      //   nonce: result.nonce,
+      //   blockHash: result.blockHash,
+      //   transactionIndex: result.transactionIndex,
+      //   from: result.from,
+      //   to: result.to,
+      //   value: result.value,
+      //   gas: result.gas,
+      //   gasPrice: result.gasPrice,
+      //   isError: result.isError,
+      //   txReceiptStatus: result.txreceipt_status,
+      //   input: result.input,
+      //   contractAddress: result.contractAddress,
+      //   cumulativeGasUsed: result.cumulativeGasUsed,
+      //   gasUsed: result.gasUsed,
+      //   confirmations: result.confirmations,
+      //   methodId: result.methodId,
+      //   functionName: result.functionName,
+      //   etherscanImported: {
+      //     account,
+      //     timestamp: block && block.timestamp || null,
+      //     blockNumber: block && block.number || null,
+      //   },
+      //   dataImported: {
+      //     tx: null,
+      //     txReceipt: null,
+      //     balances: {},
+      //     balancePreviousBlock: {},
+      //     timestamp: null,
+      //     blockNumber: null,
+      //   },
+      //   computed: {
+      //     info: {},
+      //     timestamp: null,
+      //     blockNumber: null,
+      //   },
+      // });
+      return results;
+    },
+    filteredSortedTransactions() {
+      const results = this.filteredTransactions;
+      if (this.settings.sortOption == 'timestampasc') {
+        results.sort((a, b) => a.timestamp - b.timestamp);
+      } else if (this.settings.sortOption == 'timestampdsc') {
+        results.sort((a, b) => b.timestamp - a.timestamp);
+      } else if (this.settings.sortOption == 'blocknumberasc') {
+        results.sort((a, b) => {
+          if (a.blockNumber == b.blockNumber) {
+            return a.transactionIndex - b.transactionIndex;
+          } else {
+            return a.blockNumber - b.blockNumber;
+          }
+        });
+      } else if (this.settings.sortOption == 'blocknumberdsc') {
+        results.sort((a, b) => {
+          if (a.blockNumber == b.blockNumber) {
+            return b.transactionIndex - a.transactionIndex;
+          } else {
+            return b.blockNumber - a.blockNumber
+          }
+        });
+      }
+      return results;
+    },
+    pagedFilteredSortedTransactions() {
+      return this.filteredSortedTransactions.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
     },
     filteredAccounts() {
       const results = [];
@@ -383,15 +499,15 @@ const Accounts = {
     },
     filteredSortedAccounts() {
       const results = this.filteredAccounts;
-      if (this.settings.sortOption == 'accountasc') {
+      if (this.sortOption == 'accountasc') {
         results.sort((a, b) => {
           return ('' + a.account).localeCompare(b.account);
         });
-      } else if (this.settings.sortOption == 'accountdsc') {
+      } else if (this.sortOption == 'accountdsc') {
         results.sort((a, b) => {
           return ('' + b.account).localeCompare(a.account);
         });
-      } else if (this.settings.sortOption == 'groupasc') {
+      } else if (this.sortOption == 'groupasc') {
         results.sort((a, b) => {
           if (('' + a.group).localeCompare(b.group) == 0) {
             if (('' + a.name).localeCompare(b.name) == 0) {
@@ -403,7 +519,7 @@ const Accounts = {
             return ('' + a.group).localeCompare(b.group);
           }
         });
-      } else if (this.settings.sortOption == 'groupdsc') {
+      } else if (this.sortOption == 'groupdsc') {
         results.sort((a, b) => {
           if (('' + a.group).localeCompare(b.group) == 0) {
             if (('' + a.name).localeCompare(b.name) == 0) {
@@ -415,7 +531,7 @@ const Accounts = {
             return ('' + b.group).localeCompare(a.group);
           }
         });
-      } else if (this.settings.sortOption == 'nameasc') {
+      } else if (this.sortOption == 'nameasc') {
         results.sort((a, b) => {
           if (('' + a.name).localeCompare(b.name) == 0) {
             if (('' + a.group).localeCompare(b.group) == 0) {
@@ -427,7 +543,7 @@ const Accounts = {
             return ('' + a.name).localeCompare(b.name);
           }
         });
-      } else if (this.settings.sortOption == 'namedsc') {
+      } else if (this.sortOption == 'namedsc') {
         results.sort((a, b) => {
           if (('' + a.name).localeCompare(b.name) == 0) {
             if (('' + a.group).localeCompare(b.group) == 0) {
@@ -447,6 +563,19 @@ const Accounts = {
     },
   },
   methods: {
+    formatTimestamp(ts) {
+      if (ts != null) {
+        return moment.unix(ts).format("YYYY-MM-DD HH:mm:ss");
+      }
+      return null;
+    },
+    formatETH(e) {
+      try {
+        return e ? parseFloat(ethers.utils.formatEther(e)).toFixed(9) : null;
+      } catch (err) {
+      }
+      return e.toFixed(9);
+    },
     saveSettings() {
       console.log("saveSettings: TODO");
     },
@@ -455,6 +584,30 @@ const Accounts = {
     },
     addCoinbase() {
       store.dispatch('data/addNewAccounts', this.coinbase);
+    },
+    toggleSelectedTransactions(items) {
+      let someFalse = false;
+      let someTrue = false;
+      for (const item of items) {
+        if (this.settings.selectedTransactions[item.txHash]) {
+          someTrue = true;
+        } else {
+          someFalse = true;
+        }
+      }
+      for (const item of items) {
+        if (!(someTrue && !someFalse)) {
+          Vue.set(this.settings.selectedTransactions, item.txHash, true);
+        } else {
+          Vue.delete(this.settings.selectedTransactions, item.txHash);
+        }
+      }
+      console.log("toggleSelectedAccounts: " + JSON.stringify(this.settings.selectedTransactions));
+      // localStorage.selectedTransactions = JSON.stringify(this.settings.selectedTransactions);
+    },
+    clearSelectedTransactions() {
+      this.settings.selectedTransactions = {};
+      // localStorage.selectedTransactions = JSON.stringify(this.settings.selectedTransactions);
     },
     toggleSelectedAccounts(items) {
       let someFalse = false;
@@ -554,7 +707,7 @@ const Accounts = {
       }
     },
     async timeoutCallback() {
-      logDebug("Accounts", "timeoutCallback() count: " + this.count);
+      logDebug("Transactions", "timeoutCallback() count: " + this.count);
       this.count++;
       var t = this;
       if (this.reschedule) {
@@ -565,13 +718,13 @@ const Accounts = {
     },
   },
   beforeDestroy() {
-    logDebug("Accounts", "beforeDestroy()");
+    logDebug("Transactions", "beforeDestroy()");
   },
   mounted() {
-    logDebug("Accounts", "mounted() $route: " + JSON.stringify(this.$route.params));
+    logDebug("Transactions", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('data/restoreState');
     this.reschedule = true;
-    logDebug("Accounts", "Calling timeoutCallback()");
+    logDebug("Transactions", "Calling timeoutCallback()");
     this.timeoutCallback();
   },
   destroyed() {
@@ -579,7 +732,7 @@ const Accounts = {
   },
 };
 
-const accountsModule = {
+const transactionsModule = {
   namespaced: true,
   state: {
   },

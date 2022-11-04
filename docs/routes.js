@@ -7,6 +7,10 @@ const routes = [{
     component: Accounts,
     name: 'Accounts',
   }, {
+    path: '/transactions',
+    component: Transactions,
+    name: 'Transactions',
+  }, {
     path: '/data',
     component: Data,
     name: 'Data',
