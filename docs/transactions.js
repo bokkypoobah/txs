@@ -117,13 +117,78 @@ const Transactions = {
             </font>
             <b-popover :target="'popover-target-' + data.item.txHash" placement="right" custom-class="popover-max-width">
               <template #title>
-                {{ data.item.txHash.substring(0, 16) + '...' }}
+                {{ 'Tx: ' + data.item.txHash.substring(0, 16) + '...' }}
               </template>
               <b-link @click="copyToClipboard(data.item.txHash);">Copy tx hash to clipboard</b-link>
               <br />
               <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" target="_blank">View tx in etherscan.io</b-link>
               <br />
             </b-popover>
+          </template>
+          <template #cell(from)="data">
+            <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.from">
+              {{ ensOrAccount(data.item.from) }}
+            </b-link>
+            <b-popover :target="'popover-target-' + data.item.txHash + '-' + data.item.from" placement="right" custom-class="popover-max-width">
+              <template #title>
+                {{ 'From: ' + ensOrAccount(data.item.from, 20) }}
+              </template>
+              <b-link @click="copyToClipboard(data.item.from);">Copy from account to clipboard</b-link>
+              <br />
+              <span v-if="ensOrNull(data.item.from) != null && ensOrNull(data.item.from).length > 0">
+                <b-link @click="copyToClipboard(ensOrNull(data.item.from));">Copy 'from' account ENS name to clipboard</b-link>
+                <br />
+                <b-link :href="'https://app.ens.domains/name/' + ensOrNull(data.item.from)" target="_blank">View 'from' account ENS name in app.ens.domains</b-link>
+                <br />
+              </span>
+              <b-link :href="'https://etherscan.io/address/' + data.item.from" target="_blank">View 'from' account in etherscan.io</b-link>
+              <br />
+              <b-link :href="'https://opensea.io/' + data.item.from" target="_blank">View 'from' account in opensea.io</b-link>
+              <br />
+              <b-link :href="'https://opensea.io/' + data.item.from + '?tab=bids'" target="_blank">View offers received in opensea.io for 'from' account</b-link>
+              <br />
+              <b-link :href="'https://looksrare.org/accounts/' + data.item.from + '#owned'" target="_blank">View 'from' account in looksrare.org</b-link>
+              <br />
+              <b-link :href="'https://x2y2.io/user/' + data.item.from + '/items'" target="_blank">View 'from' account in x2y2.io</b-link>
+              <br />
+              <b-link :href="'https://www.gem.xyz/profile/' + data.item.from" target="_blank">View 'from' account in gem.xyz</b-link>
+              <br />
+              <b-link :href="'https://blur.io/' + data.item.from" target="_blank">View 'from' account in blur.io</b-link>
+              <br />
+            </b-popover>
+          </template>
+          <template #cell(to)="data">
+            <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.to">
+              {{ ensOrAccount(data.item.to) }}
+            </b-link>
+            <b-popover :target="'popover-target-' + data.item.txHash + '-' + data.item.to" placement="right" custom-class="popover-max-width">
+              <template #title>
+                {{ 'To: ' + ensOrAccount(data.item.to, 20) }}
+              </template>
+              <b-link @click="copyToClipboard(data.item.to);">Copy 'to' account to clipboard</b-link>
+              <br />
+              <span v-if="ensOrNull(data.item.to) != null && ensOrNull(data.item.to).length > 0">
+                <b-link @click="copyToClipboard(ensOrNull(data.item.to));">Copy 'to' account ENS name to clipboard</b-link>
+                <br />
+                <b-link :href="'https://app.ens.domains/name/' + ensOrNull(data.item.to)" target="_blank">View 'to' account ENS name in app.ens.domains</b-link>
+                <br />
+              </span>
+              <b-link :href="'https://etherscan.io/address/' + data.item.to" target="_blank">View 'to' account in etherscan.io</b-link>
+              <br />
+              <b-link :href="'https://opensea.io/' + data.item.to" target="_blank">View 'to' account in opensea.io</b-link>
+              <br />
+              <b-link :href="'https://opensea.io/' + data.item.to + '?tab=bids'" target="_blank">View offers received in opensea.io for 'to' account</b-link>
+              <br />
+              <b-link :href="'https://looksrare.org/accounts/' + data.item.to + '#owned'" target="_blank">View 'to' account in looksrare.org</b-link>
+              <br />
+              <b-link :href="'https://x2y2.io/user/' + data.item.to + '/items'" target="_blank">View 'to' account in x2y2.io</b-link>
+              <br />
+              <b-link :href="'https://www.gem.xyz/profile/' + data.item.to" target="_blank">View 'to' account in gem.xyz</b-link>
+              <br />
+              <b-link :href="'https://blur.io/' + data.item.to" target="_blank">View 'to' account in blur.io</b-link>
+              <br />
+            </b-popover>
+
           </template>
           <template #cell(value)="data">
             {{ formatETH(data.item.value) }}
