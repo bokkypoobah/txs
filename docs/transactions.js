@@ -29,8 +29,11 @@ const Transactions = {
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
+          <div class="mt-0 pr-0">
+            <b-button v-if="sync.section == null" size="sm" @click="syncIt(['importFromEtherscan'])" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
+          </div>
           <div class="mt-0 pr-1">
-            <b-button v-if="sync.section == null" size="sm" @click="syncIt(['importFromEtherscan'])" variant="link" v-b-popover.hover.top="'Retrieve transactions for accounts'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
+            <b-button v-if="sync.section == null" size="sm" @click="syncIt(['computeTxs'])" variant="link" v-b-popover.hover.top="'Compute selected transactions'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
           </div>
           <div class="mt-1" style="width: 200px;">
             <b-progress v-if="sync.section != null" height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click the button on the right to stop. This process can be continued later'">
@@ -112,8 +115,8 @@ const Transactions = {
               {{ formatTimestamp(data.item.timestamp) }}
             </b-link>
             <br />
-            <font size="-1">
-              {{ data.item.txHash.substring(0, 16) + '...' }}
+            <font size="-2">
+              {{ data.item.txHash }}
             </font>
             <b-popover :target="'popover-target-' + data.item.txHash" placement="right" custom-class="popover-max-width">
               <template #title>
@@ -413,10 +416,11 @@ const Transactions = {
       ],
       transactionsFields: [
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
-        { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
-        { key: 'txHash', label: 'Tx Hash', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-        { key: 'from', label: 'From', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-        { key: 'to', label: 'To', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+        { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        // { key: 'txHash', label: 'Tx Hash', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+        { key: 'from', label: 'From', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'to', label: 'To', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'info', label: 'Info', sortable: false, thStyle: 'width: 50%;', tdClass: 'text-truncate' },
         // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
       ],
       accountsFields: [
@@ -517,6 +521,7 @@ const Transactions = {
             from: item.from,
             to: item.to,
             value: item.value,
+            info: item.computed.info && item.computed.info.summary || null,
           });
         }
       }

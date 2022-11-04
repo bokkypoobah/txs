@@ -328,6 +328,7 @@ const dataModule = {
               sleep(5000);
               // context.commit('setSyncSection', { section: 'Import', total: keysToSync.length });
             }
+            // TODO: Sync by batches, and incremental syncing
             context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=0&endblock=" + blockNumber + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
             console.log("importUrl: " + importUrl);
@@ -348,12 +349,13 @@ const dataModule = {
               pause = true;
             }
             if (context.state.sync.halt) {
-              // console.log("Halting");
               break;
             }
           }
           context.dispatch('saveData', ['txs']);
           context.commit('setSyncSection', { section: null, total: null });
+        } else if (section == 'computeTxs') {
+          console.log("computeTxs");
         }
       }
     },
