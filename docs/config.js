@@ -148,7 +148,7 @@ const configModule = {
       if ('txsPeriodStart' in localStorage) {
         context.commit('setPeriodStart', JSON.parse(localStorage.txsPeriodStart));
       }
-      logInfo("configModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
+      // logInfo("configModule", "actions.restoreState() - state: " + JSON.stringify(context.state));
     },
     setEtherscanAPIKey(context, p) {
       // logInfo("configModule", "actions.setEtherscanAPIKey(" + JSON.stringify(p) + ")");

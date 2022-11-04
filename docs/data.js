@@ -172,7 +172,7 @@ const dataModule = {
       const block = store.getters['connection/block'];
       for (const result of results) {
         if (!(result.hash in state.txs)) {
-          console.log("Adding " + result.hash);
+          // console.log("Adding " + result.hash);
           Vue.set(state.txs, result.hash, {
             blockNumber: result.blockNumber,
             timestamp: result.timeStamp,
@@ -300,23 +300,47 @@ const dataModule = {
 
       for (let section of sections) {
         if (section == 'importFromEtherscan') {
+          const keysToSync = [];
           for (const [key, item] of Object.entries(context.state.accounts)) {
             if (item.sync) {
-              const [chainId, account] = key.split(':');
-              console.log("--- Syncing " + account + " --- ");
-              let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=0&endblock=" + blockNumber + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
-              console.log("importUrl: " + importUrl);
-              const importData = await fetch(importUrl)
-                .then(handleErrors)
-                .then(response => response.json())
-                .catch(function(error) {
-                   console.log("ERROR - processIt: " + error);
-                   // Want to work around API data unavailablity - state.sync.error = true;
-                   return [];
-                });
-              if (importData.status == 1) {
-                context.commit('importEtherscanResults', { account, results: importData.result });
+              keysToSync.push(key);
+            }
+          }
+          let pause = false;
+          for (const keyIndex in keysToSync) {
+            const key = keysToSync[keyIndex];
+            const item = context.state.accounts[key];
+            const [chainId, account] = key.split(':');
+            console.log("--- Syncing " + account + " --- ");
+            if (pause) {
+              function sleep(milliseconds) {
+                const date = Date.now();
+                let currentDate = null;
+                do {
+                  currentDate = Date.now();
+                } while (currentDate - date < milliseconds);
               }
+              console.log("-- Pausing start --");
+              sleep(5000);
+              console.log("-- Pausing end --");
+            }
+            let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=0&endblock=" + blockNumber + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
+            console.log("importUrl: " + importUrl);
+            const importData = await fetch(importUrl)
+              .then(handleErrors)
+              .then(response => response.json())
+              .catch(function(error) {
+                 console.log("ERROR - processIt: " + error);
+                 // Want to work around API data unavailablity - state.sync.error = true;
+                 return [];
+              });
+            console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
+            if (importData.status == 1) {
+              context.commit('importEtherscanResults', { account, results: importData.result });
+            }
+            // Retrieve
+            if (importData.message && importData.message.includes("Missing")) {
+              pause = true;
             }
           }
           context.dispatch('saveData', ['txs']);
