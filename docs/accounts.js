@@ -49,7 +49,7 @@ const Accounts = {
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedAccounts.length }}</font>
+            <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedAccounts.length + '/' + Object.keys(accounts).length }}</font>
           </div>
           <div class="mt-0 pr-1">
             <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedAccounts.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>

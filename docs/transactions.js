@@ -5,7 +5,7 @@ const Transactions = {
 
         <div class="d-flex flex-wrap m-0 p-0">
           <div class="mt-0 pr-1">
-            <b-form-input type="text" size="sm" v-model.trim="settings.filter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by address or ENS name fragment'" placeholder="🔍 address / ens name"></b-form-input>
+            <b-form-input type="text" size="sm" v-model.trim="settings.filter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash fragment"></b-form-input>
           </div>
           <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
@@ -52,7 +52,7 @@ const Transactions = {
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedTransactions.length }}</font>
+            <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedTransactions.length + '/' + Object.keys(txs).length }}</font>
           </div>
           <div class="mt-0 pr-1">
             <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedTransactions.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
@@ -320,6 +320,7 @@ const Transactions = {
       transactionsFields: [
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
         { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        { key: 'txHash', label: 'Tx Hash', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
         { key: 'from', label: 'From', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
         { key: 'to', label: 'To', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
         // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
@@ -357,7 +358,7 @@ const Transactions = {
       for (const i of store.getters['config/periodOptions']) {
         results.push(i);
       }
-      results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
+      // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
       return results;
     },
     accounts() {
@@ -381,16 +382,38 @@ const Transactions = {
     },
     filteredTransactions() {
       const results = [];
+      let startPeriod = null;
+      let endPeriod = null;
+      const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
+      if (this.settings.period != null && this.settings.period != "nodata") {
+        const periodRecords = this.periodOptions.filter(e => e.value == this.settings.period);
+        startPeriod = periodRecords[0].data.startPeriod;
+        endPeriod = periodRecords[0].data.endPeriod;
+      }
       for (const [txHash, item] of Object.entries(this.txs)) {
-        results.push({
-          txHash,
-          blockNumber: item.blockNumber,
-          transactionIndex: item.transactionIndex,
-          timestamp: item.timestamp,
-          from: item.from,
-          to: item.to,
-          value: item.value,
-        });
+        let include = true;
+        if (startPeriod != null && item.timestamp < startPeriod.unix()) {
+          include = false;
+        }
+        if (include && endPeriod != null && item.timestamp > endPeriod.unix()) {
+          include = false;
+        }
+        if (include && filterLower != null) {
+          if (!(txHash.includes(filterLower))) {
+            include = false;
+          }
+        }
+        if (include) {
+          results.push({
+            txHash,
+            blockNumber: item.blockNumber,
+            transactionIndex: item.transactionIndex,
+            timestamp: item.timestamp,
+            from: item.from,
+            to: item.to,
+            value: item.value,
+          });
+        }
       }
       // Vue.set(state.txs, result.hash, {
       //   blockNumber: result.blockNumber,
