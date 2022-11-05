@@ -65,7 +65,7 @@ const Accounts = {
               <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and are used to request information via your web3 connection, or via Etherscan and Reservoir API calls" class="mx-0 my-1 p-0">
                 <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="settings.newAccounts" rows="1" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
               </b-form-group>
-              <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added below" class="mx-0 my-1 p-0">
+              <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added. Click the 'cloud download' button above to retrieve the transactions" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="newaccounts-submit" :disabled="settings.newAccounts == null || settings.newAccounts.length == 0" @click="addNewAccounts" variant="primary">Add</b-button>
               </b-form-group>
               <b-form-group label="Coinbase:" label-for="newaccounts-coinbase-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
@@ -448,7 +448,7 @@ const Accounts = {
   },
   methods: {
     saveSettings() {
-      localStorage.accountSettings = JSON.stringify(this.settings);
+      localStorage.accountsSettings = JSON.stringify(this.settings);
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
@@ -569,8 +569,8 @@ const Accounts = {
   mounted() {
     logDebug("Accounts", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('data/restoreState');
-    if ('accountSettings' in localStorage) {
-      this.settings = JSON.parse(localStorage.accountSettings);
+    if ('accountsSettings' in localStorage) {
+      this.settings = JSON.parse(localStorage.accountsSettings);
     }
     this.reschedule = true;
     logDebug("Accounts", "Calling timeoutCallback()");

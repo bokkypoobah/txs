@@ -21,6 +21,7 @@ const Transactions = {
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
+          <!--
           <div class="mt-0 pr-0">
             <b-button size="sm" :pressed.sync="settings.showNewAccounts" @click="saveSettings" variant="link" v-b-popover.hover.top="'Add new accounts'"><span v-if="settings.showNewAccounts"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
           </div>
@@ -29,6 +30,7 @@ const Transactions = {
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
+          -->
           <div class="mt-0 pr-0">
             <b-button v-if="sync.section == null" size="sm" @click="syncIt(['importFromEtherscan'])" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>

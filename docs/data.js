@@ -125,7 +125,7 @@ const dataModule = {
         name: null,
         type: accountInfo && accountInfo.type || null,
         mine: accountInfo.account == store.getters['connection/coinbase'],
-        sync: false,
+        sync: accountInfo.account == store.getters['connection/coinbase'],
         tags: [],
         notes: null,
         contract: {
@@ -303,7 +303,7 @@ const dataModule = {
     },
     async syncIt(context, sections) {
       logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections));
-      const etherscanAPIKey = store.getters['config/etherscanAPIKey'] && store.getters['config/etherscanAPIKey'].length > 0 && store.getters['config/etherscanAPIKey'] || "YourApiKeyToken";
+      const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
       const block = store.getters['connection/block'];
       const blockNumber = block && block.number || 'error!!!';
 
@@ -361,6 +361,26 @@ const dataModule = {
     },
     async setSyncHalt(context, halt) {
       context.commit('setSyncHalt', halt);
+    },
+    async resetData(context, section) {
+      console.log("data.actions.resetData - section: " + section);
+      const db0 = new Dexie(context.state.db.name);
+      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
+
+      const status = await db0.cache.where("objectName").equals(section).delete();
+      console.log("status: " + JSON.stringify(status));
+      // const txs = await db0.cache.where("objectName").equals('txs').toArray();
+      // if (txs.length == 1) {
+      //   context.state.txs = txs[0].object;
+      //   console.log(JSON.stringify(context.state.txs, null, 2).substring(0, 2000));
+      // }
+
+
+      // await db0.cache.put({ objectName: section, object: context.state[section] }).then (function() {
+      // }).catch(function(error) {
+      //   console.log("error: " + error);
+      // });
+      db0.close();
     },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {
