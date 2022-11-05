@@ -236,7 +236,6 @@ const dataModule = {
       const txs = await db0.cache.where("objectName").equals('txs').toArray();
       if (txs.length == 1) {
         context.state.txs = txs[0].object;
-        console.log(JSON.stringify(context.state.txs, null, 2).substring(0, 2000));
       }
       const assets = await db0.cache.where("objectName").equals('assets').toArray();
       if (assets.length == 1) {
@@ -301,8 +300,10 @@ const dataModule = {
       context.commit('setNotes', info);
       context.dispatch('saveData', ['accounts']);
     },
-    async syncIt(context, sections) {
-      logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections));
+    async syncIt(context, info) {
+      const sections = info.sections;
+      const parameters = info.parameters || [];
+      logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections) + ", parameters: " + JSON.stringify(parameters).substring(0, 1000));
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
       const block = store.getters['connection/block'];
       const blockNumber = block && block.number || 'error!!!';
@@ -356,6 +357,9 @@ const dataModule = {
           context.commit('setSyncSection', { section: null, total: null });
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
+
+
+
         }
       }
     },

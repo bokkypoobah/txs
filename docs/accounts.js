@@ -24,7 +24,7 @@ const Accounts = {
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-1">
-            <b-button v-if="sync.section == null" size="sm" @click="syncIt(['importFromEtherscan'])" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
+            <b-button v-if="sync.section == null" size="sm" @click="syncIt({ sections: ['importFromEtherscan'] })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
           <div class="mt-1" style="width: 200px;">
             <b-progress v-if="sync.section != null" height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click the button on the right to stop. This process can be continued later'">
@@ -497,8 +497,8 @@ const Accounts = {
     async setNotes(key, notes) {
       store.dispatch('data/setNotes', { key, notes });
     },
-    async syncIt(sections) {
-      store.dispatch('data/syncIt', sections);
+    async syncIt(info) {
+      store.dispatch('data/syncIt', info);
     },
     async halt() {
       store.dispatch('data/setSyncHalt', true);
