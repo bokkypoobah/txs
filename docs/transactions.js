@@ -31,14 +31,17 @@ const Transactions = {
           <div class="mt-0 flex-grow-1">
           </div>
           -->
-          <div class="mt-0 pr-0">
-            <b-button v-if="sync.section == null" size="sm" @click="syncIt({ sections: ['importFromEtherscan'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
+          <div v-if="sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" @click="syncIt({ sections: ['importFromEtherscan'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
-          <div class="mt-0 pr-1">
-            <b-button v-if="sync.section == null" size="sm" @click="syncIt({ sections: ['computeTxs'], parameters: Object.keys(settings.selectedTransactions) })" variant="link" v-b-popover.hover.top="'Compute selected transactions'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
+          <div v-if="sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" @click="syncIt({ sections: ['computeTxs'], parameters: Object.keys(settings.selectedTransactions) })" variant="link" v-b-popover.hover.top="'Compute selected transactions'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
           </div>
-          <div class="mt-1" style="width: 200px;">
-            <b-progress v-if="sync.section != null" height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click the button on the right to stop. This process can be continued later'">
+          <div v-if="sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" @click="exportTransactions" variant="link" v-b-popover.hover.top="'Export transactions'"><b-icon-file-earmark-spreadsheet shift-v="+1" font-scale="1.2"></b-icon-file-earmark-spreadsheet></b-button>
+          </div>
+          <div v-if="sync.section != null" class="mt-1" style="width: 200px;">
+            <b-progress height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click the button on the right to stop. This process can be continued later'">
               <b-progress-bar :value="sync.completed">
                 {{ sync.total == null ? (sync.completed + ' ' + sync.section) : (sync.completed + '/' + sync.total + ' ' + ((sync.completed / sync.total) * 100).toFixed(0) + '% ' + sync.section) }}
               </b-progress-bar>
@@ -853,6 +856,32 @@ const Transactions = {
         document.getSelection().removeAllRanges();
         document.getSelection().addRange(selected);
       }
+    },
+    exportTransactions() {
+      console.log("exportTransactions");
+      const rows = [
+          ["No", "TxHash", "From", "FromENS", "To", "ToENS"],
+      ];
+      let i = 1;
+      for (const result of this.filteredSortedTransactions) {
+        const fromENS = this.ensMap[result.from] || null;
+        rows.push([
+          i,
+          result.txHash,
+          result.from,
+          this.ensMap[result.from] || null,
+          result.to,
+          this.ensMap[result.to] || null,
+        ]);
+        i++;
+      }
+      let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+      var encodedUri = encodeURI(csvContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "txs_transactions_export-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".csv");
+      document.body.appendChild(link); // Required for FF
+      link.click(); // This will download the data with the specified file name
     },
     async timeoutCallback() {
       logDebug("Transactions", "timeoutCallback() count: " + this.count);

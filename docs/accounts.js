@@ -23,8 +23,11 @@ const Accounts = {
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
-          <div class="mt-0 pr-1">
-            <b-button v-if="sync.section == null" size="sm" @click="syncIt({ sections: ['importFromEtherscan'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
+          <div v-if="sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" @click="syncIt({ sections: ['importFromEtherscan'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
+          </div>
+          <div v-if="sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" @click="exportAccounts" variant="link" v-b-popover.hover.top="'Export accounts'"><b-icon-file-earmark-spreadsheet shift-v="+1" font-scale="1.2"></b-icon-file-earmark-spreadsheet></b-button>
           </div>
           <div class="mt-1" style="width: 200px;">
             <b-progress v-if="sync.section != null" height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click the button on the right to stop. This process can be continued later'">
@@ -36,13 +39,6 @@ const Accounts = {
           <div class="ml-0 mt-1">
             <b-button v-if="sync.section != null" size="sm" @click="halt" variant="link" v-b-popover.hover.top="'Click to stop. This process can be continued later'"><b-icon-stop-fill shift-v="+1" font-scale="1.0"></b-icon-stop-fill></b-button>
           </div>
-          <!--
-          <div class="mt-0 flex-grow-1">
-          </div>
-          <div class="mt-0 pr-1">
-            <b-button size="sm" @click="exportAddresses" variant="link">Export</b-button>
-          </div>
-          -->
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-1">
@@ -200,11 +196,6 @@ const Accounts = {
             </b-popover>
           </template>
           <template #cell(name)="data">
-            <!--
-            <font size="-1">
-              <b-badge variant="secondary">{{ data.item.group }}</b-badge>
-            </font>
-            -->
             <span v-if="settings.editAccounts">
               <b-form-input type="text" size="sm" v-model.trim="data.item.name" @change="setName(data.item.key, data.item.name)" debounce="600" placeholder="name"></b-form-input>
               <b-form-textarea size="sm" v-model.trim="data.item.notes" @change="setNotes(data.item.key, data.item.notes)" placeholder="notes" rows="2" max-rows="20" class="mt-1"></b-form-textarea>
@@ -218,13 +209,6 @@ const Accounts = {
             </span>
           </template>
         </b-table>
-
-        <!--
-        <br />
-        <b-table small fixed striped selectable responsive hover :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
-        </b-table>
-        -->
-
       </b-card>
     </div>
   `,
@@ -551,6 +535,33 @@ const Accounts = {
         document.getSelection().removeAllRanges();
         document.getSelection().addRange(selected);
       }
+    },
+    exportAccounts() {
+      console.log("exportAccounts");
+      const rows = [
+          ["No", "Account", "Type", "Mine", "ENSName", "Group", "Name", "Notes"],
+      ];
+      let i = 1;
+      for (const result of this.filteredSortedAccounts) {
+        rows.push([
+          i,
+          result.account,
+          result.type,
+          result.mine ? "y" : "n",
+          this.ensMap[result.account] || null,
+          result.group,
+          result.name,
+          result.notes,
+        ]);
+        i++;
+      }
+      let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+      var encodedUri = encodeURI(csvContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "txs_account_export-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".csv");
+      document.body.appendChild(link); // Required for FF
+      link.click(); // This will download the data with the specified file name
     },
     async timeoutCallback() {
       logDebug("Accounts", "timeoutCallback() count: " + this.count);

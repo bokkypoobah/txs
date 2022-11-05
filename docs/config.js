@@ -170,12 +170,10 @@ const configModule = {
     setEtherscanAPIKey(context, etherscanAPIKey) {
       context.commit('setEtherscanAPIKey', etherscanAPIKey);
       localStorage.configSettings = JSON.stringify(context.state.settings);
-      console.log("config.setEtherscanAPIKey: " + JSON.stringify(context.state.settings));
     },
     setPeriodStart(context, periodStart) {
       context.commit('setPeriodStart', periodStart);
       localStorage.configSettings = JSON.stringify(context.state.settings);
-      console.log("config.setPeriodStart: " + JSON.stringify(context.state.settings));
     },
   },
 };
