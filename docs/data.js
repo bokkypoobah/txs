@@ -436,8 +436,10 @@ const dataModule = {
             if (txItem) {
               // console.log(txHash + " => " + JSON.stringify(txItem, null, 2));
               const info = await getTxInfo(txHash, txItem, provider);
-              console.log(txHash + " => " + JSON.stringify(info, null, 2));
-              context.commit('updateTxData', info);
+              // console.log(txHash + " => " + JSON.stringify(info, null, 2));
+              if (info.summary) {
+                context.commit('updateTxData', info);                
+              }
             }
           }
           context.dispatch('saveData', ['txs']);
