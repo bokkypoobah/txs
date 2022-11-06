@@ -369,9 +369,11 @@ const dataModule = {
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
           for (let txHash of parameters) {
-            const txInfo = context.state.txs[txHash];
-            if (txInfo) {
-              console.log(txHash + " => " + JSON.stringify(txInfo, null, 2));
+            const txItem = context.state.txs[txHash];
+            if (txItem) {
+              console.log(txHash + " => " + JSON.stringify(txItem, null, 2));
+              const info = await getTxInfo(txHash, txItem);
+              console.log(txHash + " => " + JSON.stringify(info, null, 2));
             }
           }
         }
