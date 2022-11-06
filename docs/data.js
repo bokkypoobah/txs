@@ -246,24 +246,6 @@ const dataModule = {
         context.state.ensMap = ensMap[0].object;
       }
     },
-    async addNewAccounts(context, newAccounts) {
-      // logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
-      const accounts = newAccounts == null ? [] : newAccounts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
-      for (let account of accounts) {
-        const accountInfo = await getAccountInfo(account, provider)
-        if (accountInfo.account) {
-          context.commit('addNewAccount', accountInfo);
-        }
-        const names = await ensReverseRecordsContract.getNames([account]);
-        const name = names.length == 1 ? names[0] : account;
-        if (!(account in context.state.ensMap)) {
-          context.commit('addENSName', { account, name });
-        }
-      }
-      context.dispatch('saveData', ['accounts', 'ensMap']);
-    },
     async saveData(context, types) {
       // logInfo("dataModule", "actions.saveData - types: " + JSON.stringify(types));
       const db0 = new Dexie(context.state.db.name);
@@ -299,6 +281,35 @@ const dataModule = {
     async setNotes(context, info) {
       context.commit('setNotes', info);
       context.dispatch('saveData', ['accounts']);
+    },
+    async setSyncHalt(context, halt) {
+      context.commit('setSyncHalt', halt);
+    },
+    async resetData(context, section) {
+      console.log("data.actions.resetData - section: " + section);
+      const db0 = new Dexie(context.state.db.name);
+      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
+      const status = await db0.cache.where("objectName").equals(section).delete();
+      console.log("status: " + JSON.stringify(status));
+      db0.close();
+    },
+    async addNewAccounts(context, newAccounts) {
+      // logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
+      const accounts = newAccounts == null ? [] : newAccounts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
+      for (let account of accounts) {
+        const accountInfo = await getAccountInfo(account, provider)
+        if (accountInfo.account) {
+          context.commit('addNewAccount', accountInfo);
+        }
+        const names = await ensReverseRecordsContract.getNames([account]);
+        const name = names.length == 1 ? names[0] : account;
+        if (!(account in context.state.ensMap)) {
+          context.commit('addENSName', { account, name });
+        }
+      }
+      context.dispatch('saveData', ['accounts', 'ensMap']);
     },
     async syncIt(context, info) {
       const sections = info.sections;
@@ -357,34 +368,14 @@ const dataModule = {
           context.commit('setSyncSection', { section: null, total: null });
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
-
-
-
+          for (let txHash of parameters) {
+            const txInfo = context.state.txs[txHash];
+            if (txInfo) {
+              console.log(txHash + " => " + JSON.stringify(txInfo, null, 2));
+            }
+          }
         }
       }
-    },
-    async setSyncHalt(context, halt) {
-      context.commit('setSyncHalt', halt);
-    },
-    async resetData(context, section) {
-      console.log("data.actions.resetData - section: " + section);
-      const db0 = new Dexie(context.state.db.name);
-      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-
-      const status = await db0.cache.where("objectName").equals(section).delete();
-      console.log("status: " + JSON.stringify(status));
-      // const txs = await db0.cache.where("objectName").equals('txs').toArray();
-      // if (txs.length == 1) {
-      //   context.state.txs = txs[0].object;
-      //   console.log(JSON.stringify(context.state.txs, null, 2).substring(0, 2000));
-      // }
-
-
-      // await db0.cache.put({ objectName: section, object: context.state[section] }).then (function() {
-      // }).catch(function(error) {
-      //   console.log("error: " + error);
-      // });
-      db0.close();
     },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {

@@ -527,6 +527,8 @@ const Transactions = {
             to: item.to,
             value: item.value,
             info: item.computed.info && item.computed.info.summary || null,
+            functionName: item.functionName,
+            input: item.input,
           });
         }
       }
@@ -860,7 +862,7 @@ const Transactions = {
     exportTransactions() {
       console.log("exportTransactions");
       const rows = [
-          ["No", "TxHash", "From", "FromENS", "To", "ToENS"],
+          ["No", "TxHash", "From", "FromENS", "To", "ToENS", "FunctionName", "InputFragment"],
       ];
       let i = 1;
       for (const result of this.filteredSortedTransactions) {
@@ -872,14 +874,16 @@ const Transactions = {
           this.ensMap[result.from] || null,
           result.to,
           this.ensMap[result.to] || null,
+          result.functionName || null,
+          result.input && result.input.substring(0, 100) || null,
         ]);
         i++;
       }
-      let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+      let csvContent = "data:text/tsv;charset=utf-8," + rows.map(e => e.join("\t")).join("\n");
       var encodedUri = encodeURI(csvContent);
       var link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "txs_transactions_export-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".csv");
+      link.setAttribute("download", "txs_transactions_export-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".tsv");
       document.body.appendChild(link); // Required for FF
       link.click(); // This will download the data with the specified file name
     },
