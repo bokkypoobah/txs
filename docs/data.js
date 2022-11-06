@@ -214,6 +214,68 @@ const dataModule = {
         }
       }
     },
+    updateTxData(state, info) {
+      logInfo("dataModule", "mutations.updateTxData - info: " + JSON.stringify(info).substring(0, 1000));
+      Vue.set(state.txs[info.txHash].dataImported, 'tx', {
+        hash: info.tx.hash,
+        type: info.tx.type,
+        blockHash: info.tx.blockHash,
+        blockNumber: info.tx.blockNumber,
+        transactionIndex: info.tx.transactionIndex,
+        from: info.tx.from,
+        gasPrice: info.tx.gasPrice,
+        gasLimit: info.tx.gasLimit,
+        to: info.tx.to,
+        value: info.tx.value,
+        nonce: info.tx.nonce,
+        data: info.tx.data,
+        r: info.tx.r,
+        s: info.tx.s,
+        v: info.tx.v,
+        chainId: info.tx.chainId,
+      });
+      Vue.set(state.txs[info.txHash].dataImported, 'txReceipt', info.txReceipt);
+      Vue.set(state.txs[info.txHash].computed.info, 'summary', info.summary);
+      // Vue.set(state.txs, result.hash, {
+      //   blockNumber: result.blockNumber,
+      //   timestamp: result.timeStamp,
+      //   nonce: result.nonce,
+      //   blockHash: result.blockHash,
+      //   transactionIndex: result.transactionIndex,
+      //   from: ethers.utils.getAddress(result.from),
+      //   to: (result.to == null && result.to.length == 0) ? null : ethers.utils.getAddress(result.to),
+      //   value: result.value,
+      //   gas: result.gas,
+      //   gasPrice: result.gasPrice,
+      //   isError: result.isError,
+      //   txReceiptStatus: result.txreceipt_status,
+      //   input: result.input,
+      //   contractAddress: (result.contractAddress == null || result.contractAddress.length == 0) ? null : ethers.utils.getAddress(result.contractAddress),
+      //   cumulativeGasUsed: result.cumulativeGasUsed,
+      //   gasUsed: result.gasUsed,
+      //   confirmations: result.confirmations,
+      //   methodId: result.methodId,
+      //   functionName: result.functionName,
+      //   etherscanImported: {
+      //     account,
+      //     timestamp: block && block.timestamp || null,
+      //     blockNumber: block && block.number || null,
+      //   },
+      //   dataImported: {
+      //     tx: null,
+      //     txReceipt: null,
+      //     balances: {},
+      //     balancePreviousBlock: {},
+      //     timestamp: null,
+      //     blockNumber: null,
+      //   },
+      //   computed: {
+      //     info: {},
+      //     timestamp: null,
+      //     blockNumber: null,
+      //   },
+      // });
+    },
     setSyncSection(state, info) {
       state.sync.section = info.section;
       state.sync.total = info.total;
@@ -315,6 +377,7 @@ const dataModule = {
       const sections = info.sections;
       const parameters = info.parameters || [];
       logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections) + ", parameters: " + JSON.stringify(parameters).substring(0, 1000));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
       const block = store.getters['connection/block'];
       const blockNumber = block && block.number || 'error!!!';
@@ -371,11 +434,13 @@ const dataModule = {
           for (let txHash of parameters) {
             const txItem = context.state.txs[txHash];
             if (txItem) {
-              console.log(txHash + " => " + JSON.stringify(txItem, null, 2));
-              const info = await getTxInfo(txHash, txItem);
+              // console.log(txHash + " => " + JSON.stringify(txItem, null, 2));
+              const info = await getTxInfo(txHash, txItem, provider);
               console.log(txHash + " => " + JSON.stringify(info, null, 2));
+              context.commit('updateTxData', info);
             }
           }
+          context.dispatch('saveData', ['txs']);
         }
       }
     },
