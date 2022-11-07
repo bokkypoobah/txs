@@ -81,7 +81,7 @@ async function getTxInfo(txHash, item, provider) {
       for (const event of txReceipt.logs) {
         if (event.address == item.to) {
           let log = interface.parseLog(event);
-          // console.log("log: " + JSON.stringify(log, null, 2));
+          console.log("log: " + JSON.stringify(log, null, 2));
           if (log.name == "NameRenewed") {
             const ensName = log.args[0];
             const label = log.args[1];
@@ -89,6 +89,16 @@ async function getTxInfo(txHash, item, provider) {
             const expires = log.args[3];
             // console.log(ensName + " " + label + " " + cost + " " + moment.unix(expires).toString());
             results.summary = "Renewed ENS '" + ensName + " until " + moment.unix(expires).format("YYYY-MM-DD HH:mm:ss") + " for " + ethers.utils.formatEther(cost) + "Ξ";
+          }
+          // NameRegistered (string name, index_topic_1 bytes32 label, index_topic_2 address owner, uint256 cost, uint256 expires)
+          if (log.name == "NameRegistered") {
+            const ensName = log.args[0];
+            const label = log.args[1];
+            const owner = log.args[2];
+            const cost = log.args[3];
+            const expires = log.args[4];
+            console.log(ensName + " " + owner);
+            results.summary = "Registered ENS '" + ensName + "' until " + moment.unix(expires).format("YYYY-MM-DD HH:mm:ss") + " for " + ethers.utils.formatEther(cost) + "Ξ";
           }
           // const registration = data.events.filter(e => e.name == "NameRegistered").flat();
           // const costRecord = registration && registration.length > 0 && registration[0].args.filter(e => e.name == "cost").flat() || null;
