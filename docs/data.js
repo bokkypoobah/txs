@@ -157,11 +157,50 @@ const dataModule = {
           timestamp: block && block.timestamp || null,
           blockNumber: block && block.number || null,
         },
+        transactions: {},
+        internalTransactions: {},
+        events: {},
         updated: {
           timestamp: null,
           blockNumber: null,
         },
       });
+    },
+    addAccountERC20AndERC721Events(state, info) {
+      const accountKey = info.accountKey;
+      const events = info.events;
+      const account = state.accounts[accountKey];
+      for (const event of events) {
+        if (!event.removed) {
+          if (!(event.transactionHash in account.events)) {
+            account.events[event.transactionHash] = {};
+          }
+          const tempEvent = {...event, type: event.topics.length == 4 ? "erc721" : "erc20" };
+          delete tempEvent.transactionHash;
+          delete tempEvent.logIndex;
+          delete tempEvent.removed;
+          account.events[event.transactionHash][event.logIndex] = tempEvent;
+        }
+      }
+      // console.log("account - after: " + JSON.stringify(account, null, 2));
+    },
+    addAccountERC1155Events(state, info) {
+      const accountKey = info.accountKey;
+      const events = info.events;
+      const account = state.accounts[accountKey];
+      for (const event of events) {
+        if (!event.removed) {
+          if (!(event.transactionHash in account.events)) {
+            account.events[event.transactionHash] = {};
+          }
+          const tempEvent = {...event, type: "erc1155" };
+          delete tempEvent.transactionHash;
+          delete tempEvent.logIndex;
+          delete tempEvent.removed;
+          account.events[event.transactionHash][event.logIndex] = tempEvent;
+        }
+      }
+      // console.log("account - after: " + JSON.stringify(account, null, 2));
     },
     updateAccountTimestampAndBlock(state, info) {
       const network = store.getters['connection/network'];
@@ -245,45 +284,6 @@ const dataModule = {
       });
       Vue.set(state.txs[info.txHash].dataImported, 'txReceipt', info.txReceipt);
       Vue.set(state.txs[info.txHash].computed.info, 'summary', info.summary);
-      // Vue.set(state.txs, result.hash, {
-      //   blockNumber: result.blockNumber,
-      //   timestamp: result.timeStamp,
-      //   nonce: result.nonce,
-      //   blockHash: result.blockHash,
-      //   transactionIndex: result.transactionIndex,
-      //   from: ethers.utils.getAddress(result.from),
-      //   to: (result.to == null && result.to.length == 0) ? null : ethers.utils.getAddress(result.to),
-      //   value: result.value,
-      //   gas: result.gas,
-      //   gasPrice: result.gasPrice,
-      //   isError: result.isError,
-      //   txReceiptStatus: result.txreceipt_status,
-      //   input: result.input,
-      //   contractAddress: (result.contractAddress == null || result.contractAddress.length == 0) ? null : ethers.utils.getAddress(result.contractAddress),
-      //   cumulativeGasUsed: result.cumulativeGasUsed,
-      //   gasUsed: result.gasUsed,
-      //   confirmations: result.confirmations,
-      //   methodId: result.methodId,
-      //   functionName: result.functionName,
-      //   etherscanImported: {
-      //     account,
-      //     timestamp: block && block.timestamp || null,
-      //     blockNumber: block && block.number || null,
-      //   },
-      //   dataImported: {
-      //     tx: null,
-      //     txReceipt: null,
-      //     balances: {},
-      //     balancePreviousBlock: {},
-      //     timestamp: null,
-      //     blockNumber: null,
-      //   },
-      //   computed: {
-      //     info: {},
-      //     timestamp: null,
-      //     blockNumber: null,
-      //   },
-      // });
     },
     setSyncSection(state, info) {
       state.sync.section = info.section;
@@ -416,9 +416,9 @@ const dataModule = {
           let sleepUntil = null;
           for (const keyIndex in accountsToSync) {
             context.commit('setSyncSection', { section: (parseInt(keyIndex) + 1) + '/' + accountsToSync.length + ' Import', total: null });
-            const key = accountsToSync[keyIndex];
-            const item = context.state.accounts[key];
-            const [chainId, account] = key.split(':');
+            const accountKey = accountsToSync[keyIndex];
+            const item = context.state.accounts[accountKey];
+            const [chainId, account] = accountKey.split(':');
             context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Syncing " + account + " --- ");
             console.log(JSON.stringify(item, null, 2));
@@ -426,13 +426,11 @@ const dataModule = {
             const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) + 1) || 0;
             const endBlock = blockNumber - confirmations;
 
-            const DEVVING = 0;
+            const DEVVING = 1;
 
             if (DEVVING == 1) {
               for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
                 let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
-
-                // ERC-721
                 const erc20AndERC721FilterFrom = {
                   address: null,
                   fromBlock: startBatch,
@@ -444,7 +442,7 @@ const dataModule = {
                   ],
                 };
                 const erc20AndERC721EventsFrom = await provider.getLogs(erc20AndERC721FilterFrom);
-                console.log("erc20AndERC721EventsFrom: " + JSON.stringify(erc20AndERC721EventsFrom.slice(0, 10), null, 2));
+                context.commit('addAccountERC20AndERC721Events', { accountKey, events: erc20AndERC721EventsFrom });
                 const erc20AndERC721FilterTo = {
                   address: null,
                   fromBlock: startBatch,
@@ -456,8 +454,7 @@ const dataModule = {
                   ],
                 };
                 const erc20AndERC721EventsTo = await provider.getLogs(erc20AndERC721FilterTo);
-                console.log("erc20AndERC721EventsTo: " + JSON.stringify(erc20AndERC721EventsTo.slice(0, 10), null, 2));
-
+                context.commit('addAccountERC20AndERC721Events', { accountKey, events: erc20AndERC721EventsTo });
                 const erc1155FilterFrom = {
                   address: null,
                   fromBlock: startBatch,
@@ -470,13 +467,12 @@ const dataModule = {
                   ],
                 };
                 const erc1155EventsFrom = await provider.getLogs(erc1155FilterFrom);
-                console.log("erc1155EventsFrom: " + JSON.stringify(erc1155EventsFrom.slice(0, 10), null, 2));
+                context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsFrom });
                 const erc1155FilterTo = {
                   address: null,
                   fromBlock: startBatch,
                   toBlock: endBatch,
                   topics: [
-                    // '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 id)
                     '0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62', // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
                     null,
                     null,
@@ -484,7 +480,7 @@ const dataModule = {
                   ],
                 };
                 const erc1155EventsTo = await provider.getLogs(erc1155FilterTo);
-                console.log("erc1155EventsTo: " + JSON.stringify(erc1155EventsTo.slice(0, 10), null, 2));
+                context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsTo });
               }
             }
 
