@@ -379,6 +379,7 @@ const dataModule = {
       logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections) + ", parameters: " + JSON.stringify(parameters).substring(0, 1000));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
+      const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
       const block = store.getters['connection/block'];
       const blockNumber = block && block.number || 'error!!!';
 
@@ -409,9 +410,8 @@ const dataModule = {
 
             const startBlock = item && item.updated && item.updated.blockNumber || 0;
             const endBlock = blockNumber;
-            const batchSize = 1_000_000;
 
-            for (let startBatch = startBlock; startBatch < endBlock; startBatch += batchSize) {
+            for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
               console.log("startBatch: " + startBatch);
             }
 

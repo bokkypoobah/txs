@@ -142,6 +142,7 @@ const configModule = {
     settings: {
       etherscanAPIKey: null,
       etherscanBatchSize: 5_000_000,
+      confirmations: 10,
       periodStart: 'jul',
       version: 0,
     },
