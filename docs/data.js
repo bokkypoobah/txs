@@ -428,10 +428,8 @@ const dataModule = {
             for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
               let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
               console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
-              if (sleepUntil) {
-                do {
-                } while (sleepUntil > moment().unix());
-              }
+              do {
+              } while (sleepUntil && sleepUntil > moment().unix());
               console.log("completed sleep: " + startBatch + " to " + endBatch + " " + moment().toString());
               let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
               console.log("importUrl: " + importUrl);
