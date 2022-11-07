@@ -145,6 +145,15 @@ const dataModule = {
         },
       });
     },
+    accountUpdated(state, info) {
+      const network = store.getters['connection/network'];
+      const chainId = network.chainId;
+      const key = chainId + ':' + info.account;
+      Vue.set(state.accounts[key], 'updated', {
+        timestamp: info.timestamp,
+        blockNumber: info.blockNumber,
+      });
+    },
     addENSName(state, nameInfo) {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
     },
@@ -179,14 +188,14 @@ const dataModule = {
             blockHash: result.blockHash,
             transactionIndex: result.transactionIndex,
             from: ethers.utils.getAddress(result.from),
-            to: (result.to == null && result.to.length == 0) ? null : ethers.utils.getAddress(result.to),
+            to: (result.to == null || result.to.length <= 2) ? null : ethers.utils.getAddress(result.to),
             value: result.value,
             gas: result.gas,
             gasPrice: result.gasPrice,
             isError: result.isError,
             txReceiptStatus: result.txreceipt_status,
             input: result.input,
-            contractAddress: (result.contractAddress == null || result.contractAddress.length == 0) ? null : ethers.utils.getAddress(result.contractAddress),
+            contractAddress: (result.contractAddress == null || result.contractAddress.length <= 2) ? null : ethers.utils.getAddress(result.contractAddress),
             cumulativeGasUsed: result.cumulativeGasUsed,
             gasUsed: result.gasUsed,
             confirmations: result.confirmations,
@@ -380,8 +389,11 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
       const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
+      const confirmations = store.getters['config/settings'].confirmations && parseInt(store.getters['config/settings'].confirmations) || 10;
       const block = store.getters['connection/block'];
-      const blockNumber = block && block.number || 'error!!!';
+      const blockNumber = block && block.number || null;
+      const timestamp = block && block.timestamp || null;
+      console.log("blockNumber: " + blockNumber);
 
       context.commit('setSyncHalt', false);
       for (let section of sections) {
@@ -400,32 +412,37 @@ const dataModule = {
             }
           }
           context.commit('setSyncSection', { section: 'Import', total: accountsToSync.length });
-          let pause = false;
+
+          // function sleep(milliseconds) {
+          //   const date = Date.now();
+          //   let currentDate = null;
+          //   do {
+          //     currentDate = Date.now();
+          //   } while (currentDate - date < milliseconds);
+          // }
+
+          let sleepUntil = null;
           for (const keyIndex in accountsToSync) {
             const key = accountsToSync[keyIndex];
             const item = context.state.accounts[key];
             const [chainId, account] = key.split(':');
+            context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Syncing " + account + " --- ");
             console.log(JSON.stringify(item, null, 2));
 
             const startBlock = item && item.updated && item.updated.blockNumber || 0;
-            const endBlock = blockNumber;
+            const endBlock = blockNumber - confirmations;
 
             for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
-              console.log("startBatch: " + startBatch);
-            }
-
-
-
-            if (pause) {
-              // context.commit('setSyncSection', { section: 'Pausing', total: accountsToSync.length });
-              sleep(5000);
-              // context.commit('setSyncSection', { section: 'Import', total: accountsToSync.length });
-            }
-            // TODO: Sync by batches, and incremental syncing
-            if (false) {
-              context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
-              let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=0&endblock=" + blockNumber + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
+              let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
+              console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + moment.unix(sleepUntil).toString());
+              if (sleepUntil) {
+                do {
+                  // console.log("Sleep - now: " + Date.now());
+                } while (sleepUntil > moment().unix());
+              }
+              console.log("completed sleep: " + startBatch + " to " + endBatch);
+              let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
               console.log("importUrl: " + importUrl);
               const importData = await fetch(importUrl)
                 .then(handleErrors)
@@ -446,9 +463,12 @@ const dataModule = {
               if (context.state.sync.halt) {
                 break;
               }
+              sleepUntil = parseInt(moment().unix()) + 6;
             }
+            // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
+            context.commit('accountUpdated', { account, timestamp, blockNumber: endBlock });
           }
-          context.dispatch('saveData', ['txs']);
+          context.dispatch('saveData', ['accounts', 'txs']);
           context.commit('setSyncSection', { section: null, total: null });
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
