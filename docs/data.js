@@ -114,6 +114,24 @@ const dataModule = {
     sync: state => state.sync,
   },
   mutations: {
+    toggleAccountMine(state, key) {
+      Vue.set(state.accounts[key], 'mine', !state.accounts[key].mine);
+    },
+    toggleAccountSync(state, key) {
+      Vue.set(state.accounts[key], 'sync', !state.accounts[key].sync);
+    },
+    setAccountType(state, info) {
+      Vue.set(state.accounts[info.key], 'type', info.accountType);
+    },
+    setGroup(state, info) {
+      Vue.set(state.accounts[info.key], 'group', info.group);
+    },
+    setName(state, info) {
+      Vue.set(state.accounts[info.key], 'name', info.name);
+    },
+    setNotes(state, info) {
+      Vue.set(state.accounts[info.key], 'notes', info.notes);
+    },
     addNewAccount(state, accountInfo) {
       // logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(accountInfo) + ")");
       const block = store.getters['connection/block'];
@@ -145,7 +163,7 @@ const dataModule = {
         },
       });
     },
-    accountUpdated(state, info) {
+    updateAccountTimestampAndBlock(state, info) {
       const network = store.getters['connection/network'];
       const chainId = network.chainId;
       const key = chainId + ':' + info.account;
@@ -156,24 +174,6 @@ const dataModule = {
     },
     addENSName(state, nameInfo) {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
-    },
-    toggleAccountMine(state, key) {
-      Vue.set(state.accounts[key], 'mine', !state.accounts[key].mine);
-    },
-    toggleAccountSync(state, key) {
-      Vue.set(state.accounts[key], 'sync', !state.accounts[key].sync);
-    },
-    setAccountType(state, info) {
-      Vue.set(state.accounts[info.key], 'type', info.accountType);
-    },
-    setGroup(state, info) {
-      Vue.set(state.accounts[info.key], 'group', info.group);
-    },
-    setName(state, info) {
-      Vue.set(state.accounts[info.key], 'name', info.name);
-    },
-    setNotes(state, info) {
-      Vue.set(state.accounts[info.key], 'notes', info.notes);
     },
     importEtherscanResults(state, info) {
       logInfo("dataModule", "mutations.importEtherscanResults - info: " + JSON.stringify(info).substring(0, 1000));
@@ -413,14 +413,6 @@ const dataModule = {
           }
           context.commit('setSyncSection', { section: 'Import', total: accountsToSync.length });
 
-          // function sleep(milliseconds) {
-          //   const date = Date.now();
-          //   let currentDate = null;
-          //   do {
-          //     currentDate = Date.now();
-          //   } while (currentDate - date < milliseconds);
-          // }
-
           let sleepUntil = null;
           for (const keyIndex in accountsToSync) {
             const key = accountsToSync[keyIndex];
@@ -435,13 +427,12 @@ const dataModule = {
 
             for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
               let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
-              console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + moment.unix(sleepUntil).toString());
+              console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
               if (sleepUntil) {
                 do {
-                  // console.log("Sleep - now: " + Date.now());
                 } while (sleepUntil > moment().unix());
               }
-              console.log("completed sleep: " + startBatch + " to " + endBatch);
+              console.log("completed sleep: " + startBatch + " to " + endBatch + " " + moment().toString());
               let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
               console.log("importUrl: " + importUrl);
               const importData = await fetch(importUrl)
@@ -458,15 +449,14 @@ const dataModule = {
               }
               // Retrieve
               if (importData.message && importData.message.includes("Missing")) {
-                pause = true;
+                sleepUntil = parseInt(moment().unix()) + 6;
               }
               if (context.state.sync.halt) {
                 break;
               }
-              sleepUntil = parseInt(moment().unix()) + 6;
             }
             // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
-            context.commit('accountUpdated', { account, timestamp, blockNumber: endBlock });
+            context.commit('updateAccountTimestampAndBlock', { account, timestamp, blockNumber: endBlock });
           }
           context.dispatch('saveData', ['accounts', 'txs']);
           context.commit('setSyncSection', { section: null, total: null });

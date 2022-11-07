@@ -24,7 +24,7 @@ const Accounts = {
           <div class="mt-0 flex-grow-1">
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" @click="syncIt({ sections: ['importFromEtherscan'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
+            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['importFromEtherscan'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="exportAccounts" variant="link" v-b-popover.hover.top="'Export accounts'"><b-icon-file-earmark-spreadsheet shift-v="+1" font-scale="1.2"></b-icon-file-earmark-spreadsheet></b-button>
@@ -296,6 +296,9 @@ const Accounts = {
     },
     network() {
       return store.getters['connection/network'];
+    },
+    block() {
+      return store.getters['connection/block'];
     },
     accounts() {
       return store.getters['data/accounts'];
