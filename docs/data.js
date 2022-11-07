@@ -431,19 +431,24 @@ const dataModule = {
           context.commit('setSyncSection', { section: null, total: null });
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
-          for (let txHash of parameters) {
+          context.commit('setSyncSection', { section: 'Compute', total: parameters.length });
+          for (let txHashIndex in parameters) {
+            const txHash = parameters[txHashIndex];
             const txItem = context.state.txs[txHash];
             if (txItem) {
-              // console.log(txHash + " => " + JSON.stringify(txItem, null, 2));
               const info = await getTxInfo(txHash, txItem, provider);
-              // console.log(txHash + " => " + JSON.stringify(info, null, 2));
               if (info.summary) {
-                context.commit('updateTxData', info);                
+                context.commit('updateTxData', info);
               }
             }
+            context.commit('setSyncCompleted', parseInt(txHashIndex) + 1);
+            if (context.state.sync.halt) {
+              break;
+            }
           }
-          context.dispatch('saveData', ['txs']);
         }
+        context.dispatch('saveData', ['txs']);
+        context.commit('setSyncSection', { section: null, total: null });
       }
     },
     // Called by Connection.execWeb3()

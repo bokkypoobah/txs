@@ -582,6 +582,7 @@ const Accounts = {
     store.dispatch('data/restoreState');
     if ('accountsSettings' in localStorage) {
       this.settings = JSON.parse(localStorage.accountsSettings);
+      this.settings.currentPage = 1;
     }
     this.reschedule = true;
     logDebug("Accounts", "Calling timeoutCallback()");

@@ -16,12 +16,12 @@ async function getTxInfo(txHash, item, provider) {
   results.txReceipt = txReceipt;
   results.ethBalance = ethBalance;
   results.ethBalancePreviousBlock = ethBalancePreviousBlock;
-  console.log("tx: " + JSON.stringify(tx, null, 2));
-  console.log("txReceipt: " + JSON.stringify(txReceipt, null, 2));
+  // console.log("tx: " + JSON.stringify(tx, null, 2));
+  // console.log("txReceipt: " + JSON.stringify(txReceipt, null, 2));
   const gasUsed = ethers.BigNumber.from(txReceipt.gasUsed);
-  console.log("    gasUsed: " + gasUsed.toNumber());
+  // console.log("    gasUsed: " + gasUsed.toNumber());
   const effectiveGasPrice = ethers.BigNumber.from(txReceipt.effectiveGasPrice);
-  console.log("    effectiveGasPrice: " + ethers.utils.formatUnits(effectiveGasPrice, "gwei") + " gwei");
+  // console.log("    effectiveGasPrice: " + ethers.utils.formatUnits(effectiveGasPrice, "gwei") + " gwei");
   const txFee = gasUsed.mul(effectiveGasPrice);
   console.log("    txFee: " + ethers.utils.formatEther(txFee) + " ETH");
 
@@ -96,7 +96,7 @@ async function getTxInfo(txHash, item, provider) {
   // TODO: ERC-20 transfer
 
 
-  if (!results.summary && contract) {
+  if (!results.summary && contract && contract.abi) {
     const interface = new ethers.utils.Interface(contract.abi);
     let decodedData = interface.parseTransaction({ data: tx.data, value: tx.value });
     console.log("decodedData: " + JSON.stringify(decodedData, null, 2));

@@ -906,6 +906,7 @@ const Transactions = {
     store.dispatch('data/restoreState');
     if ('transactionsSettings' in localStorage) {
       this.settings = JSON.parse(localStorage.transactionsSettings);
+      this.settings.currentPage = 1;
     }
     this.reschedule = true;
     logDebug("Transactions", "Calling timeoutCallback()");
