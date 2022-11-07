@@ -444,6 +444,8 @@ const dataModule = {
               console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
               if (importData.status == 1) {
                 context.commit('importEtherscanResults', { account, results: importData.result });
+                // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
+                context.commit('updateAccountTimestampAndBlock', { account, timestamp, blockNumber: endBlock });
               }
               // Retrieve
               if (importData.message && importData.message.includes("Missing")) {
@@ -453,8 +455,6 @@ const dataModule = {
                 break;
               }
             }
-            // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
-            context.commit('updateAccountTimestampAndBlock', { account, timestamp, blockNumber: endBlock });
           }
           context.dispatch('saveData', ['accounts', 'txs']);
           context.commit('setSyncSection', { section: null, total: null });
