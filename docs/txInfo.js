@@ -66,17 +66,54 @@ async function getTxInfo(txHash, item, provider) {
 
   // TODO: ERC-721 transfer
 
-  // TODO: ERC-20 approve
-
+  // TODO: ERC-20 approve(address guy, uint256 wad)
+  if (!results.summary && tx.data.substring(0, 10) == "0x095ea7b3") {
+    console.log("ERC-20 approve");
+    const interface = new ethers.utils.Interface(ERC20ABI);
+    let decodedData = interface.parseTransaction({ data: tx.data, value: tx.value });
+    for (const event of txReceipt.logs) {
+      let log = interface.parseLog(event);
+      console.log(JSON.stringify(log, null, 2));
+      // Approval (index_topic_1 address src, index_topic_2 address guy, uint256 wad)View Source
+      if (log.name == "Approval") {
+        const src = log.args[0];
+        const guy = log.args[1];
+        const wad = log.args[2];
+        if (ethers.utils.formatEther(wad) > 10000000) {
+          results.summary = "Approved for " + guy + " to transfer a big amount";
+        } else {
+          results.summary = "Approved for " + guy + " to transfer " + ethers.utils.formatEther(wad);
+        }
+      }
+    }
+  }
   // TODO: ERC-20 transfer
-
 
 
   if (!results.summary && contract) {
     const interface = new ethers.utils.Interface(contract.abi);
     let decodedData = interface.parseTransaction({ data: tx.data, value: tx.value });
     console.log("decodedData: " + JSON.stringify(decodedData, null, 2));
-    if (contract.name == "ETHRegistrarController") {
+    if (contract.name == "WETH9") {
+      console.log("WETH9");
+      for (const event of txReceipt.logs) {
+        if (event.address == item.to) {
+          let log = interface.parseLog(event);
+          console.log("log: " + JSON.stringify(log, null, 2));
+          // Withdrawal (index_topic_1 address src, uint256 wad)
+          if (log.name == "Withdrawal") {
+            const src = log.args[0];
+            const wad = log.args[1];
+            results.summary = "Unwrapped " + ethers.utils.formatEther(wad) + "Ξ";
+            // Deposit (index_topic_1 address dst, uint256 wad)
+          } else if (log.name == "Deposit") {
+            const src = log.args[0];
+            const wad = log.args[1];
+            results.summary = "Wrapped " + ethers.utils.formatEther(wad) + "Ξ";            
+          }
+        }
+      }
+    } else if (contract.name == "ETHRegistrarController") {
       // console.log("abi: " + JSON.stringify(contract.abi));
       if (decodedData.name == "commit") {
         console.log("commit");
