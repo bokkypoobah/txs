@@ -387,6 +387,7 @@ const dataModule = {
       const parameters = info.parameters || [];
       logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections) + ", parameters: " + JSON.stringify(parameters).substring(0, 1000));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
       const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
       const confirmations = store.getters['config/settings'].confirmations && parseInt(store.getters['config/settings'].confirmations) || 10;
@@ -443,6 +444,28 @@ const dataModule = {
                 });
               console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
               if (importData.status == 1) {
+                for (const result of importData.result) {
+                  const from = ethers.utils.getAddress(result.from);
+                  const to = (result.to == null || result.to.length <= 2) ? null : ethers.utils.getAddress(result.to);
+                  const contract = (result.contractAddress == null || result.contractAddress.length <= 2) ? null : ethers.utils.getAddress(result.contractAddress);
+                  for (let account of [from, to, contract]) {
+                    if (account && !(account in context.state.accounts)) {
+                      // console.log("Add account: " + account);
+                      const accountInfo = await getAccountInfo(account, provider)
+                      if (accountInfo.account) {
+                        context.commit('addNewAccount', accountInfo);
+                      }
+                      const names = await ensReverseRecordsContract.getNames([account]);
+                      const name = names.length == 1 ? names[0] : account;
+                      if (!(account in context.state.ensMap)) {
+                        context.commit('addENSName', { account, name });
+                      }
+                    }
+                    if (context.state.sync.halt) {
+                      break;
+                    }
+                  }
+                }
                 context.commit('importEtherscanResults', { account, results: importData.result });
                 // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
                 context.commit('updateAccountTimestampAndBlock', { account, timestamp, blockNumber: endBlock });
@@ -456,7 +479,7 @@ const dataModule = {
               }
             }
           }
-          context.dispatch('saveData', ['accounts', 'txs']);
+          context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
           context.commit('setSyncSection', { section: null, total: null });
         } else if (section == 'computeTxs') {
           console.log("computeTxs");

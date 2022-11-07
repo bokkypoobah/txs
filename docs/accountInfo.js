@@ -1,11 +1,11 @@
 async function getAccountInfo(address, provider) {
-  console.log("getAccountInfo(" + address + ")");
+  // console.log("getAccountInfo(" + address + ")");
   const results = {};
 
   let account = null;
   try {
     account = ethers.utils.getAddress(address);
-    console.log("checksummed account: " + account);
+    // console.log("checksummed account: " + account);
   } catch (e) {
     console.log(e.toString());
   }
@@ -20,7 +20,7 @@ async function getAccountInfo(address, provider) {
     } else {
       const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider); // network.erc721HelperAddress
       try {
-        const tokenInfos = await erc721Helper.tokenInfo([account], { gasLimit: 100000000 });
+        const tokenInfos = await erc721Helper.tokenInfo([account], { gasLimit: 1000000 });
         for (let i = 0; i < tokenInfos[0].length; i++) {
           results.mask = tokenInfos[0][i].toNumber();
           results.symbol = tokenInfos[1][i];
@@ -28,6 +28,9 @@ async function getAccountInfo(address, provider) {
         }
       } catch (e) {
         console.log("getAccountInfo ERROR - account: " + account + ", message: " + e.message);
+        results.mask = 0;
+        results.symbol = null;
+        results.name = null;
       }
       results.decimals = null;
       if ((results.mask & MASK_ISERC20) == MASK_ISERC20) {
@@ -40,7 +43,7 @@ async function getAccountInfo(address, provider) {
       }
       if ((results.mask & MASK_ISERC721) == MASK_ISERC721) {
         let url = "https://api.reservoir.tools/collections/v5?contract=" + account;
-        console.log("url: " + url);
+        // console.log("url: " + url);
         const data = await fetch(url)
           .then(handleErrors)
           .then(response => response.json())
@@ -81,6 +84,6 @@ async function getAccountInfo(address, provider) {
       "weth": wethBalance,
     };
   }
-  console.log("results: " + JSON.stringify(results, null, 2));
+  // console.log("results: " + JSON.stringify(results, null, 2));
   return results;
 }
