@@ -412,10 +412,10 @@ const dataModule = {
               }
             }
           }
-          context.commit('setSyncSection', { section: 'Import', total: accountsToSync.length });
 
           let sleepUntil = null;
           for (const keyIndex in accountsToSync) {
+            context.commit('setSyncSection', { section: (parseInt(keyIndex) + 1) + '/' + accountsToSync.length + ' Import', total: null });
             const key = accountsToSync[keyIndex];
             const item = context.state.accounts[key];
             const [chainId, account] = key.split(':');
@@ -444,27 +444,35 @@ const dataModule = {
                 });
               console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
               if (importData.status == 1) {
+                const newAccounts = {};
                 for (const result of importData.result) {
                   const from = ethers.utils.getAddress(result.from);
                   const to = (result.to == null || result.to.length <= 2) ? null : ethers.utils.getAddress(result.to);
                   const contract = (result.contractAddress == null || result.contractAddress.length <= 2) ? null : ethers.utils.getAddress(result.contractAddress);
                   for (let account of [from, to, contract]) {
-                    if (account && !(account in context.state.accounts)) {
-                      // console.log("Add account: " + account);
-                      const accountInfo = await getAccountInfo(account, provider)
-                      if (accountInfo.account) {
-                        context.commit('addNewAccount', accountInfo);
-                      }
-                      const names = await ensReverseRecordsContract.getNames([account]);
-                      const name = names.length == 1 ? names[0] : account;
-                      if (!(account in context.state.ensMap)) {
-                        context.commit('addENSName', { account, name });
-                      }
-                    }
-                    if (context.state.sync.halt) {
-                      break;
+                    if (account && !(account in context.state.accounts) && !(account in newAccounts)) {
+                      newAccounts[account] = true;
                     }
                   }
+                }
+                const newAccountsList = Object.keys(newAccounts);
+                context.commit('setSyncSection', { section: (parseInt(keyIndex) + 1) + '/' + accountsToSync.length + ' Accounts', total: newAccountsList.length });
+                for (let accountIndex in newAccountsList) {
+                  const account = newAccountsList[accountIndex];
+                  context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
+                  console.log("Add account: " + account);
+                  const accountInfo = await getAccountInfo(account, provider)
+                  if (accountInfo.account) {
+                    context.commit('addNewAccount', accountInfo);
+                  }
+                  const names = await ensReverseRecordsContract.getNames([account]);
+                  const name = names.length == 1 ? names[0] : account;
+                  if (!(account in context.state.ensMap)) {
+                    context.commit('addENSName', { account, name });
+                  }
+                }
+                if (context.state.sync.halt) {
+                  break;
                 }
                 context.commit('importEtherscanResults', { account, results: importData.result });
                 // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
