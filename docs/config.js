@@ -11,6 +11,9 @@ const Config = {
               <b-form-group label="Etherscan Batch Size:" label-for="etherscan-batchsize" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Number blocks to import transactions in a batch'" class="mx-0 my-1 p-0">
                 <b-form-select size="sm" id="etherscan-batchsize" :value="settings.etherscanBatchSize" @change="setEtherscanBatchSize($event)" :options="etherscanBatchSizeOptions" class="w-25"></b-form-select>
               </b-form-group>
+              <b-form-group label="Confirmations:" label-for="import-confirmations" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Number of blocks before including a transaction in this dapp'" class="mx-0 my-1 p-0">
+                <b-form-select size="sm" id="import-confirmations" :value="settings.confirmations" @change="setConfirmations($event)" :options="confirmationsOptions" class="w-25"></b-form-select>
+              </b-form-group>
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Reporting Period" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Period Start:" label-for="period-start" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reporting periods: [' + periodOptions.map(e => e.text).join(', ') + ']'" class="mx-0 my-1 p-0">
@@ -45,6 +48,12 @@ const Config = {
         { value: 1_000_000, text: '1 million blocks' },
         { value: 5_000_000, text: '5 million blocks' },
         { value: 10_000_000, text: '10 million blocks' },
+      ],
+      confirmationsOptions: [
+        { value: 1, text: '1 block' },
+        { value: 5, text: '5 blocks' },
+        { value: 10, text: '10 blocks' },
+        { value: 20, text: '20 blocks' },
       ],
       periodStartOptions: [
         { value: 'jan', text: 'January' },
@@ -88,6 +97,9 @@ const Config = {
     },
     setEtherscanBatchSize(etherscanBatchSize) {
       store.dispatch('config/setEtherscanBatchSize', etherscanBatchSize);
+    },
+    setConfirmations(confirmations) {
+      store.dispatch('config/setConfirmations', confirmations);
     },
     setPeriodStart(periodStart) {
       store.dispatch('config/setPeriodStart', periodStart);
@@ -144,7 +156,7 @@ const configModule = {
       etherscanBatchSize: 5_000_000,
       confirmations: 10,
       periodStart: 'jul',
-      version: 0,
+      version: 1,
     },
   },
   getters: {
@@ -172,6 +184,9 @@ const configModule = {
     setEtherscanBatchSize(state, etherscanBatchSize) {
       state.settings.etherscanBatchSize = etherscanBatchSize;
     },
+    setConfirmations(state, confirmations) {
+      state.settings.confirmations = confirmations;
+    },
     setPeriodStart(state, periodStart) {
       state.settings.periodStart = periodStart;
     },
@@ -180,7 +195,7 @@ const configModule = {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 0) {
+        if ('version' in tempSettings && tempSettings.version == 1) {
           context.state.settings = tempSettings;
         }
       }
@@ -191,6 +206,10 @@ const configModule = {
     },
     setEtherscanBatchSize(context, etherscanBatchSize) {
       context.commit('setEtherscanBatchSize', etherscanBatchSize);
+      localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    setConfirmations(context, confirmations) {
+      context.commit('setConfirmations', confirmations);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
     setPeriodStart(context, periodStart) {
