@@ -423,7 +423,7 @@ const dataModule = {
             console.log("--- Syncing " + account + " --- ");
             console.log(JSON.stringify(item, null, 2));
 
-            const startBlock = item && item.updated && item.updated.blockNumber || 0;
+            const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) + 1) || 0;
             const endBlock = blockNumber - confirmations;
 
             const DEVVING = 0;
@@ -544,7 +544,8 @@ const dataModule = {
                     const to = (result.to == null || result.to.length <= 2) ? null : ethers.utils.getAddress(result.to);
                     const contract = (result.contractAddress == null || result.contractAddress.length <= 2) ? null : ethers.utils.getAddress(result.contractAddress);
                     for (let account of [from, to, contract]) {
-                      if (account && !(account in context.state.accounts) && !(account in newAccounts)) {
+                      const accountKey = chainId + ':' + account;
+                      if (account && !(accountKey in context.state.accounts) && !(account in newAccounts)) {
                         newAccounts[account] = true;
                       }
                     }
