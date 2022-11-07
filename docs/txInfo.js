@@ -18,6 +18,12 @@ async function getTxInfo(txHash, item, provider) {
   results.ethBalancePreviousBlock = ethBalancePreviousBlock;
   console.log("tx: " + JSON.stringify(tx, null, 2));
   console.log("txReceipt: " + JSON.stringify(txReceipt, null, 2));
+  const gasUsed = ethers.BigNumber.from(txReceipt.gasUsed);
+  console.log("    gasUsed: " + gasUsed.toNumber());
+  const effectiveGasPrice = ethers.BigNumber.from(txReceipt.effectiveGasPrice);
+  console.log("    effectiveGasPrice: " + ethers.utils.formatUnits(effectiveGasPrice, "gwei") + " gwei");
+  const txFee = gasUsed.mul(effectiveGasPrice);
+  console.log("    txFee: " + ethers.utils.formatEther(txFee) + " ETH");
 
   // ETH transfers
   if (txReceipt.gasUsed == 21000) {
@@ -99,7 +105,7 @@ async function getTxInfo(txHash, item, provider) {
       for (const event of txReceipt.logs) {
         if (event.address == item.to) {
           let log = interface.parseLog(event);
-          console.log("log: " + JSON.stringify(log, null, 2));
+          // console.log("log: " + JSON.stringify(log, null, 2));
           // Withdrawal (index_topic_1 address src, uint256 wad)
           if (log.name == "Withdrawal") {
             const src = log.args[0];
@@ -109,7 +115,7 @@ async function getTxInfo(txHash, item, provider) {
           } else if (log.name == "Deposit") {
             const src = log.args[0];
             const wad = log.args[1];
-            results.summary = "Wrapped " + ethers.utils.formatEther(wad) + "Ξ";            
+            results.summary = "Wrapped " + ethers.utils.formatEther(wad) + "Ξ";
           }
         }
       }
