@@ -117,7 +117,7 @@ const Config = {
           store.dispatch('data/resetData', section);
         }
       }
-      alert('Reloading this page.')
+      alert('Reloading this page in 5 seconds.')
       setTimeout(function() {
         window.location.reload();
       }, 5000);
