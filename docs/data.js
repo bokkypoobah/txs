@@ -167,40 +167,60 @@ const dataModule = {
       });
     },
     addAccountERC20AndERC721Events(state, info) {
-      const accountKey = info.accountKey;
-      const events = info.events;
+      const [accountKey, events] = [info.accountKey, info.events];
       const account = state.accounts[accountKey];
       for (const event of events) {
         if (!event.removed) {
           if (!(event.transactionHash in account.events)) {
             account.events[event.transactionHash] = {};
           }
-          const tempEvent = {...event, type: event.topics.length == 4 ? "erc721" : "erc20" };
+          const tempEvent = {...event, type: event.topics.length == 4 ? "erc721" : "erc20", processed: null };
           delete tempEvent.transactionHash;
           delete tempEvent.logIndex;
           delete tempEvent.removed;
           account.events[event.transactionHash][event.logIndex] = tempEvent;
         }
       }
-      // console.log("account - after: " + JSON.stringify(account, null, 2));
     },
     addAccountERC1155Events(state, info) {
-      const accountKey = info.accountKey;
-      const events = info.events;
+      const [accountKey, events] = [info.accountKey, info.events];
       const account = state.accounts[accountKey];
       for (const event of events) {
         if (!event.removed) {
           if (!(event.transactionHash in account.events)) {
             account.events[event.transactionHash] = {};
           }
-          const tempEvent = {...event, type: "erc1155" };
+          const tempEvent = {...event, type: "erc1155", processed: null };
           delete tempEvent.transactionHash;
           delete tempEvent.logIndex;
           delete tempEvent.removed;
           account.events[event.transactionHash][event.logIndex] = tempEvent;
         }
       }
-      // console.log("account - after: " + JSON.stringify(account, null, 2));
+    },
+    addAccountInternalTransactions(state, info) {
+      const [accountKey, results] = [info.accountKey, info.results];
+      const account = state.accounts[accountKey];
+      for (const result of results) {
+        if (!(result.hash in account.internalTransactions)) {
+          account.internalTransactions[result.hash] = {};
+        }
+        const tempResult = {...result, processed: null};
+        delete tempResult.hash;
+        delete tempResult.traceId;
+        account.internalTransactions[result.hash][result.traceId] = tempResult;
+      }
+    },
+    addAccountTransactions(state, info) {
+      const [accountKey, results] = [info.accountKey, info.results];
+      const account = state.accounts[accountKey];
+      for (const result of results) {
+        if (!(result.hash in account.transactions)) {
+          const tempResult = {...result, processed: null};
+          delete tempResult.hash;
+          account.transactions[result.hash] = tempResult;
+        }
+      }
     },
     updateAccountTimestampAndBlock(state, info) {
       const network = store.getters['connection/network'];
@@ -482,9 +502,7 @@ const dataModule = {
                 const erc1155EventsTo = await provider.getLogs(erc1155FilterTo);
                 context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsTo });
               }
-            }
 
-            if (DEVVING == 2) {
               for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
                 let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
                 console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
@@ -501,8 +519,9 @@ const dataModule = {
                      // Want to work around API data unavailablity - state.sync.error = true;
                      return [];
                   });
-                console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
+                // console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
                 if (importData.status == 1) {
+                  context.commit('addAccountInternalTransactions', { accountKey, results: importData.result });
                   // Retrieve
                   if (importData.message && importData.message.includes("Missing")) {
                     sleepUntil = parseInt(moment().unix()) + 6;
@@ -512,8 +531,38 @@ const dataModule = {
                   }
                 }
               }
-            }
 
+              for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
+                let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
+                console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
+                do {
+                } while (sleepUntil && sleepUntil > moment().unix());
+                console.log("completed sleep: " + startBatch + " to " + endBatch + " " + moment().toString());
+                let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
+                console.log("importUrl: " + importUrl);
+                const importData = await fetch(importUrl)
+                  .then(handleErrors)
+                  .then(response => response.json())
+                  .catch(function(error) {
+                     console.log("ERROR - processIt: " + error);
+                     // Want to work around API data unavailablity - state.sync.error = true;
+                     return [];
+                  });
+                // console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
+                if (importData.status == 1) {
+                  context.commit('addAccountTransactions', { accountKey, results: importData.result });
+                  // Retrieve
+                  if (importData.message && importData.message.includes("Missing")) {
+                    sleepUntil = parseInt(moment().unix()) + 6;
+                  }
+                  if (context.state.sync.halt) {
+                    break;
+                  }
+                }
+              }
+              // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
+              context.commit('updateAccountTimestampAndBlock', { account, timestamp, blockNumber: endBlock });
+            }
 
             if (DEVVING == 0) {
               for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
@@ -580,6 +629,7 @@ const dataModule = {
                 }
               }
             }
+            console.log(JSON.stringify(item, null, 2));
           }
           context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
           context.commit('setSyncSection', { section: null, total: null });
