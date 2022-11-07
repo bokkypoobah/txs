@@ -385,46 +385,67 @@ const dataModule = {
       context.commit('setSyncHalt', false);
       for (let section of sections) {
         if (section == 'importFromEtherscan') {
-          const keysToSync = [];
+          const accountsToSync = [];
           for (const [key, item] of Object.entries(context.state.accounts)) {
-            if (item.sync) {
-              keysToSync.push(key);
+            const [chainId, account] = key.split(':');
+            if (parameters.length == 0) {
+              if (item.sync) {
+                accountsToSync.push(key);
+              }
+            } else {
+              if (parameters.includes(account)) {
+                accountsToSync.push(key);
+              }
             }
           }
-          context.commit('setSyncSection', { section: 'Import', total: keysToSync.length });
+          context.commit('setSyncSection', { section: 'Import', total: accountsToSync.length });
           let pause = false;
-          for (const keyIndex in keysToSync) {
-            const key = keysToSync[keyIndex];
+          for (const keyIndex in accountsToSync) {
+            const key = accountsToSync[keyIndex];
             const item = context.state.accounts[key];
             const [chainId, account] = key.split(':');
             console.log("--- Syncing " + account + " --- ");
+            console.log(JSON.stringify(item, null, 2));
+
+            const startBlock = item && item.updated && item.updated.blockNumber || 0;
+            const endBlock = blockNumber;
+            const batchSize = 1_000_000;
+
+            for (let startBatch = startBlock; startBatch < endBlock; startBatch += batchSize) {
+              console.log("startBatch: " + startBatch);
+            }
+
+
+
             if (pause) {
-              // context.commit('setSyncSection', { section: 'Pausing', total: keysToSync.length });
+              // context.commit('setSyncSection', { section: 'Pausing', total: accountsToSync.length });
               sleep(5000);
-              // context.commit('setSyncSection', { section: 'Import', total: keysToSync.length });
+              // context.commit('setSyncSection', { section: 'Import', total: accountsToSync.length });
             }
             // TODO: Sync by batches, and incremental syncing
-            context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
-            let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=0&endblock=" + blockNumber + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
-            console.log("importUrl: " + importUrl);
-            const importData = await fetch(importUrl)
-              .then(handleErrors)
-              .then(response => response.json())
-              .catch(function(error) {
-                 console.log("ERROR - processIt: " + error);
-                 // Want to work around API data unavailablity - state.sync.error = true;
-                 return [];
-              });
-            console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
-            if (importData.status == 1) {
-              context.commit('importEtherscanResults', { account, results: importData.result });
-            }
-            // Retrieve
-            if (importData.message && importData.message.includes("Missing")) {
-              pause = true;
-            }
-            if (context.state.sync.halt) {
-              break;
+            if (false) {
+              context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
+              let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=0&endblock=" + blockNumber + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
+              console.log("importUrl: " + importUrl);
+              const importData = await fetch(importUrl)
+                .then(handleErrors)
+                .then(response => response.json())
+                .catch(function(error) {
+                   console.log("ERROR - processIt: " + error);
+                   // Want to work around API data unavailablity - state.sync.error = true;
+                   return [];
+                });
+              console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
+              if (importData.status == 1) {
+                context.commit('importEtherscanResults', { account, results: importData.result });
+              }
+              // Retrieve
+              if (importData.message && importData.message.includes("Missing")) {
+                pause = true;
+              }
+              if (context.state.sync.halt) {
+                break;
+              }
             }
           }
           context.dispatch('saveData', ['txs']);

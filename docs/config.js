@@ -8,6 +8,9 @@ const Config = {
               <b-form-group label="Etherscan API Key:" label-for="etherscan-apikey" label-size="sm" label-cols-sm="2" label-align-sm="right" description="This key is stored in your local browser storage and is sent with Etherscan API requests. If not supplied, imports from Etherscan will be rate limited to 1 request every 5 seconds" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="etherscan-apikey" :value="settings.etherscanAPIKey" @change="setEtherscanAPIKey($event)" placeholder="See https://docs.etherscan.io/ to obtain an API key" class="w-75"></b-form-input>
               </b-form-group>
+              <b-form-group label="Etherscan Batch Size:" label-for="etherscan-batchsize" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Number blocks to import transactions in a batch'" class="mx-0 my-1 p-0">
+                <b-form-select size="sm" id="etherscan-batchsize" :value="settings.etherscanBatchSize" @change="setEtherscanBatchSize($event)" :options="etherscanBatchSizeOptions" class="w-25"></b-form-select>
+              </b-form-group>
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Reporting Period" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Period Start:" label-for="period-start" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reporting periods: [' + periodOptions.map(e => e.text).join(', ') + ']'" class="mx-0 my-1 p-0">
@@ -38,8 +41,12 @@ const Config = {
       count: 0,
       reschedule: true,
       unlock: null,
+      etherscanBatchSizeOptions: [
+        { value: 1_000_000, text: '1 million blocks' },
+        { value: 5_000_000, text: '5 million blocks' },
+        { value: 10_000_000, text: '10 million blocks' },
+      ],
       periodStartOptions: [
-        { value: null, text: '(select ▼)' },
         { value: 'jan', text: 'January' },
         { value: 'feb', text: 'February' },
         { value: 'mar', text: 'March' },
@@ -78,6 +85,9 @@ const Config = {
   methods: {
     setEtherscanAPIKey(etherscanAPIKey) {
       store.dispatch('config/setEtherscanAPIKey', etherscanAPIKey);
+    },
+    setEtherscanBatchSize(etherscanBatchSize) {
+      store.dispatch('config/setEtherscanBatchSize', etherscanBatchSize);
     },
     setPeriodStart(periodStart) {
       store.dispatch('config/setPeriodStart', periodStart);
@@ -131,7 +141,9 @@ const configModule = {
   state: {
     settings: {
       etherscanAPIKey: null,
+      etherscanBatchSize: 5_000_000,
       periodStart: 'jul',
+      version: 0,
     },
   },
   getters: {
@@ -156,6 +168,9 @@ const configModule = {
     setEtherscanAPIKey(state, etherscanAPIKey) {
       state.settings.etherscanAPIKey = etherscanAPIKey;
     },
+    setEtherscanBatchSize(state, etherscanBatchSize) {
+      state.settings.etherscanBatchSize = etherscanBatchSize;
+    },
     setPeriodStart(state, periodStart) {
       state.settings.periodStart = periodStart;
     },
@@ -163,12 +178,18 @@ const configModule = {
   actions: {
     restoreState(context) {
       if ('configSettings' in localStorage) {
-        context.state.settings = JSON.parse(localStorage.configSettings);
-        console.log("config.restoreState: " + JSON.stringify(context.state.settings));
+        const tempSettings = JSON.parse(localStorage.configSettings);
+        if ('version' in tempSettings && tempSettings.version == 0) {
+          context.state.settings = tempSettings;
+        }
       }
     },
     setEtherscanAPIKey(context, etherscanAPIKey) {
       context.commit('setEtherscanAPIKey', etherscanAPIKey);
+      localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    setEtherscanBatchSize(context, etherscanBatchSize) {
+      context.commit('setEtherscanBatchSize', etherscanBatchSize);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
     setPeriodStart(context, periodStart) {
