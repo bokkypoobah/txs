@@ -460,23 +460,25 @@ const dataModule = {
                 for (let accountIndex in newAccountsList) {
                   const account = newAccountsList[accountIndex];
                   context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
-                  console.log("Add account: " + account);
                   const accountInfo = await getAccountInfo(account, provider)
                   if (accountInfo.account) {
                     context.commit('addNewAccount', accountInfo);
+                    console.log("Added account: " + account + " " + accountInfo.type + " " + accountInfo.name);
                   }
                   const names = await ensReverseRecordsContract.getNames([account]);
                   const name = names.length == 1 ? names[0] : account;
                   if (!(account in context.state.ensMap)) {
                     context.commit('addENSName', { account, name });
                   }
+                  if (context.state.sync.halt) {
+                    break;
+                  }
                 }
-                if (context.state.sync.halt) {
-                  break;
+                if (!context.state.sync.halt) {
+                  context.commit('importEtherscanResults', { account, results: importData.result });
+                  // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
+                  context.commit('updateAccountTimestampAndBlock', { account, timestamp, blockNumber: endBlock });
                 }
-                context.commit('importEtherscanResults', { account, results: importData.result });
-                // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
-                context.commit('updateAccountTimestampAndBlock', { account, timestamp, blockNumber: endBlock });
               }
               // Retrieve
               if (importData.message && importData.message.includes("Missing")) {

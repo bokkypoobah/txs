@@ -75,6 +75,8 @@ async function getAccountInfo(address, provider) {
       results.type = "erc20";
     } else if ((results.mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
       results.type = "contract";
+    } else {
+      result.type = null;
     }
     const ethBalance = await provider.getBalance(account);
     const weth = new ethers.Contract(WETHADDRESS, WETHABI, provider); // network.wethAddress
