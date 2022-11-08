@@ -1,9 +1,40 @@
 async function getTxInfo(txHash, item, provider) {
-  const results = {
-    txHash,
-  };
+  console.log("getTxInfo: " + txHash + ", currentInfo: " + JSON.stringify(item).substring(0, 60));
+  const results = {};
   const contract = item.to && _CUSTOMACCOUNTS[item.to] || null;
 
+  if (!results.tx) {
+    const tx = await provider.getTransaction(txHash);
+    results.tx = {
+      hash: tx.hash,
+      type: tx.type,
+      blockHash: tx.blockHash,
+      blockNumber: tx.blockNumber,
+      transactionIndex: tx.transactionIndex,
+      from: tx.from,
+      gasPrice: tx.gasPrice,
+      gasLimit: tx.gasLimit,
+      to: tx.to,
+      value: tx.value,
+      nonce: tx.nonce,
+      data: tx.data,
+      r: tx.r,
+      s: tx.s,
+      v: tx.v,
+      chainId: tx.chainId,
+    };
+  }
+  results.txReceipt = item.txReceipt ? item.txReceipt : await provider.getTransactionReceipt(txHash);
+  delete results.txReceipt.logsBloom;
+  results.ethBalance = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber);
+  results.ethBalancePreviousBlock = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber - 1);
+  results.gasUsed = ethers.BigNumber.from(results.txReceipt.gasUsed);
+  results.effectiveGasPrice = ethers.BigNumber.from(results.txReceipt.effectiveGasPrice);
+  results.txFee = results.gasUsed.mul(results.effectiveGasPrice);
+  // console.log("results.tx: " + JSON.stringify(results.tx, null, 2));
+  console.log("results: " + JSON.stringify(results, null, 2));
+
+  return results;
   if (item.importedData && item.importedData.tx) {
     console.log("item.importedData.tx: " + JSON.stringify(item.importedData.tx));
   }

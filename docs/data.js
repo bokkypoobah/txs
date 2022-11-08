@@ -234,6 +234,12 @@ const dataModule = {
     addENSName(state, nameInfo) {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
     },
+
+    addTxs(state, info) {
+      logInfo("dataModule", "mutations.addTxs - info: " + JSON.stringify(info).substring(0, 100));
+      Vue.set(state.txs, info.tx.hash, info);
+    },
+
     importEtherscanResults(state, info) {
       logInfo("dataModule", "mutations.importEtherscanResults - info: " + JSON.stringify(info).substring(0, 1000));
       const [account, results] = [info.account, info.results];
@@ -434,7 +440,7 @@ const dataModule = {
             const [chainId, account] = accountKey.split(':');
             context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Syncing " + account + " --- ");
-            console.log("account: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
+            console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
             const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) + 1) || 0;
 
             const DEVVING = 1;
@@ -636,7 +642,52 @@ const dataModule = {
             const [chainId, account] = accountKey.split(':');
             // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Downloading for " + account + " --- ");
-            console.log("account: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
+            console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
+
+            const txHashes = {};
+            for (const [txHash, logIndexes] of Object.entries(item.events)) {
+              if (!(txHash in context.state.txs) && !(txHash in txHashes)) {
+                for (const [logIndex, event] of Object.entries(logIndexes)) {
+                  if (!event.processed) {
+                    txHashes[txHash] = event.blockNumber;
+                  }
+                }
+              }
+            }
+            for (const [txHash, traceIds] of Object.entries(item.internalTransactions)) {
+              if (!(txHash in context.state.txs) && !(txHash in txHashes)) {
+                for (const [traceId, tx] of Object.entries(traceIds)) {
+                  if (!tx.processed) {
+                    txHashes[txHash] = tx.blockNumber;
+                  }
+                }
+              }
+            }
+            for (const [txHash, tx] of Object.entries(item.transactions)) {
+              if (!(txHash in context.state.txs) && !(txHash in txHashes)) {
+                if (!tx.processed) {
+                  txHashes[txHash] = tx.blockNumber;
+                }
+              }
+            }
+            // console.log("txHashes: " + JSON.stringify(txHashes));
+            const txHashList = [];
+            for (const [txHash, blockNumber] of Object.entries(txHashes)) {
+              txHashList.push({ txHash, blockNumber });
+            }
+            txHashList.sort((a, b) => b.blockNumber - a.blockNumber);
+            // console.log("txHashList: " + JSON.stringify(txHashList));
+            context.commit('setSyncSection', { section: 'Download', total: txHashList.length });
+            for (let txItemIndex in txHashList) {
+              const txItem = txHashList[txItemIndex];
+              context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
+              console.log("Processing: " + JSON.stringify(txItem));
+              const currentInfo = context.state.txs[txItem.txHash] || {};
+              const info = await getTxInfo(txItem.txHash, currentInfo, provider);
+              context.commit('addTxs', info);
+            }
+            // context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
+            context.dispatch('saveData', ['txs']);
           }
 
         } else if (section == 'computeTxs') {
