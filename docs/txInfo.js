@@ -84,7 +84,7 @@ async function getTxInfo(txHash, item, provider) {
       chainId: tx.chainId,
     };
   }
-  if (!result.timestamp) {
+  if (!results.timestamp) {
     const block = await provider.getBlock(results.tx.blockNumber);
     results.timestamp = block.timestamp;
   }

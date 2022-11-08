@@ -86,9 +86,9 @@ const Data = {
 const dataModule = {
   namespaced: true,
   state: {
-    accounts: {}, // TODO: Add chainId
+    accounts: {},
     txs: {},
-    assets: {}, // TODO: ChainId/Contract/TokenId/Number
+    assets: {},
     ensMap: {},
     sync: {
       section: null,
@@ -134,8 +134,7 @@ const dataModule = {
     addNewAccount(state, accountInfo) {
       // logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(accountInfo) + ")");
       const block = store.getters['connection/block'];
-      const network = store.getters['connection/network'];
-      const chainId = network.chainId;
+      const chainId = store.getters['connection/chainId'];
       if (!(chainId in state.accounts)) {
         Vue.set(state.accounts, chainId, {});
       }
@@ -168,7 +167,8 @@ const dataModule = {
       });
     },
     addAccountERC20AndERC721Events(state, info) {
-      const [chainId, account, events] = [info.chainId, info.account, info.events];
+      const [account, events] = [info.account, info.events];
+      const chainId = store.getters['connection/chainId'];
       const accountData = state.accounts[chainId][account];
       for (const event of events) {
         if (!event.removed) {
@@ -184,7 +184,8 @@ const dataModule = {
       }
     },
     addAccountERC1155Events(state, info) {
-      const [chainId, account, events] = [info.chainId, info.account, info.events];
+      const [account, events] = [info.account, info.events];
+      const chainId = store.getters['connection/chainId'];
       const accountData = state.accounts[chainId][account];
       for (const event of events) {
         if (!event.removed) {
@@ -200,7 +201,8 @@ const dataModule = {
       }
     },
     addAccountInternalTransactions(state, info) {
-      const [chainId, account, results] = [info.chainId, info.account, info.results];
+      const [account, results] = [info.account, info.results];
+      const chainId = store.getters['connection/chainId'];
       const accountData = state.accounts[chainId][account];
       for (const result of results) {
         if (!(result.hash in accountData.internalTransactions)) {
@@ -213,7 +215,8 @@ const dataModule = {
       }
     },
     addAccountTransactions(state, info) {
-      const [chainId, account, results] = [info.chainId, info.account, info.results];
+      const [account, results] = [info.account, info.results];
+      const chainId = store.getters['connection/chainId'];
       const accountData = state.accounts[chainId][account];
       for (const result of results) {
         if (!(result.hash in accountData.transactions)) {
@@ -224,7 +227,8 @@ const dataModule = {
       }
     },
     updateAccountTimestampAndBlock(state, info) {
-      const [chainId, account, events] = [info.chainId, info.account, info.events];
+      const [account, events] = [info.account, info.events];
+      const chainId = store.getters['connection/chainId'];
       Vue.set(state.accounts[chainId][account], 'updated', {
         timestamp: info.timestamp,
         blockNumber: info.blockNumber,
@@ -277,23 +281,25 @@ const dataModule = {
   },
   actions: {
     async restoreState(context) {
-      const db0 = new Dexie(context.state.db.name);
-      db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-      const ensMap = await db0.cache.where("objectName").equals('ensMap').toArray();
-      if (ensMap.length == 1) {
-        context.state.ensMap = ensMap[0].object;
-      }
-      const assets = await db0.cache.where("objectName").equals('assets').toArray();
-      if (assets.length == 1) {
-        context.state.assets = assets[0].object;
-      }
-      const txs = await db0.cache.where("objectName").equals('txs').toArray();
-      if (txs.length == 1) {
-        context.state.txs = txs[0].object;
-      }
-      const accounts = await db0.cache.where("objectName").equals('accounts').toArray();
-      if (accounts.length == 1) {
-        context.state.accounts = accounts[0].object;
+      if (Object.keys(context.state.txs) == 0) {
+        const db0 = new Dexie(context.state.db.name);
+        db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
+        const ensMap = await db0.cache.where("objectName").equals('ensMap').toArray();
+        if (ensMap.length == 1) {
+          context.state.ensMap = ensMap[0].object;
+        }
+        const assets = await db0.cache.where("objectName").equals('assets').toArray();
+        if (assets.length == 1) {
+          context.state.assets = assets[0].object;
+        }
+        const txs = await db0.cache.where("objectName").equals('txs').toArray();
+        if (txs.length == 1) {
+          context.state.txs = txs[0].object;
+        }
+        const accounts = await db0.cache.where("objectName").equals('accounts').toArray();
+        if (accounts.length == 1) {
+          context.state.accounts = accounts[0].object;
+        }
       }
     },
     async saveData(context, types) {
@@ -365,8 +371,7 @@ const dataModule = {
       const sections = info.sections;
       const parameters = info.parameters || [];
       logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections) + ", parameters: " + JSON.stringify(parameters).substring(0, 1000));
-      const network = store.getters['connection/network'];
-      const chainId = network.chainId;
+      const chainId = store.getters['connection/chainId'];
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
@@ -415,7 +420,7 @@ const dataModule = {
                 ],
               };
               const erc20AndERC721EventsFrom = await provider.getLogs(erc20AndERC721FilterFrom);
-              context.commit('addAccountERC20AndERC721Events', { chainId, account, events: erc20AndERC721EventsFrom });
+              context.commit('addAccountERC20AndERC721Events', { account, events: erc20AndERC721EventsFrom });
               const erc20AndERC721FilterTo = {
                 address: null,
                 fromBlock: startBatch,
@@ -427,7 +432,7 @@ const dataModule = {
                 ],
               };
               const erc20AndERC721EventsTo = await provider.getLogs(erc20AndERC721FilterTo);
-              context.commit('addAccountERC20AndERC721Events', { chainId, account, events: erc20AndERC721EventsTo });
+              context.commit('addAccountERC20AndERC721Events', { account, events: erc20AndERC721EventsTo });
               const erc1155FilterFrom = {
                 address: null,
                 fromBlock: startBatch,
@@ -440,7 +445,7 @@ const dataModule = {
                 ],
               };
               const erc1155EventsFrom = await provider.getLogs(erc1155FilterFrom);
-              context.commit('addAccountERC1155Events', { chainId, account, events: erc1155EventsFrom });
+              context.commit('addAccountERC1155Events', { account, events: erc1155EventsFrom });
               const erc1155FilterTo = {
                 address: null,
                 fromBlock: startBatch,
@@ -453,7 +458,7 @@ const dataModule = {
                 ],
               };
               const erc1155EventsTo = await provider.getLogs(erc1155FilterTo);
-              context.commit('addAccountERC1155Events', { chainId, account, events: erc1155EventsTo });
+              context.commit('addAccountERC1155Events', { account, events: erc1155EventsTo });
             }
 
             context.commit('setSyncSection', { section: 'Etherscan Internal Txs', total: accountsToSync.length });
@@ -473,7 +478,7 @@ const dataModule = {
                    return [];
                 });
               if (importData.status == 1) {
-                context.commit('addAccountInternalTransactions', { chainId, account, results: importData.result });
+                context.commit('addAccountInternalTransactions', { account, results: importData.result });
                 if (importData.message && importData.message.includes("Missing")) {
                   sleepUntil = parseInt(moment().unix()) + 6;
                 }
@@ -500,7 +505,7 @@ const dataModule = {
                    return [];
                 });
               if (importData.status == 1) {
-                context.commit('addAccountTransactions', { chainId, account, results: importData.result });
+                context.commit('addAccountTransactions', { account, results: importData.result });
                 if (importData.message && importData.message.includes("Missing")) {
                   sleepUntil = parseInt(moment().unix()) + 6;
                 }

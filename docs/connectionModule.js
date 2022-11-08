@@ -540,6 +540,7 @@ const connectionModule = {
     connectionError: state => state.connectionError,
     connection: state => state.connection,
     network: state => state.network,
+    chainId: state => state.network && state.network.chainId || null,
     coinbase: state => state.coinbase,
     coinbaseUpdated: state => state.coinbaseUpdated,
     balance: state => state.balance,
