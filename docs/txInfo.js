@@ -1,3 +1,18 @@
+function parseTx(item) {
+  const results = {};
+
+  // console.log(JSON.stringify(item.txReceipt));
+  const gasUsed = ethers.BigNumber.from(item.txReceipt.gasUsed);
+  if (gasUsed == 21000) {
+    // console.log("ETH transfer");
+    results.info = "Transferred " + ethers.utils.formatEther(item.tx.value) + "Ξ"; // + tx.to;
+  } else {
+    // results.info = gasUsed;
+  }
+
+  return results;
+}
+
 async function getTxInfo(txHash, item, provider) {
   console.log("getTxInfo: " + txHash + ", currentInfo: " + JSON.stringify(item).substring(0, 60));
   const results = {};

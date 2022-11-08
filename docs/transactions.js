@@ -526,7 +526,9 @@ const Transactions = {
           }
         }
         if (include) {
-          console.log(JSON.stringify(item, null, 2));
+          // console.log(JSON.stringify(item, null, 2));
+          const info = parseTx(item);
+          // console.log(JSON.stringify(info, null, 2));
           results.push({
             txHash,
             blockNumber: item.blockNumber,
@@ -535,51 +537,14 @@ const Transactions = {
             from: item.tx.from,
             to: item.tx.to,
             value: item.tx.value,
+            ...info,
             // info: item.computed.info && item.computed.info.summary || null,
             // functionName: item.functionName,
             // input: item.input,
           });
         }
       }
-      // Vue.set(state.txs, result.hash, {
-      //   blockNumber: result.blockNumber,
-      //   timestamp: result.timeStamp,
-      //   nonce: result.nonce,
-      //   blockHash: result.blockHash,
-      //   transactionIndex: result.transactionIndex,
-      //   from: result.from,
-      //   to: result.to,
-      //   value: result.value,
-      //   gas: result.gas,
-      //   gasPrice: result.gasPrice,
-      //   isError: result.isError,
-      //   txReceiptStatus: result.txreceipt_status,
-      //   input: result.input,
-      //   contractAddress: result.contractAddress,
-      //   cumulativeGasUsed: result.cumulativeGasUsed,
-      //   gasUsed: result.gasUsed,
-      //   confirmations: result.confirmations,
-      //   methodId: result.methodId,
-      //   functionName: result.functionName,
-      //   etherscanImported: {
-      //     account,
-      //     timestamp: block && block.timestamp || null,
-      //     blockNumber: block && block.number || null,
-      //   },
-      //   dataImported: {
-      //     tx: null,
-      //     txReceipt: null,
-      //     balances: {},
-      //     balancePreviousBlock: {},
-      //     timestamp: null,
-      //     blockNumber: null,
-      //   },
-      //   computed: {
-      //     info: {},
-      //     timestamp: null,
-      //     blockNumber: null,
-      //   },
-      // });
+      console.log(JSON.stringify(results.slice(0, 10), null, 2));
       return results;
     },
     filteredSortedTransactions() {
