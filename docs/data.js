@@ -422,17 +422,10 @@ const dataModule = {
           const accountsToSync = [];
           for (const [key, item] of Object.entries(context.state.accounts)) {
             const [chainId, account] = key.split(':');
-            if (parameters.length == 0) {
-              if (item.sync) {
+            if ((parameters.length == 0 && item.sync) || parameters.includes(account)) {
                 accountsToSync.push(key);
-              }
-            } else {
-              if (parameters.includes(account)) {
-                accountsToSync.push(key);
-              }
             }
           }
-
           let sleepUntil = null;
           for (const keyIndex in accountsToSync) {
             context.commit('setSyncSection', { section: ' Import', total: accountsToSync.length });
@@ -441,8 +434,7 @@ const dataModule = {
             const [chainId, account] = accountKey.split(':');
             context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Syncing " + account + " --- ");
-            console.log(JSON.stringify(item, null, 2));
-
+            console.log("account: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
             const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) + 1) || 0;
 
             const DEVVING = 1;
@@ -629,7 +621,24 @@ const dataModule = {
 
         } else if (section == 'downloadData') {
           console.log("downloadData");
-          
+          const accountsToSync = [];
+          for (const [key, item] of Object.entries(context.state.accounts)) {
+            const [chainId, account] = key.split(':');
+            if ((parameters.length == 0 && item.sync) || parameters.includes(account)) {
+                accountsToSync.push(key);
+            }
+          }
+          let sleepUntil = null;
+          for (const keyIndex in accountsToSync) {
+            // context.commit('setSyncSection', { section: ' Import', total: accountsToSync.length });
+            const accountKey = accountsToSync[keyIndex];
+            const item = context.state.accounts[accountKey];
+            const [chainId, account] = accountKey.split(':');
+            // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
+            console.log("--- Downloading for " + account + " --- ");
+            console.log("account: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
+          }
+
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
           context.commit('setSyncSection', { section: 'Compute', total: parameters.length });
