@@ -1,14 +1,27 @@
 function parseTx(item) {
   const results = {};
-
-  // console.log(JSON.stringify(item.txReceipt));
   const gasUsed = ethers.BigNumber.from(item.txReceipt.gasUsed);
   if (gasUsed == 21000) {
-    // console.log("ETH transfer");
     results.info = "Transferred " + ethers.utils.formatEther(item.tx.value) + "Ξ"; // + tx.to;
-  } else {
-    // results.info = gasUsed;
   }
+  if (!results.info && item.tx.data.substring(0, 10) == "0xa22cb465") {
+    results.info = "setApprovalForAll";
+    const interface = new ethers.utils.Interface(ERC721ABI);
+    let decodedData = interface.parseTransaction({ data: item.tx.data, value: item.tx.value });
+    for (const event of item.txReceipt.logs) {
+      let log = interface.parseLog(event);
+      if (log.name == "ApprovalForAll") {
+        const [tokenOwner, operator, approved] = [log.args[0], log.args[1], log.args[2]];
+        if (approved) {
+          results.info = "Approved transfer of " + item.tx.to.substring(0, 16) + " to " + operator.substring(0, 16);
+        } else {
+          results.info = "Revoked transfer approval of " + item.tx.to.substring(0, 16) + " from " + operator.substring(0, 16);
+        }
+      }
+    }
+  }
+
+
 
   return results;
 }
