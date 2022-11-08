@@ -618,6 +618,9 @@ const dataModule = {
           context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
           context.commit('setSyncSection', { section: null, total: null });
 
+        } else if (section == 'buildAssets') {
+          console.log("buildAssets");
+          
         } else if (section == 'downloadData') {
           console.log("downloadData");
           const accountsToSync = [];
