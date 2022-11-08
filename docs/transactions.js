@@ -32,11 +32,16 @@ const Transactions = {
           </div>
           -->
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" @click="syncIt({ sections: ['importFromEtherscan', 'downloadData'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
+            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['importFromEtherscan', 'downloadData'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import Etherscan transactions and web3 transfer events for accounts configured to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
+          <div v-if="sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['downloadData'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import transaction data via web3 for accounts configured to be synced'"><b-icon-cloud shift-v="+1" font-scale="1.2"></b-icon-cloud></b-button>
+          </div>
+          <!--
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="syncIt({ sections: ['computeTxs'], parameters: Object.keys(settings.selectedTransactions) })" variant="link" v-b-popover.hover.top="'Compute selected transactions'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
           </div>
+          -->
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="exportTransactions" variant="link" v-b-popover.hover.top="'Export transactions'"><b-icon-file-earmark-spreadsheet shift-v="+1" font-scale="1.2"></b-icon-file-earmark-spreadsheet></b-button>
           </div>
@@ -455,6 +460,9 @@ const Transactions = {
     network() {
       return store.getters['connection/network'];
     },
+    block() {
+      return store.getters['connection/block'];
+    },
     periodOptions() {
       const results = [];
       results.push({ value: null, text: "(select period)", data: null });
@@ -508,10 +516,10 @@ const Transactions = {
           }
         }
         if (include && accountFilterLower != null) {
-          const fromENS = this.ensMap[item.from] || null;
+          const fromENS = this.ensMap[item.tx.from] || null;
           if (
-            !(item.from.toLowerCase().includes(accountFilterLower)) &&
-            !(item.to.toLowerCase().includes(accountFilterLower)) &&
+            !(item.tx.from.toLowerCase().includes(accountFilterLower)) &&
+            !(item.tx.to.toLowerCase().includes(accountFilterLower)) &&
             !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
           ) {
             include = false;
@@ -524,9 +532,9 @@ const Transactions = {
             blockNumber: item.blockNumber,
             transactionIndex: item.transactionIndex,
             timestamp: item.timestamp,
-            from: item.from,
-            to: item.to,
-            value: item.value,
+            from: item.tx.from,
+            to: item.tx.to,
+            value: item.tx.value,
             // info: item.computed.info && item.computed.info.summary || null,
             // functionName: item.functionName,
             // input: item.input,
