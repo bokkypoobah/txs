@@ -518,6 +518,7 @@ const Transactions = {
           }
         }
         if (include) {
+          console.log(JSON.stringify(item, null, 2));
           results.push({
             txHash,
             blockNumber: item.blockNumber,
@@ -526,9 +527,9 @@ const Transactions = {
             from: item.from,
             to: item.to,
             value: item.value,
-            info: item.computed.info && item.computed.info.summary || null,
-            functionName: item.functionName,
-            input: item.input,
+            // info: item.computed.info && item.computed.info.summary || null,
+            // functionName: item.functionName,
+            // input: item.input,
           });
         }
       }

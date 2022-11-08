@@ -685,6 +685,9 @@ const dataModule = {
               const currentInfo = context.state.txs[txItem.txHash] || {};
               const info = await getTxInfo(txItem.txHash, currentInfo, provider);
               context.commit('addTxs', info);
+              if (context.state.sync.halt) {
+                break;
+              }
             }
             // context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
             context.dispatch('saveData', ['txs']);

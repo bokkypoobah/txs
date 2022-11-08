@@ -1,8 +1,6 @@
 async function getTxInfo(txHash, item, provider) {
   console.log("getTxInfo: " + txHash + ", currentInfo: " + JSON.stringify(item).substring(0, 60));
   const results = {};
-  const contract = item.to && _CUSTOMACCOUNTS[item.to] || null;
-
   if (!results.tx) {
     const tx = await provider.getTransaction(txHash);
     results.tx = {
@@ -24,6 +22,10 @@ async function getTxInfo(txHash, item, provider) {
       chainId: tx.chainId,
     };
   }
+  if (!result.timestamp) {
+    const block = await provider.getBlock(results.tx.blockNumber);
+    results.timestamp = block.timestamp;
+  }
   results.txReceipt = item.txReceipt ? item.txReceipt : await provider.getTransactionReceipt(txHash);
   delete results.txReceipt.logsBloom;
   results.ethBalance = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber);
@@ -35,6 +37,9 @@ async function getTxInfo(txHash, item, provider) {
   console.log("results: " + JSON.stringify(results, null, 2));
 
   return results;
+
+  const contract = item.to && _CUSTOMACCOUNTS[item.to] || null;
+
   if (item.importedData && item.importedData.tx) {
     console.log("item.importedData.tx: " + JSON.stringify(item.importedData.tx));
   }
