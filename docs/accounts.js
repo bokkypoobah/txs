@@ -94,7 +94,7 @@ const Accounts = {
             </b-form-checkbox>
           </template>
           <template #cell(image)="data">
-            <div v-if="data.item.type == 'erc721'">
+            <div v-if="data.item.type == 'erc721' || data.item.type == 'erc1155'">
               <b-avatar rounded variant="light" size="3.0rem" :src="data.item.collection.image" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
             </div>
             <div v-else-if="data.item.type == 'eoa' && data.item.account != ensOrAccount(data.item.account)">
@@ -133,10 +133,10 @@ const Accounts = {
                   </span>
                 </div>
                 <div class="m-0 pt-1 pr-1">
-                  <span v-if="data.item.type != 'erc721'">
+                  <span v-if="data.item.type != 'erc721' && data.item.type != 'erc1155'">
                     <b-badge v-if="hasENS(data.item.account)" variant="secondary" v-b-popover.hover="'ENS name if set'">{{ ensOrNull(data.item.account) }}</b-badge>
                   </span>
-                  <span v-if="data.item.type == 'erc721'">
+                  <span v-if="data.item.type == 'erc721' || data.item.type == 'erc1155'">
                     <b-badge variant="secondary" v-b-popover.hover="'ERC-721 collection name'">{{ data.item.collection.name }}</b-badge>
                   </span>
                 </div>
@@ -152,14 +152,14 @@ const Accounts = {
             </font>
             <b-popover :target="'popover-target-' + data.item.account" placement="right" custom-class="popover-max-width">
               <template #title>
-                <span v-if="data.item.type != 'erc721'">
+                <span v-if="data.item.type != 'erc721' && data.item.type != 'erc1155'">
                   {{ ensOrAccount(data.item.account) }}
                 </span>
-                <span v-if="data.item.type == 'erc721'">
+                <span v-if="data.item.type == 'erc721' || data.item.type == 'erc1155'">
                   {{ data.item.collection.name }}
                 </span>
               </template>
-              <span v-if="data.item.type != 'erc721'">
+              <span v-if="data.item.type != 'erc721' && data.item.type != 'erc1155'">
                 <b-link @click="copyToClipboard(data.item.account);">Copy account to clipboard</b-link>
                 <br />
                 <span v-if="ensOrNull(data.item.account) != null && ensOrNull(data.item.account).length > 0">
@@ -183,7 +183,7 @@ const Accounts = {
                 <b-link :href="'https://blur.io/' + data.item.account" target="_blank">View account in blur.io</b-link>
                 <br />
               </span>
-              <span v-if="data.item.type == 'erc721'">
+              <span v-if="data.item.type == 'erc721' || data.item.type == 'erc1155'">
                 <b-link @click="copyToClipboard(data.item.account);">Copy ERC-721 NFT collection address to clipboard</b-link>
                 <br />
                 <b-link :href="'https://etherscan.io/token/' + data.item.account + '#balances'" target="_blank">View ERC-721 NFT collection in etherscan.io</b-link>
