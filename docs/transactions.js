@@ -32,7 +32,7 @@ const Transactions = {
           </div>
           -->
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" @click="syncIt({ sections: ['importFromEtherscan'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
+            <b-button size="sm" @click="syncIt({ sections: ['importFromEtherscan', 'downloadData'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import transactions from Etherscan for accounts to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="syncIt({ sections: ['computeTxs'], parameters: Object.keys(settings.selectedTransactions) })" variant="link" v-b-popover.hover.top="'Compute selected transactions'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>

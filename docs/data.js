@@ -435,7 +435,7 @@ const dataModule = {
 
           let sleepUntil = null;
           for (const keyIndex in accountsToSync) {
-            context.commit('setSyncSection', { section: (parseInt(keyIndex) + 1) + '/' + accountsToSync.length + ' Import', total: null });
+            context.commit('setSyncSection', { section: ' Import', total: accountsToSync.length });
             const accountKey = accountsToSync[keyIndex];
             const item = context.state.accounts[accountKey];
             const [chainId, account] = accountKey.split(':');
@@ -448,6 +448,7 @@ const dataModule = {
             const DEVVING = 1;
 
             if (DEVVING == 1) {
+              context.commit('setSyncSection', { section: 'Web3 Events', total: accountsToSync.length });
               for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
                 const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
                 const erc20AndERC721FilterFrom = {
@@ -502,6 +503,7 @@ const dataModule = {
                 context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsTo });
               }
 
+              context.commit('setSyncSection', { section: 'Etherscan Internal Txs', total: accountsToSync.length });
               for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
                 const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
                 console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
@@ -528,6 +530,7 @@ const dataModule = {
                 }
               }
 
+              context.commit('setSyncSection', { section: 'Etherscan Transactions', total: accountsToSync.length });
               for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
                 const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
                 console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
@@ -624,6 +627,9 @@ const dataModule = {
           context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
           context.commit('setSyncSection', { section: null, total: null });
 
+        } else if (section == 'downloadData') {
+          console.log("downloadData");
+          
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
           context.commit('setSyncSection', { section: 'Compute', total: parameters.length });
