@@ -424,17 +424,17 @@ const dataModule = {
       context.commit('setSyncHalt', false);
       for (let section of sections) {
         if (section == 'importFromEtherscan') {
-          const accountsToSync = [];
+          const accountKeysToSync = [];
           for (const [key, item] of Object.entries(context.state.accounts)) {
             const [chainId, account] = key.split(':');
             if ((parameters.length == 0 && item.sync) || parameters.includes(account)) {
-                accountsToSync.push(key);
+                accountKeysToSync.push(key);
             }
           }
           let sleepUntil = null;
-          for (const keyIndex in accountsToSync) {
-            context.commit('setSyncSection', { section: ' Import', total: accountsToSync.length });
-            const accountKey = accountsToSync[keyIndex];
+          for (const keyIndex in accountKeysToSync) {
+            context.commit('setSyncSection', { section: ' Import', total: accountKeysToSync.length });
+            const accountKey = accountKeysToSync[keyIndex];
             const item = context.state.accounts[accountKey];
             const [chainId, account] = accountKey.split(':');
             context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
@@ -442,7 +442,7 @@ const dataModule = {
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
             const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) + 1) || 0;
 
-            context.commit('setSyncSection', { section: 'Web3 Events', total: accountsToSync.length });
+            context.commit('setSyncSection', { section: 'Web3 Events', total: accountKeysToSync.length });
             for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
               const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
               const erc20AndERC721FilterFrom = {
@@ -497,7 +497,7 @@ const dataModule = {
               context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsTo });
             }
 
-            context.commit('setSyncSection', { section: 'Etherscan Internal Txs', total: accountsToSync.length });
+            context.commit('setSyncSection', { section: 'Etherscan Internal Txs', total: accountKeysToSync.length });
             for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
               const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
               console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
@@ -524,7 +524,7 @@ const dataModule = {
               }
             }
 
-            context.commit('setSyncSection', { section: 'Etherscan Transactions', total: accountsToSync.length });
+            context.commit('setSyncSection', { section: 'Etherscan Transactions', total: accountKeysToSync.length });
             for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
               const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
               console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
@@ -582,7 +582,7 @@ const dataModule = {
             //       }
             //     }
             //     const newAccountsList = Object.keys(newAccounts);
-            //     context.commit('setSyncSection', { section: (parseInt(keyIndex) + 1) + '/' + accountsToSync.length + ' Accounts', total: newAccountsList.length });
+            //     context.commit('setSyncSection', { section: (parseInt(keyIndex) + 1) + '/' + accountKeysToSync.length + ' Accounts', total: newAccountsList.length });
             //     for (let accountIndex in newAccountsList) {
             //       const account = newAccountsList[accountIndex];
             //       context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
@@ -619,21 +619,70 @@ const dataModule = {
           context.commit('setSyncSection', { section: null, total: null });
 
         } else if (section == 'buildAssets') {
-          console.log("buildAssets");
-          
-        } else if (section == 'downloadData') {
-          console.log("downloadData");
-          const accountsToSync = [];
+          const accountKeysToSync = [];
           for (const [key, item] of Object.entries(context.state.accounts)) {
             const [chainId, account] = key.split(':');
             if ((parameters.length == 0 && item.sync) || parameters.includes(account)) {
-                accountsToSync.push(key);
+                accountKeysToSync.push(key);
             }
           }
+          console.log("buildAssets - accountKeysToSync: " + JSON.stringify(accountKeysToSync));
+          for (const keyIndex in accountKeysToSync) {
+            // context.commit('setSyncSection', { section: ' Import', total: accountKeysToSync.length });
+            const accountKey = accountKeysToSync[keyIndex];
+            const item = context.state.accounts[accountKey];
+            const [chainId, account] = accountKey.split(':');
+            // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
+            console.log("--- Downloading for " + account + " --- ");
+            console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
+
+            let i = 0;
+            for (const [txHash, logIndexes] of Object.entries(item.events)) {
+              // if (!(txHash in context.state.txs) && !(txHash in txHashes)) {
+                for (const [logIndex, event] of Object.entries(logIndexes)) {
+                  if (!event.processed) {
+                    const contract = event.address;
+                    const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+                    const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+                    let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
+                    if ((from == account || to == account) && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+                      console.log(i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
+                    } else {
+                      // TODO: 1155
+                      // console.log("NOT " + i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
+                    }
+                    // txHashes[txHash] = event.blockNumber;
+                    // if (i < 10) {
+                      // console.log(i + " " + JSON.stringify(event));
+                      // if (event.type == "erc721") {
+
+                        // console.log(i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
+                      // }
+                    // }
+                  }
+                  i++;
+                }
+              // }
+            }
+
+            if (context.state.sync.halt) {
+              break;
+            }
+          }
+
+        } else if (section == 'downloadData') {
+          const accountKeysToSync = [];
+          for (const [key, item] of Object.entries(context.state.accounts)) {
+            const [chainId, account] = key.split(':');
+            if ((parameters.length == 0 && item.sync) || parameters.includes(account)) {
+                accountKeysToSync.push(key);
+            }
+          }
+          console.log("downloadData - accountKeysToSync: " + JSON.stringify(accountKeysToSync));
           let sleepUntil = null;
-          for (const keyIndex in accountsToSync) {
-            // context.commit('setSyncSection', { section: ' Import', total: accountsToSync.length });
-            const accountKey = accountsToSync[keyIndex];
+          for (const keyIndex in accountKeysToSync) {
+            // context.commit('setSyncSection', { section: ' Import', total: accountKeysToSync.length });
+            const accountKey = accountKeysToSync[keyIndex];
             const item = context.state.accounts[accountKey];
             const [chainId, account] = accountKey.split(':');
             // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
@@ -687,6 +736,9 @@ const dataModule = {
             }
             // context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
             context.dispatch('saveData', ['txs']);
+            if (context.state.sync.halt) {
+              break;
+            }
           }
 
         } else if (section == 'computeTxs') {
