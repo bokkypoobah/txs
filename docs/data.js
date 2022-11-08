@@ -113,46 +113,46 @@ const dataModule = {
     sync: state => state.sync,
   },
   mutations: {
-    toggleAccountMine(state, key) {
-      Vue.set(state.accounts[key], 'mine', !state.accounts[key].mine);
+    toggleAccountMine(state, info) {
+      Vue.set(state.accounts[info.chainId][info.account], 'mine', !state.accounts[info.chainId][info.account].mine);
     },
-    toggleAccountSync(state, key) {
-      Vue.set(state.accounts[key], 'sync', !state.accounts[key].sync);
+    toggleAccountSync(state, info) {
+      Vue.set(state.accounts[info.chainId][info.account], 'sync', !state.accounts[info.chainId][info.account].sync);
     },
     setAccountType(state, info) {
-      Vue.set(state.accounts[info.key], 'type', info.accountType);
+      Vue.set(state.accounts[info.chainId][info.account], 'type', info.accountType);
     },
     setGroup(state, info) {
-      Vue.set(state.accounts[info.key], 'group', info.group);
+      Vue.set(state.accounts[info.chainId][info.account], 'group', info.group);
     },
     setName(state, info) {
-      Vue.set(state.accounts[info.key], 'name', info.name);
+      Vue.set(state.accounts[info.chainId][info.account], 'name', info.name);
     },
     setNotes(state, info) {
-      Vue.set(state.accounts[info.key], 'notes', info.notes);
+      Vue.set(state.accounts[info.chainId][info.account], 'notes', info.notes);
     },
-    addNewAccount(state, accountInfo) {
-      // logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(accountInfo) + ")");
+    addNewAccount(state, info) {
+      // logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(info) + ")");
       const block = store.getters['connection/block'];
       const chainId = store.getters['connection/chainId'];
       if (!(chainId in state.accounts)) {
         Vue.set(state.accounts, chainId, {});
       }
-      Vue.set(state.accounts[chainId], accountInfo.account, {
+      Vue.set(state.accounts[chainId], info.account, {
         group: null,
         name: null,
-        type: accountInfo && accountInfo.type || null,
-        mine: accountInfo.account == store.getters['connection/coinbase'],
-        sync: accountInfo.account == store.getters['connection/coinbase'],
+        type: info && info.type || null,
+        mine: info.account == store.getters['connection/coinbase'],
+        sync: info.account == store.getters['connection/coinbase'],
         tags: [],
         notes: null,
         contract: {
-          name: accountInfo && accountInfo.name || null,
-          symbol: accountInfo && accountInfo.symbol || null,
-          decimals: accountInfo && accountInfo.decimals || null,
+          name: info && info.name || null,
+          symbol: info && info.symbol || null,
+          decimals: info && info.decimals || null,
         },
-        collection: accountInfo && accountInfo.collection || {},
-        balances: accountInfo && accountInfo.balances || {},
+        collection: info && info.collection || {},
+        balances: info && info.balances || {},
         created: {
           timestamp: block && block.timestamp || null,
           blockNumber: block && block.number || null,
@@ -314,12 +314,12 @@ const dataModule = {
       }
       db0.close();
     },
-    async toggleAccountMine(context, key) {
-      context.commit('toggleAccountMine', key);
+    async toggleAccountMine(context, info) {
+      context.commit('toggleAccountMine', info);
       context.dispatch('saveData', ['accounts']);
     },
-    async toggleAccountSync(context, key) {
-      context.commit('toggleAccountSync', key);
+    async toggleAccountSync(context, info) {
+      context.commit('toggleAccountSync', info);
       context.dispatch('saveData', ['accounts']);
     },
     async setAccountType(context, info) {
@@ -535,13 +535,14 @@ const dataModule = {
             // context.commit('setSyncSection', { section: ' Import', total: accountKeysToSync.length });
             const account = accountsToSync[accountIndex];
             const item = context.state.accounts[chainId][account] || {};
+            const txs = context.state.txs[chainId] || {};
             // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Downloading for " + account + " --- ");
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
 
             const txHashes = {};
             for (const [txHash, logIndexes] of Object.entries(item.events)) {
-              if (!(txHash in context.state.txs) && !(txHash in txHashes)) {
+              if (!(txHash in txs) && !(txHash in txHashes)) {
                 for (const [logIndex, event] of Object.entries(logIndexes)) {
                   if (!event.processed) {
                     txHashes[txHash] = event.blockNumber;
@@ -550,7 +551,7 @@ const dataModule = {
               }
             }
             for (const [txHash, traceIds] of Object.entries(item.internalTransactions)) {
-              if (!(txHash in context.state.txs) && !(txHash in txHashes)) {
+              if (!(txHash in txs) && !(txHash in txHashes)) {
                 for (const [traceId, tx] of Object.entries(traceIds)) {
                   if (!tx.processed) {
                     txHashes[txHash] = tx.blockNumber;
@@ -559,7 +560,7 @@ const dataModule = {
               }
             }
             for (const [txHash, tx] of Object.entries(item.transactions)) {
-              if (!(txHash in context.state.txs) && !(txHash in txHashes)) {
+              if (!(txHash in txs) && !(txHash in txHashes)) {
                 if (!tx.processed) {
                   txHashes[txHash] = tx.blockNumber;
                 }
@@ -577,7 +578,7 @@ const dataModule = {
               const txItem = txHashList[txItemIndex];
               context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
               console.log("Processing: " + JSON.stringify(txItem));
-              const currentInfo = context.state.txs[chainId] && context.state.txs[chainId][txItem.txHash] || {};
+              const currentInfo = txs && txs[txItem.txHash] || {};
               const info = await getTxInfo(txItem.txHash, currentInfo, provider);
               context.commit('addTxs', { chainId, txInfo: info});
               if (context.state.sync.halt) {

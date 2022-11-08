@@ -110,7 +110,7 @@ const Accounts = {
               <div class="d-flex flex-row">
                 <div class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-select size="sm" v-model="data.item.type" @change="setAccountType(data.item.key, $event)" :options="accountTypes" v-b-popover.hover.top="'Select type'"></b-form-select>
+                    <b-form-select size="sm" v-model="data.item.type" @change="setAccountType(data.item.chainId, data.item.account, $event)" :options="accountTypes" v-b-popover.hover.top="'Select type'"></b-form-select>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge variant="info" v-b-popover.hover="'Account type'">{{ data.item.type }}</b-badge>
@@ -118,7 +118,7 @@ const Accounts = {
                 </div>
                 <div v-if="data.item.mine || settings.editAccounts" class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountMine(data.item.key)" v-b-popover.hover="'My account?'">Mine</b-form-checkbox>
+                    <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountMine(data.item.chainId, data.item.account)" v-b-popover.hover="'My account?'">Mine</b-form-checkbox>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.mine" variant="primary" v-b-popover.hover="'My account'">Mine</b-badge>
@@ -126,7 +126,7 @@ const Accounts = {
                 </div>
                 <div v-if="data.item.sync || settings.editAccounts" class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-checkbox size="sm" :checked="data.item.sync ? 1 : 0" value="1" @change="toggleAccountSync(data.item.key)" v-b-popover.hover="'Include in sync process?'">Sync</b-form-checkbox>
+                    <b-form-checkbox size="sm" :checked="data.item.sync ? 1 : 0" value="1" @change="toggleAccountSync(data.item.chainId, data.item.account)" v-b-popover.hover="'Include in sync process?'">Sync</b-form-checkbox>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.sync" variant="primary" v-b-popover.hover="'Will be included in the sync process'">Sync</b-badge>
@@ -142,7 +142,7 @@ const Accounts = {
                 </div>
                 <div class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-input type="text" size="sm" v-model.trim="data.item.group" @change="setGroup(data.item.key, data.item.group)" debounce="600" placeholder="group"></b-form-input>
+                    <b-form-input type="text" size="sm" v-model.trim="data.item.group" @change="setGroup(data.item.chainId, data.item.account, data.item.group)" debounce="600" placeholder="group"></b-form-input>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.group && data.item.group.length > 0" variant="dark" v-b-popover.hover="'Group'">{{ data.item.group }}</b-badge>
@@ -203,8 +203,8 @@ const Accounts = {
           </template>
           <template #cell(name)="data">
             <span v-if="settings.editAccounts">
-              <b-form-input type="text" size="sm" v-model.trim="data.item.name" @change="setName(data.item.key, data.item.name)" debounce="600" placeholder="name"></b-form-input>
-              <b-form-textarea size="sm" v-model.trim="data.item.notes" @change="setNotes(data.item.key, data.item.notes)" placeholder="notes" rows="2" max-rows="20" class="mt-1"></b-form-textarea>
+              <b-form-input type="text" size="sm" v-model.trim="data.item.name" @change="setName(data.item.chainId, data.item.account, data.item.name)" debounce="600" placeholder="name"></b-form-input>
+              <b-form-textarea size="sm" v-model.trim="data.item.notes" @change="setNotes(data.item.chainId, data.item.account, data.item.notes)" placeholder="notes" rows="2" max-rows="20" class="mt-1"></b-form-textarea>
             </span>
             <span v-if="!settings.editAccounts">
               {{ data.item.name }}
@@ -484,23 +484,23 @@ const Accounts = {
       this.settings.selectedAccounts = {};
       this.saveSettings();
     },
-    async toggleAccountMine(key) {
-      store.dispatch('data/toggleAccountMine', key);
+    async toggleAccountMine(chainId, account) {
+      store.dispatch('data/toggleAccountMine', { chainId, account });
     },
-    async toggleAccountSync(key) {
-      store.dispatch('data/toggleAccountSync', key);
+    async toggleAccountSync(chainId, account) {
+      store.dispatch('data/toggleAccountSync', { chainId, account });
     },
-    async setAccountType(key, accountType) {
-      store.dispatch('data/setAccountType', { key, accountType });
+    async setAccountType(chainId, account, accountType) {
+      store.dispatch('data/setAccountType', { chainId, account, accountType });
     },
-    async setGroup(key, group) {
-      store.dispatch('data/setGroup', { key, group });
+    async setGroup(chainId, account, group) {
+      store.dispatch('data/setGroup', { chainId, account, group });
     },
-    async setName(key, name) {
-      store.dispatch('data/setName', { key, name });
+    async setName(chainId, account, name) {
+      store.dispatch('data/setName', { chainId, account, name });
     },
-    async setNotes(key, notes) {
-      store.dispatch('data/setNotes', { key, notes });
+    async setNotes(chainId, account, notes) {
+      store.dispatch('data/setNotes', { chainId, account, notes });
     },
     async syncIt(info) {
       store.dispatch('data/syncIt', info);
