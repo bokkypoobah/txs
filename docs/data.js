@@ -239,54 +239,54 @@ const dataModule = {
       Vue.set(state.txs, info.tx.hash, info);
     },
 
-    importEtherscanResults(state, info) {
-      logInfo("dataModule", "mutations.importEtherscanResults - info: " + JSON.stringify(info).substring(0, 1000));
-      const [account, results] = [info.account, info.results];
-      const block = store.getters['connection/block'];
-      for (const result of results) {
-        if (!(result.hash in state.txs)) {
-          Vue.set(state.txs, result.hash, {
-            blockNumber: result.blockNumber,
-            timestamp: result.timeStamp,
-            nonce: result.nonce,
-            blockHash: result.blockHash,
-            transactionIndex: result.transactionIndex,
-            from: ethers.utils.getAddress(result.from),
-            to: (result.to == null || result.to.length <= 2) ? null : ethers.utils.getAddress(result.to),
-            value: result.value,
-            gas: result.gas,
-            gasPrice: result.gasPrice,
-            isError: result.isError,
-            txReceiptStatus: result.txreceipt_status,
-            input: result.input,
-            contractAddress: (result.contractAddress == null || result.contractAddress.length <= 2) ? null : ethers.utils.getAddress(result.contractAddress),
-            cumulativeGasUsed: result.cumulativeGasUsed,
-            gasUsed: result.gasUsed,
-            confirmations: result.confirmations,
-            methodId: result.methodId,
-            functionName: result.functionName,
-            etherscanImported: {
-              account,
-              timestamp: block && block.timestamp || null,
-              blockNumber: block && block.number || null,
-            },
-            dataImported: {
-              tx: null,
-              txReceipt: null,
-              balances: {},
-              balancePreviousBlock: {},
-              timestamp: null,
-              blockNumber: null,
-            },
-            computed: {
-              info: {},
-              timestamp: null,
-              blockNumber: null,
-            },
-          });
-        }
-      }
-    },
+    // importEtherscanResults(state, info) {
+    //   logInfo("dataModule", "mutations.importEtherscanResults - info: " + JSON.stringify(info).substring(0, 1000));
+    //   const [account, results] = [info.account, info.results];
+    //   const block = store.getters['connection/block'];
+    //   for (const result of results) {
+    //     if (!(result.hash in state.txs)) {
+    //       Vue.set(state.txs, result.hash, {
+    //         blockNumber: result.blockNumber,
+    //         timestamp: result.timeStamp,
+    //         nonce: result.nonce,
+    //         blockHash: result.blockHash,
+    //         transactionIndex: result.transactionIndex,
+    //         from: ethers.utils.getAddress(result.from),
+    //         to: (result.to == null || result.to.length <= 2) ? null : ethers.utils.getAddress(result.to),
+    //         value: result.value,
+    //         gas: result.gas,
+    //         gasPrice: result.gasPrice,
+    //         isError: result.isError,
+    //         txReceiptStatus: result.txreceipt_status,
+    //         input: result.input,
+    //         contractAddress: (result.contractAddress == null || result.contractAddress.length <= 2) ? null : ethers.utils.getAddress(result.contractAddress),
+    //         cumulativeGasUsed: result.cumulativeGasUsed,
+    //         gasUsed: result.gasUsed,
+    //         confirmations: result.confirmations,
+    //         methodId: result.methodId,
+    //         functionName: result.functionName,
+    //         etherscanImported: {
+    //           account,
+    //           timestamp: block && block.timestamp || null,
+    //           blockNumber: block && block.number || null,
+    //         },
+    //         dataImported: {
+    //           tx: null,
+    //           txReceipt: null,
+    //           balances: {},
+    //           balancePreviousBlock: {},
+    //           timestamp: null,
+    //           blockNumber: null,
+    //         },
+    //         computed: {
+    //           info: {},
+    //           timestamp: null,
+    //           blockNumber: null,
+    //         },
+    //       });
+    //     }
+    //   }
+    // },
     updateTxData(state, info) {
       logInfo("dataModule", "mutations.updateTxData - info: " + JSON.stringify(info).substring(0, 1000));
       Vue.set(state.txs[info.txHash].dataImported, 'tx', {
@@ -442,175 +442,79 @@ const dataModule = {
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
             const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) + 1) || 0;
 
-            const DEVVING = 1;
-
-            if (DEVVING == 1) {
-              context.commit('setSyncSection', { section: 'Web3 Events', total: accountsToSync.length });
-              for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
-                const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
-                const erc20AndERC721FilterFrom = {
-                  address: null,
-                  fromBlock: startBatch,
-                  toBlock: endBatch,
-                  topics: [
-                    '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 id)
-                    '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
-                    null,
-                  ],
-                };
-                const erc20AndERC721EventsFrom = await provider.getLogs(erc20AndERC721FilterFrom);
-                context.commit('addAccountERC20AndERC721Events', { accountKey, events: erc20AndERC721EventsFrom });
-                const erc20AndERC721FilterTo = {
-                  address: null,
-                  fromBlock: startBatch,
-                  toBlock: endBatch,
-                  topics: [
-                    '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 id)
-                    null,
-                    '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
-                  ],
-                };
-                const erc20AndERC721EventsTo = await provider.getLogs(erc20AndERC721FilterTo);
-                context.commit('addAccountERC20AndERC721Events', { accountKey, events: erc20AndERC721EventsTo });
-                const erc1155FilterFrom = {
-                  address: null,
-                  fromBlock: startBatch,
-                  toBlock: endBatch,
-                  topics: [
-                    '0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62', // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
-                    null,
-                    '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
-                    null,
-                  ],
-                };
-                const erc1155EventsFrom = await provider.getLogs(erc1155FilterFrom);
-                context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsFrom });
-                const erc1155FilterTo = {
-                  address: null,
-                  fromBlock: startBatch,
-                  toBlock: endBatch,
-                  topics: [
-                    '0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62', // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
-                    null,
-                    null,
-                    '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
-                  ],
-                };
-                const erc1155EventsTo = await provider.getLogs(erc1155FilterTo);
-                context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsTo });
-              }
-
-              context.commit('setSyncSection', { section: 'Etherscan Internal Txs', total: accountsToSync.length });
-              for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
-                const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
-                console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
-                do {
-                } while (sleepUntil && sleepUntil > moment().unix());
-                let importUrl = "https://api.etherscan.io/api?module=account&action=txlistinternal&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
-                console.log("importUrl: " + importUrl);
-                const importData = await fetch(importUrl)
-                  .then(handleErrors)
-                  .then(response => response.json())
-                  .catch(function(error) {
-                     console.log("ERROR - processIt: " + error);
-                     // Want to work around API data unavailablity - state.sync.error = true;
-                     return [];
-                  });
-                if (importData.status == 1) {
-                  context.commit('addAccountInternalTransactions', { accountKey, results: importData.result });
-                  if (importData.message && importData.message.includes("Missing")) {
-                    sleepUntil = parseInt(moment().unix()) + 6;
-                  }
-                  if (context.state.sync.halt) {
-                    break;
-                  }
-                }
-              }
-
-              context.commit('setSyncSection', { section: 'Etherscan Transactions', total: accountsToSync.length });
-              for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
-                const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
-                console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
-                do {
-                } while (sleepUntil && sleepUntil > moment().unix());
-                let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
-                console.log("importUrl: " + importUrl);
-                const importData = await fetch(importUrl)
-                  .then(handleErrors)
-                  .then(response => response.json())
-                  .catch(function(error) {
-                     console.log("ERROR - processIt: " + error);
-                     // Want to work around API data unavailablity - state.sync.error = true;
-                     return [];
-                  });
-                if (importData.status == 1) {
-                  context.commit('addAccountTransactions', { accountKey, results: importData.result });
-                  if (importData.message && importData.message.includes("Missing")) {
-                    sleepUntil = parseInt(moment().unix()) + 6;
-                  }
-                  if (context.state.sync.halt) {
-                    break;
-                  }
-                }
-              }
-              context.commit('updateAccountTimestampAndBlock', { account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
+            context.commit('setSyncSection', { section: 'Web3 Events', total: accountsToSync.length });
+            for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
+              const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
+              const erc20AndERC721FilterFrom = {
+                address: null,
+                fromBlock: startBatch,
+                toBlock: endBatch,
+                topics: [
+                  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 id)
+                  '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
+                  null,
+                ],
+              };
+              const erc20AndERC721EventsFrom = await provider.getLogs(erc20AndERC721FilterFrom);
+              context.commit('addAccountERC20AndERC721Events', { accountKey, events: erc20AndERC721EventsFrom });
+              const erc20AndERC721FilterTo = {
+                address: null,
+                fromBlock: startBatch,
+                toBlock: endBatch,
+                topics: [
+                  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 id)
+                  null,
+                  '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
+                ],
+              };
+              const erc20AndERC721EventsTo = await provider.getLogs(erc20AndERC721FilterTo);
+              context.commit('addAccountERC20AndERC721Events', { accountKey, events: erc20AndERC721EventsTo });
+              const erc1155FilterFrom = {
+                address: null,
+                fromBlock: startBatch,
+                toBlock: endBatch,
+                topics: [
+                  '0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62', // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+                  null,
+                  '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
+                  null,
+                ],
+              };
+              const erc1155EventsFrom = await provider.getLogs(erc1155FilterFrom);
+              context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsFrom });
+              const erc1155FilterTo = {
+                address: null,
+                fromBlock: startBatch,
+                toBlock: endBatch,
+                topics: [
+                  '0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62', // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+                  null,
+                  null,
+                  '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
+                ],
+              };
+              const erc1155EventsTo = await provider.getLogs(erc1155FilterTo);
+              context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsTo });
             }
 
-            if (DEVVING == 0) {
-              for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
-                let endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
-                console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
-                do {
-                } while (sleepUntil && sleepUntil > moment().unix());
-                let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
-                console.log("importUrl: " + importUrl);
-                const importData = await fetch(importUrl)
-                  .then(handleErrors)
-                  .then(response => response.json())
-                  .catch(function(error) {
-                     console.log("ERROR - processIt: " + error);
-                     // Want to work around API data unavailablity - state.sync.error = true;
-                     return [];
-                  });
-                console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
-                if (importData.status == 1) {
-                  const newAccounts = {};
-                  for (const result of importData.result) {
-                    const from = ethers.utils.getAddress(result.from);
-                    const to = (result.to == null || result.to.length <= 2) ? null : ethers.utils.getAddress(result.to);
-                    const contract = (result.contractAddress == null || result.contractAddress.length <= 2) ? null : ethers.utils.getAddress(result.contractAddress);
-                    for (let account of [from, to, contract]) {
-                      const accountKey = chainId + ':' + account;
-                      if (account && !(accountKey in context.state.accounts) && !(account in newAccounts)) {
-                        newAccounts[account] = true;
-                      }
-                    }
-                  }
-                  const newAccountsList = Object.keys(newAccounts);
-                  context.commit('setSyncSection', { section: (parseInt(keyIndex) + 1) + '/' + accountsToSync.length + ' Accounts', total: newAccountsList.length });
-                  for (let accountIndex in newAccountsList) {
-                    const account = newAccountsList[accountIndex];
-                    context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
-                    const accountInfo = await getAccountInfo(account, provider)
-                    if (accountInfo.account) {
-                      context.commit('addNewAccount', accountInfo);
-                      console.log("Added account: " + account + " " + accountInfo.type + " " + accountInfo.name);
-                    }
-                    const names = await ensReverseRecordsContract.getNames([account]);
-                    const name = names.length == 1 ? names[0] : account;
-                    if (!(account in context.state.ensMap)) {
-                      context.commit('addENSName', { account, name });
-                    }
-                    if (context.state.sync.halt) {
-                      break;
-                    }
-                  }
-                  if (!context.state.sync.halt) {
-                    context.commit('importEtherscanResults', { account, results: importData.result });
-                    context.commit('updateAccountTimestampAndBlock', { account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
-                  }
-                }
-                // Retrieve
+            context.commit('setSyncSection', { section: 'Etherscan Internal Txs', total: accountsToSync.length });
+            for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
+              const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
+              console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
+              do {
+              } while (sleepUntil && sleepUntil > moment().unix());
+              let importUrl = "https://api.etherscan.io/api?module=account&action=txlistinternal&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
+              console.log("importUrl: " + importUrl);
+              const importData = await fetch(importUrl)
+                .then(handleErrors)
+                .then(response => response.json())
+                .catch(function(error) {
+                   console.log("ERROR - processIt: " + error);
+                   // Want to work around API data unavailablity - state.sync.error = true;
+                   return [];
+                });
+              if (importData.status == 1) {
+                context.commit('addAccountInternalTransactions', { accountKey, results: importData.result });
                 if (importData.message && importData.message.includes("Missing")) {
                   sleepUntil = parseInt(moment().unix()) + 6;
                 }
@@ -619,6 +523,96 @@ const dataModule = {
                 }
               }
             }
+
+            context.commit('setSyncSection', { section: 'Etherscan Transactions', total: accountsToSync.length });
+            for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
+              const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
+              console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
+              do {
+              } while (sleepUntil && sleepUntil > moment().unix());
+              let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
+              console.log("importUrl: " + importUrl);
+              const importData = await fetch(importUrl)
+                .then(handleErrors)
+                .then(response => response.json())
+                .catch(function(error) {
+                   console.log("ERROR - processIt: " + error);
+                   // Want to work around API data unavailablity - state.sync.error = true;
+                   return [];
+                });
+              if (importData.status == 1) {
+                context.commit('addAccountTransactions', { accountKey, results: importData.result });
+                if (importData.message && importData.message.includes("Missing")) {
+                  sleepUntil = parseInt(moment().unix()) + 6;
+                }
+                if (context.state.sync.halt) {
+                  break;
+                }
+              }
+            }
+            context.commit('updateAccountTimestampAndBlock', { account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
+
+            // for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
+            //   let endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
+            //   console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
+            //   do {
+            //   } while (sleepUntil && sleepUntil > moment().unix());
+            //   let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
+            //   console.log("importUrl: " + importUrl);
+            //   const importData = await fetch(importUrl)
+            //     .then(handleErrors)
+            //     .then(response => response.json())
+            //     .catch(function(error) {
+            //        console.log("ERROR - processIt: " + error);
+            //        // Want to work around API data unavailablity - state.sync.error = true;
+            //        return [];
+            //     });
+            //   console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
+            //   if (importData.status == 1) {
+            //     const newAccounts = {};
+            //     for (const result of importData.result) {
+            //       const from = ethers.utils.getAddress(result.from);
+            //       const to = (result.to == null || result.to.length <= 2) ? null : ethers.utils.getAddress(result.to);
+            //       const contract = (result.contractAddress == null || result.contractAddress.length <= 2) ? null : ethers.utils.getAddress(result.contractAddress);
+            //       for (let account of [from, to, contract]) {
+            //         const accountKey = chainId + ':' + account;
+            //         if (account && !(accountKey in context.state.accounts) && !(account in newAccounts)) {
+            //           newAccounts[account] = true;
+            //         }
+            //       }
+            //     }
+            //     const newAccountsList = Object.keys(newAccounts);
+            //     context.commit('setSyncSection', { section: (parseInt(keyIndex) + 1) + '/' + accountsToSync.length + ' Accounts', total: newAccountsList.length });
+            //     for (let accountIndex in newAccountsList) {
+            //       const account = newAccountsList[accountIndex];
+            //       context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
+            //       const accountInfo = await getAccountInfo(account, provider)
+            //       if (accountInfo.account) {
+            //         context.commit('addNewAccount', accountInfo);
+            //         console.log("Added account: " + account + " " + accountInfo.type + " " + accountInfo.name);
+            //       }
+            //       const names = await ensReverseRecordsContract.getNames([account]);
+            //       const name = names.length == 1 ? names[0] : account;
+            //       if (!(account in context.state.ensMap)) {
+            //         context.commit('addENSName', { account, name });
+            //       }
+            //       if (context.state.sync.halt) {
+            //         break;
+            //       }
+            //     }
+            //     if (!context.state.sync.halt) {
+            //       context.commit('importEtherscanResults', { account, results: importData.result });
+            //       context.commit('updateAccountTimestampAndBlock', { account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
+            //     }
+            //   }
+            //   // Retrieve
+            //   if (importData.message && importData.message.includes("Missing")) {
+            //     sleepUntil = parseInt(moment().unix()) + 6;
+            //   }
+            //   if (context.state.sync.halt) {
+            //     break;
+            //   }
+            // }
             console.log(JSON.stringify(item, null, 2));
           }
           context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
