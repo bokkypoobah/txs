@@ -628,47 +628,73 @@ const dataModule = {
           }
           console.log("buildAssets - accountKeysToSync: " + JSON.stringify(accountKeysToSync));
           for (const keyIndex in accountKeysToSync) {
-            // context.commit('setSyncSection', { section: ' Import', total: accountKeysToSync.length });
+            context.commit('setSyncSection', { section: 'Build assets', total: null });
             const accountKey = accountKeysToSync[keyIndex];
             const item = context.state.accounts[accountKey];
             const [chainId, account] = accountKey.split(':');
-            // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
+            context.commit('setSyncCompleted', 1);
             console.log("--- Building assets for " + account + " --- ");
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
 
             let i = 0;
+            let completed = 0;
             for (const [txHash, logIndexes] of Object.entries(item.events)) {
-              // if (!(txHash in context.state.txs) && !(txHash in txHashes)) {
+              if (txHash in context.state.txs) {
+                const txItem = context.state.txs[txHash];
                 for (const [logIndex, event] of Object.entries(logIndexes)) {
                   if (!event.processed) {
                     const contract = event.address;
-                    const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
-                    const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
-                    let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
-                    if ((from == account || to == account) && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
-                      console.log(i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
-                    } else {
-                      // TODO: 1155
-                      // console.log("NOT " + i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
+                    const contractKey = chainId + ":" + contract;
+                    if (!(contractKey in context.state.accounts)) {
+                      let include = false;
+                      if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+                        const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+                        const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+                        let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
+                        // if (i < 10) {
+                        //   console.log(i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
+                        // }
+                        if ((from == account || to == account)) {
+                          include = true;
+                        }
+                      // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+                      } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
+                        const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+                        const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+                        const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
+                        let tokens = ethers.BigNumber.from(event.data.substring(0, 66));
+                        let value = ethers.BigNumber.from(event.data.substring(67, 130));
+                        // console.log("ERC1155 " + i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + ", value: " + value + " " + JSON.stringify(event));
+                        if ((from == account || to == account)) {
+                          include = true;
+                        }
+                      } else {
+                        console.log(i + event.type + " contract: " + contract + " " + txHash + " " + JSON.stringify(event));
+                      }
+                      if (include) {
+                        context.commit('setSyncCompleted', parseInt(completed) + 1);
+                        const accountInfo = await getAccountInfo(contract, provider)
+                        if (accountInfo.account) {
+                          context.commit('addNewAccount', accountInfo);
+                          if (i < 10) {
+                            console.log("Added contract account: " + contract + " " + accountInfo.type + " " + accountInfo.name);
+                          }
+                        }
+                        completed++;
+                      }
                     }
-                    // txHashes[txHash] = event.blockNumber;
-                    // if (i < 10) {
-                      // console.log(i + " " + JSON.stringify(event));
-                      // if (event.type == "erc721") {
-
-                        // console.log(i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
-                      // }
-                    // }
                   }
                   i++;
                 }
-              // }
+              }
             }
 
             if (context.state.sync.halt) {
               break;
             }
           }
+          context.dispatch('saveData', ['accounts']);
+          context.commit('setSyncSection', { section: null, total: null });
 
         } else if (section == 'downloadData') {
           const accountKeysToSync = [];

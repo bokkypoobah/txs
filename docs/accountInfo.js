@@ -41,7 +41,7 @@ async function getAccountInfo(address, provider) {
           console.log("getAccountInfo ERROR - decimals - account: " + account + ", message: " + e.message);
         }
       }
-      if ((results.mask & MASK_ISERC721) == MASK_ISERC721) {
+      if ((results.mask & MASK_ISERC721) == MASK_ISERC721 || (results.mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
         let url = "https://api.reservoir.tools/collections/v5?contract=" + account;
         // console.log("url: " + url);
         const data = await fetch(url)
@@ -74,7 +74,11 @@ async function getAccountInfo(address, provider) {
     } else if ((results.mask & MASK_ISERC20) == MASK_ISERC20) {
       results.type = "erc20";
     } else if ((results.mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
-      results.type = "contract";
+      if (results.collection) {
+        results.type = "erc1155";
+      } else {
+        results.type = "contract";
+      }
     } else {
       result.type = null;
     }
