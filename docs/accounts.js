@@ -68,10 +68,10 @@ const Accounts = {
                 <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="settings.newAccounts" rows="1" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
               </b-form-group>
               <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added. Click the 'cloud download' button above to retrieve the transactions" class="mx-0 my-1 p-0">
-                <b-button size="sm" id="newaccounts-submit" :disabled="settings.newAccounts == null || settings.newAccounts.length == 0" @click="addNewAccounts" variant="primary">Add</b-button>
+                <b-button size="sm" id="newaccounts-submit" :disabled="settings.newAccounts == null || settings.newAccounts.length == 0 || block == null" @click="addNewAccounts" variant="primary">Add</b-button>
               </b-form-group>
-              <b-form-group label="Coinbase:" label-for="newaccounts-coinbase-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-                <b-button size="sm" id="newaccounts-coinbase-submit" :disabled="coinbaseIncluded" @click="addCoinbase" variant="primary">{{ (coinbaseIncluded ? 'Already added ' : 'Add ') + coinbase }}</b-button>
+              <b-form-group label="Coinbase:" label-for="newaccounts-coinbase-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="coinbase == null ? '' : (coinbaseIncluded ? (coinbase + ' already added') : ('Add ' + coinbase + '?'))" class="mx-0 my-1 p-0">
+                <b-button size="sm" id="newaccounts-coinbase-submit" :disabled="block == null || coinbaseIncluded" @click="addCoinbase" variant="primary">Add</b-button>
               </b-form-group>
             </b-form-group>
           </b-card-body>
@@ -322,55 +322,62 @@ const Accounts = {
       return store.getters['data/sync'];
     },
     coinbaseIncluded() {
-      const key = this.network.chainId + ':' + this.coinbase;
-      return (key in this.accounts);
+      return this.accounts[this.network.chainId] && this.accounts[this.network.chainId][this.coinbase] && true || false;
     },
     filteredAccounts() {
       const results = [];
       const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
-      for (const [key, data] of Object.entries(this.accounts)) {
-        const [chainId, account] = key.split(':');
-        const ensName = this.ensMap[account] || null;
-        let include = filterLower == null ||
-          (account.toLowerCase().includes(filterLower)) ||
-          (data.name && data.name.toLowerCase().includes(filterLower)) ||
-          (data.group && data.group.toLowerCase().includes(filterLower)) ||
-          (data.notes && data.notes.toLowerCase().includes(filterLower)) ||
-          (ensName != null && ensName.toLowerCase().includes(filterLower));
-        if (include && this.settings.accountMineFilter != null) {
-          if (this.settings.accountMineFilter == 'mine' && data.mine) {
-          } else if (this.settings.accountMineFilter == 'notmine' && !data.mine) {
-          } else {
-            include = false;
+      console.log("filteredAccounts");
+      for (const [chainId, chainData] of Object.entries(this.accounts)) {
+        for (const [account, data] of Object.entries(chainData)) {
+          const ensName = this.ensMap[account] || null;
+          console.log(chainId + " " + account + " " + ensName);
+          let include = filterLower == null ||
+            (account.toLowerCase().includes(filterLower)) ||
+            (data.name && data.name.toLowerCase().includes(filterLower)) ||
+            (data.group && data.group.toLowerCase().includes(filterLower)) ||
+            (data.notes && data.notes.toLowerCase().includes(filterLower)) ||
+            (ensName != null && ensName.toLowerCase().includes(filterLower));
+          if (include && this.settings.accountMineFilter != null) {
+            if (this.settings.accountMineFilter == 'mine' && data.mine) {
+            } else if (this.settings.accountMineFilter == 'notmine' && !data.mine) {
+            } else {
+              include = false;
+            }
           }
-        }
-        if (include && this.settings.accountTypeFilter != null) {
-          if (this.settings.accountTypeFilter == 'unknown' && data.type == null) {
-          } else if (this.settings.accountTypeFilter == data.type) {
-          } else {
-            include = false;
+          if (include && this.settings.accountTypeFilter != null) {
+            if (this.settings.accountTypeFilter == 'unknown' && data.type == null) {
+            } else if (this.settings.accountTypeFilter == data.type) {
+            } else {
+              include = false;
+            }
           }
-        }
-        if (include) {
-          results.push({
-            key,
-            chainId,
-            account,
-            group: data.group,
-            name: data.name,
-            type: data.type,
-            mine: data.mine,
-            sync: data.sync,
-            tags: data.tags,
-            notes: data.notes,
-            contract: data.contract,
-            collection: data.collection,
-            balances: data.balances,
-            created: data.created,
-            updated: data.updated,
-          });
+          if (include) {
+            results.push({
+              chainId,
+              account,
+              group: data.group,
+              name: data.name,
+              type: data.type,
+              mine: data.mine,
+              sync: data.sync,
+              tags: data.tags,
+              notes: data.notes,
+              contract: data.contract,
+              collection: data.collection,
+              balances: data.balances,
+              created: data.created,
+              updated: data.updated,
+            });
+          }
         }
       }
+
+
+      // for (const [key, data] of Object.entries(this.accounts)) {
+      //   const [chainId, account] = key.split(':');
+      //   const ensName = this.ensMap[account] || null;
+      // }
       // console.log("filteredAccounts: " + JSON.stringify(results, null, 2));
       return results;
     },
