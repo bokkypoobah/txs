@@ -544,7 +544,7 @@ const Transactions = {
           });
         }
       }
-      console.log(JSON.stringify(results.slice(0, 10), null, 2));
+      // console.log(JSON.stringify(results.slice(0, 10), null, 2));
       return results;
     },
     filteredSortedTransactions() {
