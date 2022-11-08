@@ -97,7 +97,7 @@ const dataModule = {
       halt: false,
     },
     db: {
-      name: "txs090c",
+      name: "txs090d",
       version: 1,
       schemaDefinition: {
         cache: '&objectName',
@@ -234,8 +234,12 @@ const dataModule = {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
     },
     addTxs(state, info) {
+      const [chainId, txInfo] = [info.chainId, info.txInfo];
       logInfo("dataModule", "mutations.addTxs - info: " + JSON.stringify(info).substring(0, 100));
-      Vue.set(state.txs, info.tx.hash, info);
+      if (!(chainId in state.txs)) {
+        Vue.set(state.txs, chainId, {});
+      }
+      Vue.set(state.txs[chainId], txInfo.tx.hash, txInfo);
     },
     updateTxData(state, info) {
       logInfo("dataModule", "mutations.updateTxData - info: " + JSON.stringify(info).substring(0, 1000));
@@ -377,13 +381,11 @@ const dataModule = {
       for (let section of sections) {
         if (section == 'importFromEtherscan') {
           const accountsToSync = [];
-          const chainData = context.state.accounts[chainId] || null;
-          if (chainData) {
-            for (const [account, data] of Object.entries(chainData)) {
-              console.log("account: " + account);
-              if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
-                  accountsToSync.push(account);
-              }
+          const chainData = context.state.accounts[chainId] || {};
+          for (const [account, data] of Object.entries(chainData)) {
+            console.log("account: " + account);
+            if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
+                accountsToSync.push(account);
             }
           }
           console.log("accountsToSync: " + JSON.stringify(accountsToSync));
@@ -513,20 +515,21 @@ const dataModule = {
           context.commit('setSyncSection', { section: null, total: null });
 
         } else if (section == 'downloadData') {
-          const accountKeysToSync = [];
-          for (const [key, item] of Object.entries(context.state.accounts)) {
-            const [chainId, account] = key.split(':');
-            if ((parameters.length == 0 && item.sync) || parameters.includes(account)) {
-                accountKeysToSync.push(key);
+          const accountsToSync = [];
+          const chainData = context.state.accounts[chainId] || {};
+          for (const [account, data] of Object.entries(chainData)) {
+            console.log("account: " + account);
+            if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
+                accountsToSync.push(account);
             }
           }
-          console.log("downloadData - accountKeysToSync: " + JSON.stringify(accountKeysToSync));
+          console.log("accountsToSync: " + JSON.stringify(accountsToSync));
+
           let sleepUntil = null;
-          for (const keyIndex in accountKeysToSync) {
+          for (const accountIndex in accountsToSync) {
             // context.commit('setSyncSection', { section: ' Import', total: accountKeysToSync.length });
-            const accountKey = accountKeysToSync[keyIndex];
-            const item = context.state.accounts[accountKey];
-            const [chainId, account] = accountKey.split(':');
+            const account = accountsToSync[accountIndex];
+            const item = context.state.accounts[chainId][account] || {};
             // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Downloading for " + account + " --- ");
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
@@ -569,9 +572,9 @@ const dataModule = {
               const txItem = txHashList[txItemIndex];
               context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
               console.log("Processing: " + JSON.stringify(txItem));
-              const currentInfo = context.state.txs[txItem.txHash] || {};
+              const currentInfo = context.state.txs[chainId] && context.state.txs[chainId][txItem.txHash] || {};
               const info = await getTxInfo(txItem.txHash, currentInfo, provider);
-              context.commit('addTxs', info);
+              context.commit('addTxs', { chainId, txInfo: info});
               if (context.state.sync.halt) {
                 break;
               }

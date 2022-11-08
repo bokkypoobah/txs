@@ -68,7 +68,7 @@ const Transactions = {
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedTransactions.length + '/' + Object.keys(txs).length }}</font>
+            <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedTransactions.length + '/' + totalTransactions }}</font>
           </div>
           <div class="mt-0 pr-1">
             <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedTransactions.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
@@ -491,6 +491,13 @@ const Transactions = {
       const key = this.network.chainId + ':' + this.coinbase;
       return (key in this.accounts);
     },
+    totalTransactions() {
+      let result = 0;
+      for (const [chainId, chainData] of Object.entries(this.txs)) {
+        result = parseInt(result) + Object.keys(chainData).length;
+      }
+      return result;
+    },
     filteredTransactions() {
       const results = [];
       let startPeriod = null;
@@ -502,53 +509,46 @@ const Transactions = {
         startPeriod = periodRecords[0].data.startPeriod;
         endPeriod = periodRecords[0].data.endPeriod;
       }
-      for (const [txHash, item] of Object.entries(this.txs)) {
-        let include = true;
-        if (startPeriod != null && item.timestamp < startPeriod.unix()) {
-          include = false;
-        }
-        if (include && endPeriod != null && item.timestamp > endPeriod.unix()) {
-          include = false;
-        }
-        if (include && txhashFilterLower != null) {
-          if (!(txHash.includes(txhashFilterLower))) {
+      for (const [chainId, chainData] of Object.entries(this.txs)) {
+        for (const [txHash, item] of Object.entries(chainData)) {
+          let include = true;
+          if (startPeriod != null && item.timestamp < startPeriod.unix()) {
             include = false;
           }
-        }
-        if (include && accountFilterLower != null) {
-          const fromENS = this.ensMap[item.tx.from] || null;
-          if (
-            !(item.tx.from.toLowerCase().includes(accountFilterLower)) &&
-            !(item.tx.to.toLowerCase().includes(accountFilterLower)) &&
-            !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
-          ) {
+          if (include && endPeriod != null && item.timestamp > endPeriod.unix()) {
             include = false;
           }
-        }
-        if (include) {
-          // console.log(JSON.stringify(item, null, 2));
-          const info = parseTx(item);
-          // console.log(JSON.stringify(info, null, 2));
-          // TODO
-          // if (item.tx.to == null || item.tx.to.length < 10) {
-          //   console.log("CONTRACT: " + JSON.stringify(info, null, 2));
-          // }
-          results.push({
-            txHash,
-            blockNumber: item.blockNumber,
-            transactionIndex: item.transactionIndex,
-            timestamp: item.timestamp,
-            from: item.tx.from,
-            to: item.tx.to,
-            value: item.tx.value,
-            ...info,
-            // info: item.computed.info && item.computed.info.summary || null,
-            // functionName: item.functionName,
-            // input: item.input,
-          });
+          if (include && txhashFilterLower != null) {
+            if (!(txHash.includes(txhashFilterLower))) {
+              include = false;
+            }
+          }
+          if (include && accountFilterLower != null) {
+            const fromENS = this.ensMap[item.tx.from] || null;
+            if (
+              !(item.tx.from.toLowerCase().includes(accountFilterLower)) &&
+              !(item.tx.to.toLowerCase().includes(accountFilterLower)) &&
+              !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
+            ) {
+              include = false;
+            }
+          }
+          if (include) {
+            const info = parseTx(item);
+            results.push({
+              chainId,
+              txHash,
+              blockNumber: item.blockNumber,
+              transactionIndex: item.transactionIndex,
+              timestamp: item.timestamp,
+              from: item.tx.from,
+              to: item.tx.to,
+              value: item.tx.value,
+              ...info,
+            });
+          }
         }
       }
-      // console.log(JSON.stringify(results.slice(0, 10), null, 2));
       return results;
     },
     filteredSortedTransactions() {

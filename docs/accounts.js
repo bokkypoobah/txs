@@ -51,7 +51,7 @@ const Accounts = {
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedAccounts.length + '/' + Object.keys(accounts).length }}</font>
+            <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedAccounts.length + '/' + totalAccounts }}</font>
           </div>
           <div class="mt-0 pr-1">
             <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedAccounts.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
@@ -324,14 +324,19 @@ const Accounts = {
     coinbaseIncluded() {
       return this.accounts[this.network.chainId] && this.accounts[this.network.chainId][this.coinbase] && true || false;
     },
+    totalAccounts() {
+      let result = 0;
+      for (const [chainId, chainData] of Object.entries(this.accounts)) {
+        result = parseInt(result) + Object.keys(chainData).length;
+      }
+      return result;
+    },
     filteredAccounts() {
       const results = [];
       const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
-      console.log("filteredAccounts");
       for (const [chainId, chainData] of Object.entries(this.accounts)) {
         for (const [account, data] of Object.entries(chainData)) {
           const ensName = this.ensMap[account] || null;
-          console.log(chainId + " " + account + " " + ensName);
           let include = filterLower == null ||
             (account.toLowerCase().includes(filterLower)) ||
             (data.name && data.name.toLowerCase().includes(filterLower)) ||
