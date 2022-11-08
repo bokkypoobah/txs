@@ -411,10 +411,10 @@ const dataModule = {
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
       const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
       const confirmations = store.getters['config/settings'].confirmations && parseInt(store.getters['config/settings'].confirmations) || 10;
-      const block = store.getters['connection/block'];
-      const blockNumber = block && block.number || null;
-      const timestamp = block && block.timestamp || null;
-      console.log("blockNumber: " + blockNumber);
+      const block = await provider.getBlock();
+      const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
+      const confirmedBlock = await provider.getBlock(confirmedBlockNumber);
+      const confirmedTimestamp = confirmedBlock && confirmedBlock.timestamp || null;
 
       context.commit('setSyncHalt', false);
       for (let section of sections) {
@@ -444,13 +444,12 @@ const dataModule = {
             console.log(JSON.stringify(item, null, 2));
 
             const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) + 1) || 0;
-            const endBlock = blockNumber - confirmations;
 
             const DEVVING = 1;
 
             if (DEVVING == 1) {
-              for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
-                let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
+              for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
+                const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
                 const erc20AndERC721FilterFrom = {
                   address: null,
                   fromBlock: startBatch,
@@ -503,12 +502,11 @@ const dataModule = {
                 context.commit('addAccountERC1155Events', { accountKey, events: erc1155EventsTo });
               }
 
-              for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
-                let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
+              for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
+                const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
                 console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
                 do {
                 } while (sleepUntil && sleepUntil > moment().unix());
-                console.log("completed sleep: " + startBatch + " to " + endBatch + " " + moment().toString());
                 let importUrl = "https://api.etherscan.io/api?module=account&action=txlistinternal&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
                 console.log("importUrl: " + importUrl);
                 const importData = await fetch(importUrl)
@@ -519,10 +517,8 @@ const dataModule = {
                      // Want to work around API data unavailablity - state.sync.error = true;
                      return [];
                   });
-                // console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
                 if (importData.status == 1) {
                   context.commit('addAccountInternalTransactions', { accountKey, results: importData.result });
-                  // Retrieve
                   if (importData.message && importData.message.includes("Missing")) {
                     sleepUntil = parseInt(moment().unix()) + 6;
                   }
@@ -532,12 +528,11 @@ const dataModule = {
                 }
               }
 
-              for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
-                let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
+              for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
+                const endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
                 console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
                 do {
                 } while (sleepUntil && sleepUntil > moment().unix());
-                console.log("completed sleep: " + startBatch + " to " + endBatch + " " + moment().toString());
                 let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
                 console.log("importUrl: " + importUrl);
                 const importData = await fetch(importUrl)
@@ -548,10 +543,8 @@ const dataModule = {
                      // Want to work around API data unavailablity - state.sync.error = true;
                      return [];
                   });
-                // console.log(JSON.stringify(importData, null, 2).substring(0, 10000));
                 if (importData.status == 1) {
                   context.commit('addAccountTransactions', { accountKey, results: importData.result });
-                  // Retrieve
                   if (importData.message && importData.message.includes("Missing")) {
                     sleepUntil = parseInt(moment().unix()) + 6;
                   }
@@ -560,17 +553,15 @@ const dataModule = {
                   }
                 }
               }
-              // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
-              context.commit('updateAccountTimestampAndBlock', { account, timestamp, blockNumber: endBlock });
+              context.commit('updateAccountTimestampAndBlock', { account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
             }
 
             if (DEVVING == 0) {
-              for (let startBatch = startBlock; startBatch < endBlock; startBatch += etherscanBatchSize) {
-                let endBatch = (parseInt(startBatch) + etherscanBatchSize < endBlock) ? (parseInt(startBatch) + etherscanBatchSize) : endBlock;
+              for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
+                let endBatch = (parseInt(startBatch) + etherscanBatchSize < confirmedBlockNumber) ? (parseInt(startBatch) + etherscanBatchSize) : confirmedBlockNumber;
                 console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
                 do {
                 } while (sleepUntil && sleepUntil > moment().unix());
-                console.log("completed sleep: " + startBatch + " to " + endBatch + " " + moment().toString());
                 let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + etherscanAPIKey;
                 console.log("importUrl: " + importUrl);
                 const importData = await fetch(importUrl)
@@ -616,8 +607,7 @@ const dataModule = {
                   }
                   if (!context.state.sync.halt) {
                     context.commit('importEtherscanResults', { account, results: importData.result });
-                    // NOTE: blockNumber is for the current block - confirmations and timestamp for the current block
-                    context.commit('updateAccountTimestampAndBlock', { account, timestamp, blockNumber: endBlock });
+                    context.commit('updateAccountTimestampAndBlock', { account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
                   }
                 }
                 // Retrieve
