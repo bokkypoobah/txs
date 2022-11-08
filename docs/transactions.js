@@ -529,6 +529,10 @@ const Transactions = {
           // console.log(JSON.stringify(item, null, 2));
           const info = parseTx(item);
           // console.log(JSON.stringify(info, null, 2));
+          // TODO
+          // if (item.tx.to == null || item.tx.to.length < 10) {
+          //   console.log("CONTRACT: " + JSON.stringify(info, null, 2));
+          // }
           results.push({
             txHash,
             blockNumber: item.blockNumber,

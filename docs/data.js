@@ -633,7 +633,7 @@ const dataModule = {
             const item = context.state.accounts[accountKey];
             const [chainId, account] = accountKey.split(':');
             // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
-            console.log("--- Downloading for " + account + " --- ");
+            console.log("--- Building assets for " + account + " --- ");
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
 
             let i = 0;
