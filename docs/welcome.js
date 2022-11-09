@@ -13,7 +13,7 @@ const Welcome = {
                 A decentralised application to help manage your Ethereum portfolio. Status: <b>WIP</b>
               </b-card-text>
 
-              <b-card-text class="mt-5 mb-2">
+              <b-card-text class="mt-3 mb-2">
                 <h6>How This Works</h6>
                 <ul>
                   <li>
@@ -40,12 +40,15 @@ const Welcome = {
                     </ul>
                   </li>
                   <li>
+                    View your transactions by accounts in the Account tab
+                  </li>
+                  <li>
                     View your transactions in the Transactions tab
                   </li>
                 </ul>
               </b-card-text>
 
-              <b-card-text class="mt-5 mb-2">
+              <b-card-text class="mt-3 mb-2">
                 <h6>Your Data</h6>
                 <ul>
                   <li>
@@ -63,19 +66,16 @@ const Welcome = {
                 </ul>
               </b-card-text>
 
-              <b-card-text v-if="false" class="mt-5 mb-2">
-                <h5>Other Order Details</h5>
+              <b-card-text class="mt-3 mb-2">
+                <h6>Source Code</h6>
                 <ul>
                   <li>
-                    Orders can only be executed if the <b>expiry</b> is set to 0, or is after than the current time.
-                  </li>
-                  <li>
-                    Orders depend on ownership and approval of the NFTs and WETH, and can become active (and inactive) when these are updated.
+                    <b-link href="https://github.com/bokkypoobah/txs" target="_blank">https://github.com/bokkypoobah/txs</b-link>
                   </li>
                 </ul>
               </b-card-text>
 
-              <b-card-text v-if="false" class="mt-5 mb-2">
+              <b-card-text v-if="false" class="mt-3 mb-2">
                 <h5>ERC-721 Token Collection Data Retrieval</h5>
                 <ul>
                   <li>
@@ -87,7 +87,7 @@ const Welcome = {
                 </ul>
               </b-card-text>
 
-              <b-card-text v-if="false" class="mt-5 mb-2">
+              <b-card-text v-if="false" class="mt-3 mb-2">
                 <h5>Royalties</h5>
                 <ul>
                   <li>
@@ -102,7 +102,7 @@ const Welcome = {
                 </ul>
               </b-card-text>
 
-              <b-card-text v-if="false" class="mt-5 mb-2">
+              <b-card-text v-if="false" class="mt-3 mb-2">
                 <h5>Calculating NetAmount</h5>
                 <ul>
                   <li>
@@ -111,7 +111,7 @@ const Welcome = {
                 </ul>
               </b-card-text>
 
-              <b-card-text v-if="false" class="mt-5 mb-2">
+              <b-card-text v-if="false" class="mt-3 mb-2">
                 <h5>Repos</h5>
                 <ul>
                   <li>
