@@ -4,6 +4,9 @@ const Account = {
       <b-card no-body no-header class="border-0">
 
         <div class="d-flex flex-wrap m-0 p-0">
+          <div class="mt-0 pr-1">
+            <b-form-select size="sm" v-model="settings.selectedAccount" @change="saveSettings" :options="accountsOptions" v-b-popover.hover.top="'Select account'"></b-form-select>
+          </div>
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input>
           </div>
@@ -94,7 +97,7 @@ const Account = {
           </b-card-body>
         </b-card>
 
-        <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add your accounts in the Accounts tab, sync, then select one account on the top left" head-variant="light" class="m-0 mt-1">
           <!--
           <template #thead-top="data">
             <b-tr>
@@ -366,6 +369,7 @@ const Account = {
       count: 0,
       reschedule: true,
       settings: {
+        selectedAccount: null,
         txhashFilter: null,
         accountFilter: null,
         accountTypeFilter: null,
@@ -379,6 +383,7 @@ const Account = {
         currentPage: 1,
         pageSize: 100,
         sortOption: 'timestampdsc',
+        version: 1,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -460,8 +465,21 @@ const Account = {
     network() {
       return store.getters['connection/network'];
     },
+    chainId() {
+      return store.getters['connection/chainId'];
+    },
     block() {
       return store.getters['connection/block'];
+    },
+    accountsOptions() {
+      const results = [];
+      results.push({ value: null, text: "(select account)", data: null });
+      const accountData = store.getters['data/accounts'] && store.getters['data/accounts'][this.chainId] || {};
+      for (const [account, item] of Object.entries(accountData)) {
+        const name = this.ensOrAccount(account);
+        results.push({ value: account, text: name });
+      }
+      return results;
     },
     periodOptions() {
       const results = [];
@@ -512,6 +530,18 @@ const Account = {
       for (const [chainId, chainData] of Object.entries(this.txs)) {
         for (const [txHash, item] of Object.entries(chainData)) {
           let include = true;
+
+          if (this.settings.selectedAccount != null) {
+            if (
+              !(item.tx.from == this.settings.selectedAccount) &&
+              !(item.tx.to == this.settings.selectedAccount)
+            ) {
+              include = false;
+            }
+          } else {
+            include = false;
+          }
+
           if (startPeriod != null && item.timestamp < startPeriod.unix()) {
             include = false;
           }
@@ -882,10 +912,13 @@ const Account = {
   mounted() {
     logDebug("Account", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('data/restoreState');
-    // if ('accountSettings' in localStorage) {
-    //   this.settings = JSON.parse(localStorage.accountSettings);
-    //   this.settings.currentPage = 1;
-    // }
+    if ('accountSettings' in localStorage) {
+      const tempSettings = JSON.parse(localStorage.accountSettings);
+      if ('version' in tempSettings && tempSettings.version == 1) {
+        this.settings = tempSettings;
+        this.settings.currentPage = 1;
+      }
+    }
     this.reschedule = true;
     logDebug("Account", "Calling timeoutCallback()");
     this.timeoutCallback();
