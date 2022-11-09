@@ -24,23 +24,13 @@ const Account = {
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
-          <!--
-          <div class="mt-0 pr-0">
-            <b-button size="sm" :pressed.sync="settings.showNewAccounts" @click="saveSettings" variant="link" v-b-popover.hover.top="'Add new accounts'"><span v-if="settings.showNewAccounts"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
-          </div>
-          <div class="mt-0 pr-1">
-            <b-button size="sm" :pressed.sync="settings.editAccounts" @click="saveSettings" :variant="settings.editAccounts ? 'danger' : 'link'" v-b-popover.hover.top="settings.editAccounts ? 'End editing account attributes' : 'Edit account attributes'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
-          </div>
-          <div class="mt-0 flex-grow-1">
-          </div>
-          -->
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['importFromEtherscan', 'downloadData'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import Etherscan transactions and web3 transfer events for accounts configured to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
-          <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['downloadData'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import transaction data via web3 for accounts configured to be synced'"><b-icon-cloud shift-v="+1" font-scale="1.2"></b-icon-cloud></b-button>
-          </div>
           <!--
+          <div v-if="false && sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['downloadData'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import transaction data via web3 for accounts configured to be synced'"><b-icon-cloud shift-v="+1" font-scale="1.2"></b-icon-cloud></b-button>
+          </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="syncIt({ sections: ['computeTxs'], parameters: Object.keys(settings.selectedTransactions) })" variant="link" v-b-popover.hover.top="'Compute selected transactions'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
           </div>
@@ -80,22 +70,6 @@ const Account = {
             <b-form-select size="sm" v-model="settings.pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
           </div>
         </div>
-
-        <b-card v-if="false && settings.showNewAccounts" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
-          <b-card-body class="m-1 p-1">
-            <b-form-group label-cols-lg="2" label="New Accounts" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
-              <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and are used to request information via your web3 connection, or via Etherscan and Reservoir API calls" class="mx-0 my-1 p-0">
-                <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="settings.newAccounts" rows="1" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
-              </b-form-group>
-              <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added below" class="mx-0 my-1 p-0">
-                <b-button size="sm" id="newaccounts-submit" :disabled="settings.newAccounts == null || settings.newAccounts.length == 0" @click="addNewAccounts" variant="primary">Add</b-button>
-              </b-form-group>
-              <b-form-group label="Coinbase:" label-for="newaccounts-coinbase-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-                <b-button size="sm" id="newaccounts-coinbase-submit" :disabled="coinbaseIncluded" @click="addCoinbase" variant="primary">{{ (coinbaseIncluded ? 'Already added ' : 'Add ') + coinbase }}</b-button>
-              </b-form-group>
-            </b-form-group>
-          </b-card-body>
-        </b-card>
 
         <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add your accounts in the Accounts tab, sync, then select one account on the top left" head-variant="light" class="m-0 mt-1">
           <!--
@@ -222,16 +196,12 @@ const Account = {
         accountFilter: null,
         accountTypeFilter: null,
         accountMineFilter: null,
-        showNewAccounts: false,
-        editAccounts: false,
-        newAccounts: null,
         period: null,
-        selectedAccounts: {}, // TODO: delete
         selectedTransactions: {},
         currentPage: 1,
         pageSize: 100,
         sortOption: 'timestampdsc',
-        version: 1,
+        version: 2,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -260,10 +230,6 @@ const Account = {
         { value: 'timestampdsc', text: '▼ Timestamp' },
         { value: 'blocknumberasc', text: '▲ Block Number' },
         { value: 'blocknumberdsc', text: '▼ Block Number' },
-        // { value: 'groupasc', text: '▲ Group, ▲ Name' },
-        // { value: 'groupdsc', text: '▼ Group, ▲ Name' },
-        // { value: 'nameasc', text: '▲ Name, ▲ Group' },
-        // { value: 'namedsc', text: '▼ Name, ▲ Group' },
       ],
       pageSizes: [
         { value: 1, text: '1' },
@@ -446,119 +412,6 @@ const Account = {
     pagedFilteredSortedTransactions() {
       return this.filteredSortedTransactions.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
     },
-    filteredAccounts() {
-      const results = [];
-      const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
-      for (const [key, data] of Object.entries(this.accounts)) {
-        const [chainId, account] = key.split(':');
-        const ensName = this.ensMap[account] || null;
-        let include = filterLower == null ||
-          (account.toLowerCase().includes(filterLower)) ||
-          (data.name && data.name.toLowerCase().includes(filterLower)) ||
-          (data.group && data.group.toLowerCase().includes(filterLower)) ||
-          (data.notes && data.notes.toLowerCase().includes(filterLower)) ||
-          (ensName != null && ensName.toLowerCase().includes(filterLower));
-        if (include && this.settings.accountMineFilter != null) {
-          if (this.settings.accountMineFilter == 'mine' && data.mine) {
-          } else if (this.settings.accountMineFilter == 'notmine' && !data.mine) {
-          } else {
-            include = false;
-          }
-        }
-        if (include && this.settings.accountTypeFilter != null) {
-          if (this.settings.accountTypeFilter == 'unknown' && data.type == null) {
-          } else if (this.settings.accountTypeFilter == data.type) {
-          } else {
-            include = false;
-          }
-        }
-        if (include) {
-          results.push({
-            key,
-            chainId,
-            account,
-            group: data.group,
-            name: data.name,
-            type: data.type,
-            mine: data.mine,
-            sync: data.sync,
-            tags: data.tags,
-            notes: data.notes,
-            contract: data.contract,
-            collection: data.collection,
-            balances: data.balances,
-            created: data.created,
-            updated: data.updated,
-          });
-        }
-      }
-      // console.log("filteredAccounts: " + JSON.stringify(results, null, 2));
-      return results;
-    },
-    filteredSortedAccounts() {
-      const results = this.filteredAccounts;
-      if (this.sortOption == 'accountasc') {
-        results.sort((a, b) => {
-          return ('' + a.account).localeCompare(b.account);
-        });
-      } else if (this.sortOption == 'accountdsc') {
-        results.sort((a, b) => {
-          return ('' + b.account).localeCompare(a.account);
-        });
-      } else if (this.sortOption == 'groupasc') {
-        results.sort((a, b) => {
-          if (('' + a.group).localeCompare(b.group) == 0) {
-            if (('' + a.name).localeCompare(b.name) == 0) {
-              return ('' + a.account).localeCompare(b.account);
-            } else {
-              return ('' + a.name).localeCompare(b.name);
-            }
-          } else {
-            return ('' + a.group).localeCompare(b.group);
-          }
-        });
-      } else if (this.sortOption == 'groupdsc') {
-        results.sort((a, b) => {
-          if (('' + a.group).localeCompare(b.group) == 0) {
-            if (('' + a.name).localeCompare(b.name) == 0) {
-              return ('' + a.account).localeCompare(b.account);
-            } else {
-              return ('' + a.name).localeCompare(b.name);
-            }
-          } else {
-            return ('' + b.group).localeCompare(a.group);
-          }
-        });
-      } else if (this.sortOption == 'nameasc') {
-        results.sort((a, b) => {
-          if (('' + a.name).localeCompare(b.name) == 0) {
-            if (('' + a.group).localeCompare(b.group) == 0) {
-              return ('' + a.account).localeCompare(b.account);
-            } else {
-              return ('' + a.group).localeCompare(b.group);
-            }
-          } else {
-            return ('' + a.name).localeCompare(b.name);
-          }
-        });
-      } else if (this.sortOption == 'namedsc') {
-        results.sort((a, b) => {
-          if (('' + a.name).localeCompare(b.name) == 0) {
-            if (('' + a.group).localeCompare(b.group) == 0) {
-              return ('' + a.account).localeCompare(b.account);
-            } else {
-              return ('' + a.group).localeCompare(b.group);
-            }
-          } else {
-            return ('' + b.name).localeCompare(a.name);
-          }
-        });
-      }
-      return results;
-    },
-    pagedFilteredSortedAccounts() {
-      return this.filteredSortedAccounts.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
-    },
   },
   methods: {
     formatTimestamp(ts) {
@@ -576,12 +429,6 @@ const Account = {
     },
     saveSettings() {
       localStorage.accountSettings = JSON.stringify(this.settings);
-    },
-    addNewAccounts() {
-      store.dispatch('data/addNewAccounts', this.settings.newAccounts);
-    },
-    addCoinbase() {
-      store.dispatch('data/addNewAccounts', this.coinbase);
     },
     toggleSelectedTransactions(items) {
       let someFalse = false;
@@ -605,49 +452,6 @@ const Account = {
     clearSelectedTransactions() {
       this.settings.selectedTransactions = {};
       this.saveSettings();
-    },
-    // TODO: Delete
-    toggleSelectedAccounts(items) {
-      let someFalse = false;
-      let someTrue = false;
-      for (const item of items) {
-        if (this.settings.selectedAccounts[item.account]) {
-          someTrue = true;
-        } else {
-          someFalse = true;
-        }
-      }
-      for (const item of items) {
-        if (!(someTrue && !someFalse)) {
-          Vue.set(this.settings.selectedAccounts, item.account, true);
-        } else {
-          Vue.delete(this.settings.selectedAccounts, item.account);
-        }
-      }
-      this.saveSettings();
-    },
-    // TODO: Delete
-    clearSelectedAccounts() {
-      this.settings.selectedAccounts = {};
-      this.saveSettings();
-    },
-    async toggleAccountMine(key) {
-      store.dispatch('data/toggleAccountMine', key);
-    },
-    async toggleAccountSync(key) {
-      store.dispatch('data/toggleAccountSync', key);
-    },
-    async setAccountType(key, accountType) {
-      store.dispatch('data/setAccountType', { key, accountType });
-    },
-    async setGroup(key, group) {
-      store.dispatch('data/setGroup', { key, group });
-    },
-    async setName(key, name) {
-      store.dispatch('data/setName', { key, name });
-    },
-    async setNotes(key, notes) {
-      store.dispatch('data/setNotes', { key, notes });
     },
     async syncIt(info) {
       store.dispatch('data/syncIt', info);
@@ -751,7 +555,7 @@ const Account = {
     store.dispatch('data/restoreState');
     if ('accountSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.accountSettings);
-      if ('version' in tempSettings && tempSettings.version == 1) {
+      if ('version' in tempSettings && tempSettings.version == 2) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
