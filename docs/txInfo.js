@@ -1,9 +1,13 @@
 function parseTx(item, primaryAccount) {
   const results = {};
+  const events = [];
   const gasUsed = ethers.BigNumber.from(item.txReceipt.gasUsed);
+  const txFee = gasUsed.mul(item.txReceipt.effectiveGasPrice);
+  events.push({ from: item.tx.from, to: null, type: "txfee", asset: "eth", tokenId: null, value: txFee });
 
   // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
+    events.push({ from: item.tx.from, to: item.tx.to, type: "ethtransfer", asset: "eth", tokenId: null, value: item.tx.value });
     if (primaryAccount) {
       if (primaryAccount == item.tx.from) {
         results.info = "Sent to " + item.tx.to.substring(0, 16) + " " + ethers.utils.formatEther(item.tx.value) + "Ξ";
@@ -13,8 +17,8 @@ function parseTx(item, primaryAccount) {
     } else {
       results.info = "Transferred " + ethers.utils.formatEther(item.tx.value) + "Ξ"; // + tx.to;
     }
+    console.log("events: " + JSON.stringify(events, null, 2));
   }
-
 
   if (!results.info && item.tx.data.substring(0, 10) == "0xa22cb465") {
     results.info = "setApprovalForAll";
