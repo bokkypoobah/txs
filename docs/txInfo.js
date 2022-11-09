@@ -73,6 +73,7 @@ function parseTx(item, primaryAccount) {
     }
   }
 
+  results.events = events;
   return results;
 }
 

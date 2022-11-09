@@ -179,8 +179,12 @@ const Account = {
               <br />
             </b-popover>
           </template>
-          <template #cell(value)="data">
-            {{ formatETH(data.item.value) }}
+          <template #cell(fee)="data">
+
+            <span v-for="event of data.item.events.filter(e => (e.type == 'txfee' && e.from == settings.selectedAccount))">
+              {{ formatETH(event.value) }}
+            </span>
+
           </template>
         </b-table>
       </b-card>
