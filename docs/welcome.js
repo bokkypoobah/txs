@@ -10,14 +10,14 @@ const Welcome = {
 
               <b-card-text>
                 <h5>Welcome to txs</h5>
-                A decentralised application to help manage your Ethereum portfolio. Status: <b>WIP</b>
+                A dapp to help manage your Ethereum portfolio. Status: <b>WIP</b>
               </b-card-text>
 
               <b-card-text class="mt-3 mb-2">
-                <h6>How This Works</h6>
+                <h6>Usage</h6>
                 <ul>
                   <li>
-                    Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></b-button> in the Accounts tab to enter your accounts
+                    Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></b-button> in the Accounts tab to enter your account(s)
                   </li>
                   <li>
                     Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button> to incrementally:
@@ -44,6 +44,12 @@ const Welcome = {
                   </li>
                   <li>
                     View your transactions in the Transactions tab
+                  </li>
+                  <li>
+                    Enter your Etherscan API key in the Config tab to avoid your API data retrieval being throttled to 1 request per 6 seconds
+                  </li>
+                  <li>
+                    <b>WIP</b> You may have to re-enter your accounts and resync as this dapp still requires some data structure changes
                   </li>
                 </ul>
               </b-card-text>
