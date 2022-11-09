@@ -18,10 +18,10 @@ const routes = [{
     path: '/data',
     component: Data,
     name: 'Data',
-  }, {
-    path: '/docs/:section/:topic',
-    component: Docs,
-    name: 'Docs',
+  // }, {
+  //   path: '/docs/:section/:topic',
+  //   component: Docs,
+  //   name: 'Docs',
   }, {
     path: '*',
     component: Welcome,
