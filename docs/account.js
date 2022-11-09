@@ -115,10 +115,15 @@ const Account = {
               <br />
             </b-popover>
           </template>
+          <template #cell(action)="data">
+            {{ data.item.info }}
+          </template>
           <template #cell(from)="data">
-            <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.from">
-              {{ ensOrAccount(data.item.from) }}
-            </b-link>
+            <font size="-1">
+              <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.from">
+                {{ ensOrAccount(data.item.from) }}
+              </b-link>
+            </font>
             <b-popover :target="'popover-target-' + data.item.txHash + '-' + data.item.from" placement="right" custom-class="popover-max-width">
               <template #title>
                 {{ 'From: ' + ensOrAccount(data.item.from, 20) }}
@@ -148,9 +153,11 @@ const Account = {
             </b-popover>
           </template>
           <template #cell(to)="data">
-            <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.to">
-              {{ ensOrAccount(data.item.to) }}
-            </b-link>
+            <font size="-1">
+              <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.to">
+                {{ ensOrAccount(data.item.to) }}
+              </b-link>
+            </font>
             <b-popover :target="'popover-target-' + data.item.txHash + '-' + data.item.to" placement="right" custom-class="popover-max-width">
               <template #title>
                 {{ 'To: ' + ensOrAccount(data.item.to, 20) }}
@@ -179,12 +186,20 @@ const Account = {
               <br />
             </b-popover>
           </template>
+          <template #cell(sent)="data">
+            <span v-for="event of data.item.events.filter(e => (e.type != 'txfee' && e.from == settings.selectedAccount))">
+              {{ formatETH(event.value) }}
+            </span>
+          </template>
+          <template #cell(received)="data">
+            <span v-for="event of data.item.events.filter(e => (e.type != 'txfee' && e.to == settings.selectedAccount))">
+              {{ formatETH(event.value) }}
+            </span>
+          </template>
           <template #cell(fee)="data">
-
             <span v-for="event of data.item.events.filter(e => (e.type == 'txfee' && e.from == settings.selectedAccount))">
               {{ formatETH(event.value) }}
             </span>
-
           </template>
         </b-table>
       </b-card>
@@ -251,8 +266,8 @@ const Account = {
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
         { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         { key: 'action', label: 'Action', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-        { key: 'sent', label: 'Sent', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-        { key: 'received', label: 'Received', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'sent', label: 'Sent', sortable: false, thStyle: 'width: 15%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'received', label: 'Received', sortable: false, thStyle: 'width: 15%;', thClass: 'text-right', tdClass: 'text-right' },
         { key: 'fee', label: 'Fee', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
         { key: 'from', label: 'From', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
         { key: 'to', label: 'To', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },

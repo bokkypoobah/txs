@@ -3,11 +3,11 @@ function parseTx(item, primaryAccount) {
   const events = [];
   const gasUsed = ethers.BigNumber.from(item.txReceipt.gasUsed);
   const txFee = gasUsed.mul(item.txReceipt.effectiveGasPrice);
-  events.push({ from: item.tx.from, to: null, type: "txfee", asset: "eth", tokenId: null, value: txFee });
+  events.push({ from: item.tx.from, to: null, operator: null, type: "txfee", asset: "eth", tokenId: null, value: txFee });
 
   // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
-    events.push({ from: item.tx.from, to: item.tx.to, type: "ethtransfer", asset: "eth", tokenId: null, value: item.tx.value });
+    events.push({ from: item.tx.from, to: item.tx.to, operator: null, type: "ethtransfer", asset: "eth", tokenId: null, value: item.tx.value });
     if (primaryAccount) {
       if (primaryAccount == item.tx.from) {
         results.info = "Sent to " + item.tx.to.substring(0, 16) + " " + ethers.utils.formatEther(item.tx.value) + "Ξ";
@@ -17,7 +17,7 @@ function parseTx(item, primaryAccount) {
     } else {
       results.info = "Transferred " + ethers.utils.formatEther(item.tx.value) + "Ξ"; // + tx.to;
     }
-    console.log("events: " + JSON.stringify(events, null, 2));
+    // console.log("events: " + JSON.stringify(events, null, 2));
   }
 
   if (!results.info && item.tx.data.substring(0, 10) == "0xa22cb465") {
@@ -28,6 +28,7 @@ function parseTx(item, primaryAccount) {
       let log = interface.parseLog(event);
       if (log.name == "ApprovalForAll") {
         const [tokenOwner, operator, approved] = [log.args[0], log.args[1], log.args[2]];
+        events.push({ from: item.tx.from, to: null, operator: operator, type: "erc721approval", asset: log.address, tokenId: null, value: approved ? 1 : 0 });
         if (approved) {
           results.info = "Approved transfer of " + item.tx.to.substring(0, 16) + " to " + operator.substring(0, 16);
         } else {
@@ -35,6 +36,7 @@ function parseTx(item, primaryAccount) {
         }
       }
     }
+    console.log("setApprovalForAll: " + JSON.stringify(events, null, 2));
   }
 
   // ERC-721 safeTransferFrom(address from, address to, uint256 tokenId)
@@ -46,6 +48,7 @@ function parseTx(item, primaryAccount) {
         const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
         let tokenId = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
+        events.push({ from: from, to: to, operator: null, type: "erc721transfer", asset: event.address, tokenId: tokenId, value: null });
         if (tokenId.length > 30) {
           results.info = "Transferred ERC-721 " + item.tx.to.substring(0, 16) + ":" + tokenId.substring(0, 10) + "... from " + from.substring(0, 16) + " to " + to.substring(0, 16);
         } else {
@@ -53,6 +56,7 @@ function parseTx(item, primaryAccount) {
         }
       }
     }
+    console.log("safeTransferFrom: " + JSON.stringify(events, null, 2));
   }
 
   // ERC-20 approve(address guy, uint256 wad)
