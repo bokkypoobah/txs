@@ -433,9 +433,11 @@ const Account = {
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
         { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         // { key: 'txHash', label: 'Tx Hash', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+        { key: 'sent', label: 'Sent', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'received', label: 'Received', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         { key: 'from', label: 'From', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         { key: 'to', label: 'To', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-        { key: 'info', label: 'Info', sortable: false, thStyle: 'width: 50%;', tdClass: 'text-truncate' },
+        { key: 'info', label: 'Info', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
         // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
       ],
       accountsFields: [
@@ -564,7 +566,7 @@ const Account = {
             }
           }
           if (include) {
-            const info = parseTx(item);
+            const info = parseTx(item, this.settings.selectedAccount);
             results.push({
               chainId,
               txHash,

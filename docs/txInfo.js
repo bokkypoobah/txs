@@ -1,9 +1,21 @@
-function parseTx(item) {
+function parseTx(item, primaryAccount) {
   const results = {};
   const gasUsed = ethers.BigNumber.from(item.txReceipt.gasUsed);
+
+  // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
-    results.info = "Transferred " + ethers.utils.formatEther(item.tx.value) + "Ξ"; // + tx.to;
+    if (primaryAccount) {
+      if (primaryAccount == item.tx.from) {
+        results.info = "Sent to " + item.tx.to.substring(0, 16) + " " + ethers.utils.formatEther(item.tx.value) + "Ξ";
+      } else {
+        results.info = "Received from " + item.tx.to.substring(0, 16) + " " + ethers.utils.formatEther(item.tx.value) + "Ξ";
+      }
+    } else {
+      results.info = "Transferred " + ethers.utils.formatEther(item.tx.value) + "Ξ"; // + tx.to;
+    }
   }
+
+
   if (!results.info && item.tx.data.substring(0, 10) == "0xa22cb465") {
     results.info = "setApprovalForAll";
     const interface = new ethers.utils.Interface(ERC721ABI);

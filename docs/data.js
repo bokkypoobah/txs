@@ -381,6 +381,7 @@ const dataModule = {
       const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
       const confirmedBlock = await provider.getBlock(confirmedBlockNumber);
       const confirmedTimestamp = confirmedBlock && confirmedBlock.timestamp || null;
+      const OVERLAPBLOCKS = 10000;
 
       context.commit('setSyncHalt', false);
       for (let section of sections) {
@@ -404,7 +405,7 @@ const dataModule = {
             context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
             console.log("--- Syncing " + account + " --- ");
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
-            const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) + 1) || 0;
+            const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) - OVERLAPBLOCKS) || 0;
 
             context.commit('setSyncSection', { section: 'Web3 Events', total: accountsToSync.length });
             for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
