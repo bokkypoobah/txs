@@ -112,6 +112,9 @@ const app = new Vue({
     powerOn() {
       return store.getters['connection/powerOn'];
     },
+    chainId() {
+      return store.getters['connection/chainId'];
+    },
     spinnerVariant1() {
       var sv = store.getters['connection/spinnerVariant'];
       logInfo("index.js - computed.spinnerVariant", sv);

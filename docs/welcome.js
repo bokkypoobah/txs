@@ -1,88 +1,69 @@
 const Welcome = {
   template: `
-    <div class="mt-5 pt-3">
+    <div class="m-0 p-0">
 
-      <b-card no-body header="Welcome" class="border-0" header-class="p-1">
+      <b-card no-body no-header class="border-0" header-class="p-1">
         <b-card no-body class="border-0 m-0 mt-2">
 
-          <b-card class="my-3" header-class="warningheader" header="Web3 Connection And/Or Incorrect Network Detected" v-if="false && (!powerOn || (network.chainId != 1 && network.chainId != 4))">
-            <b-card-text>
-              Please install the MetaMask extension, connect to the Rinkeby network and refresh this page. Then click the [Power] button on the top right.
-            </b-card-text>
-          </b-card>
-
           <b-card-body class="p-0">
-            <b-card v-if="false" class="mb-2">
-
-              <b-card class="my-3" header-class="warningheader" header="Mainnet Warning" v-if="network.chainId == 1">
-                <b-card-text>
-                  Please use the Rinkeby Network, as the Mainnet is in alpha.
-                </b-card-text>
-              </b-card>
+            <b-card class="mb-2 border-0">
 
               <b-card-text>
-                Welcome to the Nix Decentralised ERC-721 Exchange. Check out the menus on the top right. Click on the top left icon to get back here. <b>Status: WIP</b>
+                <h5>Welcome to txs</h5>
+                A decentralised application to help manage your Ethereum portfolio. Status: <b>WIP</b>
               </b-card-text>
 
               <b-card-text class="mt-5 mb-2">
-                <h5>How This Works</h5>
+                <h6>How This Works</h6>
                 <ul>
                   <li>
-                    <b>Makers</b> add orders to buy or sell NFTs in the Nix exchange at <b-link :href="network.explorer + 'address/' + network.nixAddress + '#code'" target="_blank">{{ network.nixAddress && (network.nixAddress.substring(0, 20) + '...') || '' }}</b-link>. (Exchange -> Orders)
+                    Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></b-button> in the Accounts tab to enter your accounts
                   </li>
                   <li>
-                    <b>Takers</b> execute against one or more orders. (Exchange -> Trades)
+                    Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button> to incrementally:
+                    <ul>
+                      <li>
+                        Retrieve all ERC-20, ERC-721 and ERC-1155 events related to your accounts via your web3 connection
+                      </li>
+                      <li>
+                        Retrieve all transactions and internal transactions related to your accounts via the Etherscan API
+                      </li>
+                      <li>
+                        Retrieve all transaction and transaction receipt information via your web3 connection, for the transaction hashes of the data imported above
+                      </li>
+                      <li>
+                        Retrieve collection and token metadata via the Reservoir API, for the contracts and assets resulting from the above processing
+                      </li>
+                      <li>
+                        Compute a simpler representation of your transactions
+                      </li>
+                    </ul>
                   </li>
                   <li>
-                    Payments are made in <b-link :href="network.explorer + 'token/' + network.wethAddress" target="_blank">WETH</b-link> and are netted, so no fancy flash loans are required for complicated buy/sell bulk trades. The taker pays the <b>netAmount</b> in WETH if negative, or receives if positive.
-                  </li>
-                  <li>
-                    The Nix exchange must be approved to transfer the WETH and/or the NFT. (Tokens -> Approval and WETH -> Approval)
-                  </li>
-                  <li>
-                    The NixHelper contract at <b-link :href="explorer + 'address/' + network.nixHelperAddress + '#code'" target="_blank">{{ network.nixHelperAddress && network.nixHelperAddress.substring(0, 20) + '...' || '' }}</b-link> allows this Web3 UI to retrieve the order and trade information in bulk, via the web3 connection.
-                  </li>
-                  <li>
-                    There are no fees on this exchange.
-                  </li>
-                  <li>
-                    Makers and takers are encouraged to add a tip for this developer (in ETH) when executing Nix transactions.
-                  </li>
-                  <li>
-                    There is a parameter when executing Nix transactions for 3rd party integrators to receive a portion of ETH tips sent by makers and takers.
-                  </li>
-                  <li>
-                    There is no backend server for this application to work. Data retrieval is through the web3 connection, and will take time to update.
+                    View your transactions in the Transactions tab
                   </li>
                 </ul>
               </b-card-text>
 
               <b-card-text class="mt-5 mb-2">
-                <h5>Order Type Examples</h5>
-                (Buy/Sell, Any/All, [tokenIds], price, tradeMax)
+                <h6>Your Data</h6>
                 <ul>
                   <li>
-                    Buy up to 5 NFTs from a collection for 0.1 WETH each. (Buy, Any, [], 0.1, 5)
+                    Your personal information (e.g., accounts, Etherscan API key) is stored in your web browser local storage (LocalStorage and IndexedDB)
                   </li>
                   <li>
-                    Buy up to 2 NFTs with tokenIds [1, 2, 3 or 4] from a collection for 0.1 WETH each. (Buy, Any, [1, 2, 3, 4], 0.1, 2)
+                    Your accounts will be used when querying data via the web3 connection
                   </li>
                   <li>
-                    Buy a bundle of NFTs with tokenIds [1, 2, 3 and 4] from a collection for 0.1 WETH in total. (Buy, All, [1, 2, 3, 4], 0.1, 1)
+                    Your Etherscan API key and your accounts will be used when querying data via the Etherscan API
                   </li>
                   <li>
-                    Sell any NFT owned by the seller for 0.1 WETH each. (Sell, Any, [], 0.1, 1)
-                  </li>
-                  <li>
-                    Sell up to 2 of NFTs [1, 2, 3, or 4] for 0.1 WETH each. (Sell, Any, [1, 2, 3, 4], 0.1, 2)
-                  </li>
-                  <li>
-                    Sell a bundle of NFTs with tokenIds [1, 2, 3 and 4] from a collection for 0.1 WETH in total. (Sell, All, [1, 2, 3, 4], 0.1, 1)
+                    Your collections and tokens will be used when querying data via the Reservoir API
                   </li>
                 </ul>
               </b-card-text>
 
-              <b-card-text class="mt-5 mb-2">
+              <b-card-text v-if="false" class="mt-5 mb-2">
                 <h5>Other Order Details</h5>
                 <ul>
                   <li>
@@ -94,7 +75,7 @@ const Welcome = {
                 </ul>
               </b-card-text>
 
-              <b-card-text class="mt-5 mb-2">
+              <b-card-text v-if="false" class="mt-5 mb-2">
                 <h5>ERC-721 Token Collection Data Retrieval</h5>
                 <ul>
                   <li>
@@ -106,7 +87,7 @@ const Welcome = {
                 </ul>
               </b-card-text>
 
-              <b-card-text class="mt-5 mb-2">
+              <b-card-text v-if="false" class="mt-5 mb-2">
                 <h5>Royalties</h5>
                 <ul>
                   <li>
@@ -121,7 +102,7 @@ const Welcome = {
                 </ul>
               </b-card-text>
 
-              <b-card-text class="mt-5 mb-2">
+              <b-card-text v-if="false" class="mt-5 mb-2">
                 <h5>Calculating NetAmount</h5>
                 <ul>
                   <li>
@@ -130,7 +111,7 @@ const Welcome = {
                 </ul>
               </b-card-text>
 
-              <b-card-text class="mt-5 mb-2">
+              <b-card-text v-if="false" class="mt-5 mb-2">
                 <h5>Repos</h5>
                 <ul>
                   <li>
@@ -166,6 +147,9 @@ const Welcome = {
     },
     network() {
       return store.getters['connection/network'];
+    },
+    chainId() {
+      return store.getters['connection/chainId'];
     },
   },
   methods: {

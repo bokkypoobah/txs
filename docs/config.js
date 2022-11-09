@@ -1,6 +1,6 @@
 const Config = {
   template: `
-    <div class="mt-5 pt-3">
+    <div class="m-0 p-0">
       <b-card no-body no-header class="border-0">
         <b-card no-body no-header bg-variant="light" class="m-1 p-1 w-75">
           <b-card-body class="m-1 p-1">

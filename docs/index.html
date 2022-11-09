@@ -147,6 +147,15 @@
             </b-navbar-nav>
           </b-navbar>
         </div>
+        <div class="mt-5 pt-2">
+          <b-card no-header no-body class="m-0 p-0 border-0">
+            <b-card-body class="m-0 p-0">
+              <b-alert v-if="chainId && chainId != 1" size="sm" variant="warning" show class="m-1 mb-2 px-2 py-1">
+                Please install the MetaMask extension, connect to Ethereum Mainnet and refresh this page. Then click <b-button size="sm" variant="link" class="m-0 p-0" v-b-popover.hover="'Power up this app'" @click="setPowerOn();"><b-icon-power shift-v="-1" font-scale="1.5"></b-icon-power></b-button> on the top right.
+              </b-alert>
+            </b-card-body>
+          </b-card>
+        </div>
         <div style="min-height: 600px;">
           <router-view></router-view>
         </div>
