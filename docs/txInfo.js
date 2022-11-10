@@ -10,7 +10,11 @@ function parseTx(item, primaryAccount) {
     events.push({ from: item.tx.from, to: item.tx.to, operator: null, type: "ethtransfer", asset: "eth", tokenId: null, value: item.tx.value });
     if (primaryAccount) {
       if (primaryAccount == item.tx.from) {
-        results.info = "Sent to " + item.tx.to.substring(0, 16) + " " + ethers.utils.formatEther(item.tx.value) + "Ξ";
+        if (primaryAccount == item.tx.to) {
+          results.info = "Self transfer (cancellation) " + ethers.utils.formatEther(item.tx.value) + "Ξ";
+        } else {
+          results.info = "Sent to " + item.tx.to.substring(0, 16) + " " + ethers.utils.formatEther(item.tx.value) + "Ξ";
+        }
       } else {
         results.info = "Received from " + item.tx.to.substring(0, 16) + " " + ethers.utils.formatEther(item.tx.value) + "Ξ";
       }

@@ -27,16 +27,19 @@ const Account = {
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['importFromEtherscan', 'downloadData'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import Etherscan transactions and web3 transfer events for accounts configured to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
+          <div v-if="sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" :disabled="block == null || !settings.selectedAccount" @click="syncIt({ sections: ['buildAssets'], parameters: [settings.selectedAccount] })" variant="link" v-b-popover.hover.top="'Build assets'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
+          </div>
           <!--
-          <div v-if="false && sync.section == null" class="mt-0 pr-1">
+          <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['downloadData'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import transaction data via web3 for accounts configured to be synced'"><b-icon-cloud shift-v="+1" font-scale="1.2"></b-icon-cloud></b-button>
           </div>
-          <div v-if="sync.section == null" class="mt-0 pr-1">
+          -->
+          <div v-if="false && sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="syncIt({ sections: ['computeTxs'], parameters: Object.keys(settings.selectedTransactions) })" variant="link" v-b-popover.hover.top="'Compute selected transactions'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
           </div>
-          -->
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" @click="exportTransactions" variant="link" v-b-popover.hover.top="'Export transactions'"><b-icon-file-earmark-spreadsheet shift-v="+1" font-scale="1.2"></b-icon-file-earmark-spreadsheet></b-button>
+            <b-button size="sm" :disabled="block == null || !settings.selectedAccount" @click="exportTransactions" variant="link" v-b-popover.hover.top="'Export transactions'"><b-icon-file-earmark-spreadsheet shift-v="+1" font-scale="1.2"></b-icon-file-earmark-spreadsheet></b-button>
           </div>
           <div v-if="sync.section != null" class="mt-1" style="width: 200px;">
             <b-progress height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click the button on the right to stop. This process can be continued later'">
@@ -118,6 +121,29 @@ const Account = {
           <template #cell(action)="data">
             {{ data.item.info }}
           </template>
+          <template #cell(sent)="data">
+            <span v-for="event of data.item.events.filter(e => (e.type != 'txfee' && e.from == settings.selectedAccount))">
+              {{ formatETH(event.value) }}
+              <br />
+              <font size="-2">
+                to {{ ensOrAccount(data.item.to, 16) }}
+              </font>
+            </span>
+          </template>
+          <template #cell(received)="data">
+            <span v-for="event of data.item.events.filter(e => (e.type != 'txfee' && e.to == settings.selectedAccount))">
+              {{ formatETH(event.value) }}
+              <br />
+              <font size="-2">
+                from {{ ensOrAccount(data.item.from, 16) }}
+              </font>
+            </span>
+          </template>
+          <template #cell(fee)="data">
+            <span v-for="event of data.item.events.filter(e => (e.type == 'txfee' && e.from == settings.selectedAccount))">
+              {{ formatETH(event.value) }}
+            </span>
+          </template>
           <template #cell(from)="data">
             <font size="-1">
               <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.from">
@@ -185,21 +211,6 @@ const Account = {
               <b-link :href="'https://blur.io/' + data.item.to" target="_blank">View 'to' account in blur.io</b-link>
               <br />
             </b-popover>
-          </template>
-          <template #cell(sent)="data">
-            <span v-for="event of data.item.events.filter(e => (e.type != 'txfee' && e.from == settings.selectedAccount))">
-              {{ formatETH(event.value) }}
-            </span>
-          </template>
-          <template #cell(received)="data">
-            <span v-for="event of data.item.events.filter(e => (e.type != 'txfee' && e.to == settings.selectedAccount))">
-              {{ formatETH(event.value) }}
-            </span>
-          </template>
-          <template #cell(fee)="data">
-            <span v-for="event of data.item.events.filter(e => (e.type == 'txfee' && e.from == settings.selectedAccount))">
-              {{ formatETH(event.value) }}
-            </span>
           </template>
         </b-table>
       </b-card>

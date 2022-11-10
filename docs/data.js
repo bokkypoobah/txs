@@ -594,13 +594,16 @@ const dataModule = {
           }
 
         } else if (section == 'buildAssets') {
-          const accountKeysToSync = [];
-          for (const [key, item] of Object.entries(context.state.accounts)) {
-            const [chainId, account] = key.split(':');
-            if ((parameters.length == 0 && item.sync) || parameters.includes(account)) {
-                accountKeysToSync.push(key);
+          const accountsToSync = [];
+          const chainData = context.state.accounts[chainId] || {};
+          for (const [account, data] of Object.entries(chainData)) {
+            console.log("account: " + account);
+            if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
+                accountsToSync.push(account);
             }
           }
+          console.log("buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
+
           console.log("buildAssets - accountKeysToSync: " + JSON.stringify(accountKeysToSync));
           for (const keyIndex in accountKeysToSync) {
             context.commit('setSyncSection', { section: 'Build assets', total: null });
@@ -676,9 +679,10 @@ const dataModule = {
           context.commit('setSyncSection', { section: 'Compute', total: parameters.length });
           for (let txHashIndex in parameters) {
             const txHash = parameters[txHashIndex];
-            const txItem = context.state.txs[txHash];
+            const txItem = context.state.txs[chainId][txHash];
             if (txItem) {
               const info = await getTxInfo(txHash, txItem, provider);
+              console.log("info: " + JSON.stringify(info, null, 2));
               if (info.summary) {
                 context.commit('updateTxData', info);
               }
