@@ -133,8 +133,7 @@ const dataModule = {
     },
     addNewAccount(state, info) {
       // logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(info) + ")");
-      const block = store.getters['connection/block'];
-      const chainId = store.getters['connection/chainId'];
+      const [block, chainId] = [store.getters['connection/block'], store.getters['connection/chainId']];
       if (!(chainId in state.accounts)) {
         Vue.set(state.accounts, chainId, {});
       }
@@ -617,15 +616,15 @@ const dataModule = {
                 // }
                 for (const [logIndex, event] of Object.entries(logIndexes)) {
                   if (!event.processed) {
-                    const contract = event.address;
-                    if (!(contract in context.state.accounts[chainId])) {
+                    const contractAccount = event.address;
+                    if (!(contractAccount in context.state.accounts[chainId])) {
                       let include = false;
                       if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
                         const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
                         const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
                         let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
                         // if (i < 10) {
-                        //   console.log(i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
+                        //   console.log(i + event.type + " contractAccount: " + contractAccount + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
                         // }
                         if ((from == account || to == account)) {
                           include = true;
@@ -637,20 +636,20 @@ const dataModule = {
                         const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
                         let tokens = ethers.BigNumber.from(event.data.substring(0, 66));
                         let value = ethers.BigNumber.from(event.data.substring(67, 130));
-                        // console.log("ERC1155 " + i + event.type + " contract: " + contract + ", from: " + from + ", to: " + to + ", tokens: " + tokens + ", value: " + value + " " + JSON.stringify(event));
+                        // console.log("ERC1155 " + i + event.type + " contractAccount: " + contractAccount + ", from: " + from + ", to: " + to + ", tokens: " + tokens + ", value: " + value + " " + JSON.stringify(event));
                         if ((from == account || to == account)) {
                           include = true;
                         }
                       } else {
-                        console.log(i + event.type + " contract: " + contract + " " + txHash + " " + JSON.stringify(event));
+                        console.log(i + event.type + " contractAccount: " + contractAccount + " " + txHash + " " + JSON.stringify(event));
                       }
                       if (include) {
                         context.commit('setSyncCompleted', parseInt(completed) + 1);
-                        const accountInfo = await getAccountInfo(contract, provider)
+                        const accountInfo = await getAccountInfo(contractAccount, provider)
                         if (accountInfo.account) {
                           context.commit('addNewAccount', accountInfo);
                           if (i < 10) {
-                            console.log("Added contract account: " + contract + " " + accountInfo.type + " " + accountInfo.name);
+                            console.log("Added contractAccount: " + contractAccount + " " + accountInfo.type + " " + accountInfo.name);
                           }
                         }
                         completed++;
@@ -672,21 +671,27 @@ const dataModule = {
                 }
                 for (const [logIndex, event] of Object.entries(logIndexes)) {
                   if (!event.processed) {
-                    const contract = event.address;
-                    if (!(contract in context.state.accounts[chainId])) {
+                    if (event.address in context.state.accounts[chainId]) {
+                      const account = context.state.accounts[chainId][event.address];
+                      if (['erc20', 'erc721', 'erc1155'].includes(account.type)) {
+                        // console.log("account: " + account + " has type " + account.type);
+                        // console.log("account: " + JSON.stringify(account));
+                      }
+                    } else {
+                      console.log("account not found: " + event.address);
                     }
                   }
                 }
               }
               i++;
             }
-
             // if (context.state.sync.halt) {
             //   break;
             // }
           }
           context.dispatch('saveData', ['accounts']);
           context.commit('setSyncSection', { section: null, total: null });
+          console.log("end buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
 
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
