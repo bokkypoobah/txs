@@ -40,7 +40,7 @@ function parseTx(item, primaryAccount) {
         }
       }
     }
-    console.log("setApprovalForAll: " + JSON.stringify(events, null, 2));
+    // console.log("setApprovalForAll: " + JSON.stringify(events, null, 2));
   }
 
   // ERC-721 safeTransferFrom(address from, address to, uint256 tokenId)
@@ -60,7 +60,7 @@ function parseTx(item, primaryAccount) {
         }
       }
     }
-    console.log("safeTransferFrom: " + JSON.stringify(events, null, 2));
+    // console.log("safeTransferFrom: " + JSON.stringify(events, null, 2));
   }
 
   // ERC-20 approve(address guy, uint256 wad)

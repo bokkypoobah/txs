@@ -167,8 +167,7 @@ const dataModule = {
       });
     },
     addAccountERC20AndERC721Events(state, info) {
-      const [account, events] = [info.account, info.events];
-      const chainId = store.getters['connection/chainId'];
+      const [account, events, chainId] = [info.account, info.events, store.getters['connection/chainId']];
       const accountData = state.accounts[chainId][account];
       for (const event of events) {
         if (!event.removed) {
@@ -184,8 +183,7 @@ const dataModule = {
       }
     },
     addAccountERC1155Events(state, info) {
-      const [account, events] = [info.account, info.events];
-      const chainId = store.getters['connection/chainId'];
+      const [account, events, chainId] = [info.account, info.events, store.getters['connection/chainId']];
       const accountData = state.accounts[chainId][account];
       for (const event of events) {
         if (!event.removed) {
@@ -201,8 +199,7 @@ const dataModule = {
       }
     },
     addAccountInternalTransactions(state, info) {
-      const [account, results] = [info.account, info.results];
-      const chainId = store.getters['connection/chainId'];
+      const [account, results, chainId] = [info.account, info.results, store.getters['connection/chainId']];
       const accountData = state.accounts[chainId][account];
       for (const result of results) {
         if (!(result.hash in accountData.internalTransactions)) {
@@ -215,8 +212,7 @@ const dataModule = {
       }
     },
     addAccountTransactions(state, info) {
-      const [account, results] = [info.account, info.results];
-      const chainId = store.getters['connection/chainId'];
+      const [account, results, chainId] = [info.account, info.results, store.getters['connection/chainId']];
       const accountData = state.accounts[chainId][account];
       for (const result of results) {
         if (!(result.hash in accountData.transactions)) {
@@ -227,8 +223,7 @@ const dataModule = {
       }
     },
     updateAccountTimestampAndBlock(state, info) {
-      const [account, events] = [info.account, info.events];
-      const chainId = store.getters['connection/chainId'];
+      const [account, events, chainId] = [info.account, info.events, store.getters['connection/chainId']];
       Vue.set(state.accounts[chainId][account], 'updated', {
         timestamp: info.timestamp,
         blockNumber: info.blockNumber,
@@ -603,13 +598,12 @@ const dataModule = {
             }
           }
           console.log("buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
-
-          console.log("buildAssets - accountKeysToSync: " + JSON.stringify(accountKeysToSync));
-          for (const keyIndex in accountKeysToSync) {
+          for (const accountIndex in accountsToSync) {
             context.commit('setSyncSection', { section: 'Build assets', total: null });
-            const accountKey = accountKeysToSync[keyIndex];
-            const item = context.state.accounts[accountKey];
-            const [chainId, account] = accountKey.split(':');
+            const account = accountsToSync[accountIndex];
+            console.log("here - account: " + account);
+            const item = context.state.accounts[chainId][account];
+            // const [chainId, account] = accountKey.split(':');
             context.commit('setSyncCompleted', 1);
             console.log("--- Building assets for " + account + " --- ");
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
