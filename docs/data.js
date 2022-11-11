@@ -670,6 +670,9 @@ const dataModule = {
                   console.log("Add assets - txItem: " + JSON.stringify(txItem, null, 2));
                 }
                 for (const [logIndex, event] of Object.entries(logIndexes)) {
+                  if (i < 100) {
+                    console.log("logIndex: " + logIndex + " => " + JSON.stringify(event, null, 2));
+                  }
                   if (!event.processed) {
                     if (event.address in context.state.accounts[chainId]) {
                       const account = context.state.accounts[chainId][event.address];
