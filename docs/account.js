@@ -4,7 +4,7 @@ const Account = {
       <b-card no-body no-header class="border-0">
 
         <div class="d-flex flex-wrap m-0 p-0">
-          <div class="mt-0 pr-1">
+          <div class="mt-0 pr-1" style="max-width: 16.0rem;">
             <b-form-select size="sm" v-model="settings.selectedAccount" @change="saveSettings" :options="accountsOptions" v-b-popover.hover.top="'Select account'"></b-form-select>
           </div>
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
