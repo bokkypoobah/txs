@@ -775,15 +775,11 @@ const dataModule = {
                     const key = event.contract + ':' + event.tokenId;
                     if (event.tokenId in assets) {
                       const token = assets[event.tokenId];
-                      console.log(event.contract + ":" + event.tokenId + " => " + JSON.stringify(token));
+                      // console.log(event.contract + ":" + event.tokenId + " => " + JSON.stringify(token));
                       const tokenEvents = token.events;
-                      let include = true;
-                      if (include) {
+                      if (!token.events[event.txHash] || !token.events[event.txHash][event.logIndex]) {
                         context.commit('addAccountTokenEvent', event);
                       }
-
-                    // } else {
-                      // console.log("Found " + JSON.stringify(assets[event.tokenId]));
                     }
                   }
                 }
