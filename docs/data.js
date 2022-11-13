@@ -97,7 +97,7 @@ const dataModule = {
       halt: false,
     },
     db: {
-      name: "txs090d",
+      name: "txs090e",
       version: 1,
       schemaDefinition: {
         cache: '&objectName',
@@ -159,6 +159,7 @@ const dataModule = {
         transactions: {},
         internalTransactions: {},
         events: {},
+        assets: {},
         updated: {
           timestamp: null,
           blockNumber: null,
@@ -227,6 +228,18 @@ const dataModule = {
         timestamp: info.timestamp,
         blockNumber: info.blockNumber,
       });
+    },
+    addAccountERC721Asset(state, record) {
+      if (record.address == "0x139CF58D69779Eea2edC9d0000A8F9D186d89bbB") {
+        const chainId = store.getters['connection/chainId'];
+        const accountData = state.accounts[chainId][record.address];
+        if (!(record.tokenId in accountData.assets)) {
+          console.log("Does not exist");
+          // Vue.set(state.accounts[chainId][record.address].assets, record.tokenId, {}
+        }
+        console.log("addAccountERC721Asset: " + JSON.stringify(record, null, 2));
+        console.log("accountData: " + JSON.stringify(accountData));
+      }
     },
     addENSName(state, nameInfo) {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
@@ -600,93 +613,142 @@ const dataModule = {
             context.commit('setSyncSection', { section: 'Build assets', total: null });
             const account = accountsToSync[accountIndex];
             const item = context.state.accounts[chainId][account];
-            // const [chainId, account] = accountKey.split(':');
             context.commit('setSyncCompleted', 1);
             console.log("--- Building assets for " + account + " --- ");
             // console.log("item: " + JSON.stringify(item, null, 2).substring(0, 200) + "...");
 
-            let i = 0;
-            let completed = 0;
             // -- Add ERC-20, ERC-721 & ERC-1155 contracts
+            const events = [];
             for (const [txHash, logIndexes] of Object.entries(item.events)) {
               if (txHash in context.state.txs[chainId]) {
                 const txItem = context.state.txs[chainId][txHash];
-                // if (i < 1) {
-                //   console.log("Add contracts - txItem: " + JSON.stringify(txItem, null, 2));
-                // }
+                const blockNumber = txItem.tx.blockNumber;
+                const timestamp = txItem.timestamp;
                 for (const [logIndex, event] of Object.entries(logIndexes)) {
                   if (!event.processed) {
-                    const contractAccount = event.address;
-                    if (!(contractAccount in context.state.accounts[chainId])) {
-                      let include = false;
-                      if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
-                        const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
-                        const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
-                        let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
-                        // if (i < 10) {
-                        //   console.log(i + event.type + " contractAccount: " + contractAccount + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
-                        // }
-                        if ((from == account || to == account)) {
-                          include = true;
+                    let eventRecord = null;
+                    const contract = event.address;
+                    if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+                      const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+                      const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+                      if ((from == account || to == account)) {
+                        // ERC-721 Transfer
+                        if (event.topics.length == 4) {
+                          const tokenId = ethers.BigNumber.from(event.topics[3]);
+                          eventRecord = { txHash, blockNumber, timestamp, contract, from, to, tokenId, type: event.type };
+                          // ERC-20 Transfer
+                        } else {
+                          const tokens = ethers.BigNumber.from(event.data);
+                          eventRecord = { txHash, blockNumber, timestamp, contract, from, to, tokens, type: event.type };
                         }
-                      // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
-                      } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
-                        const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
-                        const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
-                        const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
-                        let tokens = ethers.BigNumber.from(event.data.substring(0, 66));
-                        let value = ethers.BigNumber.from(event.data.substring(67, 130));
-                        // console.log("ERC1155 " + i + event.type + " contractAccount: " + contractAccount + ", from: " + from + ", to: " + to + ", tokens: " + tokens + ", value: " + value + " " + JSON.stringify(event));
-                        if ((from == account || to == account)) {
-                          include = true;
-                        }
-                      } else {
-                        console.log(i + event.type + " contractAccount: " + contractAccount + " " + txHash + " " + JSON.stringify(event));
                       }
-                      if (include) {
-                        context.commit('setSyncCompleted', parseInt(completed) + 1);
-                        const accountInfo = await getAccountInfo(contractAccount, provider)
-                        if (accountInfo.account) {
-                          context.commit('addNewAccount', accountInfo);
-                          if (i < 10) {
-                            console.log("Added contractAccount: " + contractAccount + " " + accountInfo.type + " " + accountInfo.name);
-                          }
-                        }
-                        completed++;
+                    // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+                    } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
+                      const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+                      const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+                      const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
+                      if ((from == account || to == account)) {
+                        let tokenId = ethers.BigNumber.from(event.data.substring(0, 66));
+                        let value = ethers.BigNumber.from(event.data.substring(67, 130));
+                        eventRecord = { txHash, blockNumber, timestamp, contract, from, to, tokenId, value, type: event.type };
                       }
                     }
+                    if (eventRecord != null) {
+                      events.push(eventRecord);
+                    } else {
+                      console.log("NOT PROCESSED: " + event.type + " contract: " + contract + " " + txHash + " " + JSON.stringify(event));
+                    }
                   }
-                  i++;
                 }
               }
             }
+            // console.log("events: " + JSON.stringify(events, null, 2));
 
-            // -- Add ERC-20, ERC-721 & ERC-1155 contracts
-            i = 0;
-            for (const [txHash, logIndexes] of Object.entries(item.events)) {
-              if (txHash in context.state.txs[chainId]) {
-                const txItem = context.state.txs[chainId][txHash];
-                if (i < 1) {
-                  console.log("Add assets - txItem: " + JSON.stringify(txItem, null, 2));
+            const contractsToCreateMap = {};
+            for (let event of events) {
+              if (!(event.contract in context.state.accounts[chainId])) {
+                if (!(event.contract in contractsToCreateMap)) {
+                  contractsToCreateMap[event.contract] = true;
                 }
-                for (const [logIndex, event] of Object.entries(logIndexes)) {
-                  if (i < 100) {
-                    console.log("logIndex: " + logIndex + " => " + JSON.stringify(event, null, 2));
+              }
+            }
+            const contractsToCreate = Object.keys(contractsToCreateMap);
+            console.log("contractsToCreate: " + JSON.stringify(contractsToCreate, null, 2));
+            context.commit('setSyncSection', { section: 'Build Contracts', total: contractsToCreate.length });
+
+            // Create ERC-721, ERC-1155 and ERC-20 collections
+            for (let contractsToCreateIndex in contractsToCreate) {
+              const contractToCreate = contractsToCreate[contractsToCreateIndex];
+              console.log("contractToCreate: " + contractToCreate);
+              context.commit('setSyncCompleted', parseInt(contractsToCreateIndex) + 1);
+              const accountInfo = await getAccountInfo(contractToCreate, provider)
+              if (accountInfo.account) {
+                context.commit('addNewAccount', accountInfo);
+                console.log("Added contractToCreate: " + contractToCreate + " " + accountInfo.type + " " + accountInfo.name);
+              }
+              if (context.state.sync.halt) {
+                break;
+              }
+            }
+
+            if (false) {
+              let i = 0;
+
+              // -- Add ERC-20, ERC-721 & ERC-1155 contracts
+              i = 0;
+              for (const [txHash, logIndexes] of Object.entries(item.events)) {
+                if (txHash in context.state.txs[chainId]) {
+                  const txItem = context.state.txs[chainId][txHash];
+                  if (i < 1) {
+                    console.log("Add assets - txItem: " + JSON.stringify(txItem, null, 2));
                   }
-                  if (!event.processed) {
-                    if (event.address in context.state.accounts[chainId]) {
-                      const account = context.state.accounts[chainId][event.address];
-                      if (['erc20', 'erc721', 'erc1155'].includes(account.type)) {
-                        // console.log("account: " + account + " has type " + account.type);
-                        // console.log("account: " + JSON.stringify(account));
+                  const blockNumber = txItem.tx.blockNumber;
+                  const timestamp = txItem.timestamp;
+                  for (const [logIndex, event] of Object.entries(logIndexes)) {
+                    if (event.address == "0x139CF58D69779Eea2edC9d0000A8F9D186d89bbB") {
+                      console.log("blockNumber: " + blockNumber + ", timestamp: " + moment.unix(timestamp).format("YYYY-MM-DD HH:mm:ss") + ", logIndex: " + logIndex + " => " + JSON.stringify(event, null, 2));
+                    }
+                    if (!event.processed) {
+                      if (event.address in context.state.accounts[chainId]) {
+                        const accountData = context.state.accounts[chainId][event.address];
+                        // if (event.address == "0x139CF58D69779Eea2edC9d0000A8F9D186d89bbB") {
+                          // console.log("HERE: " + event.address + " => " + JSON.stringify(accountData));
+                        // }
+                        // TODO 'erc20', 'erc1155'
+                        if (['erc721'].includes(accountData.type)) {
+                          if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+                            const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+                            const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+                            let tokenId = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
+                            // if (i < 10) {
+                            //   console.log(i + event.type + " contractAccount: " + contractAccount + ", from: " + from + ", to: " + to + ", tokens: " + tokens + " " + JSON.stringify(event));
+                            // }
+                            if ((from == account || to == account)) {
+                              if (event.address == "0x139CF58D69779Eea2edC9d0000A8F9D186d89bbB") {
+                                console.log("from: " + from + ", to: " + to + ", tokenId: " + tokenId);
+                              }
+                              const record = {
+                                txHash,
+                                blockNumber,
+                                timestamp,
+                                address: event.address,
+                                type: 'transfer',
+                                from,
+                                to,
+                                tokenId: tokenId.toString(),
+                              };
+                              context.commit('addAccountERC721Asset', record);
+                            }
+                          }
+                        }
+                      } else {
+                        // console.log("account not found: " + event.address);
                       }
-                    } else {
-                      console.log("account not found: " + event.address);
                     }
                   }
                 }
+                i++;
               }
-              i++;
             }
             // if (context.state.sync.halt) {
             //   break;
