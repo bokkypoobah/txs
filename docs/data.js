@@ -230,11 +230,9 @@ const dataModule = {
       });
     },
     addAccountToken(state, token) {
-      // console.log("addAccountTokenId: " + JSON.stringify(token));
       const chainId = store.getters['connection/chainId'];
       const contract = ethers.utils.getAddress(token.contract);
       const contractData = state.accounts[chainId][contract];
-      // console.log(JSON.stringify(contractData));
       if (!(token.tokenId in contractData.assets)) {
         Vue.set(state.accounts[chainId][contract].assets, token.tokenId, {
           name: token.name,
@@ -242,11 +240,28 @@ const dataModule = {
           image: token.image,
           type: token.kind,
           isFlagged: token.isFlagged,
+          events: {},
         });
         console.log("Added token: " + contract + ":" + token.tokenId + " => " + JSON.stringify(state.accounts[chainId][contract].assets[token.tokenId]));
       }
-        // console.log("addAccountERC721Asset: " + JSON.stringify(record, null, 2));
-        // console.log("accountData: " + JSON.stringify(accountData));
+    },
+    addAccountTokenEvent(state, event) {
+      console.log("addAccountTokenEvent: " + JSON.stringify(event));
+      const chainId = store.getters['connection/chainId'];
+      const contractData = state.accounts[chainId][event.contract];
+      const asset = contractData.assets[event.tokenId];
+      console.log("  asset: " + JSON.stringify(asset));
+      // if (!(token.tokenId in contractData.assets)) {
+      //   Vue.set(state.accounts[chainId][contract].assets, token.tokenId, {
+      //     name: token.name,
+      //     description: token.description,
+      //     image: token.image,
+      //     type: token.kind,
+      //     isFlagged: token.isFlagged,
+      //     events: {},
+      //   });
+      //   console.log("Added token: " + contract + ":" + token.tokenId + " => " + JSON.stringify(state.accounts[chainId][contract].assets[token.tokenId]));
+      // }
     },
     addENSName(state, nameInfo) {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
@@ -622,7 +637,7 @@ const dataModule = {
             const item = context.state.accounts[chainId][account];
             context.commit('setSyncCompleted', 1);
             console.log("--- Building assets for " + account + " --- ");
-            // console.log("item: " + JSON.stringify(item, null, 2).substring(0, 200) + "...");
+            console.log("item: " + JSON.stringify(item, null, 2).substring(0, 200) + "...");
 
             // -- Create list of ERC-20, ERC-721 & ERC-1155 events
             const events = [];
@@ -693,12 +708,14 @@ const dataModule = {
               }
             }
 
-            // Create ERC-721, ERC-1155 tokens and ERC-20 transactions
+            // TODO ERC-20 transactions
+            // Create ERC-721, ERC-1155 tokens
             const tokenIdsToCreateMap = {};
             for (let event of events) {
               const contractData = context.state.accounts[chainId][event.contract] || null;
               if (contractData) {
                 if (contractData.type != event.type) {
+                  // TODO
                   // console.log("TODO contractData: " + JSON.stringify(contractData));
                   // console.log("         vs event: " + JSON.stringify(event));
                 } else {
@@ -707,12 +724,13 @@ const dataModule = {
                     const key = event.contract + ':' + event.tokenId;
                     if (!(event.tokenId in assets) && !(key in tokenIdsToCreateMap)) {
                       tokenIdsToCreateMap[key] = true;
+                    // } else {
+                      // console.log("Found " + JSON.stringify(assets[event.tokenId]));
                     }
                   }
                 }
               }
             }
-            console.log("tokenIdsToCreateMap: " + JSON.stringify(tokenIdsToCreateMap));
             const tokenIdsToCreate = Object.keys(tokenIdsToCreateMap);
             context.commit('setSyncSection', { section: 'Build Tokens', total: tokenIdsToCreate.length });
 
@@ -721,8 +739,6 @@ const dataModule = {
             const DELAYINMILLIS = 1000;
             for (let i = 0; i < tokenIdsToCreate.length && !context.state.sync.halt; i += GETTOKENINFOBATCHSIZE) {
               const batch = tokenIdsToCreate.slice(i, parseInt(i) + GETTOKENINFOBATCHSIZE);
-              // console.log("batch: " + JSON.stringify(batch));
-
               let continuation = null;
               do {
                 let url = "https://api.reservoir.tools/tokens/v5?";
@@ -733,39 +749,44 @@ const dataModule = {
                 }
                 url = url + (continuation != null ? "&continuation=" + continuation : '');
                 url = url + "&limit=50";
-                console.log(url);
                 const data = await fetch(url).then(response => response.json());
                 context.commit('setSyncCompleted', parseInt(i) + batch.length);
-                // state.progress.completed = parseInt(state.progress.completed) + data.tokens.length;
                 continuation = data.continuation;
-                // console.log(JSON.stringify(data, null, 2));
                 for (let record of data.tokens) {
-                  // console.log(JSON.stringify(record.token));
                   context.commit('addAccountToken', record.token);
-                //   prices[price.token.tokenId] = {
-                //     floorAskPrice: price.market && price.market.floorAsk && price.market.floorAsk.price && price.market.floorAsk.price.amount && price.market.floorAsk.price.amount.decimal || null,
-                //     source: price.market && price.market.floorAsk && price.market.floorAsk.source && price.market.floorAsk.source.name || null,
-                //   };
                 }
                 await delay(DELAYINMILLIS);
-              } while (continuation != null /*&& !state.halt && !state.sync.error */);
+              } while (continuation != null);
             }
 
+            for (let event of events) {
+              const contractData = context.state.accounts[chainId][event.contract] || null;
+              if (contractData) {
+                if (contractData.type != event.type) {
+                  // TODO
+                  // console.log("TODO contractData: " + JSON.stringify(contractData));
+                  // console.log("         vs event: " + JSON.stringify(event));
+                } else {
+                  const assets = contractData.assets;
+                  // console.log(JSON.stringify(assets));
+                  if (event.type == 'erc721' || event.type == 'erc1155') {
+                    const key = event.contract + ':' + event.tokenId;
+                    if (event.tokenId in assets) {
+                      const token = assets[event.tokenId];
+                      console.log(event.contract + ":" + event.tokenId + " => " + JSON.stringify(token));
+                      const tokenEvents = token.events;
+                      let include = true;
+                      if (include) {
+                        context.commit('addAccountTokenEvent', event);
+                      }
 
-
-            // for (let tokensIdToCreateIndex in tokenIdsToCreate) {
-            //   const tokenIdToCreate = tokenIdsToCreate[tokensIdToCreateIndex];
-            //   context.commit('setSyncCompleted', parseInt(tokensIdToCreateIndex) + 1);
-            //   console.log(tokenIdToCreate);
-            // //   // const accountInfo = await getAccountInfo(tokenIdsToCreate, provider)
-            // //   // if (accountInfo.account) {
-            // //     context.commit('addAccountTokenId', tokenIdsToCreate);
-            // //     // console.log("Added tokenIdsToCreate: " + tokenIdsToCreate);
-            // //   // }
-            //   if (context.state.sync.halt) {
-            //     break;
-            //   }
-            // }
+                    // } else {
+                      // console.log("Found " + JSON.stringify(assets[event.tokenId]));
+                    }
+                  }
+                }
+              }
+            }
 
 
             if (false) {
