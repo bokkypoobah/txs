@@ -251,17 +251,19 @@ const dataModule = {
       const contractData = state.accounts[chainId][event.contract];
       const asset = contractData.assets[event.tokenId];
       console.log("  asset: " + JSON.stringify(asset));
-      // if (!(token.tokenId in contractData.assets)) {
-      //   Vue.set(state.accounts[chainId][contract].assets, token.tokenId, {
-      //     name: token.name,
-      //     description: token.description,
-      //     image: token.image,
-      //     type: token.kind,
-      //     isFlagged: token.isFlagged,
-      //     events: {},
-      //   });
-      //   console.log("Added token: " + contract + ":" + token.tokenId + " => " + JSON.stringify(state.accounts[chainId][contract].assets[token.tokenId]));
-      // }
+      if (!(event.txHash in asset.events)) {
+        Vue.set(state.accounts[chainId][event.contract].assets[event.tokenId].events, event.txHash, {});
+      }
+      if (!(event.logIndex in asset.events[event.txHash])) {
+        Vue.set(state.accounts[chainId][event.contract].assets[event.tokenId].events[event.txHash], event.logIndex, {
+          blockNumber: event.blockNumber,
+          timestamp: event.timestamp,
+          from: event.from,
+          to: event.to,
+          value: event.value && event.value || null,
+        });
+        console.log("Added event: " + JSON.stringify(state.accounts[chainId][event.contract].assets[event.tokenId], null, 2));
+      }
     },
     addENSName(state, nameInfo) {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
