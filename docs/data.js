@@ -664,22 +664,17 @@ const dataModule = {
             }
             // console.log("events: " + JSON.stringify(events, null, 2));
 
+            // Create ERC-721, ERC-1155 and ERC-20 collections
             const contractsToCreateMap = {};
             for (let event of events) {
-              if (!(event.contract in context.state.accounts[chainId])) {
-                if (!(event.contract in contractsToCreateMap)) {
-                  contractsToCreateMap[event.contract] = true;
-                }
+              if (!(event.contract in context.state.accounts[chainId]) && !(event.contract in contractsToCreateMap)) {
+                contractsToCreateMap[event.contract] = true;
               }
             }
             const contractsToCreate = Object.keys(contractsToCreateMap);
-            console.log("contractsToCreate: " + JSON.stringify(contractsToCreate, null, 2));
             context.commit('setSyncSection', { section: 'Build Contracts', total: contractsToCreate.length });
-
-            // Create ERC-721, ERC-1155 and ERC-20 collections
             for (let contractsToCreateIndex in contractsToCreate) {
               const contractToCreate = contractsToCreate[contractsToCreateIndex];
-              console.log("contractToCreate: " + contractToCreate);
               context.commit('setSyncCompleted', parseInt(contractsToCreateIndex) + 1);
               const accountInfo = await getAccountInfo(contractToCreate, provider)
               if (accountInfo.account) {
