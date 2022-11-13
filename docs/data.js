@@ -664,7 +664,7 @@ const dataModule = {
             }
             // console.log("events: " + JSON.stringify(events, null, 2));
 
-            // Create ERC-721, ERC-1155 and ERC-20 collections
+            // Create ERC-721, ERC-1155 and ERC-20 contracts
             const contractsToCreateMap = {};
             for (let event of events) {
               if (!(event.contract in context.state.accounts[chainId]) && !(event.contract in contractsToCreateMap)) {
@@ -685,6 +685,21 @@ const dataModule = {
                 break;
               }
             }
+
+            // Create ERC-721, ERC-1155 tokens and ERC-20 transactions
+            const eventsToCreateMap = {};
+            for (let event of events) {
+              const contractData = context.state.accounts[chainId][event.contract] || null;
+              if (contractData) {
+                if (contractData.type != event.type) {
+                  console.log("TODO contractData: " + JSON.stringify(contractData));
+                  console.log("         vs event: " + JSON.stringify(event));
+                } else {
+                  
+                }
+              }
+            }
+
 
             if (false) {
               let i = 0;
