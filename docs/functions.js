@@ -344,3 +344,5 @@ function sleep(milliseconds) {
     currentDate = Date.now();
   } while (currentDate - date < milliseconds);
 }
+
+const delay = ms => new Promise(res => setTimeout(res, ms));
