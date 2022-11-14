@@ -246,6 +246,34 @@ const dataModule = {
         console.log("Added token: " + contract + ":" + token.tokenId + " => " + JSON.stringify(state.accounts[chainId][contract].assets[token.tokenId]));
       }
     },
+    addAccountERC20Transfers(state, transfer) {
+      console.log("addAccountERC20Transfers: " + JSON.stringify(transfer));
+      const chainId = store.getters['connection/chainId'];
+      const contract = ethers.utils.getAddress(transfer.contract);
+      const contractData = state.accounts[chainId][contract];
+
+      if (!(transfer.txHash in contractData.erc20transfers)) {
+        Vue.set(state.accounts[chainId][contract].erc20transfers, transfer.txHash, {});
+      //   Vue.set(state.accounts[chainId][contract].assets, token.tokenId, {
+      //     name: token.name,
+      //     description: token.description,
+      //     image: token.image,
+      //     type: token.kind,
+      //     isFlagged: token.isFlagged,
+      //     events: {},
+      //   });
+        console.log("Add txHash");
+        // console.log("Added transfer: " + contract + ":" + token.tokenId + " => " + JSON.stringify(state.accounts[chainId][contract].assets[token.tokenId]));
+      }
+      if (true || !(transfer.logIndex in state.accounts[chainId][contract].erc20transfers[transfer.txHash])) {
+        console.log("Add logIndex");
+        const tempTransfer = {...transfer};
+        delete tempTransfer.txHash;
+        delete tempTransfer.logIndex;
+        Vue.set(state.accounts[chainId][contract].erc20transfers[transfer.txHash], transfer.logIndex, tempTransfer);
+      }
+      console.log("Added " + JSON.stringify(state.accounts[chainId][contract].erc20transfers[transfer.txHash]));
+    },
     addAccountTokenEvent(state, event) {
       console.log("addAccountTokenEvent: " + JSON.stringify(event));
       const chainId = store.getters['connection/chainId'];
@@ -625,6 +653,7 @@ const dataModule = {
             }
           }
 
+          // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
         } else if (section == 'buildAssets') {
           const accountsToSync = [];
           const chainData = context.state.accounts[chainId] || {};
@@ -724,7 +753,6 @@ const dataModule = {
                 } else {
                   const assets = contractData.assets;
                   if (event.type == 'erc721' || event.type == 'erc1155') {
-                    const key = event.contract + ':' + event.tokenId;
                     if (!(event.tokenId in assets) && !(key in tokenIdsToCreateMap)) {
                       tokenIdsToCreateMap[key] = true;
                     // } else {
@@ -837,15 +865,65 @@ const dataModule = {
                       events.push(eventRecord);
                     } else {
                       if (event.type != 'erc721' && event.type != 'erc1155') {
-                        console.log("NOT PROCESSED: " + event.type + " contract: " + contract + " " + txHash + " " + JSON.stringify(event));                        
+                        console.log("NOT PROCESSED: " + event.type + " contract: " + contract + " " + txHash + " " + JSON.stringify(event));
                       }
                     }
                   }
                 }
               }
             }
-            console.log("events: " + JSON.stringify(events, null, 2));
+            // console.log("events: " + JSON.stringify(events, null, 2));
+
+            for (let event of events) {
+              console.log(JSON.stringify(event));
+              const contractData = context.state.accounts[chainId][event.contract] || null;
+              if (contractData) {
+                if (contractData.type != event.type) {
+                  // TODO
+                  // console.log("TODO contractData: " + JSON.stringify(contractData));
+                  // console.log("         vs event: " + JSON.stringify(event));
+                } else {
+                  const transfer = event;
+                  const erc20transfers = contractData.erc20transfers;
+                  // console.log(JSON.stringify(erc20transfers));
+                  if (true || !(transfer.txHash in erc20transfers) || !(transfer.logIndex in erc20transfers[transfer.txHash])) {
+                    const erc20 = new ethers.Contract(transfer.contract, ERC20ABI, provider);
+                    let fromBalance = 0;
+                    try {
+                      fromBalance = await erc20.balanceOf(transfer.from, { blockTag: transfer.blockNumber });
+                    } catch (e) {
+                    }
+                    let toBalance = 0;
+                    try {
+                      toBalance = await erc20.balanceOf(transfer.to, { blockTag: transfer.blockNumber });
+                    } catch (e) {
+                    }
+                    let fromBalancePrevBlock = 0;
+                    try {
+                      fromBalancePrevBlock = await erc20.balanceOf(transfer.from, { blockTag: parseInt(transfer.blockNumber) - 1 });
+                    } catch (e) {
+                    }
+                    let toBalancePrevBlock = 0;
+                    try {
+                      toBalancePrevBlock = await erc20.balanceOf(transfer.to, { blockTag: parseInt(transfer.blockNumber) - 1 });
+                    } catch (e) {
+                    }
+                    console.log("from prev: " + (fromBalancePrevBlock == null ? 'null' : ethers.BigNumber.from(fromBalancePrevBlock).toString()) + " curr: " + (fromBalance == null ? 'null' : ethers.BigNumber.from(fromBalance).toString()));
+                    console.log("to prev: " + (toBalancePrevBlock == null ? 'null' : ethers.BigNumber.from(toBalancePrevBlock).toString()) + " curr: " + (toBalance == null ? 'null' : ethers.BigNumber.from(toBalance).toString()));
+                    transfer.fromBalance = ethers.BigNumber.from(fromBalance).toString();
+                    transfer.fromBalancePrevBlock = ethers.BigNumber.from(fromBalancePrevBlock).toString();
+                    transfer.toBalance = ethers.BigNumber.from(toBalance).toString();
+                    transfer.toBalancePrevBlock = ethers.BigNumber.from(toBalancePrevBlock).toString();
+                    context.commit('addAccountERC20Transfers', transfer);
+                  }
+                }
+              }
+
+            }
           }
+          context.dispatch('saveData', ['accounts']);
+          context.commit('setSyncSection', { section: null, total: null });
+          console.log("end buildERC20s - accountsToSync: " + JSON.stringify(accountsToSync));
 
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
