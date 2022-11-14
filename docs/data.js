@@ -770,12 +770,9 @@ const dataModule = {
                   // console.log("         vs event: " + JSON.stringify(event));
                 } else {
                   const assets = contractData.assets;
-                  // console.log(JSON.stringify(assets));
                   if (event.type == 'erc721' || event.type == 'erc1155') {
-                    const key = event.contract + ':' + event.tokenId;
                     if (event.tokenId in assets) {
                       const token = assets[event.tokenId];
-                      // console.log(event.contract + ":" + event.tokenId + " => " + JSON.stringify(token));
                       const tokenEvents = token.events;
                       if (!token.events[event.txHash] || !token.events[event.txHash][event.logIndex]) {
                         context.commit('addAccountTokenEvent', event);

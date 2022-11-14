@@ -100,6 +100,9 @@ const Accounts = {
             <div v-else-if="data.item.type == 'eoa' && data.item.account != ensOrAccount(data.item.account)">
               <b-avatar rounded variant="light" size="3.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAccount(data.item.account)" v-b-popover.hover="'ENS avatar if set'"></b-avatar>
             </div>
+            <div v-else-if="data.item.type == 'erc20'">
+              <b-avatar rounded variant="light" size="3.0rem" :src="'https://raw.githubusercontent.com/Uniswap/assets/master/blockchains/ethereum/assets/' + data.item.account + '/logo.png'" v-b-popover.hover="'ERC-20 logo if available'"></b-avatar>
+            </div>
           </template>
           <template #cell(account)="data">
             <b-link class="sm" :id="'popover-target-' + data.item.account">
@@ -138,6 +141,9 @@ const Accounts = {
                   </span>
                   <span v-if="data.item.type == 'erc721' || data.item.type == 'erc1155'">
                     <b-badge variant="secondary" v-b-popover.hover="'ERC-721 collection name'">{{ data.item.collection.name }}</b-badge>
+                  </span>
+                  <span v-if="data.item.type == 'erc20'">
+                    <b-badge variant="secondary" v-b-popover.hover="'ERC-20 collection name'">{{ data.item.contract.symbol + ' - ' + data.item.contract.name }}</b-badge>
                   </span>
                 </div>
                 <div class="m-0 pt-1 pr-1">
