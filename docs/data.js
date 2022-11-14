@@ -247,32 +247,20 @@ const dataModule = {
       }
     },
     addAccountERC20Transfers(state, transfer) {
-      console.log("addAccountERC20Transfers: " + JSON.stringify(transfer));
+      // console.log("addAccountERC20Transfers: " + JSON.stringify(transfer));
       const chainId = store.getters['connection/chainId'];
       const contract = ethers.utils.getAddress(transfer.contract);
       const contractData = state.accounts[chainId][contract];
-
       if (!(transfer.txHash in contractData.erc20transfers)) {
         Vue.set(state.accounts[chainId][contract].erc20transfers, transfer.txHash, {});
-      //   Vue.set(state.accounts[chainId][contract].assets, token.tokenId, {
-      //     name: token.name,
-      //     description: token.description,
-      //     image: token.image,
-      //     type: token.kind,
-      //     isFlagged: token.isFlagged,
-      //     events: {},
-      //   });
-        console.log("Add txHash");
-        // console.log("Added transfer: " + contract + ":" + token.tokenId + " => " + JSON.stringify(state.accounts[chainId][contract].assets[token.tokenId]));
       }
-      if (true || !(transfer.logIndex in state.accounts[chainId][contract].erc20transfers[transfer.txHash])) {
-        console.log("Add logIndex");
+      if (!(transfer.logIndex in state.accounts[chainId][contract].erc20transfers[transfer.txHash])) {
         const tempTransfer = {...transfer};
         delete tempTransfer.txHash;
         delete tempTransfer.logIndex;
         Vue.set(state.accounts[chainId][contract].erc20transfers[transfer.txHash], transfer.logIndex, tempTransfer);
       }
-      console.log("Added " + JSON.stringify(state.accounts[chainId][contract].erc20transfers[transfer.txHash]));
+      console.log("Added " + transfer.txHash + " " + JSON.stringify(state.accounts[chainId][contract].erc20transfers[transfer.txHash]));
     },
     addAccountTokenEvent(state, event) {
       console.log("addAccountTokenEvent: " + JSON.stringify(event));
@@ -875,7 +863,6 @@ const dataModule = {
             // console.log("events: " + JSON.stringify(events, null, 2));
 
             for (let event of events) {
-              console.log(JSON.stringify(event));
               const contractData = context.state.accounts[chainId][event.contract] || null;
               if (contractData) {
                 if (contractData.type != event.type) {
@@ -885,8 +872,7 @@ const dataModule = {
                 } else {
                   const transfer = event;
                   const erc20transfers = contractData.erc20transfers;
-                  // console.log(JSON.stringify(erc20transfers));
-                  if (true || !(transfer.txHash in erc20transfers) || !(transfer.logIndex in erc20transfers[transfer.txHash])) {
+                  if (!(transfer.txHash in erc20transfers) || !(transfer.logIndex in erc20transfers[transfer.txHash])) {
                     const erc20 = new ethers.Contract(transfer.contract, ERC20ABI, provider);
                     let fromBalance = 0;
                     try {
@@ -908,8 +894,8 @@ const dataModule = {
                       toBalancePrevBlock = await erc20.balanceOf(transfer.to, { blockTag: parseInt(transfer.blockNumber) - 1 });
                     } catch (e) {
                     }
-                    console.log("from prev: " + (fromBalancePrevBlock == null ? 'null' : ethers.BigNumber.from(fromBalancePrevBlock).toString()) + " curr: " + (fromBalance == null ? 'null' : ethers.BigNumber.from(fromBalance).toString()));
-                    console.log("to prev: " + (toBalancePrevBlock == null ? 'null' : ethers.BigNumber.from(toBalancePrevBlock).toString()) + " curr: " + (toBalance == null ? 'null' : ethers.BigNumber.from(toBalance).toString()));
+                    // console.log("from prev: " + (fromBalancePrevBlock == null ? 'null' : ethers.BigNumber.from(fromBalancePrevBlock).toString()) + " curr: " + (fromBalance == null ? 'null' : ethers.BigNumber.from(fromBalance).toString()));
+                    // console.log("to prev: " + (toBalancePrevBlock == null ? 'null' : ethers.BigNumber.from(toBalancePrevBlock).toString()) + " curr: " + (toBalance == null ? 'null' : ethers.BigNumber.from(toBalance).toString()));
                     transfer.fromBalance = ethers.BigNumber.from(fromBalance).toString();
                     transfer.fromBalancePrevBlock = ethers.BigNumber.from(fromBalancePrevBlock).toString();
                     transfer.toBalance = ethers.BigNumber.from(toBalance).toString();
