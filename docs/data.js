@@ -804,9 +804,48 @@ const dataModule = {
             }
           }
           console.log("buildERC20s - accountsToSync: " + JSON.stringify(accountsToSync));
-
-
-
+          for (const accountIndex in accountsToSync) {
+            context.commit('setSyncSection', { section: 'Build ERC20s', total: null });
+            const account = accountsToSync[accountIndex];
+            const item = context.state.accounts[chainId][account];
+            context.commit('setSyncCompleted', 1);
+            console.log("--- Building ERC20s for " + account + " --- ");
+            console.log("item: " + JSON.stringify(item, null, 2).substring(0, 200) + "...");
+            // -- Create list of ERC-20 events
+            const events = [];
+            for (const [txHash, logIndexes] of Object.entries(item.events)) {
+              if (txHash in context.state.txs[chainId]) {
+                const txItem = context.state.txs[chainId][txHash];
+                const blockNumber = txItem.tx.blockNumber;
+                const timestamp = txItem.timestamp;
+                for (const [logIndex, event] of Object.entries(logIndexes)) {
+                  if (!event.processed) {
+                    let eventRecord = null;
+                    const contract = event.address;
+                    if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+                      const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+                      const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+                      if ((from == account || to == account)) {
+                        // ERC-20 Transfer
+                        if (event.topics.length == 3) {
+                          const tokens = ethers.BigNumber.from(event.data).toString();
+                          eventRecord = { txHash, blockNumber, timestamp, logIndex, contract, from, to, tokens, type: event.type };
+                        }
+                      }
+                    }
+                    if (eventRecord != null) {
+                      events.push(eventRecord);
+                    } else {
+                      if (event.type != 'erc721' && event.type != 'erc1155') {
+                        console.log("NOT PROCESSED: " + event.type + " contract: " + contract + " " + txHash + " " + JSON.stringify(event));                        
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            console.log("events: " + JSON.stringify(events, null, 2));
+          }
 
         } else if (section == 'computeTxs') {
           console.log("computeTxs");
