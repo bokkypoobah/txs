@@ -220,7 +220,8 @@ const Account = {
           </template>
         </b-table>
 
-        <b-table v-if="settings.view == 'holdings'" small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedHoldings" show-empty empty-html="Add your accounts in the Accounts tab, sync, then select one account on the top left" head-variant="light" class="m-0 mt-1">
+        <!-- <b-table v-if="settings.view == 'holdings'" small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedHoldings" show-empty empty-html="Add your accounts in the Accounts tab, sync, then select one account on the top left" head-variant="light" class="m-0 mt-1"> -->
+        <b-table v-if="settings.view == 'holdings'" small fixed striped responsive hover :items="pagedFilteredSortedHoldings" show-empty empty-html="Add your accounts in the Accounts tab, sync, then select one account on the top left" head-variant="light" class="m-0 mt-1">
           <template #cell(number)="data">
             <b-form-checkbox size="sm" :checked="settings.selectedTransactions[data.item.txHash] ? 1 : 0" value="1" @change="toggleSelectedTransactions([data.item])">
               {{ parseInt(data.index) + ((settings.holdings.currentPage - 1) * settings.holdings.pageSize) + 1 }}
@@ -474,121 +475,51 @@ const Account = {
     // --- HOLDINGS ---
     filteredHoldings() {
       const results = [];
-      // console.log("filteredHoldings - settings.holdings.selectedDate: " + this.settings.holdings.selectedDate);
-      let selectedDate = moment();
+      let selectedDate = moment().unix();
       if (this.settings.holdings.selectedDate && this.settings.holdings.selectedDate.length > 9) {
-        selectedDate = moment(this.settings.holdings.selectedDate);
+        selectedDate = moment(this.settings.holdings.selectedDate).unix();
       }
-      console.log("filteredHoldings - selectedDate: " + selectedDate.toString());
-      const cutoff = selectedDate.unix();
+      console.log("filteredHoldings - selectedDate: " + moment(selectedDate).toString());
 
       let j = 0;
       for (const [chainId, accounts] of Object.entries(this.accounts)) {
         for (const [account, accountData] of Object.entries(accounts)) {
           if (accountData.type == 'erc721' || accountData.type == 'erc1155') {
-            if (j < 10) {
-              // console.log(chainId + " " + account + " " + accountData.type);
-            }
             for (const [tokenId, assetData] of Object.entries(accountData.assets)) {
               if (j < 10) {
-                // console.log("  " + tokenId + " " + JSON.stringify(assetData, null, 2));
+                console.log(tokenId + " assetData: " + JSON.stringify(assetData, null, 2));
               }
-
               let owner = null;
               const events = [];
               for (const [txHash, logs] of Object.entries(assetData.events)) {
-                if (j < 10) {
-                  // console.log("    " + txHash + " " + JSON.stringify(logs, null, 2));
-                }
-
                 for (const [logIndex, log] of Object.entries(logs)) {
-                  if (j < 10) {
-                    console.log("      " + logIndex + " " + JSON.stringify(log, null, 2));
-                  }
-                  if (log.timestamp <= cutoff) {
+                  if (log.timestamp <= selectedDate) {
                     events.push({ ...log });
-                  } else {
-                    // console.log("Excluding: " + JSON.stringify(log));
                   }
                 }
-
               }
               if (j < 10) {
-                console.log("    " + tokenId + " events: " + JSON.stringify(events, null, 2));
+                console.log(tokenId + " events: " + JSON.stringify(events, null, 2));
               }
               if (events.length > 0) {
                 events.sort((a, b) => b.timestamp - a.timestamp);
                 owner = events[0].to;
-                console.log("    " + account + "/" + tokenId + " owned by: " + owner);
+                // console.log(account + "/" + tokenId + " => " + owner);
+                if (owner == this.settings.selectedAccount) {
+                  results.push({
+                    owner,
+                    contract: account,
+                    tokenId,
+                    collection: accountData.collection,
+                    description: assetData.description,
+                    image: assetData.image,
+                    name: assetData.name,
+                    type: assetData.type,
+                  });
+                }
               }
-
-
               j++;
             }
-          }
-        }
-      }
-
-
-
-      let startPeriod = null;
-      let endPeriod = null;
-      const txhashFilterLower = this.settings.txhashFilter && this.settings.txhashFilter.toLowerCase() || null;
-      const accountFilterLower = this.settings.accountFilter && this.settings.accountFilter.toLowerCase() || null;
-      if (this.settings.period != null && this.settings.period != "nodata") {
-        const periodRecords = this.periodOptions.filter(e => e.value == this.settings.period);
-        startPeriod = periodRecords[0].data.startPeriod;
-        endPeriod = periodRecords[0].data.endPeriod;
-      }
-      for (const [chainId, chainData] of Object.entries(this.txs)) {
-        for (const [txHash, item] of Object.entries(chainData)) {
-          let include = true;
-
-          if (this.settings.selectedAccount != null) {
-            if (
-              !(item.tx.from == this.settings.selectedAccount) &&
-              !(item.tx.to == this.settings.selectedAccount)
-            ) {
-              include = false;
-            }
-          } else {
-            include = false;
-          }
-
-          if (startPeriod != null && item.timestamp < startPeriod.unix()) {
-            include = false;
-          }
-          if (include && endPeriod != null && item.timestamp > endPeriod.unix()) {
-            include = false;
-          }
-          if (include && txhashFilterLower != null) {
-            if (!(txHash.includes(txhashFilterLower))) {
-              include = false;
-            }
-          }
-          if (include && accountFilterLower != null) {
-            const fromENS = this.ensMap[item.tx.from] || null;
-            if (
-              !(item.tx.from.toLowerCase().includes(accountFilterLower)) &&
-              !(item.tx.to.toLowerCase().includes(accountFilterLower)) &&
-              !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
-            ) {
-              include = false;
-            }
-          }
-          if (include) {
-            const info = parseTx(item, this.settings.selectedAccount);
-            results.push({
-              chainId,
-              txHash,
-              blockNumber: item.blockNumber,
-              transactionIndex: item.transactionIndex,
-              timestamp: item.timestamp,
-              from: item.tx.from,
-              to: item.tx.to,
-              value: item.tx.value,
-              ...info,
-            });
           }
         }
       }
@@ -596,31 +527,31 @@ const Account = {
     },
     filteredSortedHoldings() {
       const results = this.filteredHoldings;
-      if (this.settings.sortOption == 'timestampasc') {
-        results.sort((a, b) => a.timestamp - b.timestamp);
-      } else if (this.settings.sortOption == 'timestampdsc') {
-        results.sort((a, b) => b.timestamp - a.timestamp);
-      } else if (this.settings.sortOption == 'blocknumberasc') {
-        results.sort((a, b) => {
-          if (a.blockNumber == b.blockNumber) {
-            return a.transactionIndex - b.transactionIndex;
-          } else {
-            return a.blockNumber - b.blockNumber;
-          }
-        });
-      } else if (this.settings.sortOption == 'blocknumberdsc') {
-        results.sort((a, b) => {
-          if (a.blockNumber == b.blockNumber) {
-            return b.transactionIndex - a.transactionIndex;
-          } else {
-            return b.blockNumber - a.blockNumber
-          }
-        });
-      }
+      // if (this.settings.sortOption == 'timestampasc') {
+      //   results.sort((a, b) => a.timestamp - b.timestamp);
+      // } else if (this.settings.sortOption == 'timestampdsc') {
+      //   results.sort((a, b) => b.timestamp - a.timestamp);
+      // } else if (this.settings.sortOption == 'blocknumberasc') {
+      //   results.sort((a, b) => {
+      //     if (a.blockNumber == b.blockNumber) {
+      //       return a.transactionIndex - b.transactionIndex;
+      //     } else {
+      //       return a.blockNumber - b.blockNumber;
+      //     }
+      //   });
+      // } else if (this.settings.sortOption == 'blocknumberdsc') {
+      //   results.sort((a, b) => {
+      //     if (a.blockNumber == b.blockNumber) {
+      //       return b.transactionIndex - a.transactionIndex;
+      //     } else {
+      //       return b.blockNumber - a.blockNumber
+      //     }
+      //   });
+      // }
       return results;
     },
     pagedFilteredSortedHoldings() {
-      return this.filteredSortedHoldings.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
+      return this.filteredSortedHoldings.slice((this.settings.holdings.currentPage - 1) * this.settings.holdings.pageSize, this.settings.holdings.currentPage * this.settings.holdings.pageSize);
     },
   },
   methods: {
@@ -768,6 +699,7 @@ const Account = {
       if ('version' in tempSettings && tempSettings.version == 3) {
         this.settings = tempSettings;
         this.settings.transactions.currentPage = 1;
+        this.settings.holdings.currentPage = 1;
       }
     }
     this.reschedule = true;
