@@ -4,8 +4,17 @@ const Account = {
       <b-card no-body no-header class="border-0">
 
         <div class="d-flex flex-wrap m-0 p-0">
-          <div class="mt-0 pr-1" style="max-width: 16.0rem;">
+          <div class="mt-0 pr-1">
+            <b-form-select size="sm" v-model="settings.view" @change="saveSettings" :options="views" v-b-popover.hover.top="'Select view'"></b-form-select>
+          </div>
+          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.selectedAccount" @change="saveSettings" :options="accountsOptions" v-b-popover.hover.top="'Select account'"></b-form-select>
+          </div>
+          <div v-if="settings.view == 'transactions' || settings.view == 'events'" class="mt-0 pr-1">
+            <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
+          </div>
+          <div v-if="settings.view == 'holdings'" class="mt-0 pr-1">
+            <b-form-datepicker size="sm" v-model="settings.holdings.selectedDate" @input="saveSettings" placeholder="Current date" today-button reset-button :date-format-options="{ year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' }" label-reset-button="Current Date"></b-form-datepicker>
           </div>
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input>
@@ -18,9 +27,6 @@ const Account = {
           </div>
           <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts, or not'"></b-form-select>
-          </div>
-          <div class="mt-0 pr-1">
-            <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
@@ -61,20 +67,22 @@ const Account = {
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-1">
-            <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
+            <b-form-select size="sm" v-model="settings.transactions.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
             <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedTransactions.length + '/' + totalTransactions }}</font>
           </div>
           <div class="mt-0 pr-1">
-            <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedTransactions.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
+            <b-pagination size="sm" v-model="settings.transactions.currentPage" @input="saveSettings" :total-rows="filteredSortedTransactions.length" :per-page="settings.transactions.pageSize" style="height: 0;"></b-pagination>
           </div>
           <div class="mt-0 pl-1">
-            <b-form-select size="sm" v-model="settings.pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
+            <b-form-select size="sm" v-model="settings.transactions.pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
           </div>
         </div>
 
-        <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add your accounts in the Accounts tab, sync, then select one account on the top left" head-variant="light" class="m-0 mt-1">
+        {{ settings.holdings.selectedDate }}
+
+        <b-table v-if="settings.view == 'transactions'" small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add your accounts in the Accounts tab, sync, then select one account on the top left" head-variant="light" class="m-0 mt-1">
           <!--
           <template #thead-top="data">
             <b-tr>
@@ -97,7 +105,7 @@ const Account = {
           </template>
           <template #cell(number)="data">
             <b-form-checkbox size="sm" :checked="settings.selectedTransactions[data.item.txHash] ? 1 : 0" value="1" @change="toggleSelectedTransactions([data.item])">
-              {{ parseInt(data.index) + ((settings.currentPage - 1) * settings.pageSize) + 1 }}
+              {{ parseInt(data.index) + ((settings.transactions.currentPage - 1) * settings.transactions.pageSize) + 1 }}
             </b-form-checkbox>
           </template>
           <template #cell(timestamp)="data">
@@ -213,6 +221,14 @@ const Account = {
             </b-popover>
           </template>
         </b-table>
+
+        <b-table v-if="settings.view == 'holdings'" small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedHoldings" show-empty empty-html="Add your accounts in the Accounts tab, sync, then select one account on the top left" head-variant="light" class="m-0 mt-1">
+          <template #cell(number)="data">
+            <b-form-checkbox size="sm" :checked="settings.selectedTransactions[data.item.txHash] ? 1 : 0" value="1" @change="toggleSelectedTransactions([data.item])">
+              {{ parseInt(data.index) + ((settings.holdings.currentPage - 1) * settings.holdings.pageSize) + 1 }}
+            </b-form-checkbox>
+          </template>
+        </b-table>
       </b-card>
     </div>
   `,
@@ -221,6 +237,18 @@ const Account = {
       count: 0,
       reschedule: true,
       settings: {
+        view: 'events',
+        transactions: {
+          currentPage: 1,
+          pageSize: 100,
+          sortOption: 'timestampdsc',
+        },
+        holdings: {
+          selectedDate: null,
+          currentPage: 1,
+          pageSize: 100,
+          sortOption: 'timestampdsc',
+        },
         selectedAccount: null,
         txhashFilter: null,
         accountFilter: null,
@@ -228,11 +256,13 @@ const Account = {
         accountMineFilter: null,
         period: null,
         selectedTransactions: {},
-        currentPage: 1,
-        pageSize: 100,
-        sortOption: 'timestampdsc',
-        version: 2,
+        version: 3,
       },
+      views: [
+        { value: 'transactions', text: 'Transactions' },
+        { value: 'events', text: 'Events' },
+        { value: 'holdings', text: 'Holdings' },
+      ],
       accountTypes: [
         { value: null, text: '(unknown)' },
         { value: 'eoa', text: 'EOA' },
@@ -349,6 +379,7 @@ const Account = {
       }
       return result;
     },
+    // --- TRANSACTIONS ---
     filteredTransactions() {
       const results = [];
       let startPeriod = null;
@@ -416,6 +447,147 @@ const Account = {
     },
     filteredSortedTransactions() {
       const results = this.filteredTransactions;
+      if (this.settings.transactions.sortOption == 'timestampasc') {
+        results.sort((a, b) => a.timestamp - b.timestamp);
+      } else if (this.settings.transactions.sortOption == 'timestampdsc') {
+        results.sort((a, b) => b.timestamp - a.timestamp);
+      } else if (this.settings.transactions.sortOption == 'blocknumberasc') {
+        results.sort((a, b) => {
+          if (a.blockNumber == b.blockNumber) {
+            return a.transactionIndex - b.transactionIndex;
+          } else {
+            return a.blockNumber - b.blockNumber;
+          }
+        });
+      } else if (this.settings.transactions.sortOption == 'blocknumberdsc') {
+        results.sort((a, b) => {
+          if (a.blockNumber == b.blockNumber) {
+            return b.transactionIndex - a.transactionIndex;
+          } else {
+            return b.blockNumber - a.blockNumber
+          }
+        });
+      }
+      return results;
+    },
+    pagedFilteredSortedTransactions() {
+      return this.filteredSortedTransactions.slice((this.settings.transactions.currentPage - 1) * this.settings.transactions.pageSize, this.settings.transactions.currentPage * this.settings.transactions.pageSize);
+    },
+    // --- HOLDINGS ---
+    filteredHoldings() {
+      const results = [];
+      console.log("filteredHoldings - settings.holdings.selectedDate: " + this.settings.holdings.selectedDate);
+      let selectedDate = moment();
+      if (this.settings.holdings.selectedDate && this.settings.holdings.selectedDate.length > 9) {
+        selectedDate = moment(this.settings.holdings.selectedDate);
+      }
+      console.log("filteredHoldings - selectedDate: " + selectedDate.toString());
+
+      let j = 0;
+      for (const [chainId, accounts] of Object.entries(this.accounts)) {
+        for (const [account, accountData] of Object.entries(accounts)) {
+          if (accountData.type == 'erc721' || accountData.type == 'erc1155') {
+            if (j < 10) {
+              // console.log(chainId + " " + account + " " + accountData.type);
+            }
+            for (const [tokenId, assetData] of Object.entries(accountData.assets)) {
+              if (j < 10) {
+                // console.log("  " + tokenId + " " + JSON.stringify(assetData, null, 2));
+              }
+
+              const events = [];
+              for (const [txHash, logs] of Object.entries(assetData.events)) {
+                if (j < 10) {
+                  // console.log("    " + txHash + " " + JSON.stringify(logs, null, 2));
+                }
+
+                for (const [logIndex, log] of Object.entries(logs)) {
+                  if (j < 10) {
+                    // console.log("      " + logIndex + " " + JSON.stringify(log, null, 2));
+                    events.push({ ...log });
+                  }
+                }
+
+              }
+              events.sort((a, b) => a.timestamp - b.timestamp);
+              if (j < 10) {
+                // console.log("    " + tokenId + " events: " + JSON.stringify(events, null, 2));
+              }
+
+
+              j++;
+            }
+          }
+        }
+      }
+
+
+
+      let startPeriod = null;
+      let endPeriod = null;
+      const txhashFilterLower = this.settings.txhashFilter && this.settings.txhashFilter.toLowerCase() || null;
+      const accountFilterLower = this.settings.accountFilter && this.settings.accountFilter.toLowerCase() || null;
+      if (this.settings.period != null && this.settings.period != "nodata") {
+        const periodRecords = this.periodOptions.filter(e => e.value == this.settings.period);
+        startPeriod = periodRecords[0].data.startPeriod;
+        endPeriod = periodRecords[0].data.endPeriod;
+      }
+      for (const [chainId, chainData] of Object.entries(this.txs)) {
+        for (const [txHash, item] of Object.entries(chainData)) {
+          let include = true;
+
+          if (this.settings.selectedAccount != null) {
+            if (
+              !(item.tx.from == this.settings.selectedAccount) &&
+              !(item.tx.to == this.settings.selectedAccount)
+            ) {
+              include = false;
+            }
+          } else {
+            include = false;
+          }
+
+          if (startPeriod != null && item.timestamp < startPeriod.unix()) {
+            include = false;
+          }
+          if (include && endPeriod != null && item.timestamp > endPeriod.unix()) {
+            include = false;
+          }
+          if (include && txhashFilterLower != null) {
+            if (!(txHash.includes(txhashFilterLower))) {
+              include = false;
+            }
+          }
+          if (include && accountFilterLower != null) {
+            const fromENS = this.ensMap[item.tx.from] || null;
+            if (
+              !(item.tx.from.toLowerCase().includes(accountFilterLower)) &&
+              !(item.tx.to.toLowerCase().includes(accountFilterLower)) &&
+              !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
+            ) {
+              include = false;
+            }
+          }
+          if (include) {
+            const info = parseTx(item, this.settings.selectedAccount);
+            results.push({
+              chainId,
+              txHash,
+              blockNumber: item.blockNumber,
+              transactionIndex: item.transactionIndex,
+              timestamp: item.timestamp,
+              from: item.tx.from,
+              to: item.tx.to,
+              value: item.tx.value,
+              ...info,
+            });
+          }
+        }
+      }
+      return results;
+    },
+    filteredSortedHoldings() {
+      const results = this.filteredHoldings;
       if (this.settings.sortOption == 'timestampasc') {
         results.sort((a, b) => a.timestamp - b.timestamp);
       } else if (this.settings.sortOption == 'timestampdsc') {
@@ -439,8 +611,8 @@ const Account = {
       }
       return results;
     },
-    pagedFilteredSortedTransactions() {
-      return this.filteredSortedTransactions.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
+    pagedFilteredSortedHoldings() {
+      return this.filteredSortedHoldings.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
     },
   },
   methods: {
@@ -458,6 +630,7 @@ const Account = {
       return e.toFixed(9);
     },
     saveSettings() {
+      console.log("saveSettings: " + JSON.stringify(this.settings));
       localStorage.accountSettings = JSON.stringify(this.settings);
     },
     toggleSelectedTransactions(items) {
@@ -585,10 +758,11 @@ const Account = {
     store.dispatch('data/restoreState');
     if ('accountSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.accountSettings);
-      if ('version' in tempSettings && tempSettings.version == 2) {
+      if ('version' in tempSettings && tempSettings.version == 3) {
         this.settings = tempSettings;
-        this.settings.currentPage = 1;
+        this.settings.transactions.currentPage = 1;
       }
+      console.log("mounted - settings: " + JSON.stringify(this.settings));
     }
     this.reschedule = true;
     logDebug("Account", "Calling timeoutCallback()");
