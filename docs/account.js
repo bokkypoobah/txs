@@ -476,7 +476,7 @@ const Account = {
     // --- HOLDINGS ---
     filteredHoldings() {
       const results = [];
-      console.log("filteredHoldings - settings.holdings.selectedDate: " + this.settings.holdings.selectedDate);
+      // console.log("filteredHoldings - settings.holdings.selectedDate: " + this.settings.holdings.selectedDate);
       let selectedDate = moment();
       if (this.settings.holdings.selectedDate && this.settings.holdings.selectedDate.length > 9) {
         selectedDate = moment(this.settings.holdings.selectedDate);
@@ -630,7 +630,6 @@ const Account = {
       return e.toFixed(9);
     },
     saveSettings() {
-      console.log("saveSettings: " + JSON.stringify(this.settings));
       localStorage.accountSettings = JSON.stringify(this.settings);
     },
     toggleSelectedTransactions(items) {
@@ -762,7 +761,6 @@ const Account = {
         this.settings = tempSettings;
         this.settings.transactions.currentPage = 1;
       }
-      console.log("mounted - settings: " + JSON.stringify(this.settings));
     }
     this.reschedule = true;
     logDebug("Account", "Calling timeoutCallback()");
