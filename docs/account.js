@@ -80,8 +80,6 @@ const Account = {
           </div>
         </div>
 
-        {{ settings.holdings.selectedDate }}
-
         <b-table v-if="settings.view == 'transactions'" small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add your accounts in the Accounts tab, sync, then select one account on the top left" head-variant="light" class="m-0 mt-1">
           <!--
           <template #thead-top="data">
@@ -482,6 +480,7 @@ const Account = {
         selectedDate = moment(this.settings.holdings.selectedDate);
       }
       console.log("filteredHoldings - selectedDate: " + selectedDate.toString());
+      const cutoff = selectedDate.unix();
 
       let j = 0;
       for (const [chainId, accounts] of Object.entries(this.accounts)) {
@@ -495,6 +494,7 @@ const Account = {
                 // console.log("  " + tokenId + " " + JSON.stringify(assetData, null, 2));
               }
 
+              let owner = null;
               const events = [];
               for (const [txHash, logs] of Object.entries(assetData.events)) {
                 if (j < 10) {
@@ -503,15 +503,23 @@ const Account = {
 
                 for (const [logIndex, log] of Object.entries(logs)) {
                   if (j < 10) {
-                    // console.log("      " + logIndex + " " + JSON.stringify(log, null, 2));
+                    console.log("      " + logIndex + " " + JSON.stringify(log, null, 2));
+                  }
+                  if (log.timestamp <= cutoff) {
                     events.push({ ...log });
+                  } else {
+                    // console.log("Excluding: " + JSON.stringify(log));
                   }
                 }
 
               }
-              events.sort((a, b) => a.timestamp - b.timestamp);
               if (j < 10) {
-                // console.log("    " + tokenId + " events: " + JSON.stringify(events, null, 2));
+                console.log("    " + tokenId + " events: " + JSON.stringify(events, null, 2));
+              }
+              if (events.length > 0) {
+                events.sort((a, b) => b.timestamp - a.timestamp);
+                owner = events[0].to;
+                console.log("    " + account + "/" + tokenId + " owned by: " + owner);
               }
 
 
