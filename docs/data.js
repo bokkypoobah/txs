@@ -216,10 +216,12 @@ const dataModule = {
       const [account, results, chainId] = [info.account, info.results, store.getters['connection/chainId']];
       const accountData = state.accounts[chainId][account];
       for (const result of results) {
+        console.log("addAccountTransactions: " + JSON.stringify(result));
         if (!(result.hash in accountData.transactions)) {
           const tempResult = {...result, processed: null};
           delete tempResult.hash;
           accountData.transactions[result.hash] = tempResult;
+          console.log("addAccountTransactions: " + JSON.stringify(accountData.transactions[result.hash]));
         }
       }
     },
@@ -565,6 +567,7 @@ const dataModule = {
             }
             context.commit('updateAccountTimestampAndBlock', { chainId, account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
           }
+          console.log("accounts: " + JSON.stringify(context.state.accounts[chainId], null, 2));
           context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
           context.commit('setSyncSection', { section: null, total: null });
 
@@ -615,12 +618,12 @@ const dataModule = {
                 }
               }
             }
-            // console.log("txHashes: " + JSON.stringify(txHashes));
+            console.log("txHashes: " + JSON.stringify(txHashes));
             const txHashList = [];
             for (const [txHash, blockNumber] of Object.entries(txHashes)) {
               txHashList.push({ txHash, blockNumber });
             }
-            txHashList.sort((a, b) => b.blockNumber - a.blockNumber);
+            txHashList.sort((a, b) => a.blockNumber - b.blockNumber);
             // console.log("txHashList: " + JSON.stringify(txHashList));
             context.commit('setSyncSection', { section: 'Download', total: txHashList.length });
             for (let txItemIndex in txHashList) {
@@ -741,6 +744,7 @@ const dataModule = {
                 } else {
                   const assets = contractData.assets;
                   if (event.type == 'erc721' || event.type == 'erc1155') {
+                    const key = event.contract + ':' + event.tokenId;
                     if (!(event.tokenId in assets) && !(key in tokenIdsToCreateMap)) {
                       tokenIdsToCreateMap[key] = true;
                     // } else {

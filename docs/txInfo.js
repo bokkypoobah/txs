@@ -89,6 +89,7 @@ async function getTxInfo(txHash, item, provider) {
   console.log("getTxInfo: " + txHash + ", currentInfo: " + JSON.stringify(item).substring(0, 60));
   const results = {};
   if (!results.tx) {
+    console.log("getTxInfo - getTransaction: " + txHash);
     const tx = await provider.getTransaction(txHash);
     results.tx = {
       hash: tx.hash,
@@ -110,13 +111,28 @@ async function getTxInfo(txHash, item, provider) {
     };
   }
   if (!results.timestamp) {
+    console.log("getTxInfo - getBlock: " + results.tx.blockNumber);
     const block = await provider.getBlock(results.tx.blockNumber);
     results.timestamp = block.timestamp;
   }
+  console.log("getTxInfo - getTransactionReceipt: " + txHash);
   results.txReceipt = item.txReceipt ? item.txReceipt : await provider.getTransactionReceipt(txHash);
   delete results.txReceipt.logsBloom;
-  results.ethBalance = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber);
-  results.ethBalancePreviousBlock = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber - 1);
+  // console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
+  // try {
+  //   results.ethBalance = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber);
+  // } catch (e) {
+  //   console.log("getTxInfo - getBalance error: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
+    result.ethBalance = null;
+  // }
+  // console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber - 1);
+  // try {
+  //   results.ethBalancePreviousBlock = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber - 1);
+  // } catch (e) {
+  //   console.log("getTxInfo - getBalance -1 error: " + results.tx.from + " @ " + results.txReceipt.blockNumber - 1);
+    result.ethBalancePreviousBlock = null;
+  // }
+  console.log("getTxInfo - completed");
   results.gasUsed = ethers.BigNumber.from(results.txReceipt.gasUsed);
   results.effectiveGasPrice = ethers.BigNumber.from(results.txReceipt.effectiveGasPrice);
   results.txFee = results.gasUsed.mul(results.effectiveGasPrice);
