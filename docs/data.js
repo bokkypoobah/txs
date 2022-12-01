@@ -463,6 +463,7 @@ const dataModule = {
                 ],
               ];
               for (let topics of topicsList) {
+                console.log(JSON.stringify(topics));
                 const filter = {
                   address: null,
                   fromBlock: startBatch,
@@ -489,6 +490,7 @@ const dataModule = {
                         const tokens = ethers.BigNumber.from(log.data).toString();
                         eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc20", tokenId: null, tokens };
                       }
+                      context.commit('addAccountEvent', { account, eventRecord });
                     }
                     // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
                   } else if (log.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62" && !log.removed) {
@@ -561,7 +563,7 @@ const dataModule = {
             }
             context.commit('updateAccountTimestampAndBlock', { chainId, account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
           }
-          // console.log("accounts: " + JSON.stringify(context.state.accounts[chainId], null, 2));
+          console.log("accounts: " + JSON.stringify(context.state.accounts[chainId], null, 2));
           context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
           context.commit('setSyncSection', { section: null, total: null });
 
