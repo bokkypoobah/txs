@@ -567,7 +567,7 @@ const dataModule = {
           context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
           context.commit('setSyncSection', { section: null, total: null });
 
-        } else if (section == 'downloadDatax') {
+        } else if (section == 'downloadData') {
           const accountsToSync = [];
           const chainData = context.state.accounts[chainId] || {};
           for (const [account, data] of Object.entries(chainData)) {
@@ -592,26 +592,20 @@ const dataModule = {
             for (const [txHash, logIndexes] of Object.entries(item.events)) {
               if (!(txHash in txs) && !(txHash in txHashes)) {
                 for (const [logIndex, event] of Object.entries(logIndexes)) {
-                  if (!event.processed) {
-                    txHashes[txHash] = event.blockNumber;
-                  }
+                  txHashes[txHash] = event.blockNumber;
                 }
               }
             }
             for (const [txHash, traceIds] of Object.entries(item.internalTransactions)) {
               if (!(txHash in txs) && !(txHash in txHashes)) {
                 for (const [traceId, tx] of Object.entries(traceIds)) {
-                  if (!tx.processed) {
-                    txHashes[txHash] = tx.blockNumber;
-                  }
+                  txHashes[txHash] = tx.blockNumber;
                 }
               }
             }
             for (const [txHash, tx] of Object.entries(item.transactions)) {
               if (!(txHash in txs) && !(txHash in txHashes)) {
-                if (!tx.processed) {
-                  txHashes[txHash] = tx.blockNumber;
-                }
+                txHashes[txHash] = tx.blockNumber;
               }
             }
             console.log("txHashes: " + JSON.stringify(txHashes));
