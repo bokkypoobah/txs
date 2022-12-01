@@ -176,6 +176,17 @@ const configModule = {
       }
       return results;
     },
+    quarterlyOptions(state) {
+      const results = [];
+      const now = moment();
+      let startPeriod = moment().quarter(now.quarter()).startOf('quarter');
+      while (moment(startPeriod).year() >= 2015) {
+        const endPeriod = moment(startPeriod).add(3, 'month').subtract(1, 'second');
+        results.push({ value: "q" + startPeriod.format('YYYYQ'), text: startPeriod.format('MMM DD YYYY') + " - " + endPeriod.format('MMM DD YYYY'), data: { startPeriod, endPeriod } });
+        startPeriod = moment(startPeriod).subtract(3, 'month');
+      }
+      return results;
+    },
   },
   mutations: {
     setEtherscanAPIKey(state, etherscanAPIKey) {

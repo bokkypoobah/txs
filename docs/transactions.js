@@ -275,9 +275,8 @@ const Transactions = {
     periodOptions() {
       const results = [];
       results.push({ value: null, text: "(select period)", data: null });
-      for (const i of store.getters['config/periodOptions']) {
-        results.push(i);
-      }
+      results.push({ label: 'Annual Periods', options: store.getters['config/periodOptions'] });
+      results.push({ label: 'Quarterly Periods', options: store.getters['config/quarterlyOptions'] });
       // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
       return results;
     },
@@ -315,8 +314,16 @@ const Transactions = {
       const accountFilterLower = this.settings.accountFilter && this.settings.accountFilter.toLowerCase() || null;
       if (this.settings.period != null && this.settings.period != "nodata") {
         const periodRecords = this.periodOptions.filter(e => e.value == this.settings.period);
-        startPeriod = periodRecords[0].data.startPeriod;
-        endPeriod = periodRecords[0].data.endPeriod;
+        if (periodRecords.length > 0) {
+          startPeriod = periodRecords[0].data.startPeriod;
+          endPeriod = periodRecords[0].data.endPeriod;
+        } else {
+          const quarterlyRecords = store.getters['config/quarterlyOptions'].filter(e => e.value == this.settings.period);
+          if (quarterlyRecords.length > 0) {
+            startPeriod = quarterlyRecords[0].data.startPeriod;
+            endPeriod = quarterlyRecords[0].data.endPeriod;
+          }          
+        }
       }
       for (const [chainId, chainData] of Object.entries(this.txs)) {
         for (const [txHash, item] of Object.entries(chainData)) {

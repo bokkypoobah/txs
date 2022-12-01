@@ -346,9 +346,8 @@ const Account = {
     periodOptions() {
       const results = [];
       results.push({ value: null, text: "(select period)", data: null });
-      for (const i of store.getters['config/periodOptions']) {
-        results.push(i);
-      }
+      results.push({ label: 'Annual Periods', options: store.getters['config/periodOptions'] });
+      results.push({ label: 'Quarterly Periods', options: store.getters['config/quarterlyOptions'] });
       // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
       return results;
     },
@@ -386,9 +385,17 @@ const Account = {
       const txhashFilterLower = this.settings.txhashFilter && this.settings.txhashFilter.toLowerCase() || null;
       const accountFilterLower = this.settings.accountFilter && this.settings.accountFilter.toLowerCase() || null;
       if (this.settings.period != null && this.settings.period != "nodata") {
-        const periodRecords = this.periodOptions.filter(e => e.value == this.settings.period);
-        startPeriod = periodRecords[0].data.startPeriod;
-        endPeriod = periodRecords[0].data.endPeriod;
+        const periodRecords = store.getters['config/periodOptions'].filter(e => e.value == this.settings.period);
+        if (periodRecords.length > 0) {
+          startPeriod = periodRecords[0].data.startPeriod;
+          endPeriod = periodRecords[0].data.endPeriod;
+        } else {
+          const quarterlyRecords = store.getters['config/quarterlyOptions'].filter(e => e.value == this.settings.period);
+          if (quarterlyRecords.length > 0) {
+            startPeriod = quarterlyRecords[0].data.startPeriod;
+            endPeriod = quarterlyRecords[0].data.endPeriod;
+          }
+        }
       }
       for (const [chainId, chainData] of Object.entries(this.txs)) {
         for (const [txHash, item] of Object.entries(chainData)) {
@@ -477,7 +484,8 @@ const Account = {
       const results = [];
       let selectedDate = moment().unix();
       if (this.settings.holdings.selectedDate && this.settings.holdings.selectedDate.length > 9) {
-        selectedDate = moment(this.settings.holdings.selectedDate).unix();
+        console.log("filteredHoldings - selectedDate: " + this.settings.holdings.selectedDate);
+        selectedDate = moment.parseZone(this.settings.holdings.selectedDate, "YYYY-MM-DD").unix();
       }
       console.log("filteredHoldings - selectedDate: " + moment(selectedDate).toString());
 
