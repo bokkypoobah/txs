@@ -562,7 +562,7 @@ const dataModule = {
             context.commit('updateAccountTimestampAndBlock', { chainId, account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
           }
           // console.log("accounts: " + JSON.stringify(context.state.accounts[chainId], null, 2));
-          TODO: context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
+          context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
           context.commit('setSyncSection', { section: null, total: null });
 
         } else if (section == 'downloadDatax') {
