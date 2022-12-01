@@ -635,7 +635,7 @@ const dataModule = {
           }
 
           // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
-        } else if (section == 'buildAssetsx') {
+        } else if (section == 'buildAssets') {
           const accountsToSync = [];
           const chainData = context.state.accounts[chainId] || {};
           for (const [account, data] of Object.entries(chainData)) {
@@ -660,40 +660,7 @@ const dataModule = {
                 const blockNumber = txItem.tx.blockNumber;
                 const timestamp = txItem.timestamp;
                 for (const [logIndex, event] of Object.entries(logIndexes)) {
-                  if (!event.processed) {
-                    let eventRecord = null;
-                    const contract = event.address;
-                    if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
-                      const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
-                      const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
-                      if ((from == account || to == account)) {
-                        // ERC-721 Transfer
-                        if (event.topics.length == 4) {
-                          const tokenId = ethers.BigNumber.from(event.topics[3]).toString();
-                          eventRecord = { txHash, blockNumber, timestamp, logIndex, contract, from, to, tokenId, type: event.type };
-                          // ERC-20 Transfer
-                        } else {
-                          const tokens = ethers.BigNumber.from(event.data).toString();
-                          eventRecord = { txHash, blockNumber, timestamp, logIndex, contract, from, to, tokens, type: event.type };
-                        }
-                      }
-                    // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
-                    } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
-                      const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
-                      const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
-                      const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
-                      if ((from == account || to == account)) {
-                        let tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
-                        let value = ethers.BigNumber.from(event.data.substring(67, 130));
-                        eventRecord = { txHash, blockNumber, timestamp, logIndex, contract, from, to, tokenId, value, type: event.type };
-                      }
-                    }
-                    if (eventRecord != null) {
-                      events.push(eventRecord);
-                    } else {
-                      console.log("NOT PROCESSED: " + event.type + " contract: " + contract + " " + txHash + " " + JSON.stringify(event));
-                    }
-                  }
+                  events.push({ txHash, logIndex, ...event });
                 }
               }
             }
@@ -745,6 +712,7 @@ const dataModule = {
               }
             }
             const tokenIdsToCreate = Object.keys(tokenIdsToCreateMap);
+            console.log("tokenIdsToCreate: " + JSON.stringify(tokenIdsToCreate, null, 2));
             context.commit('setSyncSection', { section: 'Build Tokens', total: tokenIdsToCreate.length });
 
             const GETTOKENINFOBATCHSIZE = 50;
@@ -777,8 +745,8 @@ const dataModule = {
               if (contractData) {
                 if (contractData.type != event.type) {
                   // TODO
-                  // console.log("TODO contractData: " + JSON.stringify(contractData));
-                  // console.log("         vs event: " + JSON.stringify(event));
+                  console.log("TODO contractData: " + JSON.stringify(contractData));
+                  console.log("         vs event: " + JSON.stringify(event));
                 } else {
                   const assets = contractData.assets;
                   if (event.type == 'erc721' || event.type == 'erc1155') {
@@ -802,6 +770,7 @@ const dataModule = {
             }
           }
           context.dispatch('saveData', ['accounts']);
+          console.log("accounts: " + JSON.stringify(context.state.accounts[chainId], null, 2));
           context.commit('setSyncSection', { section: null, total: null });
           console.log("end buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
 

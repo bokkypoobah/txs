@@ -34,7 +34,7 @@ const Account = {
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['importFromEtherscan', 'downloadData', 'buildAssets'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import Etherscan transactions and web3 transfer events for accounts configured to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" :disabled="block == null || !settings.selectedAccount" @click="syncIt({ sections: ['buildERC20s'], parameters: [settings.selectedAccount] })" variant="link" v-b-popover.hover.top="'WIP Build ERC20s'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
+            <b-button size="sm" :disabled="block == null || !settings.selectedAccount" @click="syncIt({ sections: ['buildAssets'], parameters: [settings.selectedAccount] })" variant="link" v-b-popover.hover.top="'WIP Build Assets'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
           </div>
           <!--
           <div v-if="sync.section == null" class="mt-0 pr-1">
@@ -492,9 +492,13 @@ const Account = {
               let owner = null;
               const events = [];
               for (const [txHash, logs] of Object.entries(assetData.events)) {
-                for (const [logIndex, log] of Object.entries(logs)) {
-                  if (log.timestamp <= selectedDate) {
-                    events.push({ ...log });
+                if (txHash in this.txs[chainId]) {
+                  const txItem = this.txs[chainId][txHash];
+                  const timestamp = txItem.timestamp;
+                  for (const [logIndex, log] of Object.entries(logs)) {
+                    if (timestamp <= selectedDate) {
+                      events.push({ ...log, timestamp });
+                    }
                   }
                 }
               }
@@ -502,7 +506,7 @@ const Account = {
                 console.log(tokenId + " events: " + JSON.stringify(events, null, 2));
               }
               if (events.length > 0) {
-                events.sort((a, b) => b.timestamp - a.timestamp);
+                events.sort((a, b) => b.blockNumber - a.blockNumber);
                 owner = events[0].to;
                 // console.log(account + "/" + tokenId + " => " + owner);
                 if (owner == this.settings.selectedAccount) {
