@@ -274,7 +274,7 @@ const Report = {
     },
     periodOptions() {
       const results = [];
-      results.push({ value: null, text: "(select period)", data: null });
+      results.push({ value: null, text: "All", data: { startPeriod: null, endPeriod: null } });
       results.push({ label: 'Annual Periods', options: store.getters['config/periodOptions'] });
       results.push({ label: 'Quarterly Periods', options: store.getters['config/quarterlyOptions'] });
       // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
@@ -306,7 +306,61 @@ const Report = {
       }
       return result;
     },
+    generateReport() {
+      console.log("generateReport");
+      for (const [chainId, accounts] of Object.entries(this.accounts)) {
+        const txs = this.txs[chainId] || {};
+        // console.log(JSON.stringify(txs, null, 2));
+        for (const [account, accountData] of Object.entries(accounts)) {
+          if (accountData.mine) {
+            console.log("--- Processing " + chainId + ":" + account + " ---");
+            const txHashes = {};
+            const missingTxDataHashes = {};
+            for (const [txHash, logIndexes] of Object.entries(accountData.events)) {
+              for (const [logIndex, event] of Object.entries(logIndexes)) {
+                if (txHash in txs) {
+                  txHashes[txHash] = event.blockNumber;
+                } else {
+                  missingTxDataHashes[txHash] = event.blockNumber;
+                }
+              }
+            }
+            for (const [txHash, traceIds] of Object.entries(accountData.internalTransactions)) {
+              for (const [traceId, tx] of Object.entries(traceIds)) {
+                if (txHash in txs) {
+                  txHashes[txHash] = event.blockNumber;
+                } else {
+                  missingTxDataHashes[txHash] = event.blockNumber;
+                }
+              }
+            }
+            for (const [txHash, tx] of Object.entries(accountData.transactions)) {
+              if (txHash in txs) {
+                txHashes[txHash] = tx.blockNumber;
+              } else {
+                missingTxDataHashes[txHash] = tx.blockNumber;
+              }
+            }
+            // console.log("txHashes: " + JSON.stringify(txHashes));
+            // console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
+
+            const txList = [];
+            for (const [txHash, blockNumber] of Object.entries(txHashes)) {
+              txList.push(txs[txHash]);
+            }
+            // console.log("txList: " + JSON.stringify(txList));
+            txList.sort((a, b) => parseInt(a.blockNumber) - parseInt(b.blockNumber));
+            for (const txData of txList) {
+              // console.log("txData: " + JSON.stringify(txData));
+              console.log("txData: " + txData.tx.hash + " " + account + " " + txData.tx.blockNumber + " " + moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss"));
+            }
+          }
+        }
+      }
+
+    },
     filteredTransactions() {
+      this.generateReport;
       const results = [];
       let startPeriod = null;
       let endPeriod = null;
@@ -411,7 +465,7 @@ const Report = {
       return e.toFixed(9);
     },
     saveSettings() {
-      localStorage.transactionsSettings = JSON.stringify(this.settings);
+      localStorage.reportSettings = JSON.stringify(this.settings);
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
@@ -542,8 +596,8 @@ const Report = {
   mounted() {
     logDebug("Report", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('data/restoreState');
-    if ('transactionsSettings' in localStorage) {
-      const tempSettings = JSON.parse(localStorage.transactionsSettings);
+    if ('reportSettings' in localStorage) {
+      const tempSettings = JSON.parse(localStorage.reportSettings);
       if ('version' in tempSettings && tempSettings.version == 1) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;

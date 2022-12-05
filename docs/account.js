@@ -345,7 +345,7 @@ const Account = {
     },
     periodOptions() {
       const results = [];
-      results.push({ value: null, text: "(select period)", data: null });
+      results.push({ value: null, text: "(select period)", data: { startPeriod: null, endPeriod: null } });
       results.push({ label: 'Annual Periods', options: store.getters['config/periodOptions'] });
       results.push({ label: 'Quarterly Periods', options: store.getters['config/quarterlyOptions'] });
       // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });

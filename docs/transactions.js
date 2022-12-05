@@ -274,7 +274,7 @@ const Transactions = {
     },
     periodOptions() {
       const results = [];
-      results.push({ value: null, text: "(select period)", data: null });
+      results.push({ value: null, text: "(select period)", data: { startPeriod: null, endPeriod: null } });
       results.push({ label: 'Annual Periods', options: store.getters['config/periodOptions'] });
       results.push({ label: 'Quarterly Periods', options: store.getters['config/quarterlyOptions'] });
       // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
@@ -322,7 +322,7 @@ const Transactions = {
           if (quarterlyRecords.length > 0) {
             startPeriod = quarterlyRecords[0].data.startPeriod;
             endPeriod = quarterlyRecords[0].data.endPeriod;
-          }          
+          }
         }
       }
       for (const [chainId, chainData] of Object.entries(this.txs)) {
