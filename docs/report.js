@@ -341,19 +341,25 @@ const Report = {
                 missingTxDataHashes[txHash] = tx.blockNumber;
               }
             }
-            // console.log("txHashes: " + JSON.stringify(txHashes));
-            // console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
-
             const txList = [];
             for (const [txHash, blockNumber] of Object.entries(txHashes)) {
               txList.push(txs[txHash]);
             }
-            // console.log("txList: " + JSON.stringify(txList));
-            txList.sort((a, b) => parseInt(a.blockNumber) - parseInt(b.blockNumber));
+            txList.sort((a, b) => {
+              const aBlockNumber = parseInt(a.tx.blockNumber);
+              const bBlockNumber = parseInt(b.tx.blockNumber);
+              if (aBlockNumber == bBlockNumber) {
+                return parseInt(a.tx.transactionIndex) - parseInt(b.tx.transactionIndex);
+              } else {
+                return aBlockNumber - bBlockNumber;
+              }
+            });
             for (const txData of txList) {
               // console.log("txData: " + JSON.stringify(txData));
-              console.log("txData: " + txData.tx.hash + " " + account + " " + txData.tx.blockNumber + " " + moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss"));
+              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + ":" + txData.tx.transactionIndex + " " + txData.tx.hash + ", f: " + txData.tx.from + ", t: " + txData.tx.to.substring(0, 12));
+              // const info = parseTx(chainId, account, accounts, txData);
             }
+            console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
           }
         }
       }
@@ -404,7 +410,7 @@ const Report = {
             }
           }
           if (include) {
-            const info = parseTx(item, null);
+            const info = parseTxOld(item, null);
             results.push({
               chainId,
               txHash,

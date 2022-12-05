@@ -1,4 +1,4 @@
-function parseTx(item, primaryAccount) {
+function parseTxOld(item, primaryAccount) {
   const results = {};
   const events = [];
   const gasUsed = ethers.BigNumber.from(item.txReceipt.gasUsed);

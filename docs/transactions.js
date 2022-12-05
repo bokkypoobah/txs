@@ -350,7 +350,7 @@ const Transactions = {
             }
           }
           if (include) {
-            const info = parseTx(item, null);
+            const info = parseTxOld(item, null);
             results.push({
               chainId,
               txHash,
