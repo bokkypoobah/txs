@@ -123,14 +123,14 @@ async function getTxInfo(txHash, item, provider) {
   //   results.ethBalance = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber);
   // } catch (e) {
   //   console.log("getTxInfo - getBalance error: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
-    result.ethBalance = null;
+    results.ethBalance = null;
   // }
   // console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber - 1);
   // try {
   //   results.ethBalancePreviousBlock = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber - 1);
   // } catch (e) {
   //   console.log("getTxInfo - getBalance -1 error: " + results.tx.from + " @ " + results.txReceipt.blockNumber - 1);
-    result.ethBalancePreviousBlock = null;
+    results.ethBalancePreviousBlock = null;
   // }
   console.log("getTxInfo - completed");
   results.gasUsed = ethers.BigNumber.from(results.txReceipt.gasUsed);

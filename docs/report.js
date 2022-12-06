@@ -312,7 +312,8 @@ const Report = {
         const txs = this.txs[chainId] || {};
         // console.log(JSON.stringify(txs, null, 2));
         for (const [account, accountData] of Object.entries(accounts)) {
-          if (accountData.mine) {
+          // TODO: Remove sync criteria
+          if (accountData.mine && accountData.sync) {
             console.log("--- Processing " + chainId + ":" + account + " ---");
             const txHashes = {};
             const missingTxDataHashes = {};
@@ -328,9 +329,9 @@ const Report = {
             for (const [txHash, traceIds] of Object.entries(accountData.internalTransactions)) {
               for (const [traceId, tx] of Object.entries(traceIds)) {
                 if (txHash in txs) {
-                  txHashes[txHash] = event.blockNumber;
+                  txHashes[txHash] = tx.blockNumber;
                 } else {
-                  missingTxDataHashes[txHash] = event.blockNumber;
+                  missingTxDataHashes[txHash] = null;
                 }
               }
             }
@@ -356,8 +357,8 @@ const Report = {
             });
             for (const txData of txList) {
               // console.log("txData: " + JSON.stringify(txData));
-              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + ":" + txData.tx.transactionIndex + " " + txData.tx.hash + ", f: " + txData.tx.from + ", t: " + txData.tx.to.substring(0, 12));
-              // const info = parseTx(chainId, account, accounts, txData);
+              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + "." + txData.tx.transactionIndex + " " + txData.tx.hash + ", f: " + txData.tx.from + ", t: " + txData.tx.to.substring(0, 12));
+              const info = parseTx(chainId, account, accounts, txData);
             }
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
           }
