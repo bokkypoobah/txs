@@ -8,47 +8,92 @@ function parseTx(chainId, account, accounts, txData) {
   // const events = [];
   const gasUsed = ethers.BigNumber.from(txData.txReceipt.gasUsed);
   const txFee = gasUsed.mul(txData.txReceipt.effectiveGasPrice);
+  results.gasUsed = gasUsed;
+  results.txFee = txData.tx.from == account ? txFee : 0;
+  results.ethReceived = 0;
+  results.ethPaid = 0;
 
   // events.push({ from: txData.tx.from, to: null, operator: null, type: "txfee", asset: "eth", tokenId: null, value: txFee });
   //
 
   // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
-    let fromMap = {};
-    let toMap = {};
+    const erc20Events = [];
+    const erc721Events = [];
+    const erc1155Events = [];
+    const erc20FromMap = {};
+    const erc20ToMap = {};
     for (const event of txData.txReceipt.logs) {
       // console.log(JSON.stringify(event));
       // Transfer (index_topic_1 address from, index_topic_2 address to, uint256 value)
       if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
         const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-        let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
+        // ERC-721 Transfer
+        if (event.topics.length == 4) {
+          const tokenId = ethers.BigNumber.from(event.topics[3]).toString();
+          erc721Events.push({ contract: event.address, from, to, tokenId });
+          // ERC-20 Transfer
+        } else {
+          const tokens = ethers.BigNumber.from(event.data).toString();
+          erc20Events.push({ contract: event.address, from, to, tokens });
+          if (!(from in erc20FromMap)) {
+            erc20FromMap[from] = 1;
+          } else {
+            erc20FromMap[from] = parseInt(erc20FromMap[from]) + 1;
+          }
+          if (!(to in erc20ToMap)) {
+            erc20ToMap[to] = 1;
+          } else {
+            erc20ToMap[to] = parseInt(erc20ToMap[to]) + 1;
+          }
+        }
+        // let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data).toString() : ethers.BigNumber.from(event.topics[3]).toString();
         // console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
         // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
         //   console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
         // }
-        if (!(from in fromMap)) {
-          fromMap[from] = 1;
-        } else {
-          fromMap[from] = parseInt(fromMap[from]) + 1;
-        }
-        if (!(to in toMap)) {
-          toMap[to] = 1;
-        } else {
-          toMap[to] = parseInt(toMap[to]) + 1;
-        }
+        // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+      } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
+        const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+        const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+        const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
+        const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
+        const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
+        erc1155Events.push({ contract: event.address, operator, from, to, tokenId, tokens });
+        // eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenId, tokens, type: "erc1155" };
       }
     }
     // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
-    //   console.log("fromMap: " + JSON.stringify(fromMap, null, 2));
-    //   console.log("toMap: " + JSON.stringify(toMap, null, 2));
+    //   console.log("erc20FromMap: " + JSON.stringify(erc20FromMap, null, 2));
+    //   console.log("erc20ToMap: " + JSON.stringify(erc20ToMap, null, 2));
     // }
 
-    if ((Object.keys(fromMap).length < 3) && (Object.keys(toMap).length > 3) && (account in toMap)) {
+    if ((Object.keys(erc20FromMap).length < 3) && (Object.keys(erc20ToMap).length > 3) && (account in erc20ToMap)) {
+      // console.log("  Received Airdrop: " + JSON.stringify(erc20Events));
       console.log("  Received Airdrop");
     }
+    // if (erc721Events.length > 0) {
+    //   console.log("ERC-721: " + JSON.stringify(erc721Events));
+    // }
+    // if (erc1155Events.length > 0) {
+    //   console.log("ERC-1155: " + JSON.stringify(erc1155Events));
+    // }
   // }
 
   // TODO: Identify internal transfers
+
+  // EOA to EOA ETH transfer
+  if (gasUsed == 21000) {
+    if (txData.tx.from == account && txData.tx.to == account) {
+      console.log("  EOA to EOA - Self Transfer " + ethers.utils.formatEther(txData.tx.value) + "Ξ");
+    } else if (txData.tx.from == account) {
+      console.log("  EOA to EOA - Sent " + ethers.utils.formatEther(txData.tx.value) + "Ξ to " + txData.tx.to);
+      results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
+    } else if (txData.tx.to == account) {
+      console.log("  EOA to EOA - Received " + ethers.utils.formatEther(txData.tx.value) + "Ξ from " + txData.tx.from);
+      results.ethReceived = ethers.BigNumber.from(txData.tx.value).toString();
+    }
+  }
 
   // TokenTrader.TradeListing (index_topic_1 address ownerAddress, index_topic_2 address tokenTraderAddress, index_topic_3 address asset, uint256 buyPrice, uint256 sellPrice, uint256 units, bool buysTokens, bool sellsTokens)
   if (txData.tx.data.substring(0, 10) == "0x3d6a32bd") {
@@ -89,21 +134,10 @@ function parseTx(chainId, account, accounts, txData) {
 
 
 
-  // EOA to EOA ETH transfer
-  if (gasUsed == 21000) {
-    if (txData.tx.from == account && txData.tx.to == account) {
-      console.log("  EOA to EOA - Self Transfer " + ethers.utils.formatEther(txData.tx.value) + "Ξ");
-    } else if (txData.tx.from == account) {
-      console.log("  EOA to EOA - Sent " + ethers.utils.formatEther(txData.tx.value) + "Ξ to " + txData.tx.to);
-    } else if (txData.tx.to == account) {
-      console.log("  EOA to EOA - Received " + ethers.utils.formatEther(txData.tx.value) + "Ξ from " + txData.tx.from);
-    }
-  }
-
   // ERC-20 approve(address guy, uint256 wad)
   if (txData.tx.data.substring(0, 10) == "0x095ea7b3") {
     const interface = new ethers.utils.Interface(ERC20ABI);
-    let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
+    // let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
     for (const event of txData.txReceipt.logs) {
       if (event.address == txData.tx.to && event.topics[0] == "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925") {
         const tokenOwner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
@@ -121,7 +155,7 @@ function parseTx(chainId, account, accounts, txData) {
   // ERC-20 transfer(address _to, uint256 _value)
   if (txData.tx.data.substring(0, 10) == "0xa9059cbb") {
     const interface = new ethers.utils.Interface(ERC20ABI);
-    let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
+    // let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
     for (const event of txData.txReceipt.logs) {
       // console.log("ERC-20 transfer " + JSON.stringify(event));
       if (event.address == txData.tx.to && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
@@ -191,6 +225,7 @@ function parseTx(chainId, account, accounts, txData) {
     if (accountInfo.process) {
       accountInfo.process(txData);
     }
+    results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
     // results.mask = _CUSTOMACCOUNTS[account].mask;
     // results.symbol = _CUSTOMACCOUNTS[account].symbol;
     // results.name = _CUSTOMACCOUNTS[account].name;
@@ -198,5 +233,5 @@ function parseTx(chainId, account, accounts, txData) {
   // } else {
   //   const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider); // network.erc721HelperAddress
   }
-
+  return results;
 }

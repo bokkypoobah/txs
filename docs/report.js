@@ -355,10 +355,13 @@ const Report = {
                 return aBlockNumber - bBlockNumber;
               }
             });
+            let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {
               // console.log("txData: " + JSON.stringify(txData));
-              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + "." + txData.tx.transactionIndex + " " + txData.tx.hash + ", f: " + txData.tx.from + ", t: " + txData.tx.to.substring(0, 12));
+              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + "." + txData.tx.transactionIndex + " " + txData.tx.hash + ", f: " + txData.tx.from + ", t: " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
               const info = parseTx(chainId, account, accounts, txData);
+              ethBalance = ethBalance.add(info.ethReceived).sub(info.ethPaid).sub(info.txFee);
+              console.log("eth +:" + info.ethReceived + ", -:" + info.ethPaid + ", txFee: " + info.txFee + ", ethBalance: " + ethBalance.toString());
             }
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
           }
