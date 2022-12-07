@@ -223,7 +223,7 @@ function parseTx(chainId, account, accounts, txData) {
     const accountInfo = _CUSTOMACCOUNTS[txData.tx.to];
     console.log("  " + JSON.stringify(accountInfo.name));
     if (accountInfo.process) {
-      accountInfo.process(txData);
+      accountInfo.process(txData, results);
     }
     results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
     // results.mask = _CUSTOMACCOUNTS[account].mask;
