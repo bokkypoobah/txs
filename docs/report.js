@@ -361,7 +361,7 @@ const Report = {
               console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + "." + txData.tx.transactionIndex + " " + txData.tx.hash + ", f: " + txData.tx.from + ", t: " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
               const info = parseTx(chainId, account, accounts, txData);
               ethBalance = ethBalance.add(info.ethReceived).sub(info.ethPaid).sub(info.txFee);
-              console.log("eth +:" + info.ethReceived + ", -:" + info.ethPaid + ", txFee: " + info.txFee + ", ethBalance: " + ethBalance.toString());
+              console.log("eth +:" + ethers.utils.formatEther(info.ethReceived) + ", -:" + ethers.utils.formatEther(info.ethPaid) + ", txFee: " + ethers.utils.formatEther(info.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
             }
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
           }
