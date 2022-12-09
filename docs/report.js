@@ -358,7 +358,7 @@ const Report = {
             let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {
               // console.log("txData: " + JSON.stringify(txData));
-              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + "." + txData.tx.transactionIndex + " " + txData.tx.hash + ", f: " + txData.tx.from + ", t: " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
+              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + ", f: " + txData.tx.from + ", t: " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
               const info = parseTx(chainId, account, accounts, txData);
               ethBalance = ethBalance.add(info.ethReceived).sub(info.ethPaid).sub(info.txFee);
               console.log("eth +:" + ethers.utils.formatEther(info.ethReceived) + ", -:" + ethers.utils.formatEther(info.ethPaid) + ", txFee: " + ethers.utils.formatEther(info.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));

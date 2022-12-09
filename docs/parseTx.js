@@ -1,3 +1,52 @@
+function getEvents(txData) {
+  const erc20Events = [];
+  const erc721Events = [];
+  const erc1155Events = [];
+  const erc20FromMap = {};
+  const erc20ToMap = {};
+  for (const event of txData.txReceipt.logs) {
+    // console.log(JSON.stringify(event));
+    // Transfer (index_topic_1 address from, index_topic_2 address to, uint256 value)
+    if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+      const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
+      const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+      // ERC-721 Transfer
+      if (event.topics.length == 4) {
+        const tokenId = ethers.BigNumber.from(event.topics[3]).toString();
+        erc721Events.push({ contract: event.address, from, to, tokenId });
+        // ERC-20 Transfer
+      } else {
+        const tokens = ethers.BigNumber.from(event.data).toString();
+        erc20Events.push({ contract: event.address, from, to, tokens });
+        if (!(from in erc20FromMap)) {
+          erc20FromMap[from] = 1;
+        } else {
+          erc20FromMap[from] = parseInt(erc20FromMap[from]) + 1;
+        }
+        if (!(to in erc20ToMap)) {
+          erc20ToMap[to] = 1;
+        } else {
+          erc20ToMap[to] = parseInt(erc20ToMap[to]) + 1;
+        }
+      }
+      // let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data).toString() : ethers.BigNumber.from(event.topics[3]).toString();
+      // console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
+      // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
+      //   console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
+      // }
+      // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+    } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
+      const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+      const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+      const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
+      const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
+      const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
+      erc1155Events.push({ contract: event.address, operator, from, to, tokenId, tokens });
+      // eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenId, tokens, type: "erc1155" };
+    }
+  }
+  return { erc20Events, erc721Events, erc1155Events, erc20FromMap, erc20ToMap };
+}
 
 
 
@@ -16,65 +65,66 @@ function parseTx(chainId, account, accounts, txData) {
   // events.push({ from: txData.tx.from, to: null, operator: null, type: "txfee", asset: "eth", tokenId: null, value: txFee });
   //
 
-  // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
-    const erc20Events = [];
-    const erc721Events = [];
-    const erc1155Events = [];
-    const erc20FromMap = {};
-    const erc20ToMap = {};
-    for (const event of txData.txReceipt.logs) {
-      // console.log(JSON.stringify(event));
-      // Transfer (index_topic_1 address from, index_topic_2 address to, uint256 value)
-      if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
-        const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
-        const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-        // ERC-721 Transfer
-        if (event.topics.length == 4) {
-          const tokenId = ethers.BigNumber.from(event.topics[3]).toString();
-          erc721Events.push({ contract: event.address, from, to, tokenId });
-          // ERC-20 Transfer
-        } else {
-          const tokens = ethers.BigNumber.from(event.data).toString();
-          erc20Events.push({ contract: event.address, from, to, tokens });
-          if (!(from in erc20FromMap)) {
-            erc20FromMap[from] = 1;
-          } else {
-            erc20FromMap[from] = parseInt(erc20FromMap[from]) + 1;
-          }
-          if (!(to in erc20ToMap)) {
-            erc20ToMap[to] = 1;
-          } else {
-            erc20ToMap[to] = parseInt(erc20ToMap[to]) + 1;
-          }
-        }
-        // let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data).toString() : ethers.BigNumber.from(event.topics[3]).toString();
-        // console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
-        // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
-        //   console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
-        // }
-        // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
-      } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
-        const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
-        const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
-        const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
-        const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
-        const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
-        erc1155Events.push({ contract: event.address, operator, from, to, tokenId, tokens });
-        // eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenId, tokens, type: "erc1155" };
-      }
-    }
-    // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
-    //   console.log("erc20FromMap: " + JSON.stringify(erc20FromMap, null, 2));
-    //   console.log("erc20ToMap: " + JSON.stringify(erc20ToMap, null, 2));
-    // }
+  const events = getEvents(txData);
+  // // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
+  //   const erc20Events = [];
+  //   const erc721Events = [];
+  //   const erc1155Events = [];
+  //   const erc20FromMap = {};
+  //   const erc20ToMap = {};
+  //   for (const event of txData.txReceipt.logs) {
+  //     // console.log(JSON.stringify(event));
+  //     // Transfer (index_topic_1 address from, index_topic_2 address to, uint256 value)
+  //     if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+  //       const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
+  //       const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+  //       // ERC-721 Transfer
+  //       if (event.topics.length == 4) {
+  //         const tokenId = ethers.BigNumber.from(event.topics[3]).toString();
+  //         erc721Events.push({ contract: event.address, from, to, tokenId });
+  //         // ERC-20 Transfer
+  //       } else {
+  //         const tokens = ethers.BigNumber.from(event.data).toString();
+  //         erc20Events.push({ contract: event.address, from, to, tokens });
+  //         if (!(from in erc20FromMap)) {
+  //           erc20FromMap[from] = 1;
+  //         } else {
+  //           erc20FromMap[from] = parseInt(erc20FromMap[from]) + 1;
+  //         }
+  //         if (!(to in erc20ToMap)) {
+  //           erc20ToMap[to] = 1;
+  //         } else {
+  //           erc20ToMap[to] = parseInt(erc20ToMap[to]) + 1;
+  //         }
+  //       }
+  //       // let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data).toString() : ethers.BigNumber.from(event.topics[3]).toString();
+  //       // console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
+  //       // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
+  //       //   console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
+  //       // }
+  //       // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+  //     } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
+  //       const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+  //       const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+  //       const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
+  //       const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
+  //       const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
+  //       erc1155Events.push({ contract: event.address, operator, from, to, tokenId, tokens });
+  //       // eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenId, tokens, type: "erc1155" };
+  //     }
+  //   }
+  //   // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
+  //   //   console.log("erc20FromMap: " + JSON.stringify(erc20FromMap, null, 2));
+  //   //   console.log("erc20ToMap: " + JSON.stringify(erc20ToMap, null, 2));
+  //   // }
 
-    if ((Object.keys(erc20FromMap).length < 3) && (Object.keys(erc20ToMap).length > 3) && (account in erc20ToMap)) {
+    if ((Object.keys(events.erc20FromMap).length < 3) && (Object.keys(events.erc20ToMap).length > 3) && (account in events.erc20ToMap)) {
       // console.log("  Received Airdrop: " + JSON.stringify(erc20Events));
       console.log("  Received Airdrop");
     }
-    // if (erc721Events.length > 0) {
-    //   console.log("ERC-721: " + JSON.stringify(erc721Events));
-    // }
+    if (events.erc721Events.length > 0) {
+      console.log("ERC-721: " + JSON.stringify(events.erc721Events));
+    }
     // if (erc1155Events.length > 0) {
     //   console.log("ERC-1155: " + JSON.stringify(erc1155Events));
     // }
@@ -223,7 +273,7 @@ function parseTx(chainId, account, accounts, txData) {
     const accountInfo = _CUSTOMACCOUNTS[txData.tx.to];
     console.log("  " + JSON.stringify(accountInfo.name));
     if (accountInfo.process) {
-      accountInfo.process(txData, results);
+      accountInfo.process(txData, events, results);
     }
     results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
     // results.mask = _CUSTOMACCOUNTS[account].mask;
