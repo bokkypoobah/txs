@@ -182,10 +182,10 @@ const _CUSTOMACCOUNTS = {
       let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
       console.log("decodedData.functionFragment.name: " + decodedData.functionFragment.name);
       // console.log("decodedData: " + JSON.stringify(decodedData, null, 2));
-      for (let i in decodedData.functionFragment.inputs) {
-        const c = decodedData.functionFragment.inputs[i];
-        console.log("  " + i + " " + c.name + " " + c.type + " " + JSON.stringify(decodedData.args[i]));
-      }
+      // for (let i in decodedData.functionFragment.inputs) {
+      //   const c = decodedData.functionFragment.inputs[i];
+      //   console.log("  " + i + " " + c.name + " " + c.type + " " + JSON.stringify(decodedData.args[i]));
+      // }
       // console.log(JSON.stringify(decodedData, null, 2));
 
     },
@@ -202,10 +202,10 @@ const _CUSTOMACCOUNTS = {
       let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
       console.log("decodedData.functionFragment.name: " + decodedData.functionFragment.name);
       // console.log("decodedData: " + JSON.stringify(decodedData, null, 2));
-      for (let i in decodedData.functionFragment.inputs) {
-        const c = decodedData.functionFragment.inputs[i];
-        console.log("  " + i + " " + c.name + " " + c.type + " " + JSON.stringify(decodedData.args[i]));
-      }
+      // for (let i in decodedData.functionFragment.inputs) {
+      //   const c = decodedData.functionFragment.inputs[i];
+      //   console.log("  " + i + " " + c.name + " " + c.type + " " + JSON.stringify(decodedData.args[i]));
+      // }
       // console.log(JSON.stringify(decodedData, null, 2));
 
     },

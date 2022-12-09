@@ -308,6 +308,7 @@ const Report = {
     },
     generateReport() {
       console.log("generateReport");
+      const accumulatedData = {};
       for (const [chainId, accounts] of Object.entries(this.accounts)) {
         const txs = this.txs[chainId] || {};
         // console.log(JSON.stringify(txs, null, 2));
@@ -355,13 +356,14 @@ const Report = {
                 return aBlockNumber - bBlockNumber;
               }
             });
-            let ethBalance = ethers.BigNumber.from(0);
+            // let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {
               // console.log("txData: " + JSON.stringify(txData));
-              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + ", f: " + txData.tx.from + ", t: " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
-              const info = parseTx(chainId, account, accounts, txData);
-              ethBalance = ethBalance.add(info.ethReceived).sub(info.ethPaid).sub(info.txFee);
-              console.log("eth +:" + ethers.utils.formatEther(info.ethReceived) + ", -:" + ethers.utils.formatEther(info.ethPaid) + ", txFee: " + ethers.utils.formatEther(info.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
+              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
+              const results = parseTx(chainId, account, accounts, txData);
+              accumulateTxResults(accumulatedData, results);
+              // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
+              // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
             }
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
           }
