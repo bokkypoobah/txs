@@ -97,7 +97,7 @@ const dataModule = {
       halt: false,
     },
     db: {
-      name: "txs090g",
+      name: "txs090h",
       version: 1,
       schemaDefinition: {
         cache: '&objectName',
@@ -143,6 +143,8 @@ const dataModule = {
         type: info && info.type || null,
         mine: info.account == store.getters['connection/coinbase'],
         sync: info.account == store.getters['connection/coinbase'],
+        report: info.account == store.getters['connection/coinbase'],
+        junk: false,
         tags: [],
         notes: null,
         contract: {
@@ -195,12 +197,12 @@ const dataModule = {
       const [account, results, chainId] = [info.account, info.results, store.getters['connection/chainId']];
       const accountData = state.accounts[chainId][account];
       for (const result of results) {
-        console.log("addAccountTransactions: " + JSON.stringify(result));
+        // console.log("addAccountTransactions: " + JSON.stringify(result));
         if (!(result.hash in accountData.transactions)) {
           const tempResult = {...result, processed: null};
           delete tempResult.hash;
           accountData.transactions[result.hash] = tempResult;
-          console.log("addAccountTransactions: " + JSON.stringify(accountData.transactions[result.hash]));
+          // console.log("addAccountTransactions: " + JSON.stringify(accountData.transactions[result.hash]));
         }
       }
     },
@@ -224,7 +226,7 @@ const dataModule = {
           isFlagged: token.isFlagged,
           events: {},
         });
-        console.log("Added token: " + contract + ":" + token.tokenId + " => " + JSON.stringify(state.accounts[chainId][contract].assets[token.tokenId]));
+        // console.log("Added token: " + contract + ":" + token.tokenId + " => " + JSON.stringify(state.accounts[chainId][contract].assets[token.tokenId]));
       }
     },
     addAccountERC20Transfers(state, transfer) {
@@ -241,7 +243,7 @@ const dataModule = {
         delete tempTransfer.logIndex;
         Vue.set(state.accounts[chainId][contract].erc20transfers[transfer.txHash], transfer.logIndex, tempTransfer);
       }
-      console.log("Added " + transfer.txHash + " " + JSON.stringify(state.accounts[chainId][contract].erc20transfers[transfer.txHash]));
+      // console.log("Added " + transfer.txHash + " " + JSON.stringify(state.accounts[chainId][contract].erc20transfers[transfer.txHash]));
     },
     addAccountTokenEvent(state, event) {
       console.log("addAccountTokenEvent: " + JSON.stringify(event));
@@ -260,7 +262,7 @@ const dataModule = {
           to: event.to,
           value: event.value && event.value || null,
         });
-        console.log("Added event: " + JSON.stringify(state.accounts[chainId][event.contract].assets[event.tokenId], null, 2));
+        // console.log("Added event: " + JSON.stringify(state.accounts[chainId][event.contract].assets[event.tokenId], null, 2));
       }
     },
     addENSName(state, nameInfo) {
@@ -268,14 +270,14 @@ const dataModule = {
     },
     addTxs(state, info) {
       const [chainId, txInfo] = [info.chainId, info.txInfo];
-      logInfo("dataModule", "mutations.addTxs - info: " + JSON.stringify(info).substring(0, 100));
+      // logInfo("dataModule", "mutations.addTxs - info: " + JSON.stringify(info).substring(0, 100));
       if (!(chainId in state.txs)) {
         Vue.set(state.txs, chainId, {});
       }
       Vue.set(state.txs[chainId], txInfo.tx.hash, txInfo);
     },
     updateTxData(state, info) {
-      logInfo("dataModule", "mutations.updateTxData - info: " + JSON.stringify(info).substring(0, 1000));
+      // logInfo("dataModule", "mutations.updateTxData - info: " + JSON.stringify(info).substring(0, 1000));
       Vue.set(state.txs[info.txHash].dataImported, 'tx', {
         hash: info.tx.hash,
         type: info.tx.type,
@@ -619,7 +621,7 @@ const dataModule = {
             for (let txItemIndex in txHashList) {
               const txItem = txHashList[txItemIndex];
               context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
-              console.log("Processing: " + JSON.stringify(txItem));
+              console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Processing: " + JSON.stringify(txItem));
               const currentInfo = txs && txs[txItem.txHash] || {};
               const info = await getTxInfo(txItem.txHash, currentInfo, provider);
               context.commit('addTxs', { chainId, txInfo: info});

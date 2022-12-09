@@ -86,10 +86,10 @@ function parseTxOld(item, primaryAccount) {
 }
 
 async function getTxInfo(txHash, item, provider) {
-  console.log("getTxInfo: " + txHash + ", currentInfo: " + JSON.stringify(item).substring(0, 60));
+  // console.log("getTxInfo: " + txHash + ", currentInfo: " + JSON.stringify(item).substring(0, 60));
   const results = {};
   if (!results.tx) {
-    console.log("getTxInfo - getTransaction: " + txHash);
+    // console.log("getTxInfo - getTransaction: " + txHash);
     const tx = await provider.getTransaction(txHash);
     results.tx = {
       hash: tx.hash,
@@ -111,11 +111,11 @@ async function getTxInfo(txHash, item, provider) {
     };
   }
   if (!results.timestamp) {
-    console.log("getTxInfo - getBlock: " + results.tx.blockNumber);
+    // console.log("getTxInfo - getBlock: " + results.tx.blockNumber);
     const block = await provider.getBlock(results.tx.blockNumber);
     results.timestamp = block.timestamp;
   }
-  console.log("getTxInfo - getTransactionReceipt: " + txHash);
+  // console.log("getTxInfo - getTransactionReceipt: " + txHash);
   results.txReceipt = item.txReceipt ? item.txReceipt : await provider.getTransactionReceipt(txHash);
   delete results.txReceipt.logsBloom;
   // console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
@@ -132,12 +132,12 @@ async function getTxInfo(txHash, item, provider) {
   //   console.log("getTxInfo - getBalance -1 error: " + results.tx.from + " @ " + results.txReceipt.blockNumber - 1);
     results.ethBalancePreviousBlock = null;
   // }
-  console.log("getTxInfo - completed");
+  // console.log("getTxInfo - completed");
   results.gasUsed = ethers.BigNumber.from(results.txReceipt.gasUsed);
   results.effectiveGasPrice = ethers.BigNumber.from(results.txReceipt.effectiveGasPrice);
   results.txFee = results.gasUsed.mul(results.effectiveGasPrice);
   // console.log("results.tx: " + JSON.stringify(results.tx, null, 2));
-  console.log("results: " + JSON.stringify(results, null, 2));
+  // console.log("results: " + JSON.stringify(results, null, 2));
 
   return results;
 
