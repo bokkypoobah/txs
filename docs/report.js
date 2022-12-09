@@ -359,9 +359,9 @@ const Report = {
             // let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {
               // console.log("txData: " + JSON.stringify(txData));
-              console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
+              // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
               const results = parseTx(chainId, account, accounts, txData);
-              accumulateTxResults(accumulatedData, results);
+              accumulateTxResults(accumulatedData, txData, results);
               // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
               // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
             }

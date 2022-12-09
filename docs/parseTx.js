@@ -48,23 +48,42 @@ function getEvents(txData) {
   return { erc20Events, erc721Events, erc1155Events, erc20FromMap, erc20ToMap };
 }
 
-function accumulateTxResults(accumulatedData, results) {
+function accumulateTxResults(accumulatedData, txData, results) {
   if (!('ethBalance' in accumulatedData)) {
     accumulatedData.ethBalance = ethers.BigNumber.from(0);
   }
   accumulatedData.ethBalancePrev = accumulatedData.ethBalance;
   accumulatedData.ethBalance = accumulatedData.ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
-  console.log("  * " + ethers.utils.formatEther(accumulatedData.ethBalance) +
+  // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
+  // console.log((results.info || "(TODO)") +
+  //   " " + ethers.utils.formatEther(accumulatedData.ethBalance) +
+  //   "Ξ = " + ethers.utils.formatEther(accumulatedData.ethBalancePrev) +
+  //   "Ξ + " + ethers.utils.formatEther(results.ethReceived) +
+  //   "Ξ - " + ethers.utils.formatEther(results.ethPaid) +
+  //   "Ξ - " + ethers.utils.formatEther(results.txFee) +
+  //   "Ξ");
+
+  if (results.info) {
+    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
+  } else {
+    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to.substring(0, 12)) || ''));
+  }
+  console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
+    " " + ethers.utils.formatEther(accumulatedData.ethBalance) +
     "Ξ = " + ethers.utils.formatEther(accumulatedData.ethBalancePrev) +
     "Ξ + " + ethers.utils.formatEther(results.ethReceived) +
     "Ξ - " + ethers.utils.formatEther(results.ethPaid) +
     "Ξ - " + ethers.utils.formatEther(results.txFee) +
-    "Ξ : " + (results.info || "(TODO)"));
+    "Ξ");
+
+    // 2017-05-29 13:30:43 3785027 23 0xacb364ec18a1e9cebba4a31dcdbd118870a620f8e18e91cf3009b819f9b44ebd 0xe6cF9e3167 -> 0xDe73aF60A3
+    // Received 1.0Ξ from 0xe6cF9e316738feA7BE315B9d0024De7d87c2e44B 1.0Ξ = 0.0Ξ + 1.0Ξ - 0.0Ξ - 0.0Ξ
 }
 
 function parseTx(chainId, account, accounts, txData) {
   // console.log("parseTx: " + JSON.stringify(account));
   const results = {};
+  const msgValue = ethers.BigNumber.from(txData.tx.value).toString();
   const gasUsed = ethers.BigNumber.from(txData.txReceipt.gasUsed);
   const txFee = gasUsed.mul(txData.txReceipt.effectiveGasPrice);
   results.gasUsed = gasUsed;
@@ -72,17 +91,17 @@ function parseTx(chainId, account, accounts, txData) {
   results.ethReceived = 0;
   results.ethPaid = 0;
 
-  // TODO: Identify internal transfers
+  // TODO: Identify internal transfers?
   // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
     if (txData.tx.from == account && txData.tx.to == account) {
       results.info = "Cancel tx";
     } else if (txData.tx.from == account) {
-      results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
-      results.info = "Sent " + ethers.utils.formatEther(txData.tx.value) + "Ξ to " + txData.tx.to;
+      results.ethPaid = msgValue;
+      results.info = "Sent " + ethers.utils.formatEther(msgValue) + "Ξ to " + txData.tx.to;
     } else if (txData.tx.to == account) {
-      results.ethReceived = ethers.BigNumber.from(txData.tx.value).toString();
-      results.info = "Received " + ethers.utils.formatEther(txData.tx.value) + "Ξ from " + txData.tx.from;
+      results.ethReceived = msgValue;
+      results.info = "Received " + ethers.utils.formatEther(msgValue) + "Ξ from " + txData.tx.from;
     }
   }
 
@@ -90,17 +109,31 @@ function parseTx(chainId, account, accounts, txData) {
   let events = null;
   if (!results.info) {
     events = getEvents(txData);
-    if ((Object.keys(events.erc20FromMap).length < 3) && (Object.keys(events.erc20ToMap).length > 3) && (account in events.erc20ToMap)) {
-      // console.log("  Received Airdrop: " + JSON.stringify(erc20Events));
-      results.info = "Received Airdrop";
+    if (msgValue == 0 && (Object.keys(events.erc20FromMap).length < 3) && (Object.keys(events.erc20ToMap).length > 3) && (account in events.erc20ToMap)) {
+      const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
+      if (receivedERC20Events.length == 1) {
+        results.info = "Airdropped ERC-20:" + receivedERC20Events[0].contract + " " + receivedERC20Events[0].tokens + " tokens";
+      } else {
+        // TODO: Other cases?
+        console.log("  Received Airdrop: " + JSON.stringify(receivedERC20Events));
+      }
     }
     // TODO:
-    // if (events.erc721Events.length > 0) {
-    //   console.log("ERC-721: " + JSON.stringify(events.erc721Events));
-    // }
     // if (erc1155Events.length > 0) {
     //   console.log("ERC-1155: " + JSON.stringify(erc1155Events));
     // }
+  }
+
+  // Simple ERC-721 Purchase
+  if (!results.info && msgValue > 0 && txData.tx.from == account) {
+    const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
+    if (receivedERC721Events.length == 1) {
+        results.ethPaid = msgValue;
+        results.info = "Purchased ERC-721:" + receivedERC721Events[0].contract + "/" + receivedERC721Events[0].tokenId + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+    } else {
+      // TODO Bulk
+      console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
+    }
   }
 
   // TokenTrader.TradeListing (index_topic_1 address ownerAddress, index_topic_2 address tokenTraderAddress, index_topic_3 address asset, uint256 buyPrice, uint256 sellPrice, uint256 units, bool buysTokens, bool sellsTokens)
@@ -116,7 +149,7 @@ function parseTx(chainId, account, accounts, txData) {
   if (!results.info && txData.tx.data.substring(0, 10) == "0x2170ebf7") {
     for (const event of txData.txReceipt.logs) {
       if (event.topics[0] == "0x8a93d70d792b644d97d7da8a5798e03bbee85be4537a860a331dbe3ee50eb982") {
-        let amount = ethers.BigNumber.from(event.data);
+        results.ethReceived = ethers.BigNumber.from(event.data);
         results.info = "TokenTrader.MakerWithdrewEther";
       }
     }
@@ -209,11 +242,14 @@ function parseTx(chainId, account, accounts, txData) {
 
   if (!results.info && txData.tx.to in _CUSTOMACCOUNTS) {
     const accountInfo = _CUSTOMACCOUNTS[txData.tx.to];
-    console.log("  " + JSON.stringify(accountInfo.name));
+    // console.log("  " + JSON.stringify(accountInfo.name));
     if (accountInfo.process) {
       accountInfo.process(txData, events, results);
+      if (!results.info) {
+        console.log("  TODO: " + JSON.stringify(accountInfo.name));
+      }
     }
-    results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
+    // results.ethPaid = msgValue;
     // results.mask = _CUSTOMACCOUNTS[account].mask;
     // results.symbol = _CUSTOMACCOUNTS[account].symbol;
     // results.name = _CUSTOMACCOUNTS[account].name;
