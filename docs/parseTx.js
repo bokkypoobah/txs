@@ -158,31 +158,24 @@ function parseTx(chainId, account, accounts, txData) {
 
   // ERC-20 transfer(address _to, uint256 _value)
   if (!results.info && txData.tx.data.substring(0, 10) == "0xa9059cbb") {
-    // const interface = new ethers.utils.Interface(ERC20ABI);
-    // let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
     for (const event of txData.txReceipt.logs) {
-      // console.log("ERC-20 transfer " + JSON.stringify(event));
       if (event.address == txData.tx.to && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
         const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
         let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
-        // console.log("  ERC-20 transfer of " + event.address + " from " + from + " to " + to + " value " + tokens);
-
         if (from == account && to == account) {
-          results.info = "ERC-20 - Self Transfer ERC-20:" + event.address + " " + tokens + " tokens";
+          results.info = "Self Transfer ERC-20:" + event.address + " " + tokens;
         } else if (from == account) {
-          results.info = "ERC-20 - Sent ERC-20:" + event.address + " " + tokens + " tokens to " + to;
+          results.info = "Sent ERC-20:" + event.address + " " + tokens + " to " + to;
         } else if (to == account) {
-          results.info = "ERC-20 - Received ERC-20:" + event.address + " " + tokens + " tokens from " + from;
+          results.info = "Received ERC-20:" + event.address + " " + tokens + " from " + from;
         }
       }
     }
   }
 
   // ERC-721 safeTransferFrom(address from, address to, uint256 tokenId)
-  if (txData.tx.data.substring(0, 10) == "0x42842e0e") {
-    const interface = new ethers.utils.Interface(ERC721ABI);
-    // let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
+  if (!results.info && txData.tx.data.substring(0, 10) == "0x42842e0e") {
     for (const event of txData.txReceipt.logs) {
       // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 tokenId)
       if (event.address == txData.tx.to && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
@@ -190,40 +183,31 @@ function parseTx(chainId, account, accounts, txData) {
         const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
         let tokenId = ethers.BigNumber.from(event.topics[3]);
         console.log("  ERC-721 transfer of " + event.address + " from " + from + " to " + to + " tokenId " + tokenId);
-        // if (from == account && to == account) {
-        //   console.log("  ERC-20 - Self Transfer ERC-20:" + event.address + " " + tokens + " tokens");
-        // } else if (from == account) {
-        //   console.log("  ERC-20 - Sent ERC-20:" + event.address + " " + tokens + " tokens to " + to);
-        // } else if (to == account) {
-        //   console.log("  ERC-20 - Received ERC-20:" + event.address + " " + tokens + " tokens from " + from);
-        // }
+        if (from == account && to == account) {
+          results.info = "Self Transfer ERC-721:" + event.address + " " + tokenId;
+        } else if (from == account) {
+          results.info = "Sent ERC-721:" + event.address + " " + tokenId + " to " + to;
+        } else if (to == account) {
+          results.info = "Received ERC-721:" + event.address + " " + tokenId + " from " + from;
+        }
       }
     }
   }
 
   // ERC-721 setApprovalForAll(address operator,bool approved)
-  if (txData.tx.data.substring(0, 10) == "0xa22cb465") {
-    const interface = new ethers.utils.Interface(ERC721ABI);
-    // let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
+  if (!results.info && txData.tx.data.substring(0, 10) == "0xa22cb465") {
     for (const event of txData.txReceipt.logs) {
       // ApprovalForAll (index_topic_1 address owner, index_topic_2 address operator, bool approved)
       if (event.address == txData.tx.to && event.topics[0] == "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31") {
         const owner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const operator = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
         let approved = ethers.BigNumber.from(event.data) > 0;
-        console.log("  ERC-721 transfer of " + event.address + " owner " + owner + " operator " + operator + " approved " + approved);
-        // if (from == account && to == account) {
-        //   console.log("  ERC-20 - Self Transfer ERC-20:" + event.address + " " + tokens + " tokens");
-        // } else if (from == account) {
-        //   console.log("  ERC-20 - Sent ERC-20:" + event.address + " " + tokens + " tokens to " + to);
-        // } else if (to == account) {
-        //   console.log("  ERC-20 - Received ERC-20:" + event.address + " " + tokens + " tokens from " + from);
-        // }
+        results.info = "setApprovalForAll ERC-721:" + event.address + " for " + operator + " " + approved;
       }
     }
   }
 
-  if (txData.tx.to in _CUSTOMACCOUNTS) {
+  if (!results.info && txData.tx.to in _CUSTOMACCOUNTS) {
     const accountInfo = _CUSTOMACCOUNTS[txData.tx.to];
     console.log("  " + JSON.stringify(accountInfo.name));
     if (accountInfo.process) {
