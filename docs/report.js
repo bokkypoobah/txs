@@ -314,7 +314,7 @@ const Report = {
         // console.log(JSON.stringify(txs, null, 2));
         for (const [account, accountData] of Object.entries(accounts)) {
           // TODO: Remove sync criteria
-          if (accountData.mine && accountData.sync) {
+          if (accountData.mine && accountData.report) {
             console.log("--- Processing " + chainId + ":" + account + " ---");
             const txHashes = {};
             const missingTxDataHashes = {};

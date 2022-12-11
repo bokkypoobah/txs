@@ -137,6 +137,22 @@ const Accounts = {
                     <b-badge v-if="data.item.sync" variant="primary" v-b-popover.hover="'Will be included in the sync process'">Sync</b-badge>
                   </span>
                 </div>
+                <div v-if="data.item.report || settings.editAccounts" class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editAccounts">
+                    <b-form-checkbox size="sm" :checked="data.item.report ? 1 : 0" value="1" @change="toggleAccountReport(data.item.chainId, data.item.account)" v-b-popover.hover="'Include in report?'">Report</b-form-checkbox>
+                  </span>
+                  <span v-if="!settings.editAccounts">
+                    <b-badge v-if="data.item.report" variant="primary" v-b-popover.hover="'Will be included in the report'">Report</b-badge>
+                  </span>
+                </div>
+                <div v-if="data.item.junk || settings.editAccounts" class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editAccounts">
+                    <b-form-checkbox size="sm" :checked="data.item.junk ? 1 : 0" value="1" @change="toggleAccountJunk(data.item.chainId, data.item.account)" v-b-popover.hover="'Junk?'">Junk</b-form-checkbox>
+                  </span>
+                  <span v-if="!settings.editAccounts">
+                    <b-badge v-if="data.item.junk" variant="primary" v-b-popover.hover="'Will be excluded as junk'">Junk</b-badge>
+                  </span>
+                </div>
                 <div class="m-0 pt-1 pr-1">
                   <span v-if="data.item.type != 'erc721' && data.item.type != 'erc1155'">
                     <b-badge v-if="hasENS(data.item.account)" variant="secondary" v-b-popover.hover="'ENS name if set'">{{ ensOrNull(data.item.account) }}</b-badge>
@@ -374,6 +390,8 @@ const Accounts = {
               type: data.type,
               mine: data.mine,
               sync: data.sync,
+              report: data.report,
+              junk: data.junk,
               tags: data.tags,
               notes: data.notes,
               contract: data.contract,
@@ -497,6 +515,12 @@ const Accounts = {
     },
     async toggleAccountSync(chainId, account) {
       store.dispatch('data/toggleAccountSync', { chainId, account });
+    },
+    async toggleAccountReport(chainId, account) {
+      store.dispatch('data/toggleAccountReport', { chainId, account });
+    },
+    async toggleAccountJunk(chainId, account) {
+      store.dispatch('data/toggleAccountJunk', { chainId, account });
     },
     async setAccountType(chainId, account, accountType) {
       store.dispatch('data/setAccountType', { chainId, account, accountType });

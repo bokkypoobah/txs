@@ -119,6 +119,12 @@ const dataModule = {
     toggleAccountSync(state, info) {
       Vue.set(state.accounts[info.chainId][info.account], 'sync', !state.accounts[info.chainId][info.account].sync);
     },
+    toggleAccountReport(state, info) {
+      Vue.set(state.accounts[info.chainId][info.account], 'report', !state.accounts[info.chainId][info.account].report);
+    },
+    toggleAccountJunk(state, info) {
+      Vue.set(state.accounts[info.chainId][info.account], 'junk', !state.accounts[info.chainId][info.account].junk);
+    },
     setAccountType(state, info) {
       Vue.set(state.accounts[info.chainId][info.account], 'type', info.accountType);
     },
@@ -246,11 +252,11 @@ const dataModule = {
       // console.log("Added " + transfer.txHash + " " + JSON.stringify(state.accounts[chainId][contract].erc20transfers[transfer.txHash]));
     },
     addAccountTokenEvent(state, event) {
-      console.log("addAccountTokenEvent: " + JSON.stringify(event));
+      // console.log("addAccountTokenEvent: " + JSON.stringify(event));
       const chainId = store.getters['connection/chainId'];
       const contractData = state.accounts[chainId][event.contract];
       const asset = contractData.assets[event.tokenId];
-      console.log("  asset: " + JSON.stringify(asset));
+      // console.log("  asset: " + JSON.stringify(asset));
       if (!(event.txHash in asset.events)) {
         Vue.set(state.accounts[chainId][event.contract].assets[event.tokenId].events, event.txHash, {});
       }
@@ -351,6 +357,14 @@ const dataModule = {
     },
     async toggleAccountSync(context, info) {
       context.commit('toggleAccountSync', info);
+      context.dispatch('saveData', ['accounts']);
+    },
+    async toggleAccountReport(context, info) {
+      context.commit('toggleAccountReport', info);
+      context.dispatch('saveData', ['accounts']);
+    },
+    async toggleAccountJunk(context, info) {
+      context.commit('toggleAccountJunk', info);
       context.dispatch('saveData', ['accounts']);
     },
     async setAccountType(context, info) {
@@ -611,11 +625,13 @@ const dataModule = {
               }
             }
             console.log("txHashes: " + JSON.stringify(txHashes));
-            const txHashList = [];
+            let txHashList = [];
             for (const [txHash, blockNumber] of Object.entries(txHashes)) {
               txHashList.push({ txHash, blockNumber });
             }
             txHashList.sort((a, b) => a.blockNumber - b.blockNumber);
+            // TODO: Test
+            // txHashList = txHashList.slice(0, 10);
             // console.log("txHashList: " + JSON.stringify(txHashList));
             context.commit('setSyncSection', { section: 'Download', total: txHashList.length });
             for (let txItemIndex in txHashList) {

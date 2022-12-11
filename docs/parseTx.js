@@ -195,7 +195,7 @@ function parseTx(chainId, account, accounts, txData) {
       if (event.address == txData.tx.to && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
         const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-        let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
+        const tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
         if (from == account && to == account) {
           results.info = "Self Transfer ERC-20:" + event.address + " " + tokens;
         } else if (from == account) {
@@ -207,15 +207,16 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
-  // ERC-721 safeTransferFrom(address from, address to, uint256 tokenId)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0x42842e0e") {
+  // ERC-721 safeTransferFrom(address from, address to, uint256 tokenId) && transferFrom(address from, address to, uint256 tokenId)
+  if (!results.info && (txData.tx.data.substring(0, 10) == "0x42842e0e" || txData.tx.data.substring(0, 10) == "0x23b872dd")) {
     for (const event of txData.txReceipt.logs) {
       // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 tokenId)
       if (event.address == txData.tx.to && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
         const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-        let tokenId = ethers.BigNumber.from(event.topics[3]);
-        console.log("  ERC-721 transfer of " + event.address + " from " + from + " to " + to + " tokenId " + tokenId);
+//        let tokenId = ethers.BigNumber.from(event.topics[3]);
+        const tokenId = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
+        // console.log("  ERC-721 transfer of " + event.address + " from " + from + " to " + to + " tokenId " + tokenId);
         if (from == account && to == account) {
           results.info = "Self Transfer ERC-721:" + event.address + " " + tokenId;
         } else if (from == account) {
