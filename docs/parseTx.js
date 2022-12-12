@@ -57,7 +57,7 @@ function accumulateTxResults(accumulatedData, txData, results) {
   if (results.info) {
     console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
   } else {
-    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to.substring(0, 12)) || ''));
+    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to.substring(0, 12)) || ''));
   }
   console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
     " " + ethers.utils.formatEther(accumulatedData.ethBalance) +
@@ -245,9 +245,9 @@ function parseTx(chainId, account, accounts, txData) {
     const accountInfo = _CUSTOMACCOUNTS[txData.tx.to];
     // console.log("  " + JSON.stringify(accountInfo.name));
     if (accountInfo.process) {
-      accountInfo.process(txData, events, results);
+      accountInfo.process(txData, account, events, results);
       if (!results.info) {
-        console.log("  TODO: " + JSON.stringify(accountInfo.name));
+        console.log("  TODO: " + txData.tx.hash + " " + JSON.stringify(accountInfo.name));
       }
     }
     // results.ethPaid = msgValue;
