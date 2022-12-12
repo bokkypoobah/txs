@@ -628,11 +628,12 @@ const reportModule = {
                 return aBlockNumber - bBlockNumber;
               }
             });
-            const DEBUGTXORCONTRACT = null; // "0x00000000006c3852cbEf3e08E8dF289169EdE581"; // Seaport
+            // const DEBUGTXORCONTRACT = null;
+            const DEBUGTXORCONTRACT = "0x00000000006c3852cbEf3e08E8dF289169EdE581"; // Seaport
 
             // let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {
-              if (DEBUGTXORCONTRACT == null || txData.tx.to == DEBUGTXORCONTRACT || txData.txHash == DEBUGTXORCONTRACT) {
+              if (DEBUGTXORCONTRACT == null || txData.tx.to == DEBUGTXORCONTRACT || txData.tx.hash == DEBUGTXORCONTRACT) {
                 // console.log("txData: " + JSON.stringify(txData));
                 // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
                 const exchangeRate = getExchangeRate(moment.unix(txData.timestamp), exchangeRates);

@@ -224,13 +224,101 @@ const _CUSTOMACCOUNTS = {
       console.log("  Seaport");
       const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
       let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
-      console.log("decodedData.functionFragment.name: " + decodedData.functionFragment.name);
+      // console.log("decodedData.functionFragment.name: " + decodedData.functionFragment.name);
       // console.log("decodedData: " + JSON.stringify(decodedData, null, 2));
       // for (let i in decodedData.functionFragment.inputs) {
       //   const c = decodedData.functionFragment.inputs[i];
       //   console.log("  " + i + " " + c.name + " " + c.type + " " + JSON.stringify(decodedData.args[i]));
       // }
+      if (decodedData.functionFragment.name == "fulfillBasicOrder") {
+        // console.log("decodedData.args[0]: " + JSON.stringify(decodedData.args[0]));
+        const [considerationToken, considerationIdentifier, considerationAmount, offerer, zone, offerToken,
+          offerIdentifier, offerAmount, basicOrderType, startTime, endTime, zoneHash, salt, offererConduitKey,
+          fulfillerConduitKey, totalOriginalAdditionalRecipients, additionalRecipients, signature] = decodedData.args[0];
+        console.log("  considerationToken: " + considerationToken);
+        console.log("  offerer: " + offerer);
+        console.log("  zone: " + zone);
+        console.log("  offerToken: " + offerToken);
+        console.log("  offerIdentifier: " + offerIdentifier);
+        console.log("  offerAmount: " + offerAmount);
+        console.log("  basicOrderType: " + basicOrderType);
+        console.log("  startTime: " + startTime);
+        console.log("  endTime: " + endTime);
+        console.log("  zoneHash: " + zoneHash);
+        console.log("  salt: " + salt);
+        console.log("  offererConduitKey: " + offererConduitKey);
+        console.log("  fulfillerConduitKey: " + fulfillerConduitKey);
+        console.log("  totalOriginalAdditionalRecipients: " + totalOriginalAdditionalRecipients);
+        console.log("  additionalRecipients: " + additionalRecipients);
+        console.log("  signature: " + signature);
+        // fulfillBasicOrder((address,uint256,uint256,address,address,address,uint256,uint256,uint8,uint256,uint256,bytes32,uint256,bytes32,bytes32,uint256,tuple[],bytes))
+        // struct BasicOrderParameters {
+        //     // calldata offset
+        //     address considerationToken; // 0x24
+        //     uint256 considerationIdentifier; // 0x44
+        //     uint256 considerationAmount; // 0x64
+        //     address payable offerer; // 0x84
+        //     address zone; // 0xa4
+        //     address offerToken; // 0xc4
+        //     uint256 offerIdentifier; // 0xe4
+        //     uint256 offerAmount; // 0x104
+        //     BasicOrderType basicOrderType; // 0x124
+        //     uint256 startTime; // 0x144
+        //     uint256 endTime; // 0x164
+        //     bytes32 zoneHash; // 0x184
+        //     uint256 salt; // 0x1a4
+        //     bytes32 offererConduitKey; // 0x1c4
+        //     bytes32 fulfillerConduitKey; // 0x1e4
+        //     uint256 totalOriginalAdditionalRecipients; // 0x204
+        //     AdditionalRecipient[] additionalRecipients; // 0x224
+        //     bytes signature; // 0x244
+        //     // Total length, excluding dynamic array data: 0x264 (580)
+        // }
+      } else if (decodedData.functionFragment.name == "fulfillAvailableAdvancedOrders") {
+        // console.log("decodedData.args[0]: " + JSON.stringify(decodedData.args[0]));
+        const [advancedOrders, criteriaResolvers, offerFulfillments, considerationFulfillments, fulfillerConduitKey, recipient, maximumFulfilled] = decodedData.args;
+        console.log("  advancedOrders: " + advancedOrders);
+        console.log("  criteriaResolvers: " + criteriaResolvers);
+        console.log("  offerFulfillments: " + offerFulfillments);
+        console.log("  considerationFulfillments: " + considerationFulfillments);
+        console.log("  fulfillerConduitKey: " + fulfillerConduitKey);
+        console.log("  recipient: " + recipient);
+        console.log("  maximumFulfilled: " + maximumFulfilled);
+
+        // function fulfillAvailableAdvancedOrders(
+        //     AdvancedOrder[] calldata advancedOrders,
+        //     CriteriaResolver[] calldata criteriaResolvers,
+        //     FulfillmentComponent[][] calldata offerFulfillments,
+        //     FulfillmentComponent[][] calldata considerationFulfillments,
+        //     bytes32 fulfillerConduitKey,
+        //     address recipient,
+        //     uint256 maximumFulfilled
+        // )
+        // struct AdvancedOrder {
+        //     OrderParameters parameters;
+        //     uint120 numerator;
+        //     uint120 denominator;
+        //     bytes signature;
+        //     bytes extraData;
+        // }
+        // struct CriteriaResolver {
+        //     uint256 orderIndex;
+        //     Side side;
+        //     uint256 index;
+        //     uint256 identifier;
+        //     bytes32[] criteriaProof;
+        // }
+        // struct FulfillmentComponent {
+        //     uint256 orderIndex;
+        //     uint256 itemIndex;
+        // }
+
+      }
+
       // console.log(JSON.stringify(decodedData, null, 2));
+      results.info = "Seaport TODO";
+
+
 
     },
   },
