@@ -142,7 +142,7 @@ function parseTx(chainId, account, accounts, txData) {
         results.info = "Purchased ERC-721:" + receivedERC721Events[0].contract + "/" + receivedERC721Events[0].tokenId + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     } else {
       // TODO Bulk
-      console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
+      // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
     }
   }
 
