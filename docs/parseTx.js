@@ -8,6 +8,19 @@ function getERC20Info(contract, accounts) {
   return { name: "Unknown", symbol: "Unknown", decimals: 18 };
 }
 
+function getERC721Info(contract, accounts) {
+  // console.log("getERC20Info - contract: " + contract);
+  if (contract in accounts) {
+    const account = accounts[contract];
+    // console.log(JSON.stringify(account));
+    return { name: account.contract.name, symbol: account.contract.symbol, decimals: account.contract.decimals };
+  }
+  return { name: "Unknown", symbol: "Unknown", decimals: 18 };
+}
+
+// ERC-20 event Transfer(address indexed _from, address indexed _to, uint256 _value)
+// ERC-721 event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
+// CryptoVoxels ERC-721 @ 0x79986aF15539de2db9A5086382daEdA917A9CF0C uses ERC-20 style
 function getEvents(txData) {
   const erc20Events = [];
   const erc721Events = [];
@@ -20,14 +33,13 @@ function getEvents(txData) {
     if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
       const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
       const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+      const tokensOrTokenId = event.topics.length == 4 ? ethers.BigNumber.from(event.topics[3]).toString() : ethers.BigNumber.from(event.data).toString();
       // ERC-721 Transfer
-      if (event.topics.length == 4) {
-        const tokenId = ethers.BigNumber.from(event.topics[3]).toString();
-        erc721Events.push({ contract: event.address, from, to, tokenId });
+      if (event.topics.length == 4 || event.address == "0x79986aF15539de2db9A5086382daEdA917A9CF0C") {
+        erc721Events.push({ contract: event.address, from, to, tokenId: tokensOrTokenId });
         // ERC-20 Transfer
       } else {
-        const tokens = ethers.BigNumber.from(event.data).toString();
-        erc20Events.push({ contract: event.address, from, to, tokens });
+        erc20Events.push({ contract: event.address, from, to, tokens: tokensOrTokenId });
         if (!(from in erc20FromMap)) {
           erc20FromMap[from] = 1;
         } else {

@@ -630,7 +630,7 @@ const reportModule = {
             });
             // let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {
-              if (txData.tx.to == "0x0000000000c2d145a2526bD8C716263bFeBe1A72") {
+              // if (txData.tx.to == "0x0000000000c2d145a2526bD8C716263bFeBe1A72") {
                 // console.log("txData: " + JSON.stringify(txData));
                 // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
                 const exchangeRate = getExchangeRate(moment.unix(txData.timestamp), exchangeRates);
@@ -639,7 +639,7 @@ const reportModule = {
                 // console.log("  exchangeRate: " + JSON.stringify(exchangeRate));
                 // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
                 // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
-              }
+              // }
             }
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
           }
