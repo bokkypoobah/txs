@@ -79,7 +79,7 @@ function accumulateTxResults(accumulatedData, txData, results) {
   if (results.info) {
     console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
   } else {
-    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to.substring(0, 12)) || ''));
+    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " TODO " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to.substring(0, 12)) || ''));
   }
   console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
     " " + ethers.utils.formatEther(accumulatedData.ethBalance) +
@@ -146,12 +146,13 @@ function parseTx(chainId, account, accounts, txData) {
   //   }
   // }
 
-  // Simple ERC-721 Purchase
-  if (!results.info && msgValue > 0 && txData.tx.from == account) {
+  // Simple ERC-721 Purchase, excluding ENS registrations
+  if (!results.info && msgValue > 0 && txData.tx.from == account && txData.tx.to != "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     if (receivedERC721Events.length == 1) {
         results.ethPaid = msgValue;
-        results.info = "Purchased ERC-721:" + receivedERC721Events[0].contract + "/" + receivedERC721Events[0].tokenId + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+        const info = getERC721Info(receivedERC721Events[0].contract, accounts);
+        results.info = "Purchased ERC-721 " + info.symbol + " " + receivedERC721Events[0].tokenId + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     } else {
       // TODO Bulk
       // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
@@ -258,7 +259,8 @@ function parseTx(chainId, account, accounts, txData) {
         const owner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const operator = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
         let approved = ethers.BigNumber.from(event.data) > 0;
-        results.info = "setApprovalForAll ERC-721:" + event.address + " for " + operator + " " + approved;
+        const info = getERC721Info(event.address, accounts);
+        results.info = "ERC-721 " + info.symbol + " setApprovalForAll(" + operator + ", " + approved + ")";
       }
     }
   }
