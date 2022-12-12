@@ -628,8 +628,8 @@ const reportModule = {
                 return aBlockNumber - bBlockNumber;
               }
             });
-            // const DEBUGTXORCONTRACT = null;
-            const DEBUGTXORCONTRACT = "0x00000000006c3852cbEf3e08E8dF289169EdE581"; // Seaport
+            const DEBUGTXORCONTRACT = null;
+            // const DEBUGTXORCONTRACT = "0x00000000006c3852cbEf3e08E8dF289169EdE581"; // Seaport
 
             // let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {

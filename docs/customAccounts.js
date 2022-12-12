@@ -277,7 +277,83 @@ const _CUSTOMACCOUNTS = {
       } else if (decodedData.functionFragment.name == "fulfillAvailableAdvancedOrders") {
         // console.log("decodedData.args[0]: " + JSON.stringify(decodedData.args[0]));
         const [advancedOrders, criteriaResolvers, offerFulfillments, considerationFulfillments, fulfillerConduitKey, recipient, maximumFulfilled] = decodedData.args;
-        console.log("  advancedOrders: " + advancedOrders);
+        // console.log("  advancedOrders: " + JSON.stringify(advancedOrders, null, 2));
+
+        for (let i = 0; i < advancedOrders.length; i++) {
+          const [parameters, numerator, denominator, signature, extraData] = advancedOrders[i];
+          const [offerer, zone, offer, consideration, orderType, startTime, endTime, zoneHash, salt, conduitKey, totalOriginalConsiderationItems] = parameters;
+          // const [itemType, token, identifierOrCriteria, startAmount, endAmount, recipient] = consideration;
+          // console.log("  " + i + ".parameters: " + parameters);
+          console.log("  " + i + ".parameters.offerer: " + offerer);
+          console.log("  " + i + ".parameters.zone: " + zone);
+          // console.log("  " + i + ".parameters.offer[]: " + offer);
+          for (let j = 0; j < offer.length; j++) {
+            const [itemType, token, identifierOrCriteria, startAmount, endAmount] = offer[j];
+            console.log("  " + i + ".parameters.offer[" + j + "].itemType: " + itemType);
+            console.log("  " + i + ".parameters.offer[" + j + "].token: " + token);
+            console.log("  " + i + ".parameters.offer[" + j + "].identifierOrCriteria: " + identifierOrCriteria);
+            console.log("  " + i + ".parameters.offer[" + j + "].startAmount: " + startAmount);
+            console.log("  " + i + ".parameters.offer[" + j + "].endAmount: " + endAmount);
+          }
+          // console.log("  " + i + ".parameters.consideration[]: " + consideration);
+          for (let j = 0; j < consideration.length; j++) {
+            const [itemType, token, identifierOrCriteria, startAmount, endAmount, recipient] = consideration[j];
+            console.log("  " + i + ".parameters.consideration[" + j + "].itemType: " + itemType);
+            console.log("  " + i + ".parameters.consideration[" + j + "].token: " + token);
+            console.log("  " + i + ".parameters.consideration[" + j + "].identifierOrCriteria: " + identifierOrCriteria);
+            console.log("  " + i + ".parameters.consideration[" + j + "].startAmount: " + startAmount);
+            console.log("  " + i + ".parameters.consideration[" + j + "].endAmount: " + endAmount);
+            console.log("  " + i + ".parameters.consideration[" + j + "].recipient: " + recipient);
+          }
+
+          console.log("  " + i + ".parameters.orderType: " + orderType);
+          console.log("  " + i + ".parameters.startTime: " + startTime);
+          console.log("  " + i + ".parameters.endTime: " + endTime);
+          console.log("  " + i + ".parameters.zoneHash: " + zoneHash);
+          console.log("  " + i + ".parameters.salt: " + salt);
+          console.log("  " + i + ".parameters.conduitKey: " + conduitKey);
+          console.log("  " + i + ".parameters.totalOriginalConsiderationItems: " + totalOriginalConsiderationItems);
+
+          // struct OfferItem {
+          //     ItemType itemType;
+          //     address token;
+          //     uint256 identifierOrCriteria;
+          //     uint256 startAmount;
+          //     uint256 endAmount;
+          // }
+
+          // struct ConsiderationItem {
+          //     ItemType itemType;
+          //     address token;
+          //     uint256 identifierOrCriteria;
+          //     uint256 startAmount;
+          //     uint256 endAmount;
+          //     address payable recipient;
+          // }
+
+
+          // struct OrderParameters {
+          //     address offerer; // 0x00
+          //     address zone; // 0x20
+          //     OfferItem[] offer; // 0x40
+          //     ConsiderationItem[] consideration; // 0x60
+          //     OrderType orderType; // 0x80
+          //     uint256 startTime; // 0xa0
+          //     uint256 endTime; // 0xc0
+          //     bytes32 zoneHash; // 0xe0
+          //     uint256 salt; // 0x100
+          //     bytes32 conduitKey; // 0x120
+          //     uint256 totalOriginalConsiderationItems; // 0x140
+          //     // offer.length                          // 0x160
+          // }
+
+
+          console.log("  " + i + ".numerator: " + numerator);
+          console.log("  " + i + ".denominator: " + denominator);
+          console.log("  " + i + ".signature: " + signature);
+          console.log("  " + i + ".extraData: " + extraData);
+        }
+
         console.log("  criteriaResolvers: " + criteriaResolvers);
         console.log("  offerFulfillments: " + offerFulfillments);
         console.log("  considerationFulfillments: " + considerationFulfillments);
@@ -311,6 +387,20 @@ const _CUSTOMACCOUNTS = {
         // struct FulfillmentComponent {
         //     uint256 orderIndex;
         //     uint256 itemIndex;
+        // }
+        // struct OrderParameters {
+        //     address offerer; // 0x00
+        //     address zone; // 0x20
+        //     OfferItem[] offer; // 0x40
+        //     ConsiderationItem[] consideration; // 0x60
+        //     OrderType orderType; // 0x80
+        //     uint256 startTime; // 0xa0
+        //     uint256 endTime; // 0xc0
+        //     bytes32 zoneHash; // 0xe0
+        //     uint256 salt; // 0x100
+        //     bytes32 conduitKey; // 0x120
+        //     uint256 totalOriginalConsiderationItems; // 0x140
+        //     // offer.length                          // 0x160
         // }
 
       }
