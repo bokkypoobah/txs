@@ -145,16 +145,15 @@ const _CUSTOMACCOUNTS = {
 
         if (msgValue > 0 && receivedERC20Events.length > 0) {
           const info = getERC20Info(receivedERC20Events[0].contract, accounts);
-          // console.log(JSON.stringify(info));
           results.info = "Purchased " + ethers.utils.formatUnits(receivedERC20Events[0].tokens, info.decimals) + " " + info.symbol + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
         } else if (sentERC20Events.length > 0 && wethWithdrawalEvents.length > 0) {
           const info = getERC20Info(sentERC20Events[0].contract, accounts);
-          // console.log(JSON.stringify(info));
           const tokens = ethers.BigNumber.from(wethWithdrawalEvents[0].data).toString();
           results.info = "Sold " + ethers.utils.formatUnits(sentERC20Events[0].tokens, info.decimals) + " " + info.symbol + " for " + ethers.utils.formatEther(tokens) + "Ξ";
         } else if (sentERC20Events.length > 0 && receivedERC20Events.length > 0) {
-
+          console.log("TODO: UniswapV3Router2: " + txData.tx.hash);
         } else {
+          console.log("TODO: UniswapV3Router2: " + txData.tx.hash);
           // TODO: Other cases
         }
 
