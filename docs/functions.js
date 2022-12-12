@@ -346,3 +346,13 @@ function sleep(milliseconds) {
 }
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
+
+function getExchangeRate(date, exchangeRates) {
+  for (let lookback = 0; lookback < 10; lookback++) {
+    const searchDate = moment(date).subtract(lookback, 'days').format("YYYYMMDD");
+    if (searchDate in exchangeRates) {
+      return { date: searchDate, rate: exchangeRates[searchDate] };
+    }
+  }
+  return { date: null, rate: null };
+}

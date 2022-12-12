@@ -580,7 +580,7 @@ const reportModule = {
       logInfo("reportModule", "generateReport()");
       const allAccounts = store.getters['data/accounts'];
       const allTxs = store.getters['data/txs'];
-      // console.log(JSON.stringify(allAccounts));
+      const exchangeRates = store.getters['data/exchangeRates'];
       const accumulatedData = {};
       for (const [chainId, accounts] of Object.entries(allAccounts)) {
         const txs = allTxs[chainId] || {};
@@ -632,8 +632,10 @@ const reportModule = {
             for (const txData of txList) {
               // console.log("txData: " + JSON.stringify(txData));
               // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
+              const exchangeRate = getExchangeRate(moment.unix(txData.timestamp), exchangeRates);
               const results = parseTx(chainId, account, accounts, txData);
               accumulateTxResults(accumulatedData, txData, results);
+              console.log("  exchangeRate: " + JSON.stringify(exchangeRate));
               // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
               // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
             }

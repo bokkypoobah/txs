@@ -947,7 +947,7 @@ const dataModule = {
                 console.log("error: " + e);
               });
             for (day of data.Data.Data) {
-              results[moment.utc(day.time * 1000).format("YYYYMMDD")] = day.close;
+              results[moment.unix(day.time).format("YYYYMMDD")] = day.close;
             }
             toTs = moment(toTs).subtract(MAXDAYS, 'days');
           }
