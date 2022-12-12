@@ -1,3 +1,13 @@
+function getERC20Info(contract, accounts) {
+  // console.log("getERC20Info - contract: " + contract);
+  if (contract in accounts) {
+    const account = accounts[contract];
+    // console.log(JSON.stringify(account));
+    return { name: account.contract.name, symbol: account.contract.symbol, decimals: account.contract.decimals };
+  }
+  return { name: "Unknown", symbol: "Unknown", decimals: 18 };
+}
+
 function getEvents(txData) {
   const erc20Events = [];
   const erc721Events = [];
@@ -245,7 +255,7 @@ function parseTx(chainId, account, accounts, txData) {
     const accountInfo = _CUSTOMACCOUNTS[txData.tx.to];
     // console.log("  " + JSON.stringify(accountInfo.name));
     if (accountInfo.process) {
-      accountInfo.process(txData, account, events, results);
+      accountInfo.process(txData, account, accounts, events, results);
       if (!results.info) {
         console.log("  TODO: " + txData.tx.hash + " " + JSON.stringify(accountInfo.name));
       }
