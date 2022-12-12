@@ -122,17 +122,17 @@ function parseTx(chainId, account, accounts, txData) {
     // }
   }
 
-  // Simple ERC-20 Purchase
-  if (!results.info && msgValue > 0 && txData.tx.from == account) {
-    const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
-    if (receivedERC20Events.length == 1) {
-        results.ethPaid = msgValue;
-        results.info = "Purchased ERC-20:" + receivedERC20Events[0].contract + " " + receivedERC20Events[0].tokens + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
-    } else {
-      // TODO Bulk
-      // console.log("receivedERC20Events: " + JSON.stringify(receivedERC20Events));
-    }
-  }
+  // // Simple ERC-20 Purchase
+  // if (!results.info && msgValue > 0 && txData.tx.from == account) {
+  //   const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
+  //   if (receivedERC20Events.length == 1) {
+  //       results.ethPaid = msgValue;
+  //       results.info = "Purchased ERC-20:" + receivedERC20Events[0].contract + " " + receivedERC20Events[0].tokens + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+  //   } else {
+  //     // TODO Bulk
+  //     // console.log("receivedERC20Events: " + JSON.stringify(receivedERC20Events));
+  //   }
+  // }
 
   // Simple ERC-721 Purchase
   if (!results.info && msgValue > 0 && txData.tx.from == account) {
