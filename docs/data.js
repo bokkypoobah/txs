@@ -424,6 +424,7 @@ const dataModule = {
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
       const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
       const confirmations = store.getters['config/settings'].confirmations && parseInt(store.getters['config/settings'].confirmations) || 10;
+      const reportingCurrency = store.getters['config/settings'].reportingCurrency;
       const block = await provider.getBlock();
       const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
       const confirmedBlock = await provider.getBlock(confirmedBlockNumber);
@@ -913,14 +914,46 @@ const dataModule = {
             }
           }
         } else if (section == 'getExchangeRates') {
-          console.log("getExchangeRates");
+          console.log("getExchangeRates: " + reportingCurrency);
 
 
           // async function fetchExchangeRates() {
           //   // TODO: Use toTs={timestamp} when > 2000 days - https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday
-          const days = parseInt((new Date() - new Date("2015-07-01")) / (24 * 60 * 60 * 1000));
-          https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=AUD&limit=2000
-          console.log("days: " + days);
+          // const days = parseInt((new Date() - new Date("2015-07-01")) / (24 * 60 * 60 * 1000));
+          // https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=AUD&limit=2000
+          // console.log("days: " + days);
+          const MAXDAYS = 2000;
+          const MINDATE = moment("2015-07-30");
+          console.log("MINDATE: " + MINDATE.toString())
+          let toTs = moment();
+          const results = {};
+          // Jul-30-2015
+          while (toTs.year() >= 2015) {
+            console.log(toTs.toString());
+            let days = toTs.diff(MINDATE, 'days');
+            if (days > MAXDAYS) {
+              days = MAXDAYS;
+            }
+            console.log("days: " + days);
+            const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + reportingCurrency + "&toTs=" + toTs.unix() + "&limit=" + days;
+            console.log(url);
+              const data = await fetch(url)
+                .then(response => response.json())
+                .catch(function(e) {
+                  console.log("error: " + e);
+                });
+            for (day of data.Data.Data) {
+              results[day.time] = day.close;
+            }
+            toTs = moment(toTs).subtract(MAXDAYS, 'days');
+          }
+          const dates = Object.keys(results);
+          dates.sort();
+          // console.log(JSON.stringify(dates));
+          for (let date of dates) {
+            console.log(moment.unix(date).toString() + " => " + results[date]);
+          }
+
           //   const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + state.config.currency + "&limit=" + days;
           //   // logInfo("cryptoPunksModule", "mutations.loadPunks().fetchLatestEvents() url: " + url);
           //   const data = await fetch(url)
