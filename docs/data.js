@@ -308,8 +308,11 @@ const dataModule = {
       Vue.set(state.txs[info.txHash].computed.info, 'summary', info.summary);
     },
     setExchangeRates(state, exchangeRates) {
-      // TODO: Delete debug
-      console.log("mutation.setExchangeRates: " + JSON.stringify(exchangeRates));
+      // const dates = Object.keys(exchangeRates);
+      // dates.sort();
+      // for (let date of dates) {
+      //   console.log(date + "\t" + exchangeRates[date]);
+      // }
       Vue.set(state, 'exchangeRates', exchangeRates);
     },
     setSyncSection(state, info) {
@@ -949,12 +952,6 @@ const dataModule = {
             toTs = moment(toTs).subtract(MAXDAYS, 'days');
           }
           context.commit('setExchangeRates', results);
-          // TODO: Delete debugging
-          // const dates = Object.keys(results);
-          // dates.sort();
-          // for (let date of dates) {
-          //   console.log(date + "\t" + results[date]);
-          // }
           context.dispatch('saveData', ['exchangeRates']);
           context.commit('setSyncSection', { section: null, total: null });
         }
