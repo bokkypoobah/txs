@@ -31,7 +31,7 @@ const Report = {
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['getExchangeRates'], parameters: [] })" variant="link" v-b-popover.hover.top="'Get exchange rates'"><b-icon-bar-chart shift-v="+1" font-scale="1.2"></b-icon-bar-chart></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" :disabled="block == null" @click="generateReport" variant="link" v-b-popover.hover.top="'Generate Report'"><b-icon-newspaper shift-v="+1" font-scale="1.2"></b-icon-newspaper></b-button>
+            <b-button size="sm" :disabled="block == null" @click="generateReport(contractOrTx)" variant="link" v-b-popover.hover.top="'Generate Report'"><b-icon-newspaper shift-v="+1" font-scale="1.2"></b-icon-newspaper></b-button>
           </div>
           <!--
           <div v-if="sync.section == null" class="mt-0 pr-1">
@@ -191,6 +191,7 @@ const Report = {
       </b-card>
     </div>
   `,
+  props: ['contractOrTx'],
   data: function () {
     return {
       count: 0,
@@ -419,8 +420,9 @@ const Report = {
     saveSettings() {
       localStorage.reportSettings = JSON.stringify(this.settings);
     },
-    generateReport() {
-      store.dispatch('report/generateReport');
+    generateReport(contractOrTx) {
+      console.log("UI generateReport: " + contractOrTx);
+      store.dispatch('report/generateReport', contractOrTx);
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
@@ -549,7 +551,7 @@ const Report = {
     logDebug("Report", "beforeDestroy()");
   },
   mounted() {
-    logDebug("Report", "mounted() $route: " + JSON.stringify(this.$route.params));
+    logInfo("Report", "mounted() $route: " + JSON.stringify(this.$route.params) + ", props['contractOrTx']: " + this.contractOrTx);
     store.dispatch('data/restoreState');
     if ('reportSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.reportSettings);
@@ -576,8 +578,8 @@ const reportModule = {
   mutations: {
   },
   actions: {
-    async generateReport() {
-      logInfo("reportModule", "generateReport()");
+    async generateReport(context, contractOrTx) {
+      logInfo("reportModule", "generateReport(): " + contractOrTx);
       const allAccounts = store.getters['data/accounts'];
       const allTxs = store.getters['data/txs'];
       const exchangeRates = store.getters['data/exchangeRates'];
@@ -628,12 +630,10 @@ const reportModule = {
                 return aBlockNumber - bBlockNumber;
               }
             });
-            const DEBUGTXORCONTRACT = null;
-            // const DEBUGTXORCONTRACT = "0x00000000006c3852cbEf3e08E8dF289169EdE581"; // Seaport
 
             // let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {
-              if (DEBUGTXORCONTRACT == null || txData.tx.to == DEBUGTXORCONTRACT || txData.tx.hash == DEBUGTXORCONTRACT) {
+              if (!contractOrTx || txData.tx.to == contractOrTx || txData.tx.hash == contractOrTx) {
                 // console.log("txData: " + JSON.stringify(txData));
                 // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
                 const exchangeRate = getExchangeRate(moment.unix(txData.timestamp), exchangeRates);

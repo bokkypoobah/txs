@@ -11,9 +11,10 @@ const routes = [{
     component: Accounts,
     name: 'Accounts',
   }, {
-    path: '/report',
+    path: '/report/:contractOrTx?',
     component: Report,
     name: 'Report',
+    props: true,
   }, {
     path: '/transactions',
     component: Transactions,
