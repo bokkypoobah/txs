@@ -307,6 +307,11 @@ const dataModule = {
       Vue.set(state.txs[info.txHash].dataImported, 'txReceipt', info.txReceipt);
       Vue.set(state.txs[info.txHash].computed.info, 'summary', info.summary);
     },
+    setExchangeRates(state, exchangeRates) {
+      // TODO: Delete debug
+      console.log("mutation.setExchangeRates: " + JSON.stringify(exchangeRates));
+      Vue.set(state, 'exchangeRates', exchangeRates);
+    },
     setSyncSection(state, info) {
       state.sync.section = info.section;
       state.sync.total = info.total;
@@ -338,6 +343,10 @@ const dataModule = {
         const accounts = await db0.cache.where("objectName").equals('accounts').toArray();
         if (accounts.length == 1) {
           context.state.accounts = accounts[0].object;
+        }
+        const exchangeRates = await db0.cache.where("objectName").equals('exchangeRates').toArray();
+        if (exchangeRates.length == 1) {
+          context.state.exchangeRates = exchangeRates[0].object;
         }
       }
     },
@@ -913,65 +922,42 @@ const dataModule = {
               break;
             }
           }
+          context.dispatch('saveData', ['txs']);
+          context.commit('setSyncSection', { section: null, total: null });
+
         } else if (section == 'getExchangeRates') {
           console.log("getExchangeRates: " + reportingCurrency);
-
-
-          // async function fetchExchangeRates() {
-          //   // TODO: Use toTs={timestamp} when > 2000 days - https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday
-          // const days = parseInt((new Date() - new Date("2015-07-01")) / (24 * 60 * 60 * 1000));
-          // https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=AUD&limit=2000
-          // console.log("days: " + days);
           const MAXDAYS = 2000;
           const MINDATE = moment("2015-07-30");
-          console.log("MINDATE: " + MINDATE.toString())
           let toTs = moment();
           const results = {};
-          // Jul-30-2015
           while (toTs.year() >= 2015) {
-            console.log(toTs.toString());
             let days = toTs.diff(MINDATE, 'days');
             if (days > MAXDAYS) {
               days = MAXDAYS;
             }
-            console.log("days: " + days);
             const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + reportingCurrency + "&toTs=" + toTs.unix() + "&limit=" + days;
             console.log(url);
-              const data = await fetch(url)
-                .then(response => response.json())
-                .catch(function(e) {
-                  console.log("error: " + e);
-                });
+            const data = await fetch(url)
+              .then(response => response.json())
+              .catch(function(e) {
+                console.log("error: " + e);
+              });
             for (day of data.Data.Data) {
-              results[day.time] = day.close;
+              results[moment.utc(day.time * 1000).format("YYYYMMDD")] = day.close;
             }
             toTs = moment(toTs).subtract(MAXDAYS, 'days');
           }
-          const dates = Object.keys(results);
-          dates.sort();
-          // console.log(JSON.stringify(dates));
-          for (let date of dates) {
-            console.log(moment.unix(date).toString() + " => " + results[date]);
-          }
-
-          //   const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + state.config.currency + "&limit=" + days;
-          //   // logInfo("cryptoPunksModule", "mutations.loadPunks().fetchLatestEvents() url: " + url);
-          //   const data = await fetch(url)
-          //     .then(response => response.json())
-          //     .catch(function(e) {
-          //       console.log("error: " + e);
-          //     });
-          //   const results = {};
-          //   for (day of data.Data.Data) {
-          //     results[day.time] = day.close;
-          //   }
-          //   return results;
+          context.commit('setExchangeRates', results);
+          // TODO: Delete debugging
+          // const dates = Object.keys(results);
+          // dates.sort();
+          // for (let date of dates) {
+          //   console.log(date + "\t" + results[date]);
           // }
-
-
+          context.dispatch('saveData', ['exchangeRates']);
+          context.commit('setSyncSection', { section: null, total: null });
         }
-        context.dispatch('saveData', ['txs']);
-        context.commit('setSyncSection', { section: null, total: null });
       }
     },
     // Called by Connection.execWeb3()
