@@ -20,6 +20,11 @@ const Config = {
                 <b-form-select size="sm" id="period-start" :value="settings.periodStart" @change="setPeriodStart($event)" :options="periodStartOptions" class="w-25"></b-form-select>
               </b-form-group>
             </b-form-group>
+            <b-form-group label-cols-lg="2" label="Reporting Currency" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Currency:" label-for="reporting-currency" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Used in https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym={ccy}&limit=2000'" class="mx-0 my-1 p-0">
+                <b-form-select size="sm" id="reporting-currency" :value="settings.reportingCurrency" @change="setReportingCurrency($event)" :options="reportingCurrencyOptions" class="w-25"></b-form-select>
+              </b-form-group>
+            </b-form-group>
             <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Temporary Data:" label-for="reset-localstorage" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset view preferences stored in your browser LocalStorage'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="reset-localstorage" @click="reset(['localStorage'])" variant="primary">Reset</b-button>
@@ -69,6 +74,17 @@ const Config = {
         { value: 'nov', text: 'November' },
         { value: 'dec', text: 'December' },
       ],
+      // As supported by https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym={ccy}&limit=2000
+      reportingCurrencyOptions: [
+        { value: 'AUD', text: 'AUD' },
+        { value: 'CAD', text: 'CAD' },
+        { value: 'CHF', text: 'CHF' },
+        { value: 'EUR', text: 'EUR' },
+        { value: 'GBP', text: 'GBP' },
+        { value: 'JPY', text: 'JPY' },
+        { value: 'NZD', text: 'NZD' },
+        { value: 'USD', text: 'USD' },
+      ],
     }
   },
   computed: {
@@ -103,6 +119,9 @@ const Config = {
     },
     setPeriodStart(periodStart) {
       store.dispatch('config/setPeriodStart', periodStart);
+    },
+    setReportingCurrency(reportingCurrency) {
+      store.dispatch('config/setReportingCurrency', reportingCurrency);
     },
     reset(sections) {
       console.log("reset() - sections: " + JSON.stringify(sections));
@@ -156,7 +175,8 @@ const configModule = {
       etherscanBatchSize: 10_000_000,
       confirmations: 10,
       periodStart: 'jul',
-      version: 1,
+      reportingCurrency: 'USD',
+      version: 2,
     },
   },
   getters: {
@@ -201,12 +221,15 @@ const configModule = {
     setPeriodStart(state, periodStart) {
       state.settings.periodStart = periodStart;
     },
+    setReportingCurrency(state, reportingCurrency) {
+      state.settings.reportingCurrency = reportingCurrency;
+    },
   },
   actions: {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 1) {
+        if ('version' in tempSettings && tempSettings.version == 2) {
           context.state.settings = tempSettings;
         }
       }
@@ -225,6 +248,10 @@ const configModule = {
     },
     setPeriodStart(context, periodStart) {
       context.commit('setPeriodStart', periodStart);
+      localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    setReportingCurrency(context, reportingCurrency) {
+      context.commit('setReportingCurrency', reportingCurrency);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
   },

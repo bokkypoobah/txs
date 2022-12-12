@@ -90,6 +90,7 @@ const dataModule = {
     txs: {},
     assets: {},
     ensMap: {},
+    exchangeRates: {},
     sync: {
       section: null,
       total: null,
@@ -110,6 +111,7 @@ const dataModule = {
     txs: state => state.txs,
     assets: state => state.assets,
     ensMap: state => state.ensMap,
+    exchangeRates: state => state.exchangeRates,
     sync: state => state.sync,
   },
   mutations: {
@@ -910,6 +912,30 @@ const dataModule = {
               break;
             }
           }
+        } else if (section == 'getExchangeRates') {
+          console.log("getExchangeRates");
+
+
+          // async function fetchExchangeRates() {
+          //   // TODO: Use toTs={timestamp} when > 2000 days - https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday
+          const days = parseInt((new Date() - new Date("2015-07-01")) / (24 * 60 * 60 * 1000));
+          https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=AUD&limit=2000
+          console.log("days: " + days);
+          //   const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + state.config.currency + "&limit=" + days;
+          //   // logInfo("cryptoPunksModule", "mutations.loadPunks().fetchLatestEvents() url: " + url);
+          //   const data = await fetch(url)
+          //     .then(response => response.json())
+          //     .catch(function(e) {
+          //       console.log("error: " + e);
+          //     });
+          //   const results = {};
+          //   for (day of data.Data.Data) {
+          //     results[day.time] = day.close;
+          //   }
+          //   return results;
+          // }
+
+
         }
         context.dispatch('saveData', ['txs']);
         context.commit('setSyncSection', { section: null, total: null });

@@ -22,10 +22,13 @@ const Report = {
           <div class="mt-0 flex-grow-1">
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['importFromEtherscan', 'downloadData'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import Etherscan transactions and web3 transfer events for accounts configured to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
+            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['importFromEtherscan', 'downloadData', 'buildAssets', 'getExchangeRates'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import Etherscan transactions and web3 transfer events for accounts configured to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['downloadData'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import transaction data via web3 for accounts configured to be synced'"><b-icon-cloud shift-v="+1" font-scale="1.2"></b-icon-cloud></b-button>
+          </div>
+          <div v-if="sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['getExchangeRates'], parameters: [] })" variant="link" v-b-popover.hover.top="'Get exchange rates'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="generateReport" variant="link" v-b-popover.hover.top="'Generate Report'"><b-icon-newspaper shift-v="+1" font-scale="1.2"></b-icon-newspaper></b-button>
