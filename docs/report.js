@@ -27,6 +27,9 @@ const Report = {
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['downloadData'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import transaction data via web3 for accounts configured to be synced'"><b-icon-cloud shift-v="+1" font-scale="1.2"></b-icon-cloud></b-button>
           </div>
+          <div v-if="sync.section == null" class="mt-0 pr-1">
+            <b-button size="sm" :disabled="block == null" @click="generateReport" variant="link" v-b-popover.hover.top="'Generate Report'"><b-icon-newspaper shift-v="+1" font-scale="1.2"></b-icon-newspaper></b-button>
+          </div>
           <!--
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="syncIt({ sections: ['computeTxs'], parameters: Object.keys(settings.selectedTransactions) })" variant="link" v-b-popover.hover.top="'Compute selected transactions'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
@@ -306,73 +309,7 @@ const Report = {
       }
       return result;
     },
-    generateReport() {
-      console.log("generateReport");
-      const accumulatedData = {};
-      for (const [chainId, accounts] of Object.entries(this.accounts)) {
-        const txs = this.txs[chainId] || {};
-        // console.log(JSON.stringify(txs, null, 2));
-        for (const [account, accountData] of Object.entries(accounts)) {
-          // TODO: Remove sync criteria
-          if (accountData.mine && accountData.report) {
-            console.log("--- Processing " + chainId + ":" + account + " ---");
-            const txHashes = {};
-            const missingTxDataHashes = {};
-            for (const [txHash, logIndexes] of Object.entries(accountData.events)) {
-              for (const [logIndex, event] of Object.entries(logIndexes)) {
-                if (txHash in txs) {
-                  txHashes[txHash] = event.blockNumber;
-                } else {
-                  missingTxDataHashes[txHash] = event.blockNumber;
-                }
-              }
-            }
-            for (const [txHash, traceIds] of Object.entries(accountData.internalTransactions)) {
-              for (const [traceId, tx] of Object.entries(traceIds)) {
-                if (txHash in txs) {
-                  txHashes[txHash] = tx.blockNumber;
-                } else {
-                  missingTxDataHashes[txHash] = null;
-                }
-              }
-            }
-            for (const [txHash, tx] of Object.entries(accountData.transactions)) {
-              if (txHash in txs) {
-                txHashes[txHash] = tx.blockNumber;
-              } else {
-                missingTxDataHashes[txHash] = tx.blockNumber;
-              }
-            }
-            const txList = [];
-            for (const [txHash, blockNumber] of Object.entries(txHashes)) {
-              txList.push(txs[txHash]);
-            }
-            txList.sort((a, b) => {
-              const aBlockNumber = parseInt(a.tx.blockNumber);
-              const bBlockNumber = parseInt(b.tx.blockNumber);
-              if (aBlockNumber == bBlockNumber) {
-                return parseInt(a.tx.transactionIndex) - parseInt(b.tx.transactionIndex);
-              } else {
-                return aBlockNumber - bBlockNumber;
-              }
-            });
-            // let ethBalance = ethers.BigNumber.from(0);
-            for (const txData of txList) {
-              // console.log("txData: " + JSON.stringify(txData));
-              // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
-              const results = parseTx(chainId, account, accounts, txData);
-              accumulateTxResults(accumulatedData, txData, results);
-              // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
-              // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
-            }
-            console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
-          }
-        }
-      }
-
-    },
     filteredTransactions() {
-      this.generateReport;
       const results = [];
       let startPeriod = null;
       let endPeriod = null;
@@ -478,6 +415,9 @@ const Report = {
     },
     saveSettings() {
       localStorage.reportSettings = JSON.stringify(this.settings);
+    },
+    generateReport() {
+      store.dispatch('report/generateReport');
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
@@ -633,5 +573,71 @@ const reportModule = {
   mutations: {
   },
   actions: {
+    async generateReport() {
+      logInfo("reportModule", "generateReport()");
+      const allAccounts = store.getters['data/accounts'];
+      const allTxs = store.getters['data/txs'];
+      // console.log(JSON.stringify(allAccounts));
+      const accumulatedData = {};
+      for (const [chainId, accounts] of Object.entries(allAccounts)) {
+        const txs = allTxs[chainId] || {};
+        // console.log(JSON.stringify(txs, null, 2));
+        for (const [account, accountData] of Object.entries(accounts)) {
+          if (accountData.mine && accountData.report) {
+            console.log("--- Processing " + chainId + ":" + account + " ---");
+            const txHashes = {};
+            const missingTxDataHashes = {};
+            for (const [txHash, logIndexes] of Object.entries(accountData.events)) {
+              for (const [logIndex, event] of Object.entries(logIndexes)) {
+                if (txHash in txs) {
+                  txHashes[txHash] = event.blockNumber;
+                } else {
+                  missingTxDataHashes[txHash] = event.blockNumber;
+                }
+              }
+            }
+            for (const [txHash, traceIds] of Object.entries(accountData.internalTransactions)) {
+              for (const [traceId, tx] of Object.entries(traceIds)) {
+                if (txHash in txs) {
+                  txHashes[txHash] = tx.blockNumber;
+                } else {
+                  missingTxDataHashes[txHash] = null;
+                }
+              }
+            }
+            for (const [txHash, tx] of Object.entries(accountData.transactions)) {
+              if (txHash in txs) {
+                txHashes[txHash] = tx.blockNumber;
+              } else {
+                missingTxDataHashes[txHash] = tx.blockNumber;
+              }
+            }
+            const txList = [];
+            for (const [txHash, blockNumber] of Object.entries(txHashes)) {
+              txList.push(txs[txHash]);
+            }
+            txList.sort((a, b) => {
+              const aBlockNumber = parseInt(a.tx.blockNumber);
+              const bBlockNumber = parseInt(b.tx.blockNumber);
+              if (aBlockNumber == bBlockNumber) {
+                return parseInt(a.tx.transactionIndex) - parseInt(b.tx.transactionIndex);
+              } else {
+                return aBlockNumber - bBlockNumber;
+              }
+            });
+            // let ethBalance = ethers.BigNumber.from(0);
+            for (const txData of txList) {
+              // console.log("txData: " + JSON.stringify(txData));
+              // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
+              const results = parseTx(chainId, account, accounts, txData);
+              accumulateTxResults(accumulatedData, txData, results);
+              // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
+              // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
+            }
+            console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
+          }
+        }
+      }
+    },
   },
 };
