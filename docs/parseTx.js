@@ -435,6 +435,7 @@ function parseTx(chainId, account, accounts, txData) {
   // ERC-721 Mints
   const MINTSIGS = {
     "0xa0712d68": true, // mint(uint256 mintedAmount)
+    "0x3f81449a": true, // mintTrunk(uint256 randomSeed, bool isBasic)
   };
   // if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
   //   results.info = "General contract maintenance TODO";
@@ -455,7 +456,20 @@ function parseTx(chainId, account, accounts, txData) {
     if (receivedERC721Events.length == 1) {
         results.ethPaid = msgValue;
         const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
-        results.info = "Purchased ERC-721 " + info.symbol + " " + receivedERC721Events[0].tokenId + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+        results.info = "Purchased ERC-721 " + info.name + " " + receivedERC721Events[0].tokenId + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+    } else {
+      // TODO Bulk
+      // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
+    }
+  }
+
+  // Simple ERC-1155 Purchase
+  if (!results.info && msgValue > 0 && txData.tx.from == account) {
+    const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
+    if (receivedERC1155Events.length == 1) {
+        results.ethPaid = msgValue;
+        const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
+        results.info = "Purchased ERC-1155 " + info.name + " " + receivedERC1155Events[0].tokenId + " x " + receivedERC1155Events[0].tokens + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     } else {
       // TODO Bulk
       // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));

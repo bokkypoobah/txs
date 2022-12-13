@@ -583,7 +583,7 @@ const reportModule = {
       const allAccounts = store.getters['data/accounts'];
       const allTxs = store.getters['data/txs'];
       const exchangeRates = store.getters['data/exchangeRates'];
-      const blockRange = contractOrTxOrBlockRange.match(/(\d+)-(\d+)/)
+      const blockRange = contractOrTxOrBlockRange ? contractOrTxOrBlockRange.match(/(\d+)-(\d+)/) : null;
       let startBlock = 0;
       let endBlock = 999999999999;
       let contractOrTx = null;
@@ -591,7 +591,7 @@ const reportModule = {
         startBlock = blockRange[1];
         endBlock = blockRange[2];
       } else {
-        contractOrTx = testContractOrTxOrBlockRange;
+        contractOrTx = contractOrTxOrBlockRange;
       }
       const accumulatedData = {};
       for (const [chainId, accounts] of Object.entries(allAccounts)) {
