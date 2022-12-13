@@ -8,18 +8,20 @@ function getTokenContractInfo(contract, accounts) {
   return { name: "Unknown", symbol: "Unknown", decimals: 18 };
 }
 
-// ERC-20 event Transfer(address indexed _from, address indexed _to, uint256 _value)
-// ERC-721 event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
-// CryptoVoxels ERC-721 @ 0x79986aF15539de2db9A5086382daEdA917A9CF0C uses ERC-20 style
 function getEvents(txData) {
+  const seaportInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
   const erc20Events = [];
   const erc721Events = [];
   const erc1155Events = [];
+  const nftExchangeEvents = [];
   const erc20FromMap = {};
   const erc20ToMap = {};
   for (const event of txData.txReceipt.logs) {
     // console.log(JSON.stringify(event));
-    // Transfer (index_topic_1 address from, index_topic_2 address to, uint256 value)
+    // ERC-20 event Transfer(address indexed _from, address indexed _to, uint256 _value)
+    // ERC-721 event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
+    // CryptoVoxels ERC-721 @ 0x79986aF15539de2db9A5086382daEdA917A9CF0C uses ERC-20 style
+    // CryptoKitties ERC-721 @ 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d has unindexed parameters
     if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
       let from;
       let to;
@@ -37,7 +39,7 @@ function getEvents(txData) {
         to = ethers.utils.getAddress('0x' + event.data.substring(90, 130));
         tokensOrTokenId = ethers.BigNumber.from('0x' + event.data.substring(130, 193)).toString();
       }
-      // ERC-721 Transfer - CryptoVoxels & CryptoKitties
+      // ERC-721 Transfer, including CryptoVoxels & CryptoKitties
       if (event.topics.length == 4 || event.address == "0x79986aF15539de2db9A5086382daEdA917A9CF0C" || event.address == "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d") {
         erc721Events.push({ contract: event.address, from, to, tokenId: tokensOrTokenId });
         // ERC-20 Transfer
@@ -54,11 +56,6 @@ function getEvents(txData) {
           erc20ToMap[to] = parseInt(erc20ToMap[to]) + 1;
         }
       }
-      // let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data).toString() : ethers.BigNumber.from(event.topics[3]).toString();
-      // console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
-      // if (txData.tx.hash == "0xf9dcdb65a12ed5ff4a95af1ac5ce3ed02ce535ad8bcbccc23c667a9a9e24e49d") {
-      //   console.log("ERC-20 " + event.address + ", from: " + from + ", to: " + to + ", tokens: " + tokens);
-      // }
       // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
     } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
       const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
@@ -68,9 +65,42 @@ function getEvents(txData) {
       const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
       erc1155Events.push({ contract: event.address, operator, from, to, tokenId, tokens });
       // eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenId, tokens, type: "erc1155" };
+      // Seaport
+    } else if (event.address == "0x00000000006c3852cbEf3e08E8dF289169EdE581") {
+      const log = seaportInterface.parseLog(event);
+      console.log("Seaport log: " + JSON.stringify(log));
+      if (log.name == "OrderFulfilled") {
+        console.log("  OrderFulfilled(");
+        const [orderHash, offerer, zone, recipient, offer, consideration] = log.args;
+        console.log("    orderHash: " + orderHash);
+        console.log("    offerer: " + offerer);
+        console.log("    zone: " + zone);
+        for (let i = 0; i < offer.length; i++) {
+          const [itemType, token, identifier, amount] = offer[i];
+          console.log("    offer[" + i + "].itemType: " + itemType);
+          console.log("    offer[" + i + "].token: " + token);
+          console.log("    offer[" + i + "].identifier: " + identifier);
+          console.log("    offer[" + i + "].amount: " + amount);
+        }
+        for (let i = 0; i < consideration.length; i++) {
+          const [itemType, token, identifier, amount, recipient] = consideration[i];
+          console.log("    consideration[" + i + "].itemType: " + itemType);
+          console.log("    consideration[" + i + "].token: " + token);
+          console.log("    consideration[" + i + "].identifier: " + identifier);
+          console.log("    consideration[" + i + "].amount: " + amount);
+          console.log("    consideration[" + i + "].recipient: " + recipient);
+        }
+        console.log("  )");
+        nftExchangeEvents.push({
+          contract: event.address,
+          orderHash,
+          offerer,
+          zone,
+        });
+      }
     }
   }
-  return { erc20Events, erc721Events, erc1155Events, erc20FromMap, erc20ToMap };
+  return { erc20Events, erc721Events, erc1155Events, erc20FromMap, erc20ToMap, nftExchangeEvents };
 }
 
 function accumulateTxResults(accumulatedData, txData, results) {
@@ -104,11 +134,14 @@ function parseTx(chainId, account, accounts, txData) {
   const msgValue = ethers.BigNumber.from(txData.tx.value).toString();
   const gasUsed = ethers.BigNumber.from(txData.txReceipt.gasUsed);
   const txFee = gasUsed.mul(txData.txReceipt.effectiveGasPrice);
-  const events = getEvents(txData);
   results.gasUsed = gasUsed;
   results.txFee = txData.tx.from == account ? txFee : 0;
   results.ethReceived = 0;
   results.ethPaid = 0;
+  const events = getEvents(txData);
+  if (events.nftExchangeEvents.length > 0) {
+    console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents, null, 2));
+  }
 
   // TODO: Identify internal transfers?
   // EOA to EOA ETH transfer
