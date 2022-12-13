@@ -31,7 +31,7 @@ const Report = {
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['getExchangeRates'], parameters: [] })" variant="link" v-b-popover.hover.top="'Get exchange rates'"><b-icon-bar-chart shift-v="+1" font-scale="1.2"></b-icon-bar-chart></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" :disabled="block == null" @click="generateReport(contractOrTx)" variant="link" v-b-popover.hover.top="'Generate Report'"><b-icon-newspaper shift-v="+1" font-scale="1.2"></b-icon-newspaper></b-button>
+            <b-button size="sm" :disabled="block == null" @click="generateReport(contractOrTxOrBlockRange)" variant="link" v-b-popover.hover.top="'Generate Report'"><b-icon-newspaper shift-v="+1" font-scale="1.2"></b-icon-newspaper></b-button>
           </div>
           <!--
           <div v-if="sync.section == null" class="mt-0 pr-1">
@@ -191,7 +191,7 @@ const Report = {
       </b-card>
     </div>
   `,
-  props: ['contractOrTx'],
+  props: ['contractOrTxOrBlockRange'],
   data: function () {
     return {
       count: 0,
@@ -420,9 +420,9 @@ const Report = {
     saveSettings() {
       localStorage.reportSettings = JSON.stringify(this.settings);
     },
-    generateReport(contractOrTx) {
-      console.log("UI generateReport: " + contractOrTx);
-      store.dispatch('report/generateReport', contractOrTx);
+    generateReport(contractOrTxOrBlockRange) {
+      console.log("UI generateReport: " + contractOrTxOrBlockRange);
+      store.dispatch('report/generateReport', contractOrTxOrBlockRange);
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
@@ -551,7 +551,7 @@ const Report = {
     logDebug("Report", "beforeDestroy()");
   },
   mounted() {
-    logInfo("Report", "mounted() $route: " + JSON.stringify(this.$route.params) + ", props['contractOrTx']: " + this.contractOrTx);
+    logInfo("Report", "mounted() $route: " + JSON.stringify(this.$route.params) + ", props['contractOrTxOrBlockRange']: " + this.contractOrTxOrBlockRange);
     store.dispatch('data/restoreState');
     if ('reportSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.reportSettings);
@@ -578,11 +578,21 @@ const reportModule = {
   mutations: {
   },
   actions: {
-    async generateReport(context, contractOrTx) {
-      logInfo("reportModule", "generateReport(): " + contractOrTx);
+    async generateReport(context, contractOrTxOrBlockRange) {
+      logInfo("reportModule", "generateReport(): " + contractOrTxOrBlockRange);
       const allAccounts = store.getters['data/accounts'];
       const allTxs = store.getters['data/txs'];
       const exchangeRates = store.getters['data/exchangeRates'];
+      const blockRange = contractOrTxOrBlockRange.match(/(\d+)-(\d+)/)
+      let startBlock = 0;
+      let endBlock = 999999999999;
+      let contractOrTx = null;
+      if (blockRange != null) {
+        startBlock = blockRange[1];
+        endBlock = blockRange[2];
+      } else {
+        contractOrTx = testContractOrTxOrBlockRange;
+      }
       const accumulatedData = {};
       for (const [chainId, accounts] of Object.entries(allAccounts)) {
         const txs = allTxs[chainId] || {};
@@ -633,7 +643,7 @@ const reportModule = {
 
             // let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {
-              if (!contractOrTx || txData.tx.to == contractOrTx || txData.tx.hash == contractOrTx) {
+              if ((!contractOrTx || txData.tx.to == contractOrTx || txData.tx.hash == contractOrTx) && txData.tx.blockNumber >= startBlock && txData.tx.blockNumber <= endBlock) {
                 // console.log("txData: " + JSON.stringify(txData));
                 // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
                 const exchangeRate = getExchangeRate(moment.unix(txData.timestamp), exchangeRates);

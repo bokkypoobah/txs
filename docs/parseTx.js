@@ -45,10 +45,10 @@ function getEvents(txData) {
       }
       // ERC-721 Transfer, including CryptoVoxels & CryptoKitties
       if (event.topics.length == 4 || event.address == "0x79986aF15539de2db9A5086382daEdA917A9CF0C" || event.address == "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d") {
-        erc721Events.push({ contract: event.address, from, to, tokenId: tokensOrTokenId });
+        erc721Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId });
         // ERC-20 Transfer
       } else {
-        erc20Events.push({ contract: event.address, from, to, tokens: tokensOrTokenId });
+        erc20Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId });
         if (!(from in erc20FromMap)) {
           erc20FromMap[from] = 1;
         } else {
@@ -67,7 +67,7 @@ function getEvents(txData) {
       const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
       const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
       const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
-      erc1155Events.push({ contract: event.address, operator, from, to, tokenId, tokens });
+      erc1155Events.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens });
       // Seaport
     } else if (event.address == "0x00000000006c3852cbEf3e08E8dF289169EdE581") {
       const log = seaportInterface.parseLog(event);
@@ -83,7 +83,7 @@ function getEvents(txData) {
           const [itemType, token, identifier, amount, recipient] = consideration[i];
           considerations.push({ itemType, token, identifier: ethers.BigNumber.from(identifier).toString(), amount: ethers.BigNumber.from(amount).toString(), recipient });
         }
-        nftExchangeEvents.push({ contract: event.address, exchange: "Seaport", name: "OrderFulfilled", orderHash, offerer, zone, offers, considerations });
+        nftExchangeEvents.push({ logIndex: event.logIndex, contract: event.address, exchange: "Seaport", name: "OrderFulfilled", orderHash, offerer, zone, offers, considerations });
       }
       // Blur
     } else if (event.address == "0x000000000000Ad05Ccc4F10045630fb830B95127") {
@@ -150,14 +150,14 @@ function getEvents(txData) {
           salt: ethers.BigNumber.from(salt).toString(),
           extraParams,
         };
-        nftExchangeEvents.push({ contract: event.address, exchange: "Blur", name: "OrdersMatched", maker, taker, sell: sellData, sellHash, buy: buyData, buyHash });
+        nftExchangeEvents.push({ logIndex: event.logIndex, contract: event.address, exchange: "Blur", name: "OrdersMatched", maker, taker, sell: sellData, sellHash, buy: buyData, buyHash });
       }
       // WyvernExchange
     } else if (event.address == "0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b") {
       const log = wyvernInterface.parseLog(event);
       if (log.name == "OrdersMatched") {
         const [buyHash, sellHash, maker, taker, price, metadata] = log.args;
-        nftExchangeEvents.push({ contract: event.address, exchange: "WyvernExchange", name: "OrdersMatched", maker, taker, price: ethers.BigNumber.from(price).toString(), metadata });
+        nftExchangeEvents.push({ logIndex: event.logIndex, contract: event.address, exchange: "WyvernExchange", name: "OrdersMatched", maker, taker, price: ethers.BigNumber.from(price).toString(), metadata });
       }
       // LooksRareExchange
     } else if (event.address == "0x59728544B08AB483533076417FbBB2fD0B17CE3a") {
@@ -165,6 +165,7 @@ function getEvents(txData) {
       if (log.name == "TakerAsk") {
         const [orderHash, orderNonce, taker, maker, strategy, currency, collection, tokenId, amount, price] = log.args;
         nftExchangeEvents.push({
+          logIndex: event.logIndex,
           contract: event.address,
           exchange: "LooksRareExchange",
           name: "TakerAsk",
@@ -186,10 +187,10 @@ function getEvents(txData) {
       // X2Y2_r1
     } else if (event.address == "0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3") {
       const log = x2y2Interface.parseLog(event);
-      console.log(JSON.stringify(log));
       if (log.name == "EvProfit") {
         const [itemHash, currency, to, amount] = log.args;
         nftExchangeEvents.push({
+          logIndex: event.logIndex,
           contract: event.address,
           exchange: "X2Y2_r1",
           name: "EvProfit",
@@ -198,47 +199,20 @@ function getEvents(txData) {
           to,
           amount: ethers.BigNumber.from(amount).toString(),
         });
-        // TODO: EvInventory
       } else if (log.name == "EvInventory") {
-        console.log("  EvInventory(");
         const [itemHash, maker, taker, orderSalt, settleSalt, intent, delegateType, deadline, currency, dataMask, item, detail] = log.args;
-        console.log("    itemHash: " + itemHash);
-        console.log("    maker: " + maker);
-        console.log("    taker: " + taker);
-        console.log("    orderSalt: " + orderSalt);
-        console.log("    settleSalt: " + settleSalt);
-        console.log("    intent: " + intent);
-        console.log("    delegateType: " + delegateType);
-        console.log("    deadline: " + deadline);
-        console.log("    currency: " + currency);
-        console.log("    dataMask: " + dataMask);
         const [price, data] = item;
-        console.log("    item.price: " + price);
-        console.log("    item.data: " + data);
         const [op, orderIdx, itemIdx, price1, itemHash1, executionDelegate, dataReplacement, bidIncentivePct, aucMinIncrementPct, aucIncDurationSecs, fees] = detail;
-        console.log("    detail.op: " + op);
-        console.log("    detail.orderIdx: " + orderIdx);
-        console.log("    detail.itemIdx: " + itemIdx);
-        console.log("    detail.price: " + price1);
-        console.log("    detail.itemHash: " + itemHash1);
-        console.log("    detail.executionDelegate: " + executionDelegate);
-        console.log("    detail.dataReplacement: " + dataReplacement);
-        console.log("    detail.bidIncentivePct: " + bidIncentivePct);
-        console.log("    detail.aucMinIncrementPct: " + aucMinIncrementPct);
-        console.log("    detail.aucIncDurationSecs: " + aucIncDurationSecs);
         const feesData = [];
         for (let i = 0; i < fees.length; i++) {
           const [percentage, to] = fees[i];
           feesData.push({ percentage: ethers.BigNumber.from(percentage).toString(), to });
-          // console.log("    detail.fees[" + i + "].percentage: " + percentage);
-          // console.log("    detail.fees[" + i + "].to: " + to);
         }
-        console.log("feesData: " + JSON.stringify(feesData));
-        console.log("  )");
         nftExchangeEvents.push({
+          logIndex: event.logIndex,
           contract: event.address,
           exchange: "X2Y2_r1",
-          name: "EvInventory_TODO",
+          name: "EvInventory",
           itemHash,
           maker,
           taker,
@@ -252,7 +226,20 @@ function getEvents(txData) {
           item: {
             price: ethers.BigNumber.from(price).toString(),
             data,
-          }
+          },
+          detail: {
+            op,
+            orderIdx: ethers.BigNumber.from(orderIdx).toString(),
+            itemIdx: ethers.BigNumber.from(itemIdx).toString(),
+            price: ethers.BigNumber.from(price1).toString(),
+            itemHash,
+            executionDelegate,
+            dataReplacement,
+            bidIncentivePct: ethers.BigNumber.from(bidIncentivePct).toString(),
+            aucMinIncrementPct: ethers.BigNumber.from(aucMinIncrementPct).toString(),
+            aucIncDurationSecs: ethers.BigNumber.from(aucIncDurationSecs).toString(),
+            fees: feesData,
+          },
         });
       }
     }
