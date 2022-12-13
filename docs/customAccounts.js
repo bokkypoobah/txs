@@ -616,4 +616,31 @@ const _CUSTOMACCOUNTS = {
 
     },
   },
+  "0x000000000000509081d6FCD3ee63e791aD1db763": {
+    mask: MASK_ISCONTRACT,
+    symbol: "ENSVisionBatchRegistration",
+    name: "ENSVisionBatchRegistration",
+    decimals: null,
+    abi: null,
+    process: function(txData, account, accounts, events, results) {
+      console.log("  ENSVisionBatchRegistration");
+      const ethRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
+      for (const event of txData.txReceipt.logs) {
+        if (event.address == "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
+          const log = ethRegistrarControllerInterface.parseLog(event);
+          // TODO: Sum cost and check totals. & separate out the ENS Vision fees
+          if (log.name == "NameRegistered") {
+            console.log("  NameRegistered(");
+            const [name, label, owner, cost, expires] = log.args;
+            console.log("    name: " + name);
+            console.log("    label: " + label);
+            console.log("    owner: " + owner);
+            console.log("    cost: " + cost);
+            console.log("    expires: " + expires);
+            console.log("  )");
+          }
+        }
+      }
+    },
+  },
 };
