@@ -31,11 +31,24 @@ function getEvents(txData) {
     // console.log(JSON.stringify(event));
     // Transfer (index_topic_1 address from, index_topic_2 address to, uint256 value)
     if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
-      const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
-      const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-      const tokensOrTokenId = event.topics.length == 4 ? ethers.BigNumber.from(event.topics[3]).toString() : ethers.BigNumber.from(event.data).toString();
-      // ERC-721 Transfer
-      if (event.topics.length == 4 || event.address == "0x79986aF15539de2db9A5086382daEdA917A9CF0C") {
+      let from;
+      let to;
+      let tokensOrTokenId;
+      if (event.topics.length == 4) {
+        from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
+        to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+        tokensOrTokenId = ethers.BigNumber.from(event.topics[3]).toString();
+      } else if (event.topics.length == 3) {
+        from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
+        to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+        tokensOrTokenId = ethers.BigNumber.from(event.data).toString();
+      } else if (event.topics.length == 1) {
+        from = ethers.utils.getAddress('0x' + event.data.substring(26, 66));
+        to = ethers.utils.getAddress('0x' + event.data.substring(90, 130));
+        tokensOrTokenId = ethers.BigNumber.from('0x' + event.data.substring(130, 193)).toString();
+      }
+      // ERC-721 Transfer - CryptoVoxels & CryptoKitties
+      if (event.topics.length == 4 || event.address == "0x79986aF15539de2db9A5086382daEdA917A9CF0C" || event.address == "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d") {
         erc721Events.push({ contract: event.address, from, to, tokenId: tokensOrTokenId });
         // ERC-20 Transfer
       } else {
