@@ -12,6 +12,7 @@ function getEvents(txData) {
   const seaportInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
   const blurInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x000000000000Ad05Ccc4F10045630fb830B95127"].abi);
   const wyvernInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"].abi);
+  const looksRareInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x59728544B08AB483533076417FbBB2fD0B17CE3a"].abi);
   const erc20Events = [];
   const erc721Events = [];
   const erc1155Events = [];
@@ -156,6 +157,30 @@ function getEvents(txData) {
       if (log.name == "OrdersMatched") {
         const [buyHash, sellHash, maker, taker, price, metadata] = log.args;
         nftExchangeEvents.push({ contract: event.address, exchange: "WyvernExchange", name: "OrdersMatched", maker, taker, price: ethers.BigNumber.from(price).toString(), metadata });
+      }
+      // LooksRareExchange
+    } else if (event.address == "0x59728544B08AB483533076417FbBB2fD0B17CE3a") {
+      const log = looksRareInterface.parseLog(event);
+      if (log.name == "TakerAsk") {
+        const [orderHash, orderNonce, taker, maker, strategy, currency, collection, tokenId, amount, price] = log.args;
+        nftExchangeEvents.push({
+          contract: event.address,
+          exchange: "LooksRareExchange",
+          name: "TakerAsk",
+          orderHash,
+          orderNonce: ethers.BigNumber.from(orderNonce).toString(),
+          taker,
+          maker,
+          strategy,
+          currency,
+          collection,
+          tokenId: ethers.BigNumber.from(tokenId).toString(),
+          amount: ethers.BigNumber.from(amount).toString(),
+          price: ethers.BigNumber.from(price).toString(),
+        });
+        // TODO: RoyaltyPayment & TakerBid?
+      } else if (log.name != "RoyaltyPayment") {
+        console.log("LooksRareExchange: " + JSON.stringify(log));
       }
     }
   }
