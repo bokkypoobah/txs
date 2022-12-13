@@ -446,7 +446,7 @@ function parseTx(chainId, account, accounts, txData) {
       const tokenIds = receivedERC721Events.map(e => e.tokenId);
       const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
       results.ethPaid = msgValue;
-      results.info = "ERC-721 Mint " + receivedERC721Events.length + "x " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+      results.info = "Mint ERC-721:" + info.name + " (" + receivedERC721Events.length + "x) " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     }
   }
 
@@ -470,6 +470,24 @@ function parseTx(chainId, account, accounts, txData) {
         results.ethPaid = msgValue;
         const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
         results.info = "Purchased ERC-1155 " + info.name + " " + receivedERC1155Events[0].tokenId + " x " + receivedERC1155Events[0].tokens + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+    } else {
+      // TODO Bulk
+      // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
+    }
+  }
+
+  // Old Opensea Bulk Transfers @ 0xA64528Ce3c465C47258F14106FE903C201b07374
+  if (!results.info && txData.tx.data.substring(0, 10) == "0x3f801f91") {
+    const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
+    const sentERC721Events = events.erc721Events.filter(e => e.from == account);
+    if (receivedERC721Events.length > 0) {
+      const tokenIds = receivedERC721Events.map(e => e.tokenId);
+      const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
+      results.info = "Receive Bulk Transfer ERC-721:" + info.name + " x" + receivedERC721Events.length + " " + tokenIds.join(", ") + " from " + receivedERC721Events[0].from;
+    } else if (sentERC721Events.length > 0) {
+      const tokenIds = sentERC721Events.map(e => e.tokenId);
+      const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
+      results.info = "Sent Bulk Transfer ERC-721:" + info.name + " x" + sentERC721Events.length + " " + tokenIds.join(", ") + " to " + sentERC721Events[0].to;
     } else {
       // TODO Bulk
       // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
