@@ -480,6 +480,8 @@ function parseTx(chainId, account, accounts, txData) {
   if (!results.info && txData.tx.data.substring(0, 10) == "0x3f801f91") {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     const sentERC721Events = events.erc721Events.filter(e => e.from == account);
+    const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
+    const sentERC1155Events = events.erc1155Events.filter(e => e.from == account);
     if (receivedERC721Events.length > 0) {
       const tokenIds = receivedERC721Events.map(e => e.tokenId);
       const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
@@ -488,9 +490,14 @@ function parseTx(chainId, account, accounts, txData) {
       const tokenIds = sentERC721Events.map(e => e.tokenId);
       const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
       results.info = "Sent Bulk Transfer ERC-721:" + info.name + " x" + sentERC721Events.length + " " + tokenIds.join(", ") + " to " + sentERC721Events[0].to;
-    } else {
-      // TODO Bulk
-      // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
+    } else if (receivedERC1155Events.length > 0) {
+      const tokenIds = receivedERC1155Events.map(e => e.tokenId);
+      const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
+      results.info = "Receive Bulk Transfer ERC-1155:" + info.name + " x" + receivedERC1155Events.length + " " + tokenIds.join(", ") + " from " + receivedERC1155Events[0].from;
+    } else if (sentERC1155Events.length > 0) {
+      const tokenIds = sentERC1155Events.map(e => e.tokenId);
+      const info = getTokenContractInfo(sentERC1155Events[0].contract, accounts);
+      results.info = "Sent Bulk Transfer ERC-1155:" + info.name + " x" + sentERC1155Events.length + " " + tokenIds.join(", ") + " to " + sentERC1155Events[0].to;
     }
   }
 
