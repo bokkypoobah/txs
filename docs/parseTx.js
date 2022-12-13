@@ -84,9 +84,9 @@ function accumulateTxResults(accumulatedData, txData, results) {
   console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
     " " + ethers.utils.formatEther(accumulatedData.ethBalance) +
     "Ξ = " + ethers.utils.formatEther(accumulatedData.ethBalancePrev) +
-    "Ξ + " + ethers.utils.formatEther(results.ethReceived) +
-    "Ξ - " + ethers.utils.formatEther(results.ethPaid) +
-    "Ξ - " + ethers.utils.formatEther(results.txFee) +
+    "Ξ+" + ethers.utils.formatEther(results.ethReceived) +
+    "Ξ-" + ethers.utils.formatEther(results.ethPaid) +
+    "Ξ-" + ethers.utils.formatEther(results.txFee) +
     "Ξ");
 }
 
