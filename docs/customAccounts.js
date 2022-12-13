@@ -93,6 +93,39 @@ const _CUSTOMACCOUNTS = {
     abi: [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes","name":"pubkey","type":"bytes"},{"indexed":false,"internalType":"bytes","name":"withdrawal_credentials","type":"bytes"},{"indexed":false,"internalType":"bytes","name":"amount","type":"bytes"},{"indexed":false,"internalType":"bytes","name":"signature","type":"bytes"},{"indexed":false,"internalType":"bytes","name":"index","type":"bytes"}],"name":"DepositEvent","type":"event"},{"inputs":[{"internalType":"bytes","name":"pubkey","type":"bytes"},{"internalType":"bytes","name":"withdrawal_credentials","type":"bytes"},{"internalType":"bytes","name":"signature","type":"bytes"},{"internalType":"bytes32","name":"deposit_data_root","type":"bytes32"}],"name":"deposit","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"get_deposit_count","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"get_deposit_root","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"pure","type":"function"}],
     process: null,
   },
+  "0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455": {
+    mask: MASK_ISCONTRACT,
+    symbol: "ETHRegistrarController(old)",
+    name: "ETHRegistrarController(old)",
+    decimals: null,
+    abi: [{"constant":true,"inputs":[{"name":"interfaceID","type":"bytes4"}],"name":"supportsInterface","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"pure","type":"function"},{"constant":false,"inputs":[],"name":"withdraw","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_prices","type":"address"}],"name":"setPriceOracle","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"renounceOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_minCommitmentAge","type":"uint256"},{"name":"_maxCommitmentAge","type":"uint256"}],"name":"setCommitmentAges","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"bytes32"}],"name":"commitments","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"name","type":"string"},{"name":"duration","type":"uint256"}],"name":"rentPrice","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"name","type":"string"},{"name":"owner","type":"address"},{"name":"duration","type":"uint256"},{"name":"secret","type":"bytes32"}],"name":"register","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[],"name":"MIN_REGISTRATION_DURATION","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"minCommitmentAge","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"isOwner","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"name","type":"string"}],"name":"valid","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"name","type":"string"},{"name":"duration","type":"uint256"}],"name":"renew","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"name":"name","type":"string"}],"name":"available","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"maxCommitmentAge","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"commitment","type":"bytes32"}],"name":"commit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"name","type":"string"},{"name":"owner","type":"address"},{"name":"secret","type":"bytes32"}],"name":"makeCommitment","outputs":[{"name":"","type":"bytes32"}],"payable":false,"stateMutability":"pure","type":"function"},{"inputs":[{"name":"_base","type":"address"},{"name":"_prices","type":"address"},{"name":"_minCommitmentAge","type":"uint256"},{"name":"_maxCommitmentAge","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"name","type":"string"},{"indexed":true,"name":"label","type":"bytes32"},{"indexed":true,"name":"owner","type":"address"},{"indexed":false,"name":"cost","type":"uint256"},{"indexed":false,"name":"expires","type":"uint256"}],"name":"NameRegistered","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"name","type":"string"},{"indexed":true,"name":"label","type":"bytes32"},{"indexed":false,"name":"cost","type":"uint256"},{"indexed":false,"name":"expires","type":"uint256"}],"name":"NameRenewed","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"oracle","type":"address"}],"name":"NewPriceOracle","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"previousOwner","type":"address"},{"indexed":true,"name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"}],
+    process: function(txData, account, accounts, events, results) {
+      console.log("  ETHRegistrarController");
+      if (txData.tx.data.substring(0, 10) == "0xf14fcbc8") {
+        results.info = "Old ENS Registration Commit";
+      } else {
+        const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455"].abi);
+        for (const event of txData.txReceipt.logs) {
+          if (event.address == "0xF0AD5cAd05e10572EfcEB849f6Ff0c68f9700455") {
+            const log = interface.parseLog(event);
+            // TODO: Costs & refund
+            if (log.name == "NameRegistered") {
+              const [name, label, owner, cost, expires] = log.args;
+              // console.log("  NameRegistered(");
+              // console.log("    name: " + name);
+              // console.log("    label: " + label);
+              // console.log("    owner: " + owner);
+              // console.log("    cost: " + cost);
+              // console.log("    expires: " + expires);
+              // console.log("  )");
+              results.ethPaid = ethers.BigNumber.from(cost).toString();
+              results.info = "Registered ENS " + name + ".eth for " + ethers.utils.formatEther(cost) + "Ξ";
+            }
+          }
+        }
+      }
+    }
+  },
   "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5": {
     mask: MASK_ISCONTRACT,
     symbol: "ETHRegistrarController",
@@ -101,22 +134,26 @@ const _CUSTOMACCOUNTS = {
     abi: [{"inputs":[{"internalType":"contract BaseRegistrar","name":"_base","type":"address"},{"internalType":"contract PriceOracle","name":"_prices","type":"address"},{"internalType":"uint256","name":"_minCommitmentAge","type":"uint256"},{"internalType":"uint256","name":"_maxCommitmentAge","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"name","type":"string"},{"indexed":true,"internalType":"bytes32","name":"label","type":"bytes32"},{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"uint256","name":"cost","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"expires","type":"uint256"}],"name":"NameRegistered","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"name","type":"string"},{"indexed":true,"internalType":"bytes32","name":"label","type":"bytes32"},{"indexed":false,"internalType":"uint256","name":"cost","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"expires","type":"uint256"}],"name":"NameRenewed","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oracle","type":"address"}],"name":"NewPriceOracle","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"constant":true,"inputs":[],"name":"MIN_REGISTRATION_DURATION","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"internalType":"string","name":"name","type":"string"}],"name":"available","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"bytes32","name":"commitment","type":"bytes32"}],"name":"commit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"commitments","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"isOwner","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"address","name":"owner","type":"address"},{"internalType":"bytes32","name":"secret","type":"bytes32"}],"name":"makeCommitment","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"payable":false,"stateMutability":"pure","type":"function"},{"constant":true,"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"address","name":"owner","type":"address"},{"internalType":"bytes32","name":"secret","type":"bytes32"},{"internalType":"address","name":"resolver","type":"address"},{"internalType":"address","name":"addr","type":"address"}],"name":"makeCommitmentWithConfig","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"payable":false,"stateMutability":"pure","type":"function"},{"constant":true,"inputs":[],"name":"maxCommitmentAge","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"minCommitmentAge","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"duration","type":"uint256"},{"internalType":"bytes32","name":"secret","type":"bytes32"}],"name":"register","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"address","name":"owner","type":"address"},{"internalType":"uint256","name":"duration","type":"uint256"},{"internalType":"bytes32","name":"secret","type":"bytes32"},{"internalType":"address","name":"resolver","type":"address"},{"internalType":"address","name":"addr","type":"address"}],"name":"registerWithConfig","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"uint256","name":"duration","type":"uint256"}],"name":"renew","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[],"name":"renounceOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"uint256","name":"duration","type":"uint256"}],"name":"rentPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"uint256","name":"_minCommitmentAge","type":"uint256"},{"internalType":"uint256","name":"_maxCommitmentAge","type":"uint256"}],"name":"setCommitmentAges","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"internalType":"contract PriceOracle","name":"_prices","type":"address"}],"name":"setPriceOracle","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"bytes4","name":"interfaceID","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"pure","type":"function"},{"constant":false,"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"internalType":"string","name":"name","type":"string"}],"name":"valid","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"pure","type":"function"},{"constant":false,"inputs":[],"name":"withdraw","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}],
     process: function(txData, account, accounts, events, results) {
       // console.log("  ETHRegistrarController");
-      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
-      for (const event of txData.txReceipt.logs) {
-        if (event.address == "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
-          const log = interface.parseLog(event);
-          // TODO: Costs & refund
-          if (log.name == "NameRegistered") {
-            const [name, label, owner, cost, expires] = log.args;
-            // console.log("  NameRegistered(");
-            // console.log("    name: " + name);
-            // console.log("    label: " + label);
-            // console.log("    owner: " + owner);
-            // console.log("    cost: " + cost);
-            // console.log("    expires: " + expires);
-            // console.log("  )");
-            results.ethPaid = ethers.BigNumber.from(cost).toString();
-            results.info = "Registered ENS " + name + ".eth for " + ethers.utils.formatEther(cost) + "Ξ";
+      if (txData.tx.data.substring(0, 10) == "0xf14fcbc8") {
+        results.info = "ENS Registration Commit";
+      } else {
+        const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
+        for (const event of txData.txReceipt.logs) {
+          if (event.address == "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
+            const log = interface.parseLog(event);
+            // TODO: Costs & refund
+            if (log.name == "NameRegistered") {
+              const [name, label, owner, cost, expires] = log.args;
+              // console.log("  NameRegistered(");
+              // console.log("    name: " + name);
+              // console.log("    label: " + label);
+              // console.log("    owner: " + owner);
+              // console.log("    cost: " + cost);
+              // console.log("    expires: " + expires);
+              // console.log("  )");
+              results.ethPaid = ethers.BigNumber.from(cost).toString();
+              results.info = "Registered ENS " + name + ".eth for " + ethers.utils.formatEther(cost) + "Ξ";
+            }
           }
         }
       }
@@ -240,158 +277,72 @@ const _CUSTOMACCOUNTS = {
       console.log("  Seaport");
       const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
       let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
-      // console.log("decodedData.functionFragment.name: " + decodedData.functionFragment.name);
-      // console.log("decodedData: " + JSON.stringify(decodedData, null, 2));
-      // for (let i in decodedData.functionFragment.inputs) {
-      //   const c = decodedData.functionFragment.inputs[i];
-      //   console.log("  " + i + " " + c.name + " " + c.type + " " + JSON.stringify(decodedData.args[i]));
-      // }
       if (decodedData.functionFragment.name == "fulfillBasicOrder") {
-        // console.log("decodedData.args[0]: " + JSON.stringify(decodedData.args[0]));
         console.log("  fulfillBasicOrder(");
-        const [considerationToken, considerationIdentifier, considerationAmount, offerer, zone, offerToken,
-          offerIdentifier, offerAmount, basicOrderType, startTime, endTime, zoneHash, salt, offererConduitKey,
-          fulfillerConduitKey, totalOriginalAdditionalRecipients, additionalRecipients, signature] = decodedData.args[0];
-        console.log("    considerationToken: " + considerationToken);
-        console.log("    offerer: " + offerer);
-        console.log("    zone: " + zone);
-        console.log("    offerToken: " + offerToken);
-        console.log("    offerIdentifier: " + offerIdentifier);
-        console.log("    offerAmount: " + offerAmount);
-        console.log("    basicOrderType: " + basicOrderType);
-        console.log("    startTime: " + startTime);
-        console.log("    endTime: " + endTime);
-        console.log("    zoneHash: " + zoneHash);
-        console.log("    salt: " + salt);
-        console.log("    offererConduitKey: " + offererConduitKey);
-        console.log("    fulfillerConduitKey: " + fulfillerConduitKey);
-        console.log("    totalOriginalAdditionalRecipients: " + totalOriginalAdditionalRecipients);
-        console.log("    additionalRecipients: " + additionalRecipients);
-        console.log("    signature: " + signature);
-        console.log("  )");
-        // fulfillBasicOrder((address,uint256,uint256,address,address,address,uint256,uint256,uint8,uint256,uint256,bytes32,uint256,bytes32,bytes32,uint256,tuple[],bytes))
-        // struct BasicOrderParameters {
-        //     // calldata offset
-        //     address considerationToken; // 0x24
-        //     uint256 considerationIdentifier; // 0x44
-        //     uint256 considerationAmount; // 0x64
-        //     address payable offerer; // 0x84
-        //     address zone; // 0xa4
-        //     address offerToken; // 0xc4
-        //     uint256 offerIdentifier; // 0xe4
-        //     uint256 offerAmount; // 0x104
-        //     BasicOrderType basicOrderType; // 0x124
-        //     uint256 startTime; // 0x144
-        //     uint256 endTime; // 0x164
-        //     bytes32 zoneHash; // 0x184
-        //     uint256 salt; // 0x1a4
-        //     bytes32 offererConduitKey; // 0x1c4
-        //     bytes32 fulfillerConduitKey; // 0x1e4
-        //     uint256 totalOriginalAdditionalRecipients; // 0x204
-        //     AdditionalRecipient[] additionalRecipients; // 0x224
-        //     bytes signature; // 0x244
-        //     // Total length, excluding dynamic array data: 0x264 (580)
-        // }
+        // const [considerationToken, considerationIdentifier, considerationAmount, offerer, zone, offerToken,
+        //   offerIdentifier, offerAmount, basicOrderType, startTime, endTime, zoneHash, salt, offererConduitKey,
+        //   fulfillerConduitKey, totalOriginalAdditionalRecipients, additionalRecipients, signature] = decodedData.args[0];
+        // console.log("    considerationToken: " + considerationToken);
+        // console.log("    offerer: " + offerer);
+        // console.log("    zone: " + zone);
+        // console.log("    offerToken: " + offerToken);
+        // console.log("    offerIdentifier: " + offerIdentifier);
+        // console.log("    offerAmount: " + offerAmount);
+        // console.log("    basicOrderType: " + basicOrderType);
+        // console.log("    startTime: " + startTime);
+        // console.log("    endTime: " + endTime);
+        // console.log("    zoneHash: " + zoneHash);
+        // console.log("    salt: " + salt);
+        // console.log("    offererConduitKey: " + offererConduitKey);
+        // console.log("    fulfillerConduitKey: " + fulfillerConduitKey);
+        // console.log("    totalOriginalAdditionalRecipients: " + totalOriginalAdditionalRecipients);
+        // console.log("    additionalRecipients: " + additionalRecipients);
+        // console.log("    signature: " + signature);
+        // console.log("  )");
       } else if (decodedData.functionFragment.name == "fulfillAvailableAdvancedOrders") {
         console.log("  fulfillAvailableAdvancedOrders(");
-        const [advancedOrders, criteriaResolvers, offerFulfillments, considerationFulfillments, fulfillerConduitKey, recipient, maximumFulfilled] = decodedData.args;
-        for (let i = 0; i < advancedOrders.length; i++) {
-          const [parameters, numerator, denominator, signature, extraData] = advancedOrders[i];
-          const [offerer, zone, offer, consideration, orderType, startTime, endTime, zoneHash, salt, conduitKey, totalOriginalConsiderationItems] = parameters;
-          console.log("    advancedOrders[" + i + "].parameters.offerer: " + offerer);
-          console.log("    advancedOrders[" + i + "].parameters.zone: " + zone);
-          for (let j = 0; j < offer.length; j++) {
-            const [itemType, token, identifierOrCriteria, startAmount, endAmount] = offer[j];
-            console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].itemType: " + itemType);
-            console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].token: " + token);
-            console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].identifierOrCriteria: " + identifierOrCriteria);
-            console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].startAmount: " + startAmount);
-            console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].endAmount: " + endAmount);
-          }
-          for (let j = 0; j < consideration.length; j++) {
-            const [itemType, token, identifierOrCriteria, startAmount, endAmount, recipient] = consideration[j];
-            console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].itemType: " + itemType);
-            console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].token: " + token);
-            console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].identifierOrCriteria: " + identifierOrCriteria);
-            console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].startAmount: " + startAmount);
-            console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].endAmount: " + endAmount);
-            console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].recipient: " + recipient);
-          }
-          console.log("    advancedOrders[" + i + "].parameters.orderType: " + orderType);
-          console.log("    advancedOrders[" + i + "].parameters.startTime: " + startTime);
-          console.log("    advancedOrders[" + i + "].parameters.endTime: " + endTime);
-          console.log("    advancedOrders[" + i + "].parameters.zoneHash: " + zoneHash);
-          console.log("    advancedOrders[" + i + "].parameters.salt: " + salt);
-          console.log("    advancedOrders[" + i + "].parameters.conduitKey: " + conduitKey);
-          console.log("    advancedOrders[" + i + "].parameters.totalOriginalConsiderationItems: " + totalOriginalConsiderationItems);
-          console.log("    advancedOrders[" + i + "].numerator: " + numerator);
-          console.log("    advancedOrders[" + i + "].denominator: " + denominator);
-          console.log("    advancedOrders[" + i + "].signature: " + signature);
-          console.log("    advancedOrders[" + i + "].extraData: " + extraData);
-        }
-        console.log("    criteriaResolvers: " + criteriaResolvers);
-        console.log("    offerFulfillments: " + offerFulfillments);
-        console.log("    considerationFulfillments: " + considerationFulfillments);
-        console.log("    fulfillerConduitKey: " + fulfillerConduitKey);
-        console.log("    recipient: " + recipient);
-        console.log("    maximumFulfilled: " + maximumFulfilled);
-        console.log("  )");
-        // function fulfillAvailableAdvancedOrders(
-        //     AdvancedOrder[] calldata advancedOrders,
-        //     CriteriaResolver[] calldata criteriaResolvers,
-        //     FulfillmentComponent[][] calldata offerFulfillments,
-        //     FulfillmentComponent[][] calldata considerationFulfillments,
-        //     bytes32 fulfillerConduitKey,
-        //     address recipient,
-        //     uint256 maximumFulfilled
-        // )
-        // struct AdvancedOrder {
-        //     OrderParameters parameters;
-        //     uint120 numerator;
-        //     uint120 denominator;
-        //     bytes signature;
-        //     bytes extraData;
+        // const [advancedOrders, criteriaResolvers, offerFulfillments, considerationFulfillments, fulfillerConduitKey, recipient, maximumFulfilled] = decodedData.args;
+        // for (let i = 0; i < advancedOrders.length; i++) {
+        //   const [parameters, numerator, denominator, signature, extraData] = advancedOrders[i];
+        //   const [offerer, zone, offer, consideration, orderType, startTime, endTime, zoneHash, salt, conduitKey, totalOriginalConsiderationItems] = parameters;
+        //   console.log("    advancedOrders[" + i + "].parameters.offerer: " + offerer);
+        //   console.log("    advancedOrders[" + i + "].parameters.zone: " + zone);
+        //   for (let j = 0; j < offer.length; j++) {
+        //     const [itemType, token, identifierOrCriteria, startAmount, endAmount] = offer[j];
+        //     console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].itemType: " + itemType);
+        //     console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].token: " + token);
+        //     console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].identifierOrCriteria: " + identifierOrCriteria);
+        //     console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].startAmount: " + startAmount);
+        //     console.log("    advancedOrders[" + i + "].parameters.offer[" + j + "].endAmount: " + endAmount);
+        //   }
+        //   for (let j = 0; j < consideration.length; j++) {
+        //     const [itemType, token, identifierOrCriteria, startAmount, endAmount, recipient] = consideration[j];
+        //     console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].itemType: " + itemType);
+        //     console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].token: " + token);
+        //     console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].identifierOrCriteria: " + identifierOrCriteria);
+        //     console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].startAmount: " + startAmount);
+        //     console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].endAmount: " + endAmount);
+        //     console.log("    advancedOrders[" + i + "].parameters.consideration[" + j + "].recipient: " + recipient);
+        //   }
+        //   console.log("    advancedOrders[" + i + "].parameters.orderType: " + orderType);
+        //   console.log("    advancedOrders[" + i + "].parameters.startTime: " + startTime);
+        //   console.log("    advancedOrders[" + i + "].parameters.endTime: " + endTime);
+        //   console.log("    advancedOrders[" + i + "].parameters.zoneHash: " + zoneHash);
+        //   console.log("    advancedOrders[" + i + "].parameters.salt: " + salt);
+        //   console.log("    advancedOrders[" + i + "].parameters.conduitKey: " + conduitKey);
+        //   console.log("    advancedOrders[" + i + "].parameters.totalOriginalConsiderationItems: " + totalOriginalConsiderationItems);
+        //   console.log("    advancedOrders[" + i + "].numerator: " + numerator);
+        //   console.log("    advancedOrders[" + i + "].denominator: " + denominator);
+        //   console.log("    advancedOrders[" + i + "].signature: " + signature);
+        //   console.log("    advancedOrders[" + i + "].extraData: " + extraData);
         // }
-        // struct CriteriaResolver {
-        //     uint256 orderIndex;
-        //     Side side;
-        //     uint256 index;
-        //     uint256 identifier;
-        //     bytes32[] criteriaProof;
-        // }
-        // struct FulfillmentComponent {
-        //     uint256 orderIndex;
-        //     uint256 itemIndex;
-        // }
-        // struct OrderParameters {
-        //     address offerer; // 0x00
-        //     address zone; // 0x20
-        //     OfferItem[] offer; // 0x40
-        //     ConsiderationItem[] consideration; // 0x60
-        //     OrderType orderType; // 0x80
-        //     uint256 startTime; // 0xa0
-        //     uint256 endTime; // 0xc0
-        //     bytes32 zoneHash; // 0xe0
-        //     uint256 salt; // 0x100
-        //     bytes32 conduitKey; // 0x120
-        //     uint256 totalOriginalConsiderationItems; // 0x140
-        //     // offer.length                          // 0x160
-        // }
-        // struct OfferItem {
-        //     ItemType itemType;
-        //     address token;
-        //     uint256 identifierOrCriteria;
-        //     uint256 startAmount;
-        //     uint256 endAmount;
-        // }
-        // struct ConsiderationItem {
-        //     ItemType itemType;
-        //     address token;
-        //     uint256 identifierOrCriteria;
-        //     uint256 startAmount;
-        //     uint256 endAmount;
-        //     address payable recipient;
-        // }
+        // console.log("    criteriaResolvers: " + criteriaResolvers);
+        // console.log("    offerFulfillments: " + offerFulfillments);
+        // console.log("    considerationFulfillments: " + considerationFulfillments);
+        // console.log("    fulfillerConduitKey: " + fulfillerConduitKey);
+        // console.log("    recipient: " + recipient);
+        // console.log("    maximumFulfilled: " + maximumFulfilled);
+        // console.log("  )");
       } else {
         console.log("Seaport Unhandled Call");
       }
@@ -400,27 +351,27 @@ const _CUSTOMACCOUNTS = {
           const log = interface.parseLog(event);
           // console.log(JSON.stringify(log, null, 2));
           if (log.name == "OrderFulfilled") {
-            console.log("  OrderFulfilled(");
-            const [orderHash, offerer, zone, recipient, offer, consideration] = log.args;
-            console.log("    orderHash: " + orderHash);
-            console.log("    offerer: " + offerer);
-            console.log("    zone: " + zone);
-            for (let i = 0; i < offer.length; i++) {
-              const [itemType, token, identifier, amount] = offer[i];
-              console.log("    offer[" + i + "].itemType: " + itemType);
-              console.log("    offer[" + i + "].token: " + token);
-              console.log("    offer[" + i + "].identifier: " + identifier);
-              console.log("    offer[" + i + "].amount: " + amount);
-            }
-            for (let i = 0; i < consideration.length; i++) {
-              const [itemType, token, identifier, amount, recipient] = consideration[i];
-              console.log("    consideration[" + i + "].itemType: " + itemType);
-              console.log("    consideration[" + i + "].token: " + token);
-              console.log("    consideration[" + i + "].identifier: " + identifier);
-              console.log("    consideration[" + i + "].amount: " + amount);
-              console.log("    consideration[" + i + "].recipient: " + recipient);
-            }
-            console.log("  )");
+            // console.log("  OrderFulfilled(");
+            // const [orderHash, offerer, zone, recipient, offer, consideration] = log.args;
+            // console.log("    orderHash: " + orderHash);
+            // console.log("    offerer: " + offerer);
+            // console.log("    zone: " + zone);
+            // for (let i = 0; i < offer.length; i++) {
+            //   const [itemType, token, identifier, amount] = offer[i];
+            //   console.log("    offer[" + i + "].itemType: " + itemType);
+            //   console.log("    offer[" + i + "].token: " + token);
+            //   console.log("    offer[" + i + "].identifier: " + identifier);
+            //   console.log("    offer[" + i + "].amount: " + amount);
+            // }
+            // for (let i = 0; i < consideration.length; i++) {
+            //   const [itemType, token, identifier, amount, recipient] = consideration[i];
+            //   console.log("    consideration[" + i + "].itemType: " + itemType);
+            //   console.log("    consideration[" + i + "].token: " + token);
+            //   console.log("    consideration[" + i + "].identifier: " + identifier);
+            //   console.log("    consideration[" + i + "].amount: " + amount);
+            //   console.log("    consideration[" + i + "].recipient: " + recipient);
+            // }
+            // console.log("  )");
           }
         }
 
@@ -447,10 +398,7 @@ const _CUSTOMACCOUNTS = {
         //     uint256 amount;
         //     address payable recipient;
         // }
-
-
       }
-
 
       results.info = "Seaport TODO";
     },

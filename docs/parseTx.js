@@ -274,5 +274,25 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
+  // Umswap swap(uint256[] inTokenIds,uint256[] outTokenIds)
+  if (!results.info && txData.tx.data.substring(0, 10) == "0x0a3cb72e") {
+    results.info = "Umswap swap() TODO";
+  }
+
+  // Umswap newUmswap(address collection,string name,uint256[] tokenIds)
+  if (!results.info && txData.tx.data.substring(0, 10) == "0x8945f054") {
+    results.info = "Umswap newUmswap() TODO";
+  }
+
+  // BokkyPooBahsFixedSupplyTokenFactory deployTokenContract(string symbol, string name, uint8 decimals, uint256 totalSupply)
+  if (!results.info && txData.tx.data.substring(0, 10) == "0xcdaca7d5") {
+    results.info = "BokkyPooBahsFixedSupplyTokenFactory deployTokenContract() TODO";
+  }
+
+  // BokkyPooBahsFixedSupplyTokenFactory transferOwnership(address _newOwner)
+  if (!results.info && txData.tx.data.substring(0, 10) == "0xf2fde38b") {
+    results.info = "BokkyPooBahsFixedSupplyTokenFactory transferOwnership() TODO";
+  }
+
   return results;
 }
