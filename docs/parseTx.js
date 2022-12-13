@@ -13,6 +13,7 @@ function getEvents(txData) {
   const blurInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x000000000000Ad05Ccc4F10045630fb830B95127"].abi);
   const wyvernInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"].abi);
   const looksRareInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x59728544B08AB483533076417FbBB2fD0B17CE3a"].abi);
+  const x2y2Interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3"].abi);
   const erc20Events = [];
   const erc721Events = [];
   const erc1155Events = [];
@@ -181,6 +182,78 @@ function getEvents(txData) {
         // TODO: RoyaltyPayment & TakerBid?
       } else if (log.name != "RoyaltyPayment") {
         console.log("LooksRareExchange: " + JSON.stringify(log));
+      }
+      // X2Y2_r1
+    } else if (event.address == "0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3") {
+      const log = x2y2Interface.parseLog(event);
+      console.log(JSON.stringify(log));
+      if (log.name == "EvProfit") {
+        const [itemHash, currency, to, amount] = log.args;
+        nftExchangeEvents.push({
+          contract: event.address,
+          exchange: "X2Y2_r1",
+          name: "EvProfit",
+          itemHash,
+          currency,
+          to,
+          amount: ethers.BigNumber.from(amount).toString(),
+        });
+        // TODO: EvInventory
+      } else if (log.name == "EvInventory") {
+        console.log("  EvInventory(");
+        const [itemHash, maker, taker, orderSalt, settleSalt, intent, delegateType, deadline, currency, dataMask, item, detail] = log.args;
+        console.log("    itemHash: " + itemHash);
+        console.log("    maker: " + maker);
+        console.log("    taker: " + taker);
+        console.log("    orderSalt: " + orderSalt);
+        console.log("    settleSalt: " + settleSalt);
+        console.log("    intent: " + intent);
+        console.log("    delegateType: " + delegateType);
+        console.log("    deadline: " + deadline);
+        console.log("    currency: " + currency);
+        console.log("    dataMask: " + dataMask);
+        const [price, data] = item;
+        console.log("    item.price: " + price);
+        console.log("    item.data: " + data);
+        const [op, orderIdx, itemIdx, price1, itemHash1, executionDelegate, dataReplacement, bidIncentivePct, aucMinIncrementPct, aucIncDurationSecs, fees] = detail;
+        console.log("    detail.op: " + op);
+        console.log("    detail.orderIdx: " + orderIdx);
+        console.log("    detail.itemIdx: " + itemIdx);
+        console.log("    detail.price: " + price1);
+        console.log("    detail.itemHash: " + itemHash1);
+        console.log("    detail.executionDelegate: " + executionDelegate);
+        console.log("    detail.dataReplacement: " + dataReplacement);
+        console.log("    detail.bidIncentivePct: " + bidIncentivePct);
+        console.log("    detail.aucMinIncrementPct: " + aucMinIncrementPct);
+        console.log("    detail.aucIncDurationSecs: " + aucIncDurationSecs);
+        const feesData = [];
+        for (let i = 0; i < fees.length; i++) {
+          const [percentage, to] = fees[i];
+          feesData.push({ percentage: ethers.BigNumber.from(percentage).toString(), to });
+          // console.log("    detail.fees[" + i + "].percentage: " + percentage);
+          // console.log("    detail.fees[" + i + "].to: " + to);
+        }
+        console.log("feesData: " + JSON.stringify(feesData));
+        console.log("  )");
+        nftExchangeEvents.push({
+          contract: event.address,
+          exchange: "X2Y2_r1",
+          name: "EvInventory_TODO",
+          itemHash,
+          maker,
+          taker,
+          orderSalt: ethers.BigNumber.from(orderSalt).toString(),
+          settleSalt: ethers.BigNumber.from(settleSalt).toString(),
+          intent: ethers.BigNumber.from(intent).toString(),
+          delegateType: ethers.BigNumber.from(delegateType).toString(),
+          delegateType: ethers.BigNumber.from(delegateType).toString(),
+          currency,
+          dataMask,
+          item: {
+            price: ethers.BigNumber.from(price).toString(),
+            data,
+          }
+        });
       }
     }
   }
