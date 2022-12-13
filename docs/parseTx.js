@@ -224,8 +224,8 @@ function parseTx(chainId, account, accounts, txData) {
   //   }
   // }
 
-  // Simple ERC-721 Purchase, excluding ENS registrations
-  if (!results.info && msgValue > 0 && txData.tx.from == account && txData.tx.to != "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
+  // Simple ERC-721 Purchase
+  if (!results.info && msgValue > 0 && txData.tx.from == account) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     if (receivedERC721Events.length == 1) {
         results.ethPaid = msgValue;
@@ -292,6 +292,16 @@ function parseTx(chainId, account, accounts, txData) {
   // BokkyPooBahsFixedSupplyTokenFactory transferOwnership(address _newOwner)
   if (!results.info && txData.tx.data.substring(0, 10) == "0xf2fde38b") {
     results.info = "BokkyPooBahsFixedSupplyTokenFactory transferOwnership() TODO";
+  }
+
+  const GENERALCONTRACTMAINTENANCESIGS = {
+    "0xeb32e37e": true, // No contract source
+    "0x6c595451": true, // addApp(string appName, address _feeAccount, uint256 _fee)
+    "0x73311631": true, // addBrand(address brandAccount, string brandName)
+    "0x0a40fb8c": true, // permissionMarker(address marker, bool permission)
+  };
+  if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
+    results.info = "General contract maintenance TODO";
   }
 
   return results;
