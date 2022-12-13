@@ -80,7 +80,7 @@ async function getAccountInfo(address, provider) {
         results.type = "contract";
       }
     } else {
-      result.type = null;
+      results.type = null;
     }
     const ethBalance = await provider.getBalance(account);
     const weth = new ethers.Contract(WETHADDRESS, WETHABI, provider); // network.wethAddress
