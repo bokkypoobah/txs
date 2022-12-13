@@ -644,4 +644,121 @@ const _CUSTOMACCOUNTS = {
       }
     },
   },
+  "0xaE9C73fd0Fd237c1c6f66FE009d24ce969e98704": {
+    mask: MASK_ISCONTRACT,
+    symbol: "GemProtectionEnabledAddress",
+    name: "GemProtectionEnabledAddress",
+    decimals: null,
+    abi: null,
+    process: function(txData, account, accounts, events, results) {
+      // console.log("  GemProtectionEnabledAddress");
+      // if (txData.tx.data.substring(0, 10) == "0x8813034e") {
+      //   // results.info = "ENS.Vision Bulk Registration Commit";
+      // } else {
+      //   const ethRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
+      //   let totalCost = ethers.BigNumber.from(0);
+      //   const names = [];
+      //   for (const event of txData.txReceipt.logs) {
+      //     if (event.address == "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
+      //       const log = ethRegistrarControllerInterface.parseLog(event);
+      //       // TODO: Sum cost and check totals. & separate out the ENS Vision fees
+      //       if (log.name == "NameRegistered") {
+      //         const [name, label, owner, cost, expires] = log.args;
+      //         // console.log("  NameRegistered(");
+      //         // console.log("    name: " + name);
+      //         // console.log("    label: " + label);
+      //         // console.log("    owner: " + owner);
+      //         // console.log("    cost: " + cost);
+      //         // console.log("    expires: " + expires);
+      //         // console.log("  )");
+      //         names.push(name + ".eth");
+      //         totalCost = totalCost.add(cost);
+      //       }
+      //     }
+      //   }
+      //   results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
+      //   const fees = ethers.BigNumber.from(txData.tx.value).sub(totalCost).toString();
+      //   // results.info = "ENS.Vision Bulk Registered " + names.length + "x ENS " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ and " + ethers.utils.formatEther(fees) + "Ξ fees ";
+      // }
+      results.info = "GemProtectionEnabledAddress TODO";
+    },
+  },
+  "0x83C8F28c26bF6aaca652Df1DbBE0e1b56F8baBa2": {
+    mask: MASK_ISCONTRACT,
+    symbol: "GemSwap",
+    name: "GemSwap",
+    decimals: null,
+    abi: null,
+    process: function(txData, account, accounts, events, results) {
+      // console.log("  GemSwap");
+      // if (txData.tx.data.substring(0, 10) == "0x8813034e") {
+      //   // results.info = "ENS.Vision Bulk Registration Commit";
+      // } else {
+      //   const ethRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
+      //   let totalCost = ethers.BigNumber.from(0);
+      //   const names = [];
+      //   for (const event of txData.txReceipt.logs) {
+      //     if (event.address == "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
+      //       const log = ethRegistrarControllerInterface.parseLog(event);
+      //       // TODO: Sum cost and check totals. & separate out the ENS Vision fees
+      //       if (log.name == "NameRegistered") {
+      //         const [name, label, owner, cost, expires] = log.args;
+      //         // console.log("  NameRegistered(");
+      //         // console.log("    name: " + name);
+      //         // console.log("    label: " + label);
+      //         // console.log("    owner: " + owner);
+      //         // console.log("    cost: " + cost);
+      //         // console.log("    expires: " + expires);
+      //         // console.log("  )");
+      //         names.push(name + ".eth");
+      //         totalCost = totalCost.add(cost);
+      //       }
+      //     }
+      //   }
+      //   results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
+      //   const fees = ethers.BigNumber.from(txData.tx.value).sub(totalCost).toString();
+      //   // results.info = "ENS.Vision Bulk Registered " + names.length + "x ENS " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ and " + ethers.utils.formatEther(fees) + "Ξ fees ";
+      // }
+      results.info = "GemSwap TODO";
+    },
+  },
+  "0x9EbFB53Fa8526906738856848A27cB11b0285C3f": {
+    mask: MASK_ISCONTRACT,
+    symbol: "ReservoirV5_0_0",
+    name: "ReservoirV5_0_0",
+    decimals: null,
+    abi: null,
+    process: function(txData, account, accounts, events, results) {
+      // console.log("  ReservoirV5_0_0");
+      // if (txData.tx.data.substring(0, 10) == "0x8813034e") {
+      //   // results.info = "ENS.Vision Bulk Registration Commit";
+      // } else {
+      //   const ethRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
+      //   let totalCost = ethers.BigNumber.from(0);
+      //   const names = [];
+      //   for (const event of txData.txReceipt.logs) {
+      //     if (event.address == "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
+      //       const log = ethRegistrarControllerInterface.parseLog(event);
+      //       // TODO: Sum cost and check totals. & separate out the ENS Vision fees
+      //       if (log.name == "NameRegistered") {
+      //         const [name, label, owner, cost, expires] = log.args;
+      //         // console.log("  NameRegistered(");
+      //         // console.log("    name: " + name);
+      //         // console.log("    label: " + label);
+      //         // console.log("    owner: " + owner);
+      //         // console.log("    cost: " + cost);
+      //         // console.log("    expires: " + expires);
+      //         // console.log("  )");
+      //         names.push(name + ".eth");
+      //         totalCost = totalCost.add(cost);
+      //       }
+      //     }
+      //   }
+      //   results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
+      //   const fees = ethers.BigNumber.from(txData.tx.value).sub(totalCost).toString();
+      //   // results.info = "ENS.Vision Bulk Registered " + names.length + "x ENS " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ and " + ethers.utils.formatEther(fees) + "Ξ fees ";
+      // }
+      results.info = "ReservoirV5_0_0 TODO";
+    },
+  },
 };

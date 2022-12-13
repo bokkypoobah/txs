@@ -82,7 +82,7 @@ function accumulateTxResults(accumulatedData, txData, results) {
       console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
     }
   } else {
-    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " TODO " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to.substring(0, 12)) || ''));
+    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " TODO " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to) || ''));
   }
   if (!DEBUG || !results.info) {
     console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
@@ -228,6 +228,23 @@ function parseTx(chainId, account, accounts, txData) {
   //     // console.log("receivedERC20Events: " + JSON.stringify(receivedERC20Events));
   //   }
   // }
+
+  // ERC-721 Mints
+  const MINTSIGS = {
+    "0xa0712d68": true, // mint(uint256 mintedAmount)
+  };
+  // if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
+  //   results.info = "General contract maintenance TODO";
+  // }
+  if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS) {
+    const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
+    if (receivedERC721Events.length > 0) {
+      const tokenIds = receivedERC721Events.map(e => e.tokenId);
+      const info = getERC721Info(receivedERC721Events[0].contract, accounts);
+      results.ethPaid = msgValue;
+      results.info = "ERC-721 Mint " + receivedERC721Events.length + "x " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+    }
+  }
 
   // Simple ERC-721 Purchase
   if (!results.info && msgValue > 0 && txData.tx.from == account) {
