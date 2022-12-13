@@ -11,6 +11,7 @@ function getTokenContractInfo(contract, accounts) {
 function getEvents(txData) {
   const seaportInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
   const blurInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x000000000000Ad05Ccc4F10045630fb830B95127"].abi);
+  const wyvernInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"].abi);
   const erc20Events = [];
   const erc721Events = [];
   const erc1155Events = [];
@@ -85,8 +86,6 @@ function getEvents(txData) {
       // Blur
     } else if (event.address == "0x000000000000Ad05Ccc4F10045630fb830B95127") {
       const log = blurInterface.parseLog(event);
-      console.log(JSON.stringify(log));
-
       // event OrdersMatched(
       //     address indexed maker,
       //     address indexed taker,
@@ -115,7 +114,6 @@ function getEvents(txData) {
       //     uint16 rate;
       //     address payable recipient;
       // }
-
       if (log.name == "OrdersMatched") {
         const [maker, taker, sell, sellHash, buy, buyHash] = log.args;
         let [trader, side, matchingPolicy, collection, tokenId, amount, paymentToken, price, listingTime, expirationTime, fees, salt, extraParams] = sell;
@@ -151,6 +149,13 @@ function getEvents(txData) {
           extraParams,
         };
         nftExchangeEvents.push({ contract: event.address, exchange: "Blur", name: "OrdersMatched", maker, taker, sell: sellData, sellHash, buy: buyData, buyHash });
+      }
+      // WyvernExchange
+    } else if (event.address == "0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b") {
+      const log = wyvernInterface.parseLog(event);
+      if (log.name == "OrdersMatched") {
+        const [buyHash, sellHash, maker, taker, price, metadata] = log.args;
+        nftExchangeEvents.push({ contract: event.address, exchange: "WyvernExchange", name: "OrdersMatched", maker, taker, price: ethers.BigNumber.from(price).toString(), metadata });
       }
     }
   }
