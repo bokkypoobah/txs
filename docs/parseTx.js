@@ -1,15 +1,5 @@
-function getERC20Info(contract, accounts) {
-  // console.log("getERC20Info - contract: " + contract);
-  if (contract in accounts) {
-    const account = accounts[contract];
-    // console.log(JSON.stringify(account));
-    return { name: account.contract.name, symbol: account.contract.symbol, decimals: account.contract.decimals };
-  }
-  return { name: "Unknown", symbol: "Unknown", decimals: 18 };
-}
-
-function getERC721Info(contract, accounts) {
-  // console.log("getERC20Info - contract: " + contract);
+function getTokenContractInfo(contract, accounts) {
+  // console.log("getTokenContractInfo - contract: " + contract);
   if (contract in accounts) {
     const account = accounts[contract];
     // console.log(JSON.stringify(account));
@@ -176,7 +166,7 @@ function parseTx(chainId, account, accounts, txData) {
         const owner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const operator = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
         let approved = ethers.BigNumber.from(event.data) > 0;
-        const info = getERC721Info(event.address, accounts);
+        const info = getTokenContractInfo(event.address, accounts);
         results.info = "ERC-721 " + info.symbol + " setApprovalForAll(" + operator + ", " + approved + ")";
       }
     }
@@ -192,17 +182,40 @@ function parseTx(chainId, account, accounts, txData) {
 //        let tokenId = ethers.BigNumber.from(event.topics[3]);
         const tokenId = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
         // console.log("  ERC-721 transfer of " + event.address + " from " + from + " to " + to + " tokenId " + tokenId);
+        const info = getTokenContractInfo(event.address, accounts);
         if (from == account && to == account) {
-          results.info = "Self Transfer ERC-721:" + event.address + " " + tokenId;
+          results.info = "Self Transfer ERC-721:" + info.name + " " + tokenId;
         } else if (from == account) {
-          results.info = "Sent ERC-721:" + event.address + " " + tokenId + " to " + to;
+          results.info = "Sent ERC-721:" + info.name + " " + tokenId + " to " + to;
         } else if (to == account) {
-          results.info = "Received ERC-721:" + event.address + " " + tokenId + " from " + from;
+          results.info = "Received ERC-721:" + info.name + " " + tokenId + " from " + from;
         }
       }
     }
   }
 
+  // ERC-1155 safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes _data)
+  if (!results.info && txData.tx.data.substring(0, 10) == "0xf242432a") {
+    for (const event of txData.txReceipt.logs) {
+      // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 tokenId)
+      if (event.address == txData.tx.to && event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
+        const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+        const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+        const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
+        const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
+        const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
+        const info = getTokenContractInfo(event.address, accounts);
+        // console.log("    ERC-1155 transfer of " + info.symbol + ", from: " + from + ", to: " + to + ", tokenId: " + tokenId + ", tokens: " + tokens);
+        if (from == account && to == account) {
+          results.info = "Self Transfer ERC-1155:" + info.name + " " + tokenId + " x " + tokens;
+        } else if (from == account) {
+          results.info = "Sent ERC-1155:" + info.name + " " + tokenId + " x " + tokens + " to " + to;
+        } else if (to == account) {
+          results.info = "Received ERC-1155:" + info.name + " " + tokenId + " x " + tokens + " from " + from;
+        }
+      }
+    }
+  }
   if (!results.info && txData.tx.to in _CUSTOMACCOUNTS) {
     const accountInfo = _CUSTOMACCOUNTS[txData.tx.to];
     // console.log("  " + JSON.stringify(accountInfo.name));
@@ -253,7 +266,7 @@ function parseTx(chainId, account, accounts, txData) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     if (receivedERC721Events.length > 0) {
       const tokenIds = receivedERC721Events.map(e => e.tokenId);
-      const info = getERC721Info(receivedERC721Events[0].contract, accounts);
+      const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
       results.ethPaid = msgValue;
       results.info = "ERC-721 Mint " + receivedERC721Events.length + "x " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     }
@@ -264,7 +277,7 @@ function parseTx(chainId, account, accounts, txData) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     if (receivedERC721Events.length == 1) {
         results.ethPaid = msgValue;
-        const info = getERC721Info(receivedERC721Events[0].contract, accounts);
+        const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
         results.info = "Purchased ERC-721 " + info.symbol + " " + receivedERC721Events[0].tokenId + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     } else {
       // TODO Bulk
