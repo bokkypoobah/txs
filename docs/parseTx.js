@@ -10,6 +10,7 @@ function getTokenContractInfo(contract, accounts) {
 
 function getEvents(txData) {
   const seaportInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
+  const blurInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x000000000000Ad05Ccc4F10045630fb830B95127"].abi);
   const erc20Events = [];
   const erc721Events = [];
   const erc1155Events = [];
@@ -64,39 +65,92 @@ function getEvents(txData) {
       const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
       const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
       erc1155Events.push({ contract: event.address, operator, from, to, tokenId, tokens });
-      // eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenId, tokens, type: "erc1155" };
       // Seaport
     } else if (event.address == "0x00000000006c3852cbEf3e08E8dF289169EdE581") {
       const log = seaportInterface.parseLog(event);
-      console.log("Seaport log: " + JSON.stringify(log));
       if (log.name == "OrderFulfilled") {
-        console.log("  OrderFulfilled(");
         const [orderHash, offerer, zone, recipient, offer, consideration] = log.args;
-        console.log("    orderHash: " + orderHash);
-        console.log("    offerer: " + offerer);
-        console.log("    zone: " + zone);
+        const offers = [];
+        const considerations = [];
         for (let i = 0; i < offer.length; i++) {
           const [itemType, token, identifier, amount] = offer[i];
-          console.log("    offer[" + i + "].itemType: " + itemType);
-          console.log("    offer[" + i + "].token: " + token);
-          console.log("    offer[" + i + "].identifier: " + identifier);
-          console.log("    offer[" + i + "].amount: " + amount);
+          offers.push({ itemType, token, identifier: ethers.BigNumber.from(identifier).toString(), amount: ethers.BigNumber.from(amount).toString() });
         }
         for (let i = 0; i < consideration.length; i++) {
           const [itemType, token, identifier, amount, recipient] = consideration[i];
-          console.log("    consideration[" + i + "].itemType: " + itemType);
-          console.log("    consideration[" + i + "].token: " + token);
-          console.log("    consideration[" + i + "].identifier: " + identifier);
-          console.log("    consideration[" + i + "].amount: " + amount);
-          console.log("    consideration[" + i + "].recipient: " + recipient);
+          considerations.push({ itemType, token, identifier: ethers.BigNumber.from(identifier).toString(), amount: ethers.BigNumber.from(amount).toString(), recipient });
         }
-        console.log("  )");
-        nftExchangeEvents.push({
-          contract: event.address,
-          orderHash,
-          offerer,
-          zone,
-        });
+        nftExchangeEvents.push({ contract: event.address, exchange: "Seaport", name: "OrderFulfilled", orderHash, offerer, zone, offers, considerations });
+      }
+      // Blur
+    } else if (event.address == "0x000000000000Ad05Ccc4F10045630fb830B95127") {
+      const log = blurInterface.parseLog(event);
+      console.log(JSON.stringify(log));
+
+      // event OrdersMatched(
+      //     address indexed maker,
+      //     address indexed taker,
+      //     Order sell,
+      //     bytes32 sellHash,
+      //     Order buy,
+      //     bytes32 buyHash
+      // );
+      // struct Order {
+      //     address trader;
+      //     Side side;
+      //     address matchingPolicy;
+      //     address collection;
+      //     uint256 tokenId;
+      //     uint256 amount;
+      //     address paymentToken;
+      //     uint256 price;
+      //     uint256 listingTime;
+      //     /* Order expiration timestamp - 0 for oracle cancellations. */
+      //     uint256 expirationTime;
+      //     Fee[] fees;
+      //     uint256 salt;
+      //     bytes extraParams;
+      // }
+      // struct Fee {
+      //     uint16 rate;
+      //     address payable recipient;
+      // }
+
+      if (log.name == "OrdersMatched") {
+        const [maker, taker, sell, sellHash, buy, buyHash] = log.args;
+        let [trader, side, matchingPolicy, collection, tokenId, amount, paymentToken, price, listingTime, expirationTime, fees, salt, extraParams] = sell;
+        const sellData = {
+          trader,
+          side,
+          matchingPolicy,
+          collection,
+          tokenId: ethers.BigNumber.from(tokenId).toString(),
+          amount: ethers.BigNumber.from(amount).toString(),
+          paymentToken,
+          price: ethers.BigNumber.from(price).toString(),
+          listingTime: ethers.BigNumber.from(listingTime).toString(),
+          expirationTime: ethers.BigNumber.from(expirationTime).toString(),
+          fees, // TODO
+          salt: ethers.BigNumber.from(salt).toString(),
+          extraParams,
+        };
+        [trader, side, matchingPolicy, collection, tokenId, amount, paymentToken, price, listingTime, expirationTime, fees, salt, extraParams] = buy;
+        const buyData = {
+          trader,
+          side,
+          matchingPolicy,
+          collection,
+          tokenId: ethers.BigNumber.from(tokenId).toString(),
+          amount: ethers.BigNumber.from(amount).toString(),
+          paymentToken,
+          price: ethers.BigNumber.from(price).toString(),
+          listingTime: ethers.BigNumber.from(listingTime).toString(),
+          expirationTime: ethers.BigNumber.from(expirationTime).toString(),
+          fees, // TODO
+          salt: ethers.BigNumber.from(salt).toString(),
+          extraParams,
+        };
+        nftExchangeEvents.push({ contract: event.address, exchange: "Blur", name: "OrdersMatched", maker, taker, sell: sellData, sellHash, buy: buyData, buyHash });
       }
     }
   }
