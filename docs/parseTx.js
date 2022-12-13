@@ -76,18 +76,23 @@ function accumulateTxResults(accumulatedData, txData, results) {
   }
   accumulatedData.ethBalancePrev = accumulatedData.ethBalance;
   accumulatedData.ethBalance = accumulatedData.ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
+  const DEBUG = false;
   if (results.info) {
-    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
+    if (!DEBUG) {
+      console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
+    }
   } else {
     console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " TODO " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to.substring(0, 12)) || ''));
   }
-  console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
-    " " + ethers.utils.formatEther(accumulatedData.ethBalance) +
-    "Ξ = " + ethers.utils.formatEther(accumulatedData.ethBalancePrev) +
-    "Ξ+" + ethers.utils.formatEther(results.ethReceived) +
-    "Ξ-" + ethers.utils.formatEther(results.ethPaid) +
-    "Ξ-" + ethers.utils.formatEther(results.txFee) +
-    "Ξ");
+  if (!DEBUG || !results.info) {
+    console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
+      " " + ethers.utils.formatEther(accumulatedData.ethBalance) +
+      "Ξ = " + ethers.utils.formatEther(accumulatedData.ethBalancePrev) +
+      "Ξ+" + ethers.utils.formatEther(results.ethReceived) +
+      "Ξ-" + ethers.utils.formatEther(results.ethPaid) +
+      "Ξ-" + ethers.utils.formatEther(results.txFee) +
+      "Ξ");
+  }
 }
 
 function parseTx(chainId, account, accounts, txData) {
@@ -292,6 +297,11 @@ function parseTx(chainId, account, accounts, txData) {
   // BokkyPooBahsFixedSupplyTokenFactory transferOwnership(address _newOwner)
   if (!results.info && txData.tx.data.substring(0, 10) == "0xf2fde38b") {
     results.info = "BokkyPooBahsFixedSupplyTokenFactory transferOwnership() TODO";
+  }
+
+  // BokkyPooBahsFixedSupplyTokenFactory transferOwnership(address _newOwner)
+  if (!results.info && txData.tx.data.substring(0, 10) == "0xd0def521") {
+    results.info = "CryptoVoxels Name mint() TODO";
   }
 
   const GENERALCONTRACTMAINTENANCESIGS = {
