@@ -90,7 +90,6 @@ function getEvents(txData) {
       erc1155BatchEvents.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
     } else if (event.address == "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2") {
       const log = wethInterface.parseLog(event);
-      console.log("log: " + JSON.stringify(log, null, 2));
       // Deposit (index_topic_1 address dst, uint256 wad)
       if (event.topics[0] == "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c") {
         const [to, tokens] = log.args;
