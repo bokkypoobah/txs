@@ -488,6 +488,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0x379607f5": true, // claim(uint256 megarares_count) 0x31eAa2E93D7AFd237F87F30c0Dbd3aDEB9934f1B
     "0xd47f030d": true, // mintMultiple(uint256[] rescueOrders) 0x1e9385eE28c5C7d33F3472f732Fb08CE3ceBce1F
     "0xe7d3fe6b": true, // mint(uint256 tokenId0, uint256 tokenId1, address otherToken) 0x6aDA46d38A2F3Bf2309432d3Db9A81685Cb96fac
+    "0x1249c58b": true, // mint() 0xe0fA9Fb0e30ca86513642112BEE1CBbAA2A0580d
   };
   if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
@@ -507,6 +508,28 @@ function parseTx(chainId, account, accounts, txData) {
       const info = getTokenContractInfo(receivedERC1155BatchEvents[0].contract, accounts);
       results.ethPaid = msgValue;
       results.info = "Batch Minted ERC-1155:" + info.name + " x" + receivedERC1155BatchEvents.length + " " + receivedERC1155BatchEvents[0].tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+    }
+  }
+
+  // ETH bulk transfers as internals
+  const BULKINTERNALREFUNDS = {
+    "0xfe132c63": true, // refundDifferenceToBidders(address[] bidderAddresses) 0xe0fA9Fb0e30ca86513642112BEE1CBbAA2A0580d
+  };
+  if (!results.info && txData.tx.from != account && txData.tx.data.substring(0, 10) in BULKINTERNALREFUNDS) {
+    const accountData = accounts[account];
+    let ethBalance = ethers.BigNumber.from(0);
+    for (const [txHash, traceData] of Object.entries(accountData.internalTransactions)) {
+      if (txHash == txData.tx.hash) {
+        for (const [traceId, internalTransaction] of Object.entries(traceData)) {
+          const to = ethers.utils.getAddress(internalTransaction.to);
+          if (to == account) {
+            ethBalance = ethBalance.add(internalTransaction.value);
+          }
+        }
+      }
+    }
+    if (ethBalance > 0) {
+      results.info = "Received internal transaction refund of " + ethers.utils.formatEther(ethBalance) + "Ξ from " + txData.tx.to;
     }
   }
 
