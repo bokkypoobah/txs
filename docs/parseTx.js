@@ -183,8 +183,15 @@ function getEvents(txData) {
         };
         nftExchangeEvents.push({ logIndex: event.logIndex, contract: event.address, exchange: "Blur", name: "OrdersMatched", maker, taker, sell: sellData, sellHash, buy: buyData, buyHash });
       }
-      // WyvernExchange
+      // WyvernExchange - 2018 version
     } else if (event.address == "0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b") {
+      const log = wyvernInterface.parseLog(event);
+      if (log.name == "OrdersMatched") {
+        const [buyHash, sellHash, maker, taker, price, metadata] = log.args;
+        nftExchangeEvents.push({ logIndex: event.logIndex, contract: event.address, exchange: "WyvernExchange", name: "OrdersMatched", maker, taker, price: ethers.BigNumber.from(price).toString(), metadata });
+      }
+      // WyvernExchange - 2022 version
+    } else if (event.address == "0x7f268357A8c2552623316e2562D90e642bB538E5") {
       const log = wyvernInterface.parseLog(event);
       if (log.name == "OrdersMatched") {
         const [buyHash, sellHash, maker, taker, price, metadata] = log.args;
@@ -498,8 +505,16 @@ function parseTx(chainId, account, accounts, txData) {
     "0x6bf2a62a": true, // mint(uint256 pSaleId, address pAccount, uint256 pMintAmount, bytes32[] pProof) 0x674D37ac70E3a946B4a3Eb85EEadF3a75407EE41
     "0x5befbed3": true, // ? 0x3eC9583F3f298f28b02D4312015B27360FadF88f
     "0x3c168eab": true, // mintNFT(address receiver, uint256 nb_nft) 0x7DAfE71dB8CF7edb682E762529c8af78fEd569c5
+    "0xb155d7fa": true, // mintRandom() 0xca3CDA3B5a8B36356568A573bf10C3EB0Fc3238C
+    "0x40c10f19": true, // mint(address _to, uint256 _count) 0x8d0D79D39475187F3B51Cfc02d2dc516C378f865
+    "0x43508b05": true, // batchMint(address account, uint256 amount) 0x009d6A428AC3797888ceAF7CA4AA2aa113655500
+    "0xa71bbebe": true, // mint(uint32 count) 0x4e83Fb543E8fFa0E19929f0C754ba6EAee56190b
+    "0xe3c0cee5": true, // mintBatch(tuple[] mintingBatch) 0x2d255b756dD75a11D75cf701aBaD7c6D64b0AeDD
+    "0x927f59ba": true, // mintBatch(address[] to) 0x135511599D8D78e4E5D2ed7E224b54D80ff97309
+    "0xbd075b84": true, // mint(address[] recipients) 0x26F4465DdBDFA4c62dE1982Dbf68f5055c6a959a
+    "0x39fd5d70": true, // mint(uint256 pDrop, uint256 pTokenId, address pRecipient, uint256 amount, bytes32[] pProof) 0x11B197e078e41aF41Bc1d9e03407090e61e40BAA
   };
-  if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS) {
+  if (!results.info && /*txData.tx.from == account &&*/ txData.tx.data.substring(0, 10) in MINTSIGS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
     const receivedERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.to == account);
@@ -573,6 +588,7 @@ function parseTx(chainId, account, accounts, txData) {
 
   // console.log("erc721Events: " + JSON.stringify(events.erc721Events));
   // console.log("erc1155Events: " + JSON.stringify(events.erc1155Events));
+  // console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents));
 
   // Other account purchased our ERC-721
   if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from != account) {
