@@ -986,4 +986,34 @@ const _CUSTOMACCOUNTS = {
       results.info = "ReservoirV5_0_0 TODO";
     },
   },
+  "0xA42f6cADa809Bcf417DeefbdD69C5C5A909249C0": {
+    mask: MASK_ISCONTRACT,
+    symbol: "NFT20CasUpgreadableV2",
+    name: "NFT20CasUpgreadableV2",
+    decimals: null,
+    abi: [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"inputs":[],"name":"ETH","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"NFT20","outputs":[{"internalType":"contract INFT20Factory","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"UNIV2","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"UNIV3","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"WETH","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_nft","type":"address"},{"internalType":"uint256[]","name":"_toIds","type":"uint256[]"},{"internalType":"uint256[]","name":"_toAmounts","type":"uint256[]"},{"internalType":"address","name":"_receipient","type":"address"},{"internalType":"uint24","name":"_fee","type":"uint24"},{"internalType":"bool","name":"isV3","type":"bool"}],"name":"ethForNft","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"address","name":"_nft","type":"address"},{"internalType":"uint256[]","name":"_ids","type":"uint256[]"},{"internalType":"uint256[]","name":"_amounts","type":"uint256[]"},{"internalType":"bool","name":"isErc721","type":"bool"},{"internalType":"uint24","name":"_fee","type":"uint24"},{"internalType":"bool","name":"isV3","type":"bool"}],"name":"nftForEth","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"tokenAmount","type":"uint256"},{"internalType":"address","name":"sendTo","type":"address"}],"name":"recoverERC20","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_registry","type":"address"}],"name":"setNFT20","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"withdrawEth","outputs":[],"stateMutability":"payable","type":"function"},{"stateMutability":"payable","type":"receive"}],
+    process: function(txData, account, accounts, events, results) {
+      console.log("  NFT20CasUpgreadableV2");
+      console.log("events.erc20Events: " + JSON.stringify(events.erc20Events));
+      console.log("events.wethWithdrawalEvents: " + JSON.stringify(events.wethWithdrawalEvents));
+      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xA42f6cADa809Bcf417DeefbdD69C5C5A909249C0"].abi);
+      let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
+      console.log("decodedData.functionFragment.name: " + decodedData.functionFragment.name);
+      if (decodedData.functionFragment.name == "nftForEth") {
+        for (const event of txData.txReceipt.logs) {
+          console.log("event: " + JSON.stringify(event));
+          // TODO: Search for WETH Withdrawal & NFTs sent
+          if (event.address == "0xA42f6cADa809Bcf417DeefbdD69C5C5A909249C0") {
+            const log = interface.parseLog(event);
+            console.log("log: " + JSON.stringify(log));
+            if (log.name == "Minted") {
+              const [tokenId, pricePaid] = log.args;
+              results.info = "MandalaToken Minted " + tokenId + " for " + ethers.utils.formatEther(pricePaid) + "Ξ";
+              results.ethPaid = pricePaid;
+            }
+          }
+        }
+      }
+    },
+  },
 };
