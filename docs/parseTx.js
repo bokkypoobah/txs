@@ -315,6 +315,10 @@ function parseTx(chainId, account, accounts, txData) {
     console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents, null, 2));
   }
 
+  if (txData.txReceipt.status == 0) {
+    results.info = "Error tx with status 0";
+  }
+
   // TODO: Identify internal transfers?
   // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
@@ -539,6 +543,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0x3f801f91": true, // Old Opensea Bulk Transfers @ 0xA64528Ce3c465C47258F14106FE903C201b07374
     "0xd9eccc2e": true, // sendToMany(address from, address[] to, uint256 id, uint256 amount, bytes data) @ 0xD9c8e3d79B44679A4837E2D53c5da43Ca582DADf
     "0x54ffbd23": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
+    "0xe96c3edb": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
   };
   if (!results.info && txData.tx.data.substring(0, 10) in BULKTRANSFERS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
