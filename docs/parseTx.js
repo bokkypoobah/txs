@@ -450,6 +450,8 @@ function parseTx(chainId, account, accounts, txData) {
 
   const CLAIMERC20AIRDROPS = {
     "0xca21b177": true, // claim(bytes32[] proof_, address claimant_, uint256 claim_) 0xed39DAFd2B2a624fE43A5BbE76e0Dae4E4E621ef
+    "0xabf2ebd8": true, // claim(uint256 amountV, bytes32 r, bytes32 s) 0x3b484b82567a09e2588A13D54D032153f0c0aEe0
+    "0x6ba4c138": true, // claim(uint256[] tokenIndices) 0x8A9c4dfe8b9D8962B31e4e16F8321C44d48e246E
   };
   if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in CLAIMERC20AIRDROPS) {
     const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
@@ -489,6 +491,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0xd47f030d": true, // mintMultiple(uint256[] rescueOrders) 0x1e9385eE28c5C7d33F3472f732Fb08CE3ceBce1F
     "0xe7d3fe6b": true, // mint(uint256 tokenId0, uint256 tokenId1, address otherToken) 0x6aDA46d38A2F3Bf2309432d3Db9A81685Cb96fac
     "0x1249c58b": true, // mint() 0xe0fA9Fb0e30ca86513642112BEE1CBbAA2A0580d
+    "0x6bf2a62a": true, // mint(uint256 pSaleId, address pAccount, uint256 pMintAmount, bytes32[] pProof) 0x674D37ac70E3a946B4a3Eb85EEadF3a75407EE41
   };
   if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
@@ -713,7 +716,8 @@ function parseTx(chainId, account, accounts, txData) {
     "0xddd81f82": "registerProxy()", // OpenSea  0xa5409ec958C83C3f309868babACA7c86DCB077c1
     "0x2385554c": "hatchEgg(uint256 egg)", //  0x7685376aF33104dD02be287ed857a19Bb4A24EA2
     "0x4e71d92d": "claim()", //  0xfdD7399e22918ba7234f5568cc2eF922489F7Ba6 - TODO ERC-20
-    "0xfc24100b": "buyAccessories(tuple[] orders)", // buyAccessories(tuple[] orders) 0x8d33303023723dE93b213da4EB53bE890e747C63
+    "0xfc24100b": "buyAccessories(tuple[] orders)", // 0x8d33303023723dE93b213da4EB53bE890e747C63
+    "0xc39cbef1": "changeName(uint256 tokenId, string newName)", // 0xC2C747E0F7004F9E8817Db2ca4997657a7746928
   };
   if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
     results.info = "Call " + GENERALCONTRACTMAINTENANCESIGS[txData.tx.data.substring(0, 10)];
