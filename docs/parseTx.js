@@ -462,6 +462,20 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
+  const ERC721DROP = {
+    "0x7884af44": true, // mintBase(address to, string uri) 0xA8121B153c77cA4dd1da3a9D7cDC4729129c8c6D
+  };
+  if (!results.info && txData.tx.from != account && txData.tx.data.substring(0, 10) in ERC721DROP) {
+    const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
+    if (receivedERC721Events.length == 1) {
+      const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
+      results.info = "Received Drop of ERC-721:" + info.name + " x" + receivedERC721Events.length + " " + receivedERC721Events[0].tokenId;
+    } else {
+      // TODO: Other cases?
+      // console.log("  Received Airdrop: " + JSON.stringify(receivedERC20Events));
+    }
+  }
+
   // ERC-721 Mints
   const MINTSIGS = {
     "0xa0712d68": true, // mint(uint256 mintedAmount)
