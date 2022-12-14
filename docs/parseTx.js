@@ -533,7 +533,8 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // Old Opensea Bulk Transfers @ 0xA64528Ce3c465C47258F14106FE903C201b07374
-  if (!results.info && txData.tx.data.substring(0, 10) == "0x3f801f91") {
+  // sendToMany(address from, address[] to, uint256 id, uint256 amount, bytes data) @ 0xD9c8e3d79B44679A4837E2D53c5da43Ca582DADf
+  if (!results.info && (txData.tx.data.substring(0, 10) == "0x3f801f91" || txData.tx.data.substring(0, 10) == "0xd9eccc2e")) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     const sentERC721Events = events.erc721Events.filter(e => e.from == account);
     const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
