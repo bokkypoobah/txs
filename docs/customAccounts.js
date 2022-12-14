@@ -182,6 +182,7 @@ const _CUSTOMACCOUNTS = {
             if (log.name == "AuctionSuccessful") {
               const [tokenId, totalPrice, winner] = log.args;
               results.info = "CryptoKitties AuctionSuccessful for " + tokenId + " at " + ethers.utils.formatEther(totalPrice) + "Ξ to " + winner;
+              results.ethPaid = totalPrice;
             }
           }
         }
