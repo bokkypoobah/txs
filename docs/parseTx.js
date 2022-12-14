@@ -455,6 +455,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0xa0712d68": true, // mint(uint256 mintedAmount)
     "0x3f81449a": true, // mintTrunk(uint256 randomSeed, bool isBasic)
     "0xa903f6c3": true, // mintBatchFurnitures(uint256[] ids, uint256[] amounts) 0xb644476e44A797Db3B8a6A16f2e63e8D5a541b67
+    // "0xb510391f": true, // mint(address to, bytes signature) 0xDaCa87395f3b1Bbc46F3FA187e996E03a5dCc985 - has refund
   };
   if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
