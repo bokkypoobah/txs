@@ -490,7 +490,7 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
-  // Simple ERC-721 & ERC-721 Purchase
+  // We purchase ERC-721 & ERC-1155
   if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from == account) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
@@ -519,13 +519,16 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
-  // Simple ERC-1155 Purchase
-  if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from == account) {
-    const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
-    if (receivedERC1155Events.length == 1) {
-        results.ethPaid = msgValue;
-        const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
-        results.info = "Purchased ERC-1155 " + info.name + " " + receivedERC1155Events[0].tokenId + " x " + receivedERC1155Events[0].tokens + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+  // Other account purchased our ERC-721
+  if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from != account) {
+    const sentERC721Events = events.erc721Events.filter(e => e.from == account);
+    // console.log("sentERC721Events: " + JSON.stringify(sentERC721Events));
+    if (sentERC721Events.length == 1 && events.nftExchangeEvents.length == 1) {
+      const price = events.nftExchangeEvents[0].price;
+      // TODO: Need to search for internal transaction
+      results.ethReceived = price;
+      const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
+      results.info = "Sold ERC-721 " + info.name + " " + sentERC721Events[0].tokenId + " for " + ethers.utils.formatEther(price) + "Ξ -fees";
     } else {
       // TODO Bulk
       // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
