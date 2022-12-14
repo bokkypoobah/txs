@@ -606,7 +606,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0x34f14c0a": true, // addEntry(address token, uint8 permission)
   };
   if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
-    results.info = "General contract maintenance TODO";
+    results.info = "General contract maintenance TOODO";
   }
 
   return results;
