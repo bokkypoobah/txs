@@ -431,7 +431,7 @@ function parseTx(chainId, account, accounts, txData) {
     if (accountInfo.process) {
       accountInfo.process(txData, account, accounts, events, results);
       if (!results.info) {
-        console.log("  TODO: " + txData.tx.hash + " " + JSON.stringify(accountInfo.name));
+        console.log("  TOODO: " + txData.tx.hash + " " + JSON.stringify(accountInfo.name));
       }
     }
   }
@@ -446,23 +446,21 @@ function parseTx(chainId, account, accounts, txData) {
         console.log("  Received Airdrop: " + JSON.stringify(receivedERC20Events));
       }
     }
-    // TODO:
-    // if (erc1155Events.length > 0) {
-    //   console.log("ERC-1155: " + JSON.stringify(erc1155Events));
-    // }
   }
 
-  // // Simple ERC-20 Purchase
-  // if (!results.info && msgValue > 0 && txData.tx.from == account) {
-  //   const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
-  //   if (receivedERC20Events.length == 1) {
-  //       results.ethPaid = msgValue;
-  //       results.info = "Purchased ERC-20:" + receivedERC20Events[0].contract + " " + receivedERC20Events[0].tokens + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
-  //   } else {
-  //     // TODO Bulk
-  //     // console.log("receivedERC20Events: " + JSON.stringify(receivedERC20Events));
-  //   }
-  // }
+  const CLAIMERC20AIRDROPS = {
+    "0xca21b177": true, // claim(bytes32[] proof_, address claimant_, uint256 claim_) 0xed39DAFd2B2a624fE43A5BbE76e0Dae4E4E621ef
+  };
+  if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in CLAIMERC20AIRDROPS) {
+    const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
+    if (receivedERC20Events.length == 1) {
+      const info = getTokenContractInfo(receivedERC20Events[0].contract, accounts);
+      results.info = "Claimed Airdrop ERC-20:" + info.name + " " + ethers.utils.formatUnits(receivedERC20Events[0].tokens, info.decimals) + " tokens";
+    } else {
+      // TODO: Other cases?
+      // console.log("  Received Airdrop: " + JSON.stringify(receivedERC20Events));
+    }
+  }
 
   // ERC-721 Mints
   const MINTSIGS = {
@@ -474,6 +472,8 @@ function parseTx(chainId, account, accounts, txData) {
     "0x42ece838": true, // mintNFTWithETH(uint256[] connectedNftIndices, string nftType) 0x433B2E291720CD5714dfAA02883Fb8FAc1061458
     "0xd5fbb40f": true, // mintGLICPIXV2_BATCH(uint8 _collection, uint256[] tokenIds) 0x1C60841b70821dcA733c9B1a26dBe1a33338bD43
     "0x379607f5": true, // claim(uint256 megarares_count) 0x31eAa2E93D7AFd237F87F30c0Dbd3aDEB9934f1B
+    "0xd47f030d": true, // mintMultiple(uint256[] rescueOrders) 0x1e9385eE28c5C7d33F3472f732Fb08CE3ceBce1F
+    "0xe7d3fe6b": true, // mint(uint256 tokenId0, uint256 tokenId1, address otherToken) 0x6aDA46d38A2F3Bf2309432d3Db9A81685Cb96fac
   };
   if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
@@ -525,8 +525,12 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
+  // console.log("erc721Events: " + JSON.stringify(events.erc721Events));
+  // console.log("erc1155Events: " + JSON.stringify(events.erc1155Events));
+
   // Other account purchased our ERC-721
   if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from != account) {
+    // console.log("Here");
     const sentERC721Events = events.erc721Events.filter(e => e.from == account);
     // console.log("sentERC721Events: " + JSON.stringify(sentERC721Events));
     if (sentERC721Events.length == 1 && events.nftExchangeEvents.length == 1) {
@@ -534,7 +538,29 @@ function parseTx(chainId, account, accounts, txData) {
       // TODO: Need to search for internal transaction
       results.ethReceived = price;
       const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
-      results.info = "Sold ERC-721 " + info.name + " " + sentERC721Events[0].tokenId + " for " + ethers.utils.formatEther(price) + "Ξ -fees";
+      results.info = "Sold ERC-721 " + info.name + " " + sentERC721Events[0].tokenId + " for " + ethers.utils.formatEther(price) + "Ξ -fees to " + sentERC721Events[0].to;
+    } else {
+      // TODO Bulk
+      // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
+    }
+  }
+
+  // We accept WETH bid for our ERC-721
+  if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from == account) {
+    const sentERC721Events = events.erc721Events.filter(e => e.from == account);
+    let wethBalance = ethers.BigNumber.from(0);
+    for (const event of events.erc20Events) {
+      if (event.contract == "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2") {
+        if (event.to == account) {
+          wethBalance = wethBalance.add(event.tokens);
+        } else if (event.from == account) {
+          wethBalance = wethBalance.sub(event.tokens);
+        }
+      }
+    }
+    if (sentERC721Events.length == 1 && events.nftExchangeEvents.length == 1) {
+      const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
+      results.info = "Sold ERC-721 " + info.name + " " + sentERC721Events[0].tokenId + " for " + ethers.utils.formatEther(wethBalance) + " WETH to " + sentERC721Events[0].to;
     } else {
       // TODO Bulk
       // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
