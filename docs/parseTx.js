@@ -1,11 +1,21 @@
 function getTokenContractInfo(contract, accounts) {
   // console.log("getTokenContractInfo - contract: " + contract);
+  let name = null;
+  let symbol = null;
+  let decimals = 18;
   if (contract in accounts) {
     const account = accounts[contract];
-    // console.log(JSON.stringify(account));
-    return { name: account.contract.name, symbol: account.contract.symbol, decimals: account.contract.decimals };
+    name = account.contract.name;
+    symbol = account.contract.symbol;
+    decimals = account.contract.decimals;
   }
-  return { name: "Unknown", symbol: "Unknown", decimals: 18 };
+  if (name == null || name.length == 0) {
+    name = contract;
+  }
+  if (symbol == null || symbol.length == 0) {
+    symbol = "???";
+  }
+  return { name, symbol, decimals };
 }
 
 function getEvents(txData) {
@@ -455,7 +465,9 @@ function parseTx(chainId, account, accounts, txData) {
     "0xa0712d68": true, // mint(uint256 mintedAmount)
     "0x3f81449a": true, // mintTrunk(uint256 randomSeed, bool isBasic)
     "0xa903f6c3": true, // mintBatchFurnitures(uint256[] ids, uint256[] amounts) 0xb644476e44A797Db3B8a6A16f2e63e8D5a541b67
-    // "0xb510391f": true, // mint(address to, bytes signature) 0xDaCa87395f3b1Bbc46F3FA187e996E03a5dCc985 - has refund
+    "0xdb7fd408": true, // mint(uint256 _amountToMint, bytes _data) 0x7685376aF33104dD02be287ed857a19Bb4A24EA2
+    "0xc242452d": true, // adoptDog(uint256 baycTokenId) 0xba30E5F9Bb24caa003E9f2f0497Ad287FDF95623
+    "0x42ece838": true, // mintNFTWithETH(uint256[] connectedNftIndices, string nftType) 0x433B2E291720CD5714dfAA02883Fb8FAc1061458
   };
   if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
@@ -616,14 +628,18 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   const GENERALCONTRACTMAINTENANCESIGS = {
-    "0xeb32e37e": true, // No contract source
-    "0x6c595451": true, // addApp(string appName, address _feeAccount, uint256 _fee)
-    "0x73311631": true, // addBrand(address brandAccount, string brandName)
-    "0x0a40fb8c": true, // permissionMarker(address marker, bool permission)
-    "0x34f14c0a": true, // addEntry(address token, uint8 permission)
+    // "0xeb32e37e": true, // No contract source
+    "0x6c595451": "addApp(string appName, address _feeAccount, uint256 _fee)", //
+    "0x73311631": "addBrand(address brandAccount, string brandName)", //
+    "0x0a40fb8c": "permissionMarker(address marker, bool permission)", //
+    "0x34f14c0a": "addEntry(address token, uint8 permission)", //
+    "0xddd81f82": "registerProxy()", // OpenSea  0xa5409ec958C83C3f309868babACA7c86DCB077c1
+    "0x2385554c": "hatchEgg(uint256 egg)", //  0x7685376aF33104dD02be287ed857a19Bb4A24EA2
+    "0x4e71d92d": "claim()", //  0xfdD7399e22918ba7234f5568cc2eF922489F7Ba6 - TODO ERC-20
+    "0xfc24100b": "buyAccessories(tuple[] orders)", // buyAccessories(tuple[] orders) 0x8d33303023723dE93b213da4EB53bE890e747C63
   };
   if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
-    results.info = "General contract maintenance TOODO";
+    results.info = "Call " + GENERALCONTRACTMAINTENANCESIGS[txData.tx.data.substring(0, 10)];
   }
 
   return results;
