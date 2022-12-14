@@ -477,13 +477,29 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
-  // Simple ERC-721 Purchase
-  if (!results.info && msgValue > 0 && txData.tx.from == account) {
+  // Simple ERC-721 & ERC-721 Purchase
+  if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from == account) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
+    const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
     if (receivedERC721Events.length == 1) {
-        results.ethPaid = msgValue;
-        const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
-        results.info = "Purchased ERC-721 " + info.name + " " + receivedERC721Events[0].tokenId + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+      results.ethPaid = msgValue;
+      const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
+      results.info = "Purchased ERC-721 " + info.name + " " + receivedERC721Events[0].tokenId + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+    } else if (receivedERC1155Events.length == 1) {
+      results.ethPaid = msgValue;
+      const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
+      results.info = "Purchased ERC-1155 " + info.name + " " + receivedERC1155Events[0].tokenId + " x " + receivedERC1155Events[0].tokens + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+    } else if (events.nftExchangeEvents.length == 1 && (receivedERC721Events.length + receivedERC1155Events.length) > 1) {
+      const purchased = [];
+      for (const event of receivedERC721Events) {
+        const info = getTokenContractInfo(event.contract, accounts);
+        purchased.push(info.name + ":" + event.tokenId);
+      }
+      for (const event of receivedERC1155Events) {
+        const info = getTokenContractInfo(event.contract, accounts);
+        purchased.push(info.name + ":" + event.tokenId);
+      }
+      results.info = "Purchased OS Bundle " + purchased.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     } else {
       // TODO Bulk
       // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
