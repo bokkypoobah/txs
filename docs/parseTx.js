@@ -9,6 +9,7 @@ function getTokenContractInfo(contract, accounts) {
 }
 
 function getEvents(txData) {
+  const erc1155Interface = new ethers.utils.Interface(ERC1155ABI);
   const seaportInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
   const blurInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x000000000000Ad05Ccc4F10045630fb830B95127"].abi);
   const wyvernInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"].abi);
@@ -17,6 +18,7 @@ function getEvents(txData) {
   const erc20Events = [];
   const erc721Events = [];
   const erc1155Events = [];
+  const erc1155BatchEvents = [];
   const nftExchangeEvents = [];
   const erc20FromMap = {};
   const erc20ToMap = {};
@@ -68,6 +70,22 @@ function getEvents(txData) {
       const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
       const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
       erc1155Events.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens });
+      // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
+    } else if (event.topics[0] == "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb") {
+      const log = erc1155Interface.parseLog(event);
+      // console.log("log: " + JSON.stringify(log, null, 2));
+      // const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+      // const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
+      // const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
+      // const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
+      // const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
+      const [operator, from, to, tokenIds, tokens] = log.args;
+      // console.log("operator: " + operator);
+      // console.log("from: " + from);
+      // console.log("to: " + to);
+      // console.log("tokenIds: " + tokenIds);
+      // console.log("tokens: " + tokens);
+      erc1155BatchEvents.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
       // Seaport
     } else if (event.address == "0x00000000006c3852cbEf3e08E8dF289169EdE581") {
       const log = seaportInterface.parseLog(event);
@@ -244,7 +262,7 @@ function getEvents(txData) {
       }
     }
   }
-  return { erc20Events, erc721Events, erc1155Events, erc20FromMap, erc20ToMap, nftExchangeEvents };
+  return { erc20Events, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents };
 }
 
 function accumulateTxResults(accumulatedData, txData, results) {
@@ -436,17 +454,26 @@ function parseTx(chainId, account, accounts, txData) {
   const MINTSIGS = {
     "0xa0712d68": true, // mint(uint256 mintedAmount)
     "0x3f81449a": true, // mintTrunk(uint256 randomSeed, bool isBasic)
+    "0xa903f6c3": true, // mintBatchFurnitures(uint256[] ids, uint256[] amounts) 0xb644476e44A797Db3B8a6A16f2e63e8D5a541b67
   };
-  // if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
-  //   results.info = "General contract maintenance TODO";
-  // }
   if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
+    const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
+    const receivedERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.to == account);
     if (receivedERC721Events.length > 0) {
       const tokenIds = receivedERC721Events.map(e => e.tokenId);
       const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
       results.ethPaid = msgValue;
-      results.info = "Mint ERC-721:" + info.name + " (" + receivedERC721Events.length + "x) " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+      results.info = "Minted ERC-721:" + info.name + " x" + receivedERC721Events.length + " " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+    } else if (receivedERC1155Events.length > 0) {
+      const tokenIds = receivedERC1155Events.map(e => e.tokenId);
+      const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
+      results.ethPaid = msgValue;
+      results.info = "Minted ERC-1155:" + info.name + " x" + receivedERC1155Events.length + " " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+    } else if (receivedERC1155BatchEvents.length > 0) {
+      const info = getTokenContractInfo(receivedERC1155BatchEvents[0].contract, accounts);
+      results.ethPaid = msgValue;
+      results.info = "Batch Minted ERC-1155:" + info.name + " x" + receivedERC1155BatchEvents.length + " " + receivedERC1155BatchEvents[0].tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     }
   }
 
@@ -464,7 +491,7 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // Simple ERC-1155 Purchase
-  if (!results.info && msgValue > 0 && txData.tx.from == account) {
+  if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from == account) {
     const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
     if (receivedERC1155Events.length == 1) {
         results.ethPaid = msgValue;
@@ -482,6 +509,8 @@ function parseTx(chainId, account, accounts, txData) {
     const sentERC721Events = events.erc721Events.filter(e => e.from == account);
     const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
     const sentERC1155Events = events.erc1155Events.filter(e => e.from == account);
+    const receivedERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.to == account);
+    const sentERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.from == account);
     if (receivedERC721Events.length > 0) {
       const tokenIds = receivedERC721Events.map(e => e.tokenId);
       const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
@@ -498,6 +527,12 @@ function parseTx(chainId, account, accounts, txData) {
       const tokenIds = sentERC1155Events.map(e => e.tokenId);
       const info = getTokenContractInfo(sentERC1155Events[0].contract, accounts);
       results.info = "Sent Bulk Transfer ERC-1155:" + info.name + " x" + sentERC1155Events.length + " " + tokenIds.join(", ") + " to " + sentERC1155Events[0].to;
+    } else if (receivedERC1155BatchEvents.length > 0) {
+      const info = getTokenContractInfo(receivedERC1155BatchEvents[0].contract, accounts);
+      results.info = "Receive Bulk Transfer ERC-1155:" + info.name + " x" + receivedERC1155BatchEvents.length + " " + receivedERC1155BatchEvents[0].tokenIds.join(", ") + " from " + receivedERC1155BatchEvents[0].from;
+    } else if (sentERC1155BatchEvents.length > 0) {
+      const info = getTokenContractInfo(sentERC1155BatchEvents[0].contract, accounts);
+      results.info = "Sent Bulk Transfer ERC-1155:" + info.name + " x" + sentERC1155BatchEvents.length + " " + sentERC1155BatchEvents[0].tokenIds.join(", ") + " from " + sentERC1155BatchEvents[0].from;
     }
   }
 
