@@ -452,6 +452,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0xca21b177": true, // claim(bytes32[] proof_, address claimant_, uint256 claim_) 0xed39DAFd2B2a624fE43A5BbE76e0Dae4E4E621ef
     "0xabf2ebd8": true, // claim(uint256 amountV, bytes32 r, bytes32 s) 0x3b484b82567a09e2588A13D54D032153f0c0aEe0
     "0x6ba4c138": true, // claim(uint256[] tokenIndices) 0x8A9c4dfe8b9D8962B31e4e16F8321C44d48e246E
+    "0x4972a7a7": true, // claim(uint256 amount,bytes32[] merkleProof,tuple makerAsk,bool isERC721) 0xA35dce3e0E6ceb67a30b8D7f4aEe721C949B5970
   };
   if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in CLAIMERC20AIRDROPS) {
     const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
