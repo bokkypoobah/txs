@@ -603,6 +603,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0x6c595451": true, // addApp(string appName, address _feeAccount, uint256 _fee)
     "0x73311631": true, // addBrand(address brandAccount, string brandName)
     "0x0a40fb8c": true, // permissionMarker(address marker, bool permission)
+    "0x34f14c0a": true, // addEntry(address token, uint8 permission)
   };
   if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
     results.info = "General contract maintenance TODO";
