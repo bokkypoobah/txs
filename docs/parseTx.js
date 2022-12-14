@@ -472,6 +472,8 @@ function parseTx(chainId, account, accounts, txData) {
     "0xdb7fd408": true, // mint(uint256 _amountToMint, bytes _data) 0x7685376aF33104dD02be287ed857a19Bb4A24EA2
     "0xc242452d": true, // adoptDog(uint256 baycTokenId) 0xba30E5F9Bb24caa003E9f2f0497Ad287FDF95623
     "0x42ece838": true, // mintNFTWithETH(uint256[] connectedNftIndices, string nftType) 0x433B2E291720CD5714dfAA02883Fb8FAc1061458
+    "0xd5fbb40f": true, // mintGLICPIXV2_BATCH(uint8 _collection, uint256[] tokenIds) 0x1C60841b70821dcA733c9B1a26dBe1a33338bD43
+    "0x379607f5": true, // claim(uint256 megarares_count) 0x31eAa2E93D7AFd237F87F30c0Dbd3aDEB9934f1B
   };
   if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
