@@ -1051,7 +1051,10 @@ const _CUSTOMACCOUNTS = {
         if (sentERC721Events.length > 0 && events.wethWithdrawalEvents.length == 1) {
           const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
           results.info = "Sold To NFT20.io ERC-721:" + info.name + " x" + sentERC721Events.length + " " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(events.wethWithdrawalEvents[0].tokens) + "Ξ";
-          results.ethReceived = events.wethWithdrawalEvents[0].tokens;
+          // results.ethReceived = events.wethWithdrawalEvents[0].tokens;
+          if (events.receivedInternalEvents.length == 1) {
+            results.ethReceived = events.receivedInternalEvents[0].value;
+          }
         }
       }
     },
