@@ -409,6 +409,16 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // TODO: Identify internal transfers?
+
+  // Multisig execute internal transfer
+  if (events.receivedInternalEvents.length > 0 && txData.tx.data.substring(0, 10) == "0xb61d27f6") {
+    // TODO: Handle > 1
+    if (events.receivedInternalEvents.length == txData.txReceipt.logs.length) {
+      results.ethReceived = events.receivedInternalEvents[0].value;
+      results.info = "Received Internal " + ethers.utils.formatEther(events.receivedInternalEvents[0].value) + "Ξ from " + events.receivedInternalEvents[0].from;
+    }
+  }
+
   // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
     if (txData.tx.from == account && txData.tx.to == account) {
