@@ -26,6 +26,7 @@ function getEvents(txData) {
   const wyvernInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"].abi);
   const looksRareInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x59728544B08AB483533076417FbBB2fD0B17CE3a"].abi);
   const x2y2Interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3"].abi);
+  const nftxInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d"].abi);
   const erc20Events = [];
   const wethDepositEvents = [];
   const wethWithdrawalEvents = [];
@@ -280,6 +281,43 @@ function getEvents(txData) {
           },
         });
       }
+      // NFTX
+    } else if (event.address == "0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d") {
+      const log = nftxInterface.parseLog(event);
+      if (log.name == "Buy") {
+        const [count, ethSpent, to] = log.args;
+        nftExchangeEvents.push({
+          logIndex: event.logIndex,
+          contract: event.address,
+          exchange: "NFTXMarketplaceZap",
+          name: "Buy",
+          count: ethers.BigNumber.from(count).toString(),
+          ethSpent: ethers.BigNumber.from(ethSpent).toString(),
+          to,
+        });
+      } else if (log.name == "Sell") {
+        const [count, ethReceived, to] = log.args;
+        nftExchangeEvents.push({
+          logIndex: event.logIndex,
+          contract: event.address,
+          exchange: "NFTXMarketplaceZap",
+          name: "Sell",
+          count: ethers.BigNumber.from(count).toString(),
+          ethReceived: ethers.BigNumber.from(ethReceived).toString(),
+          to,
+        });
+      } else if (log.name == "Swap") {
+        const [count, ethSpent, to] = log.args;
+        nftExchangeEvents.push({
+          logIndex: event.logIndex,
+          contract: event.address,
+          exchange: "NFTXMarketplaceZap",
+          name: "Swap",
+          count: ethers.BigNumber.from(count).toString(),
+          ethSpent: ethers.BigNumber.from(ethSpent).toString(),
+          to,
+        });
+      }
     }
   }
   return { erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents };
@@ -491,30 +529,30 @@ function parseTx(chainId, account, accounts, txData) {
 
   // ERC-721 Mints
   const MINTSIGS = {
-    "0xa0712d68": true, // mint(uint256 mintedAmount)
-    "0x3f81449a": true, // mintTrunk(uint256 randomSeed, bool isBasic)
-    "0xa903f6c3": true, // mintBatchFurnitures(uint256[] ids, uint256[] amounts) 0xb644476e44A797Db3B8a6A16f2e63e8D5a541b67
-    "0xdb7fd408": true, // mint(uint256 _amountToMint, bytes _data) 0x7685376aF33104dD02be287ed857a19Bb4A24EA2
-    "0xc242452d": true, // adoptDog(uint256 baycTokenId) 0xba30E5F9Bb24caa003E9f2f0497Ad287FDF95623
-    "0x42ece838": true, // mintNFTWithETH(uint256[] connectedNftIndices, string nftType) 0x433B2E291720CD5714dfAA02883Fb8FAc1061458
-    "0xd5fbb40f": true, // mintGLICPIXV2_BATCH(uint8 _collection, uint256[] tokenIds) 0x1C60841b70821dcA733c9B1a26dBe1a33338bD43
-    "0x379607f5": true, // claim(uint256 megarares_count) 0x31eAa2E93D7AFd237F87F30c0Dbd3aDEB9934f1B
-    "0xd47f030d": true, // mintMultiple(uint256[] rescueOrders) 0x1e9385eE28c5C7d33F3472f732Fb08CE3ceBce1F
-    "0xe7d3fe6b": true, // mint(uint256 tokenId0, uint256 tokenId1, address otherToken) 0x6aDA46d38A2F3Bf2309432d3Db9A81685Cb96fac
-    "0x1249c58b": true, // mint() 0xe0fA9Fb0e30ca86513642112BEE1CBbAA2A0580d
-    "0x6bf2a62a": true, // mint(uint256 pSaleId, address pAccount, uint256 pMintAmount, bytes32[] pProof) 0x674D37ac70E3a946B4a3Eb85EEadF3a75407EE41
-    "0x5befbed3": true, // ? 0x3eC9583F3f298f28b02D4312015B27360FadF88f
-    "0x3c168eab": true, // mintNFT(address receiver, uint256 nb_nft) 0x7DAfE71dB8CF7edb682E762529c8af78fEd569c5
-    "0xb155d7fa": true, // mintRandom() 0xca3CDA3B5a8B36356568A573bf10C3EB0Fc3238C
-    "0x40c10f19": true, // mint(address _to, uint256 _count) 0x8d0D79D39475187F3B51Cfc02d2dc516C378f865
-    "0x43508b05": true, // batchMint(address account, uint256 amount) 0x009d6A428AC3797888ceAF7CA4AA2aa113655500
-    "0xa71bbebe": true, // mint(uint32 count) 0x4e83Fb543E8fFa0E19929f0C754ba6EAee56190b
-    "0xe3c0cee5": true, // mintBatch(tuple[] mintingBatch) 0x2d255b756dD75a11D75cf701aBaD7c6D64b0AeDD
-    "0x927f59ba": true, // mintBatch(address[] to) 0x135511599D8D78e4E5D2ed7E224b54D80ff97309
-    "0xbd075b84": true, // mint(address[] recipients) 0x26F4465DdBDFA4c62dE1982Dbf68f5055c6a959a
-    "0x39fd5d70": true, // mint(uint256 pDrop, uint256 pTokenId, address pRecipient, uint256 amount, bytes32[] pProof) 0x11B197e078e41aF41Bc1d9e03407090e61e40BAA
+    // "0xa0712d68": true, // mint(uint256 mintedAmount)
+    // "0x3f81449a": true, // mintTrunk(uint256 randomSeed, bool isBasic)
+    // "0xa903f6c3": true, // mintBatchFurnitures(uint256[] ids, uint256[] amounts) 0xb644476e44A797Db3B8a6A16f2e63e8D5a541b67
+    // "0xdb7fd408": true, // mint(uint256 _amountToMint, bytes _data) 0x7685376aF33104dD02be287ed857a19Bb4A24EA2
+    // "0xc242452d": true, // adoptDog(uint256 baycTokenId) 0xba30E5F9Bb24caa003E9f2f0497Ad287FDF95623
+    // "0x42ece838": true, // mintNFTWithETH(uint256[] connectedNftIndices, string nftType) 0x433B2E291720CD5714dfAA02883Fb8FAc1061458
+    // "0xd5fbb40f": true, // mintGLICPIXV2_BATCH(uint8 _collection, uint256[] tokenIds) 0x1C60841b70821dcA733c9B1a26dBe1a33338bD43
+    // "0x379607f5": true, // claim(uint256 megarares_count) 0x31eAa2E93D7AFd237F87F30c0Dbd3aDEB9934f1B
+    // "0xd47f030d": true, // mintMultiple(uint256[] rescueOrders) 0x1e9385eE28c5C7d33F3472f732Fb08CE3ceBce1F
+    // "0xe7d3fe6b": true, // mint(uint256 tokenId0, uint256 tokenId1, address otherToken) 0x6aDA46d38A2F3Bf2309432d3Db9A81685Cb96fac
+    // "0x1249c58b": true, // mint() 0xe0fA9Fb0e30ca86513642112BEE1CBbAA2A0580d
+    // "0x6bf2a62a": true, // mint(uint256 pSaleId, address pAccount, uint256 pMintAmount, bytes32[] pProof) 0x674D37ac70E3a946B4a3Eb85EEadF3a75407EE41
+    // "0x5befbed3": true, // ? 0x3eC9583F3f298f28b02D4312015B27360FadF88f
+    // "0x3c168eab": true, // mintNFT(address receiver, uint256 nb_nft) 0x7DAfE71dB8CF7edb682E762529c8af78fEd569c5
+    // "0xb155d7fa": true, // mintRandom() 0xca3CDA3B5a8B36356568A573bf10C3EB0Fc3238C
+    // "0x40c10f19": true, // mint(address _to, uint256 _count) 0x8d0D79D39475187F3B51Cfc02d2dc516C378f865
+    // "0x43508b05": true, // batchMint(address account, uint256 amount) 0x009d6A428AC3797888ceAF7CA4AA2aa113655500
+    // "0xa71bbebe": true, // mint(uint32 count) 0x4e83Fb543E8fFa0E19929f0C754ba6EAee56190b
+    // "0xe3c0cee5": true, // mintBatch(tuple[] mintingBatch) 0x2d255b756dD75a11D75cf701aBaD7c6D64b0AeDD
+    // "0x927f59ba": true, // mintBatch(address[] to) 0x135511599D8D78e4E5D2ed7E224b54D80ff97309
+    // "0xbd075b84": true, // mint(address[] recipients) 0x26F4465DdBDFA4c62dE1982Dbf68f5055c6a959a
+    // "0x39fd5d70": true, // mint(uint256 pDrop, uint256 pTokenId, address pRecipient, uint256 amount, bytes32[] pProof) 0x11B197e078e41aF41Bc1d9e03407090e61e40BAA
   };
-  if (!results.info && /*txData.tx.from == account &&*/ txData.tx.data.substring(0, 10) in MINTSIGS) {
+  if (!results.info && events.nftExchangeEvents.length == 0 /*txData.tx.from == account && txData.tx.data.substring(0, 10) in MINTSIGS*/) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
     const receivedERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.to == account);
@@ -596,11 +634,11 @@ function parseTx(chainId, account, accounts, txData) {
     const sentERC721Events = events.erc721Events.filter(e => e.from == account);
     // console.log("sentERC721Events: " + JSON.stringify(sentERC721Events));
     if (sentERC721Events.length == 1 && events.nftExchangeEvents.length == 1) {
-      const price = events.nftExchangeEvents[0].price;
+      const price = ('price' in events.nftExchangeEvents[0]) ? events.nftExchangeEvents[0].price : 0;
       // TODO: Need to search for internal transaction
       results.ethReceived = price;
       const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
-      results.info = "Sold ERC-721 " + info.name + " " + sentERC721Events[0].tokenId + " for " + ethers.utils.formatEther(price) + "Ξ -fees to " + sentERC721Events[0].to;
+      results.info = "Sold ERC-721 " + info.name + " " + sentERC721Events[0].tokenId + " for " + price ? ethers.utils.formatEther(price) : "0" + "Ξ -fees to " + sentERC721Events[0].to;
     } else {
       // TODO Bulk
       // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
