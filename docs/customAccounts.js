@@ -483,6 +483,7 @@ const _CUSTOMACCOUNTS = {
           const info = getTokenContractInfo(sentERC20Events[0].contract, accounts);
           const tokens = ethers.BigNumber.from(wethWithdrawalEvents[0].data).toString();
           results.info = "Sold " + ethers.utils.formatUnits(sentERC20Events[0].tokens, info.decimals) + " " + info.symbol + " for " + ethers.utils.formatEther(tokens) + "Ξ";
+          results.ethReceived = tokens;
         } else if (sentERC20Events.length > 0 && receivedERC20Events.length > 0) {
           console.log("TODO: UniswapV3Router2: " + txData.tx.hash);
         } else {

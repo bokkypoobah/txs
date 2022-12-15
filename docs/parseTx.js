@@ -18,7 +18,7 @@ function getTokenContractInfo(contract, accounts) {
   return { name, symbol, decimals };
 }
 
-function getEvents(txData) {
+function getEvents(account, accounts, txData) {
   const erc1155Interface = new ethers.utils.Interface(ERC1155ABI);
   const wethInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"].abi);
   const seaportInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
@@ -36,6 +36,8 @@ function getEvents(txData) {
   const erc1155BatchEvents = [];
   const nftExchangeEvents = [];
   const ensEvents = [];
+  const sentInternalEvents = [];
+  const receivedInternalEvents = [];
   const erc20FromMap = {};
   const erc20ToMap = {};
   for (const event of txData.txReceipt.logs) {
@@ -336,7 +338,21 @@ function getEvents(txData) {
       }
     }
   }
-  return { erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents, ensEvents };
+
+  for (const [txHash, traceData] of Object.entries(accounts[account].internalTransactions)) {
+    if (txHash == txData.tx.hash) {
+      for (const [traceId, internalTransaction] of Object.entries(traceData)) {
+        const from = ethers.utils.getAddress(internalTransaction.from);
+        const to = ethers.utils.getAddress(internalTransaction.to);
+        if (from == account) {
+          sentInternalEvents.push({ from, to, value: ethers.BigNumber.from(internalTransaction.value).toString() });
+        } else if (to == account) {
+          receivedInternalEvents.push({ from, to, value: ethers.BigNumber.from(internalTransaction.value).toString() });
+        }
+      }
+    }
+  }
+  return { erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents, ensEvents, sentInternalEvents, receivedInternalEvents };
 }
 
 function accumulateTxResults(accumulatedData, txData, results) {
@@ -374,13 +390,19 @@ function parseTx(chainId, account, accounts, txData) {
   results.txFee = txData.tx.from == account ? txFee : 0;
   results.ethReceived = 0;
   results.ethPaid = 0;
-  const events = getEvents(txData);
+  const events = getEvents(account, accounts, txData);
   // if (events.nftExchangeEvents.length > 0) {
   //   console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents, null, 2));
   // }
   // if (events.ensEvents.length > 0) {
   //   console.log("ensEvents: " + JSON.stringify(events.ensEvents, null, 2));
   // }
+  if (events.sentInternalEvents.length > 0) {
+    console.log("sentInternalEvents: " + JSON.stringify(events.sentInternalEvents, null, 2));
+  }
+  if (events.receivedInternalEvents.length > 0) {
+    console.log("receivedInternalEvents: " + JSON.stringify(events.receivedInternalEvents, null, 2));
+  }
 
   if (txData.txReceipt.status == 0) {
     results.info = "Error tx with status 0";
@@ -602,16 +624,31 @@ function parseTx(chainId, account, accounts, txData) {
     if (receivedERC721Events.length > 0) {
       const tokenIds = receivedERC721Events.map(e => e.tokenId);
       const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
-      results.ethPaid = msgValue;
+      if (txData.tx.from == account) {
+        results.ethPaid = msgValue;
+        if (events.receivedInternalEvents.length == 1) {
+          results.ethReceived = events.receivedInternalEvents[0].value;
+        }
+      }
       results.info = "Minted ERC-721:" + info.name + " x" + receivedERC721Events.length + " " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     } else if (receivedERC1155Events.length > 0) {
       const tokenIds = receivedERC1155Events.map(e => e.tokenId);
       const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
-      results.ethPaid = msgValue;
+      if (txData.tx.from == account) {
+        results.ethPaid = msgValue;
+        if (events.receivedInternalEvents.length == 1) {
+          results.ethReceived = events.receivedInternalEvents[0].value;
+        }
+      }
       results.info = "Minted ERC-1155:" + info.name + " x" + receivedERC1155Events.length + " " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     } else if (receivedERC1155BatchEvents.length > 0) {
       const info = getTokenContractInfo(receivedERC1155BatchEvents[0].contract, accounts);
-      results.ethPaid = msgValue;
+      if (txData.tx.from == account) {
+        results.ethPaid = msgValue;
+        if (events.receivedInternalEvents.length == 1) {
+          results.ethReceived = events.receivedInternalEvents[0].value;
+        }
+      }
       results.info = "Batch Minted ERC-1155:" + info.name + " x" + receivedERC1155BatchEvents.length + " " + receivedERC1155BatchEvents[0].tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     }
   }
@@ -635,6 +672,7 @@ function parseTx(chainId, account, accounts, txData) {
     }
     if (ethBalance > 0) {
       results.info = "Received internal transaction refund of " + ethers.utils.formatEther(ethBalance) + "Ξ from " + txData.tx.to;
+      results.ethReceived = ethers.BigNumber.from(ethBalance).toString();
     }
   }
 
@@ -668,21 +706,19 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
-  console.log("erc721Events: " + JSON.stringify(events.erc721Events));
-  console.log("erc1155Events: " + JSON.stringify(events.erc1155Events));
-  console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents));
+  // console.log("erc721Events: " + JSON.stringify(events.erc721Events));
+  // console.log("erc1155Events: " + JSON.stringify(events.erc1155Events));
+  // console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents));
 
   // Other account purchased our ERC-721
   if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from != account) {
-    console.log("Here");
+    // console.log("receivedInternalEvents: " + JSON.stringify(events.receivedInternalEvents));
     const sentERC721Events = events.erc721Events.filter(e => e.from == account);
-    console.log("sentERC721Events: " + JSON.stringify(sentERC721Events));
-    if (sentERC721Events.length == 1 && events.nftExchangeEvents.length == 1) {
-      const price = ('price' in events.nftExchangeEvents[0]) ? events.nftExchangeEvents[0].price : 0;
-      // TODO: Need to search for internal transaction
-      results.ethReceived = price;
+    // console.log("sentERC721Events: " + JSON.stringify(sentERC721Events));
+    if (sentERC721Events.length == 1 && events.nftExchangeEvents.length == 1 && events.receivedInternalEvents.length == 1) {
+      results.ethReceived = events.receivedInternalEvents[0].value;
       const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
-      results.info = "Sold ERC-721 " + info.name + " " + sentERC721Events[0].tokenId + " for " + price ? ethers.utils.formatEther(price) : "0" + "Ξ -fees to " + sentERC721Events[0].to;
+      results.info = "Sold ERC-721 " + info.name + " " + sentERC721Events[0].tokenId + " for " + ethers.utils.formatEther(events.receivedInternalEvents[0].value) + "Ξ -fees to " + sentERC721Events[0].to;
     } else {
       // TODO Bulk
       // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
