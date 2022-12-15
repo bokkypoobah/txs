@@ -13,36 +13,35 @@ const _CUSTOMACCOUNTS = {
       }
     },
   },
-  "0xfF252725f6122A92551A5FA9a6b6bf10eb0Be035": {
-    mask: MASK_ISERC721,
-    symbol: "ENSBulkRenewal",
-    name: "ENSBulkRenewal",
-    decimals: null,
-    abi: [{"inputs":[{"internalType":"contract ENS","name":"_ens","type":"address"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"constant":true,"inputs":[],"name":"BULK_RENEWAL_ID","outputs":[{"internalType":"bytes4","name":"","type":"bytes4"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"ens","outputs":[{"internalType":"contract ENS","name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"string[]","name":"names","type":"string[]"},{"internalType":"uint256","name":"duration","type":"uint256"}],"name":"renewAll","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"internalType":"string[]","name":"names","type":"string[]"},{"internalType":"uint256","name":"duration","type":"uint256"}],"name":"rentPrice","outputs":[{"internalType":"uint256","name":"total","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"internalType":"bytes4","name":"interfaceID","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"pure","type":"function"}],
-    process: function(txData, account, accounts, events, results) {
-      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xfF252725f6122A92551A5FA9a6b6bf10eb0Be035"].abi);
-      let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
-      console.log("decodedData.functionFragment.name: " + decodedData.functionFragment.name);
-      if (decodedData.functionFragment.name == "renewAll") {
-        // const log = interface.parseLog(event);
-        // console.log("log: " + JSON.stringify(log));
-        // // TODO: Costs & refund
-        // if (log.name == "NameRegistered") {
-        //   const [name, label, owner, cost, expires] = log.args;
-        //   // console.log("  NameRegistered(");
-        //   // console.log("    name: " + name);
-        //   // console.log("    label: " + label);
-        //   // console.log("    owner: " + owner);
-        //   // console.log("    cost: " + cost);
-        //   // console.log("    expires: " + expires);
-        //   // console.log("  )");
-        //   results.ethPaid = ethers.BigNumber.from(cost).toString();
-        //   results.info = "Registered ENS " + name + ".eth for " + ethers.utils.formatEther(cost) + "Ξ";
-        //   // results.info = "ENS maintenance - " + decodedData.functionFragment.name;
-        // }
-      }
-    },
-  },
+  // "0xfF252725f6122A92551A5FA9a6b6bf10eb0Be035": {
+  //   mask: MASK_ISERC721,
+  //   symbol: "ENSBulkRenewal",
+  //   name: "ENSBulkRenewal",
+  //   decimals: null,
+  //   abi: [{"inputs":[{"internalType":"contract ENS","name":"_ens","type":"address"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"constant":true,"inputs":[],"name":"BULK_RENEWAL_ID","outputs":[{"internalType":"bytes4","name":"","type":"bytes4"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"ens","outputs":[{"internalType":"contract ENS","name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"string[]","name":"names","type":"string[]"},{"internalType":"uint256","name":"duration","type":"uint256"}],"name":"renewAll","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":true,"inputs":[{"internalType":"string[]","name":"names","type":"string[]"},{"internalType":"uint256","name":"duration","type":"uint256"}],"name":"rentPrice","outputs":[{"internalType":"uint256","name":"total","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"internalType":"bytes4","name":"interfaceID","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"payable":false,"stateMutability":"pure","type":"function"}],
+  //   process: null,
+  //   process: function(txData, account, accounts, events, results) {
+  //     const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xfF252725f6122A92551A5FA9a6b6bf10eb0Be035"].abi);
+  //     let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
+  //     console.log("decodedData.functionFragment.name: " + decodedData.functionFragment.name);
+  //     if (decodedData.functionFragment.name == "renewAll") {
+  //       let totalCost = ethers.BigNumber.from(0);
+  //       const names = [];
+  //       const renewalEvents = events.ensEvents.filter(e => e.type == "NameRenewed");
+  //       if (renewalEvents.length > 0) {
+  //         for (const event of renewalEvents) {
+  //           names.push(event.name + ".eth");
+  //           totalCost = totalCost.add(event.cost);
+  //           console.log(JSON.stringify(event));
+  //         }
+  //       }
+  //       console.log("totalCost: " + totalCost);
+  //       console.log("names: " + names.join(", "));
+  //       results.ethPaid = totalCost;
+  //       results.info = "Renewed ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
+  //     }
+  //   },
+  // },
   "0xB22c1C159d12461EA124b0deb4b5b93020E6Ad16": {
     mask: MASK_ISCONTRACT,
     symbol: "ENS",
@@ -100,13 +99,15 @@ const _CUSTOMACCOUNTS = {
           if (log.name == "CatAdopted") {
             const [catId, price, from, to] = log.args;
             if (to == account) {
-              results.info = "Received MoonCatRescue " + catId + " from " + from + " price " + price;
+              results.info = "Purchased/Received MoonCatRescue " + catId + " from " + from + " for " + ethers.utils.formatEther(price) + "Ξ";
+              results.ethPaid = price;
             } else if (from == account) {
-              results.info = "Sent MoonCatRescue " + catId + " to " + to + " price " + price;
+              results.info = "Sold/Sent MoonCatRescue " + catId + " to " + to + " for " + ethers.utils.formatEther(price) + "Ξ";
+              results.ethReceived = price;
             }
           } else if (log.name == "AdoptionOffered") {
             const [catId, price, to] = log.args;
-            results.info = "Offered For Adoption MoonCatRescue " + catId + " to " + to + " price " + price;
+            results.info = "Offered For Adoption MoonCatRescue " + catId + " to " + to + " for " + ethers.utils.formatEther(price) + "Ξ";
           } else if (log.name == "CatNamed") {
             const [catId, catName] = log.args;
             results.info = "Named MoonCatRescue " + catId + " '" + catName + "'";

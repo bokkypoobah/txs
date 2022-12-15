@@ -27,6 +27,7 @@ function getEvents(txData) {
   const looksRareInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x59728544B08AB483533076417FbBB2fD0B17CE3a"].abi);
   const x2y2Interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3"].abi);
   const nftxInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d"].abi);
+  const ensRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
   const erc20Events = [];
   const wethDepositEvents = [];
   const wethWithdrawalEvents = [];
@@ -34,6 +35,7 @@ function getEvents(txData) {
   const erc1155Events = [];
   const erc1155BatchEvents = [];
   const nftExchangeEvents = [];
+  const ensEvents = [];
   const erc20FromMap = {};
   const erc20ToMap = {};
   for (const event of txData.txReceipt.logs) {
@@ -76,6 +78,7 @@ function getEvents(txData) {
           erc20ToMap[to] = parseInt(erc20ToMap[to]) + 1;
         }
       }
+
       // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
     } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
       const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
@@ -84,11 +87,24 @@ function getEvents(txData) {
       const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
       const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
       erc1155Events.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens });
+
       // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
     } else if (event.topics[0] == "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb") {
       const log = erc1155Interface.parseLog(event);
       const [operator, from, to, tokenIds, tokens] = log.args;
       erc1155BatchEvents.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
+
+      // ENS ETHRegistrarController
+    } else if (event.address == "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
+      const log = ensRegistrarControllerInterface.parseLog(event);
+      if (log.name == "NameRegistered") {
+        const [name, label, owner, cost, expires] = log.args;
+        ensEvents.push({ logIndex: event.logIndex, contract: event.address, type: log.name, name, label, owner, cost: ethers.BigNumber.from(cost).toString(), expires: ethers.BigNumber.from(expires).toString() });
+      } else if (log.name == "NameRenewed") {
+        const [name, label, cost, expires] = log.args;
+        ensEvents.push({ logIndex: event.logIndex, contract: event.address, type: log.name, name, label, cost: ethers.BigNumber.from(cost).toString(), expires: ethers.BigNumber.from(expires).toString() });
+      }
+      // WETH
     } else if (event.address == "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2") {
       const log = wethInterface.parseLog(event);
       // Deposit (index_topic_1 address dst, uint256 wad)
@@ -320,7 +336,7 @@ function getEvents(txData) {
       }
     }
   }
-  return { erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents };
+  return { erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents, ensEvents };
 }
 
 function accumulateTxResults(accumulatedData, txData, results) {
@@ -359,9 +375,12 @@ function parseTx(chainId, account, accounts, txData) {
   results.ethReceived = 0;
   results.ethPaid = 0;
   const events = getEvents(txData);
-  if (events.nftExchangeEvents.length > 0) {
-    console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents, null, 2));
-  }
+  // if (events.nftExchangeEvents.length > 0) {
+  //   console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents, null, 2));
+  // }
+  // if (events.ensEvents.length > 0) {
+  //   console.log("ensEvents: " + JSON.stringify(events.ensEvents, null, 2));
+  // }
 
   if (txData.txReceipt.status == 0) {
     results.info = "Error tx with status 0";
@@ -473,6 +492,30 @@ function parseTx(chainId, account, accounts, txData) {
       }
     }
   }
+
+  // ENS Registrations and renewals, can be executed via ENS Batch Renewal, ENS.Vision, ...
+  if (!results.info && events.ensEvents.length > 0) {
+    const registrationEvents = events.ensEvents.filter(e => e.type == "NameRegistered");
+    const renewalEvents = events.ensEvents.filter(e => e.type == "NameRenewed");
+    let totalCost = ethers.BigNumber.from(0);
+    const names = [];
+    if (registrationEvents.length > 0) {
+      for (const event of registrationEvents) {
+        names.push(event.name + ".eth");
+        totalCost = totalCost.add(event.cost);
+      }
+      results.info = "Registered ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
+    } else if (renewalEvents.length > 0) {
+      for (const event of renewalEvents) {
+        names.push(event.name + ".eth");
+        totalCost = totalCost.add(event.cost);
+      }
+      results.info = "Renewed ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
+    }
+    results.ethPaid = totalCost;
+  }
+
+
   if (!results.info && txData.tx.to in _CUSTOMACCOUNTS) {
     const accountInfo = _CUSTOMACCOUNTS[txData.tx.to];
     // console.log("  " + JSON.stringify(accountInfo.name));
@@ -608,6 +651,7 @@ function parseTx(chainId, account, accounts, txData) {
       const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
       results.info = "Purchased ERC-1155 " + info.name + " " + receivedERC1155Events[0].tokenId + " x " + receivedERC1155Events[0].tokens + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
     } else if (events.nftExchangeEvents.length == 1 && (receivedERC721Events.length + receivedERC1155Events.length) > 1) {
+      results.ethPaid = msgValue;
       const purchased = [];
       for (const event of receivedERC721Events) {
         const info = getTokenContractInfo(event.contract, accounts);
@@ -624,15 +668,15 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
-  // console.log("erc721Events: " + JSON.stringify(events.erc721Events));
-  // console.log("erc1155Events: " + JSON.stringify(events.erc1155Events));
-  // console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents));
+  console.log("erc721Events: " + JSON.stringify(events.erc721Events));
+  console.log("erc1155Events: " + JSON.stringify(events.erc1155Events));
+  console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents));
 
   // Other account purchased our ERC-721
   if (!results.info && events.nftExchangeEvents.length > 0 && txData.tx.from != account) {
-    // console.log("Here");
+    console.log("Here");
     const sentERC721Events = events.erc721Events.filter(e => e.from == account);
-    // console.log("sentERC721Events: " + JSON.stringify(sentERC721Events));
+    console.log("sentERC721Events: " + JSON.stringify(sentERC721Events));
     if (sentERC721Events.length == 1 && events.nftExchangeEvents.length == 1) {
       const price = ('price' in events.nftExchangeEvents[0]) ? events.nftExchangeEvents[0].price : 0;
       // TODO: Need to search for internal transaction
@@ -781,6 +825,7 @@ function parseTx(chainId, account, accounts, txData) {
   };
   if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
     results.info = "Call " + GENERALCONTRACTMAINTENANCESIGS[txData.tx.data.substring(0, 10)];
+    results.ethPaid = msgValue;
   }
 
   return results;
