@@ -118,6 +118,8 @@ function getEvents(account, accounts, txData) {
         const [from, tokens] = log.args;
         wethWithdrawalEvents.push({ logIndex: event.logIndex, contract: event.address, from, tokens: ethers.BigNumber.from(tokens).toString() });
       }
+    //   // ERC-20 Exchange Events
+    // } else if (event.address == "0x00000000006c3852cbEf3e08E8dF289169EdE581") {
       // Seaport
     } else if (event.address == "0x00000000006c3852cbEf3e08E8dF289169EdE581") {
       const log = seaportInterface.parseLog(event);
@@ -410,6 +412,13 @@ function parseTx(chainId, account, accounts, txData) {
 
   // TODO: Identify internal transfers?
 
+  // Contract deployment
+  if (txData.tx.from == account && txData.tx.to == null) {
+    // console.log(JSON.stringify(txData.tx, null, 2));
+    // console.log(JSON.stringify(accounts[account].transactions[txData.tx.hash], null, 2));
+    results.info = "Contract deployment"; // to " + txData.tx.contractAddress;
+  }
+
   // Multisig execute internal transfer
   if (events.receivedInternalEvents.length > 0 && txData.tx.data.substring(0, 10) == "0xb61d27f6") {
     // TODO: Handle > 1
@@ -445,6 +454,9 @@ function parseTx(chainId, account, accounts, txData) {
           results.info = "ERC-20 approved for " + event.address.substring(0, 16);
         }
       }
+    }
+    if (!results.info) {
+      results.info = "ERC-20 approval with no logs";
     }
   }
 
@@ -771,6 +783,17 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
 
+  // ETH -> ERC-20 Swap
+  if (!results.info && msgValue > 0) {
+    const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
+    console.log("receivedERC20Events: " + JSON.stringify(receivedERC20Events));
+    if (receivedERC20Events.length > 0) {
+      const info = getTokenContractInfo(receivedERC20Events[0].contract, accounts);
+      results.info = "Purchased " + ethers.utils.formatUnits(receivedERC20Events[0].tokens, info.decimals) + " " + info.symbol + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
+      results.ethPaid = msgValue;
+    }
+  }
+
   // TokenTrader.TradeListing (index_topic_1 address ownerAddress, index_topic_2 address tokenTraderAddress, index_topic_3 address asset, uint256 buyPrice, uint256 sellPrice, uint256 units, bool buysTokens, bool sellsTokens)
   if (!results.info && txData.tx.data.substring(0, 10) == "0x3d6a32bd") {
     for (const event of txData.txReceipt.logs) {
@@ -831,6 +854,26 @@ function parseTx(chainId, account, accounts, txData) {
   // BokkyPooBahsFixedSupplyTokenFactory transferOwnership(address _newOwner)
   if (!results.info && txData.tx.data.substring(0, 10) == "0xd0def521") {
     results.info = "CryptoVoxels Name mint() TODO";
+  }
+
+  // ExtraBalDaoWithdraw withdraw()
+  if (!results.info && txData.tx.to == "0x755cdba6AE4F479f7164792B318b2a06c759833B" && txData.tx.data.substring(0, 10) == "0x3ccfd60b") {
+    results.info = "ExtraBalDaoWithdraw withdraw TOODO";
+  }
+
+  // Early contract testing moveToWaves(string wavesAddress, uint256 amount)
+  if (!results.info && txData.tx.data.substring(0, 10) == "0x7f09beca") {
+    results.info = "Testing moveToWaves() TOODO";
+  }
+
+  // Parity token registry register(address _addr, string _tla, uint256 _base, string _name)
+  if (!results.info && txData.tx.to == "0x5F0281910Af44bFb5fC7e86A404d0304B0e042F1" && txData.tx.data.substring(0, 10) == "0x66b42dcb") {
+    results.info = "Parity token registry register() TOODO";
+  }
+
+  // Parity signature registry register(string _method)
+  if (!results.info && txData.tx.to == "0x44691B39d1a75dC4E0A0346CBB15E310e6ED1E86" && txData.tx.data.substring(0, 10) == "0xf2c298be") {
+    results.info = "Parity signature registry register() TOODO";
   }
 
   const GENERALCONTRACTMAINTENANCESIGS = {

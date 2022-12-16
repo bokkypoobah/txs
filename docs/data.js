@@ -641,8 +641,11 @@ const dataModule = {
             }
             console.log("txHashes: " + JSON.stringify(txHashes));
             let txHashList = [];
+            const TESTMAXBLOCKNUMBER = null; // 4000000;
             for (const [txHash, blockNumber] of Object.entries(txHashes)) {
-              txHashList.push({ txHash, blockNumber });
+              if (!TESTMAXBLOCKNUMBER || blockNumber <= TESTMAXBLOCKNUMBER) {
+                txHashList.push({ txHash, blockNumber });
+              }
             }
             txHashList.sort((a, b) => a.blockNumber - b.blockNumber);
             // TODO: Test
