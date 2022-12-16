@@ -18,16 +18,34 @@ function getTokenContractInfo(contract, accounts) {
   return { name, symbol, decimals };
 }
 
+const _interfaces = {};
+
+function getInterfaces() {
+  if (!('weth' in _interfaces)) {
+    _interfaces.erc1155 = new ethers.utils.Interface(ERC1155ABI);
+    _interfaces.weth = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"].abi);
+    _interfaces.seaport = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
+    _interfaces.blur = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x000000000000Ad05Ccc4F10045630fb830B95127"].abi);
+    _interfaces.wyvern = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"].abi);
+    _interfaces.looksRare = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x59728544B08AB483533076417FbBB2fD0B17CE3a"].abi);
+    _interfaces.x2y2 = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3"].abi);
+    _interfaces.nftx = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d"].abi);
+    _interfaces.ensRegistrarController = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
+  }
+  return _interfaces;
+}
+
 function getEvents(account, accounts, txData) {
-  const erc1155Interface = new ethers.utils.Interface(ERC1155ABI);
-  const wethInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"].abi);
-  const seaportInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
-  const blurInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x000000000000Ad05Ccc4F10045630fb830B95127"].abi);
-  const wyvernInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"].abi);
-  const looksRareInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x59728544B08AB483533076417FbBB2fD0B17CE3a"].abi);
-  const x2y2Interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3"].abi);
-  const nftxInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d"].abi);
-  const ensRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
+  const interfaces = getInterfaces();
+  // const erc1155Interface = new ethers.utils.Interface(ERC1155ABI);
+  // const wethInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"].abi);
+  // const seaportInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
+  // const blurInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x000000000000Ad05Ccc4F10045630fb830B95127"].abi);
+  // const wyvernInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"].abi);
+  // const looksRareInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x59728544B08AB483533076417FbBB2fD0B17CE3a"].abi);
+  // const x2y2Interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3"].abi);
+  // const nftxInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d"].abi);
+  // const ensRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
   const erc20Events = [];
   const wethDepositEvents = [];
   const wethWithdrawalEvents = [];
@@ -108,7 +126,7 @@ function getEvents(account, accounts, txData) {
       }
       // WETH
     } else if (event.address == "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2") {
-      const log = wethInterface.parseLog(event);
+      const log = interfaces.weth.parseLog(event);
       // Deposit (index_topic_1 address dst, uint256 wad)
       if (event.topics[0] == "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c") {
         const [to, tokens] = log.args;
@@ -122,7 +140,7 @@ function getEvents(account, accounts, txData) {
     // } else if (event.address == "0x00000000006c3852cbEf3e08E8dF289169EdE581") {
       // Seaport
     } else if (event.address == "0x00000000006c3852cbEf3e08E8dF289169EdE581") {
-      const log = seaportInterface.parseLog(event);
+      const log = interfaces.seaport.parseLog(event);
       if (log.name == "OrderFulfilled") {
         const [orderHash, offerer, zone, recipient, offer, consideration] = log.args;
         const offers = [];
@@ -139,7 +157,7 @@ function getEvents(account, accounts, txData) {
       }
       // Blur
     } else if (event.address == "0x000000000000Ad05Ccc4F10045630fb830B95127") {
-      const log = blurInterface.parseLog(event);
+      const log = interfaces.blur.parseLog(event);
       // event OrdersMatched(
       //     address indexed maker,
       //     address indexed taker,
@@ -206,21 +224,21 @@ function getEvents(account, accounts, txData) {
       }
       // WyvernExchange - 2018 version
     } else if (event.address == "0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b") {
-      const log = wyvernInterface.parseLog(event);
+      const log = interfaces.wyvern.parseLog(event);
       if (log.name == "OrdersMatched") {
         const [buyHash, sellHash, maker, taker, price, metadata] = log.args;
         nftExchangeEvents.push({ logIndex: event.logIndex, contract: event.address, exchange: "WyvernExchange", name: "OrdersMatched", maker, taker, price: ethers.BigNumber.from(price).toString(), metadata });
       }
       // WyvernExchange - 2022 version
     } else if (event.address == "0x7f268357A8c2552623316e2562D90e642bB538E5") {
-      const log = wyvernInterface.parseLog(event);
+      const log = interfaces.wyvern.parseLog(event);
       if (log.name == "OrdersMatched") {
         const [buyHash, sellHash, maker, taker, price, metadata] = log.args;
         nftExchangeEvents.push({ logIndex: event.logIndex, contract: event.address, exchange: "WyvernExchange", name: "OrdersMatched", maker, taker, price: ethers.BigNumber.from(price).toString(), metadata });
       }
       // LooksRareExchange
     } else if (event.address == "0x59728544B08AB483533076417FbBB2fD0B17CE3a") {
-      const log = looksRareInterface.parseLog(event);
+      const log = interfaces.looksRare.parseLog(event);
       if (log.name == "TakerAsk") {
         const [orderHash, orderNonce, taker, maker, strategy, currency, collection, tokenId, amount, price] = log.args;
         nftExchangeEvents.push({
@@ -245,7 +263,7 @@ function getEvents(account, accounts, txData) {
       }
       // X2Y2_r1
     } else if (event.address == "0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3") {
-      const log = x2y2Interface.parseLog(event);
+      const log = interfaces.x2y2.parseLog(event);
       if (log.name == "EvProfit") {
         const [itemHash, currency, to, amount] = log.args;
         nftExchangeEvents.push({
@@ -303,7 +321,7 @@ function getEvents(account, accounts, txData) {
       }
       // NFTX
     } else if (event.address == "0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d") {
-      const log = nftxInterface.parseLog(event);
+      const log = interfaces.nftx.parseLog(event);
       if (log.name == "Buy") {
         const [count, ethSpent, to] = log.args;
         nftExchangeEvents.push({
