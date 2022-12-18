@@ -91,6 +91,10 @@ const dataModule = {
     assets: {},
     ensMap: {},
     exchangeRates: {},
+    signatures: {
+      functionSignatures: {},
+      eventSignatures: {},
+    },
     sync: {
       section: null,
       total: null,
@@ -112,6 +116,7 @@ const dataModule = {
     assets: state => state.assets,
     ensMap: state => state.ensMap,
     exchangeRates: state => state.exchangeRates,
+    signatures: state => state.signatures,
     sync: state => state.sync,
   },
   mutations: {
@@ -283,6 +288,17 @@ const dataModule = {
         Vue.set(state.txs, chainId, {});
       }
       Vue.set(state.txs[chainId], txInfo.tx.hash, txInfo);
+    },
+    addNewSignatures(state, newSignatures) {
+      // console.log("addNewSignatures: " + JSON.stringify(newSignatures));
+      for (const [methodId, signatures] of Object.entries(newSignatures.functionSignatures)) {
+        // console.log(methodId + " => " + JSON.stringify(signatures));
+        // TODO: Merge new array with old array
+        if (!(methodId in state.signatures.functionSignatures)) {
+          Vue.set(state.signatures.functionSignatures, methodId, signatures);
+          // console.log("state.signatures.functionSignatures: " + JSON.stringify(state.signatures.functionSignatures));
+        }
+      }
     },
     updateTxData(state, info) {
       // logInfo("dataModule", "mutations.updateTxData - info: " + JSON.stringify(info).substring(0, 1000));
@@ -657,8 +673,9 @@ const dataModule = {
               context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
               console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Processing: " + JSON.stringify(txItem));
               const currentInfo = txs && txs[txItem.txHash] || {};
-              const info = await getTxInfo(txItem.txHash, currentInfo, provider);
+              const [info, newSignatures] = await getTxInfo(txItem.txHash, currentInfo, provider, context.state.signatures);
               context.commit('addTxs', { chainId, txInfo: info});
+              context.commit('addNewSignatures', newSignatures);
               if (context.state.sync.halt) {
                 break;
               }
@@ -670,6 +687,7 @@ const dataModule = {
             }
           }
 
+          // TODO
           // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
         } else if (section == 'buildAssets') {
           const accountsToSync = [];
@@ -931,6 +949,7 @@ const dataModule = {
           context.dispatch('saveData', ['txs']);
           context.commit('setSyncSection', { section: null, total: null });
 
+          // TODO
         } else if (section == 'getExchangeRates') {
           console.log("getExchangeRates: " + reportingCurrency);
           const MAXDAYS = 2000;

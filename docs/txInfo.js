@@ -85,12 +85,33 @@ function parseTxOld(item, primaryAccount) {
   return results;
 }
 
-async function getTxInfo(txHash, item, provider) {
+async function getTxInfo(txHash, item, provider, signatures) {
   // console.log("getTxInfo: " + txHash + ", currentInfo: " + JSON.stringify(item).substring(0, 60));
   const results = {};
+  const newFunctionSigs = {};
+  const newEventSigs = {};
   if (!results.tx) {
-    // console.log("getTxInfo - getTransaction: " + txHash);
+    console.log("getTxInfo - getTransaction: " + txHash); // + " " + JSON.stringify(signatures));
     const tx = await provider.getTransaction(txHash);
+    // if (tx.to != null && tx.data.length > 10) {
+    //   console.log("tx.data: " + tx.data);
+    //   const signature = tx.data.substring(0, 10);
+    //   if (!(signature in signatures.functionSignatures)) {
+    //     let url = "https://www.4byte.directory/api/v1/signatures/?hex_signature=" + signature;
+    //     console.log(url);
+    //     const data = await fetch(url)
+    //       .then(response => response.json())
+    //       .catch(function(e) {
+    //         console.log("error: " + e);
+    //       });
+    //     // console.log(JSON.stringify(data, null, 2));
+    //     if (data.count > 0) {
+    //       const signatureList = data.results.map(e => e.text_signature);
+    //       newFunctionSigs[signature] = signatureList;
+    //       console.log("signatureList: " + JSON.stringify(signatureList, null, 2));
+    //     }
+    //   }
+    // }
     results.tx = {
       hash: tx.hash,
       type: tx.type,
@@ -139,8 +160,9 @@ async function getTxInfo(txHash, item, provider) {
   // console.log("results.tx: " + JSON.stringify(results.tx, null, 2));
   // console.log("results: " + JSON.stringify(results, null, 2));
 
-  return results;
+  return [results, { functionSignatures: newFunctionSigs, eventSignatures: newEventSigs }];
 
+  // TODO: Delete below
   const contract = item.to && _CUSTOMACCOUNTS[item.to] || null;
 
   if (item.importedData && item.importedData.tx) {

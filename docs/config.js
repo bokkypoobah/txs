@@ -25,6 +25,13 @@ const Config = {
                 <b-form-select size="sm" id="reporting-currency" :value="settings.reportingCurrency" @change="setReportingCurrency($event)" :options="reportingCurrencyOptions" class="w-25"></b-form-select>
               </b-form-group>
             </b-form-group>
+            <!--
+            <b-form-group label-cols-lg="2" label="Function Signatures" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Download:" label-for="download-function-signatures" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Download function signatures from www.4byte.directory'" class="mx-0 my-1 p-0">
+                <b-button size="sm" id="download-function-signatures" @click="downloadFunctionSignatures()" variant="info">Download</b-button>
+              </b-form-group>
+            </b-form-group>
+            -->
             <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Temporary Data:" label-for="reset-localstorage" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset view preferences stored in your browser LocalStorage'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="reset-localstorage" @click="reset(['localStorage'])" variant="primary">Reset</b-button>
@@ -122,6 +129,9 @@ const Config = {
     },
     setReportingCurrency(reportingCurrency) {
       store.dispatch('config/setReportingCurrency', reportingCurrency);
+    },
+    downloadFunctionSignatures() {
+      store.dispatch('config/downloadFunctionSignatures');
     },
     reset(sections) {
       console.log("reset() - sections: " + JSON.stringify(sections));
@@ -253,6 +263,41 @@ const configModule = {
     setReportingCurrency(context, reportingCurrency) {
       context.commit('setReportingCurrency', reportingCurrency);
       localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    async downloadFunctionSignatures(context) {
+      console.log("action.downloadFunctionSignatures()");
+      let url = "https://www.4byte.directory/api/v1/signatures/";
+      do {
+        console.log(url);
+        const data = await fetch(url)
+          .then(response => response.json())
+          .catch(function(e) {
+            console.log("error: " + e);
+          });
+        console.log(JSON.stringify(data, null, 2));
+        url = data.next;
+        delay(5000);
+      } while (url);
+
+      // while (toTs.year() >= 2015) {
+      //   let days = toTs.diff(MINDATE, 'days');
+      //   if (days > MAXDAYS) {
+      //     days = MAXDAYS;
+      //   }
+      //   const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + reportingCurrency + "&toTs=" + toTs.unix() + "&limit=" + days;
+      //   console.log(url);
+      //   const data = await fetch(url)
+      //     .then(response => response.json())
+      //     .catch(function(e) {
+      //       console.log("error: " + e);
+      //     });
+      //   for (day of data.Data.Data) {
+      //     results[moment.unix(day.time).format("YYYYMMDD")] = day.close;
+      //   }
+      //   toTs = moment(toTs).subtract(MAXDAYS, 'days');
+      // }
+
+      // context.commit('setReportingCurrency', reportingCurrency);
     },
   },
 };
