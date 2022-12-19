@@ -216,7 +216,7 @@ const configModule = {
     settings: state => state.settings,
     periodOptions(state) {
       const results = [];
-      const startMonth = state.periodStart && state.periodStart.length > 0 && state.periodStart || "jul";
+      const startMonth = state.settings.periodStart && state.settings.periodStart.length > 0 && state.settings.periodStart || "jul";
       const now = moment();
       let startPeriod = moment(now).month(startMonth).startOf('month');
       if (startPeriod > now) {
@@ -239,6 +239,9 @@ const configModule = {
         startPeriod = moment(startPeriod).subtract(3, 'month');
       }
       return results;
+    },
+    devSettings(state) {
+      return { skipTransactions: state.settings.skipTransactions, maxTransactions: state.settings.maxTransactions, checkBalance: state.settings.checkBalance };
     },
   },
   mutations: {
