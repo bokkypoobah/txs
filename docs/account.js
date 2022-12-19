@@ -269,6 +269,9 @@ const Account = {
         { value: 'erc721', text: 'ERC-721' },
         { value: 'erc1155', text: 'ERC-1155' },
         { value: 'erc20', text: 'ERC-20' },
+        { value: 'exchangewallet', text: 'Exchange Wallet' },
+        { value: 'erc20exchange', text: 'ERC-20 Exchange' },
+        { value: 'nftexchange', text: 'NFT Exchange' },
       ],
       accountTypeFilters: [
         { value: null, text: '(all)' },
@@ -277,6 +280,9 @@ const Account = {
         { value: 'erc721', text: 'ERC-721' },
         { value: 'erc1155', text: 'ERC-1155' },
         { value: 'erc20', text: 'ERC-20' },
+        { value: 'exchangewallet', text: 'Exchange Wallet' },
+        { value: 'erc20exchange', text: 'ERC-20 Exchange' },
+        { value: 'nftexchange', text: 'NFT Exchange' },
         { value: 'unknown', text: '(unknown)' },
       ],
       accountMineFilters: [
