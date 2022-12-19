@@ -32,6 +32,17 @@ const Config = {
               </b-form-group>
             </b-form-group>
             -->
+            <b-form-group label-cols-lg="2" label="Development Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Skip Transactions:" label-for="transaction-skip" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Number of transactions to skip. Set to 0 to include all'" class="mx-0 my-1 p-0">
+                <b-form-input type="text" size="sm" id="transaction-skip" :value="settings.skipTransactions" @change="setSkipTransactions($event)" placeholder="0" class="w-75"></b-form-input>
+              </b-form-group>
+              <b-form-group label="Max Transactions:" label-for="transaction-max" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Maximum number of transactions to process. Set to 99999 to include all'" class="mx-0 my-1 p-0">
+                <b-form-input type="text" size="sm" id="transaction-max" :value="settings.maxTransactions" @change="setMaxTransactions($event)" placeholder="99999" class="w-75"></b-form-input>
+              </b-form-group>
+              <b-form-group label="Check Balance:" label-for="check-balance" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Retrieve balance to check intermediate calculations'" class="mx-0 my-1 p-0">
+                <b-form-checkbox size="sm" id="check-balance" :checked="settings.checkBalance ? 1 : 0" value="1" @change="toggleCheckBalance" />
+              </b-form-group>
+            </b-form-group>
             <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Temporary Data:" label-for="reset-localstorage" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset view preferences stored in your browser LocalStorage'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="reset-localstorage" @click="reset(['localStorage'])" variant="primary">Reset</b-button>
@@ -130,6 +141,15 @@ const Config = {
     setReportingCurrency(reportingCurrency) {
       store.dispatch('config/setReportingCurrency', reportingCurrency);
     },
+    setSkipTransactions(skipTransactions) {
+      store.dispatch('config/setSkipTransactions', skipTransactions);
+    },
+    setMaxTransactions(maxTransactions) {
+      store.dispatch('config/setMaxTransactions', maxTransactions);
+    },
+    toggleCheckBalance(checkBalance) {
+      store.dispatch('config/toggleCheckBalance', checkBalance);
+    },
     downloadFunctionSignatures() {
       store.dispatch('config/downloadFunctionSignatures');
     },
@@ -186,7 +206,10 @@ const configModule = {
       confirmations: 10,
       periodStart: 'jul',
       reportingCurrency: 'USD',
-      version: 2,
+      skipTransactions: 0,
+      maxTransactions: 99999,
+      checkBalance: false,
+      version: 3,
     },
   },
   getters: {
@@ -234,12 +257,21 @@ const configModule = {
     setReportingCurrency(state, reportingCurrency) {
       state.settings.reportingCurrency = reportingCurrency;
     },
+    setSkipTransactions(state, skipTransactions) {
+      state.settings.skipTransactions = skipTransactions;
+    },
+    setMaxTransactions(state, maxTransactions) {
+      state.settings.maxTransactions = maxTransactions;
+    },
+    toggleCheckBalance(state) {
+      state.settings.checkBalance = !state.settings.checkBalance;
+    },
   },
   actions: {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 2) {
+        if ('version' in tempSettings && tempSettings.version == 3) {
           context.state.settings = tempSettings;
         }
       }
@@ -262,6 +294,18 @@ const configModule = {
     },
     setReportingCurrency(context, reportingCurrency) {
       context.commit('setReportingCurrency', reportingCurrency);
+      localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    setSkipTransactions(context, skipTransactions) {
+      context.commit('setSkipTransactions', skipTransactions);
+      localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    setMaxTransactions(context, maxTransactions) {
+      context.commit('setMaxTransactions', maxTransactions);
+      localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    toggleCheckBalance(context) {
+      context.commit('toggleCheckBalance');
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
     async downloadFunctionSignatures(context) {
