@@ -36,7 +36,7 @@ async function getAccountInfo(address, provider) {
       if ((results.mask & MASK_ISERC20) == MASK_ISERC20) {
         const erc20 = new ethers.Contract(account, ERC20ABI, provider);
         try {
-          results.decimals = await erc20.decimals();
+          results.decimals = ethers.BigNumber.from(await erc20.decimals()).toString();
         } catch (e) {
           console.log("getAccountInfo ERROR - decimals - account: " + account + ", message: " + e.message);
         }
@@ -86,8 +86,8 @@ async function getAccountInfo(address, provider) {
     const weth = new ethers.Contract(WETHADDRESS, WETHABI, provider); // network.wethAddress
     const wethBalance = await weth.balanceOf(account);
     results.balances = {
-      "eth": ethBalance,
-      "weth": wethBalance,
+      "eth": ethers.BigNumber.from(ethBalance).toString(),
+      "weth": ethers.BigNumber.from(wethBalance).toString(),
     };
   }
   // console.log("results: " + JSON.stringify(results, null, 2));
