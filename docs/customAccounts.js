@@ -476,6 +476,9 @@ const _CUSTOMACCOUNTS = {
         // Withdrawal (index_topic_1 address src, uint256 wad)
         const wethWithdrawalEvents = txData.txReceipt.logs.filter(e => e.topics[0] == "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65");
         // console.log("wethWithdrawalEvents: " + JSON.stringify(wethWithdrawalEvents));
+        // console.log("receivedInternalEvents: " + JSON.stringify(receivedInternalEvents));
+        // const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
+        // console.log("totalReceivedInternally: " + totalReceivedInternally);
         if (msgValue > 0 && receivedERC20Events.length > 0) {
           const info = getTokenContractInfo(receivedERC20Events[0].contract, accounts);
           results.info = "Purchased " + ethers.utils.formatUnits(receivedERC20Events[0].tokens, info.decimals) + " " + info.symbol + " for " + ethers.utils.formatEther(msgValue) + "Ξ";

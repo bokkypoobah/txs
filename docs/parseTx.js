@@ -404,13 +404,14 @@ async function accumulateTxResults(provider, account, accumulatedData, txData, r
       "Ξ");
   }
 
-  if (txData.txReceipt.blockNumber > 15345896) { // } && txData.txReceipt.blockNumber < 14379871) {
-    const balance = await provider.getBalance(account, txData.txReceipt.blockNumber);
+  // if (txData.txReceipt.blockNumber > 15345896) { // } && txData.txReceipt.blockNumber < 14379871) {
+    const balance = ethers.BigNumber.from(txData.ethBalance);
+    // const balance = await provider.getBalance(account, txData.txReceipt.blockNumber);
     const diff = balance.sub(accumulatedData.ethBalance);
     if (diff != 0) {
-      console.log("balance - actual: " + ethers.utils.formatEther(balance) + " vs computed: " + ethers.utils.formatEther(accumulatedData.ethBalance) + " diff: " + ethers.utils.formatEther(diff))
+      console.log("balance - actual: " + ethers.utils.formatEther(balance) + " vs computed: " + ethers.utils.formatEther(accumulatedData.ethBalance) + " diff: " + ethers.utils.formatEther(diff) + " vs retrieved: " + ethers.utils.formatEther(txData.ethBalance));
     }
-  }
+  // }
 }
 
 function parseTx(chainId, account, accounts, txData) {
@@ -581,15 +582,23 @@ function parseTx(chainId, account, accounts, txData) {
     let totalCost = ethers.BigNumber.from(0);
     const names = [];
     if (registrationEvents.length > 0) {
-      for (const event of registrationEvents) {
-        names.push(event.name + ".eth");
-        totalCost = totalCost.add(event.cost);
+      if (events.receivedInternalEvents.length > 0) {
+        for (const event of registrationEvents) {
+          names.push(event.name + ".eth");
+          totalCost = totalCost.add(event.cost);
+        }
+      } else {
+        totalCost = msgValue;
       }
       results.info = "Registered ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
     } else if (renewalEvents.length > 0) {
-      for (const event of renewalEvents) {
-        names.push(event.name + ".eth");
-        totalCost = totalCost.add(event.cost);
+      if (events.receivedInternalEvents.length > 0) {
+        for (const event of renewalEvents) {
+          names.push(event.name + ".eth");
+          totalCost = totalCost.add(event.cost);
+        }
+      } else {
+        totalCost = msgValue;
       }
       results.info = "Renewed ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
     }
@@ -747,16 +756,16 @@ function parseTx(chainId, account, accounts, txData) {
       // console.log("receivedInternalEvents: " + JSON.stringify(events.receivedInternalEvents));
       // console.log("sentERC721Events: " + JSON.stringify(sentERC721Events));
       // TODO Split
-      const total = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
-      results.ethReceived = total;
+      const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
+      results.ethReceived = totalReceivedInternally;
       const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
-      results.info = "Sold ERC-721 " + info.name + " x" + sentERC721Events.length + " for " + ethers.utils.formatEther(total) + "Ξ  after fees deducted to " + sentERC721Events[0].to;
+      results.info = "Sold ERC-721 " + info.name + " x" + sentERC721Events.length + " for " + ethers.utils.formatEther(totalReceivedInternally) + "Ξ  after fees deducted to " + sentERC721Events[0].to;
     } else if (sentERC1155Events.length > 0 && events.receivedInternalEvents.length == sentERC1155Events.length) {
       // TODO Split
-      const total = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
-      results.ethReceived = total;
+      const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
+      results.ethReceived = totalReceivedInternally;
       const info = getTokenContractInfo(sentERC1155Events[0].contract, accounts);
-      results.info = "Sold ERC-1155 " + info.name + " x" + sentERC1155Events.length + " for " + ethers.utils.formatEther(total) + "Ξ after fees deducted to " + sentERC1155Events[0].to;
+      results.info = "Sold ERC-1155 " + info.name + " x" + sentERC1155Events.length + " for " + ethers.utils.formatEther(totalReceivedInternally) + "Ξ after fees deducted to " + sentERC1155Events[0].to;
     } else {
       // TODO Bulk
       // console.log("receivedERC721Events: " + JSON.stringify(receivedERC721Events));
@@ -836,11 +845,14 @@ function parseTx(chainId, account, accounts, txData) {
   // ETH -> ERC-20 Swap
   if (!results.info && msgValue > 0) {
     const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
-    console.log("receivedERC20Events: " + JSON.stringify(receivedERC20Events));
+    // console.log("receivedERC20Events: " + JSON.stringify(receivedERC20Events));
+    // console.log("receivedInternalEvents: " + JSON.stringify(events.receivedInternalEvents));
+    const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
+    // console.log("totalReceivedInternally: " + totalReceivedInternally);
     if (receivedERC20Events.length > 0) {
       const info = getTokenContractInfo(receivedERC20Events[0].contract, accounts);
-      results.info = "Purchased " + ethers.utils.formatUnits(receivedERC20Events[0].tokens, info.decimals) + " " + info.symbol + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
-      results.ethPaid = msgValue;
+      results.info = "Purchased " + ethers.utils.formatUnits(receivedERC20Events[0].tokens, info.decimals) + " ERC-20 " + info.symbol + " for " + ethers.utils.formatEther(msgValue) + "Ξ with " + ethers.utils.formatEther(totalReceivedInternally) + "Ξ refund";
+      results.ethPaid = ethers.BigNumber.from(msgValue).sub(totalReceivedInternally);
     }
   }
 

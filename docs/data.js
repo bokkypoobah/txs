@@ -664,7 +664,7 @@ const dataModule = {
               context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
               console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Processing: " + JSON.stringify(txItem));
               const currentInfo = txs && txs[txItem.txHash] || {};
-              const [info, newSignatures] = await getTxInfo(txItem.txHash, currentInfo, provider, context.state.signatures);
+              const [info, newSignatures] = await getTxInfo(txItem.txHash, currentInfo, account, provider, context.state.signatures);
               context.commit('addTxs', { chainId, txInfo: info});
               context.commit('addNewSignatures', newSignatures);
               if (context.state.sync.halt) {
@@ -783,7 +783,7 @@ const dataModule = {
                 if (data.tokens) {
                   for (let record of data.tokens) {
                     context.commit('addAccountToken', record.token);
-                  }                  
+                  }
                 }
                 await delay(DELAYINMILLIS);
               } while (continuation != null);

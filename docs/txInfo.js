@@ -85,7 +85,7 @@ function parseTxOld(item, primaryAccount) {
   return results;
 }
 
-async function getTxInfo(txHash, item, provider, signatures) {
+async function getTxInfo(txHash, item, account, provider, signatures) {
   // console.log("getTxInfo: " + txHash + ", currentInfo: " + JSON.stringify(item).substring(0, 60));
   const results = {};
   const newFunctionSigs = {};
@@ -139,11 +139,11 @@ async function getTxInfo(txHash, item, provider, signatures) {
   // console.log("getTxInfo - getTransactionReceipt: " + txHash);
   results.txReceipt = item.txReceipt ? item.txReceipt : await provider.getTransactionReceipt(txHash);
   delete results.txReceipt.logsBloom;
-  console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
+  console.log("getTxInfo - getBalance: " + account + " @ " + results.txReceipt.blockNumber);
   try {
-    results.ethBalance = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber);
+    results.ethBalance = await provider.getBalance(account, results.txReceipt.blockNumber);
   } catch (e) {
-    console.log("getTxInfo - getBalance error: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
+    console.log("getTxInfo - getBalance error: " + account + " @ " + results.txReceipt.blockNumber);
     results.ethBalance = null;
   }
   // console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber - 1);
