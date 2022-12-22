@@ -139,13 +139,13 @@ async function getTxInfo(txHash, item, provider, signatures) {
   // console.log("getTxInfo - getTransactionReceipt: " + txHash);
   results.txReceipt = item.txReceipt ? item.txReceipt : await provider.getTransactionReceipt(txHash);
   delete results.txReceipt.logsBloom;
-  // console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
-  // try {
-  //   results.ethBalance = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber);
-  // } catch (e) {
-  //   console.log("getTxInfo - getBalance error: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
+  console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
+  try {
+    results.ethBalance = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber);
+  } catch (e) {
+    console.log("getTxInfo - getBalance error: " + results.tx.from + " @ " + results.txReceipt.blockNumber);
     results.ethBalance = null;
-  // }
+  }
   // console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber - 1);
   // try {
   //   results.ethBalancePreviousBlock = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber - 1);
