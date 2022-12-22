@@ -115,7 +115,7 @@ const Accounts = {
               <div class="d-flex flex-row">
                 <div class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-select size="sm" v-model="data.item.type" @change="setAccountType(data.item.chainId, data.item.account, $event)" :options="accountTypes" v-b-popover.hover.top="'Select type'"></b-form-select>
+                    <b-form-select size="sm" v-model="data.item.type" @change="setAccountInfoField(data.item.chainId, data.item.account, 'type', $event)" :options="accountTypes" v-b-popover.hover.top="'Select type'"></b-form-select>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge variant="info" v-b-popover.hover="'Account type'">{{ data.item.type }}</b-badge>
@@ -123,7 +123,7 @@ const Accounts = {
                 </div>
                 <div v-if="data.item.mine || settings.editAccounts" class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountMine(data.item.chainId, data.item.account)" v-b-popover.hover="'My account?'">Mine</b-form-checkbox>
+                    <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountInfoField(data.item.chainId, data.item.account, 'mine')" v-b-popover.hover="'My account?'">Mine</b-form-checkbox>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.mine" variant="primary" v-b-popover.hover="'My account'">Mine</b-badge>
@@ -131,7 +131,7 @@ const Accounts = {
                 </div>
                 <div v-if="data.item.sync || settings.editAccounts" class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-checkbox size="sm" :checked="data.item.sync ? 1 : 0" value="1" @change="toggleAccountSync(data.item.chainId, data.item.account)" v-b-popover.hover="'Include in sync process?'">Sync</b-form-checkbox>
+                    <b-form-checkbox size="sm" :checked="data.item.sync ? 1 : 0" value="1" @change="toggleAccountInfoField(data.item.chainId, data.item.account, 'sync')" v-b-popover.hover="'Include in sync process?'">Sync</b-form-checkbox>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.sync" variant="primary" v-b-popover.hover="'Will be included in the sync process'">Sync</b-badge>
@@ -139,7 +139,7 @@ const Accounts = {
                 </div>
                 <div v-if="data.item.report || settings.editAccounts" class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-checkbox size="sm" :checked="data.item.report ? 1 : 0" value="1" @change="toggleAccountReport(data.item.chainId, data.item.account)" v-b-popover.hover="'Include in report?'">Report</b-form-checkbox>
+                    <b-form-checkbox size="sm" :checked="data.item.report ? 1 : 0" value="1" @change="toggleAccountInfoField(data.item.chainId, data.item.account, 'report')" v-b-popover.hover="'Include in report?'">Report</b-form-checkbox>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.report" variant="primary" v-b-popover.hover="'Will be included in the report'">Report</b-badge>
@@ -147,7 +147,7 @@ const Accounts = {
                 </div>
                 <div v-if="data.item.junk || settings.editAccounts" class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-checkbox size="sm" :checked="data.item.junk ? 1 : 0" value="1" @change="toggleAccountJunk(data.item.chainId, data.item.account)" v-b-popover.hover="'Junk?'">Junk</b-form-checkbox>
+                    <b-form-checkbox size="sm" :checked="data.item.junk ? 1 : 0" value="1" @change="toggleAccountInfoField(data.item.chainId, data.item.account, 'junk')" v-b-popover.hover="'Junk?'">Junk</b-form-checkbox>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.junk" variant="primary" v-b-popover.hover="'Will be excluded as junk'">Junk</b-badge>
@@ -166,7 +166,7 @@ const Accounts = {
                 </div>
                 <div class="m-0 pt-1 pr-1">
                   <span v-if="settings.editAccounts">
-                    <b-form-input type="text" size="sm" v-model.trim="data.item.group" @change="setGroup(data.item.chainId, data.item.account, data.item.group)" debounce="600" placeholder="group"></b-form-input>
+                    <b-form-input type="text" size="sm" v-model.trim="data.item.group" @change="setAccountInfoField(data.item.chainId, data.item.account, 'group', data.item.group)" debounce="600" placeholder="group"></b-form-input>
                   </span>
                   <span v-if="!settings.editAccounts">
                     <b-badge v-if="data.item.group && data.item.group.length > 0" variant="dark" v-b-popover.hover="'Group'">{{ data.item.group }}</b-badge>
@@ -227,8 +227,8 @@ const Accounts = {
           </template>
           <template #cell(name)="data">
             <span v-if="settings.editAccounts">
-              <b-form-input type="text" size="sm" v-model.trim="data.item.name" @change="setName(data.item.chainId, data.item.account, data.item.name)" debounce="600" placeholder="name"></b-form-input>
-              <b-form-textarea size="sm" v-model.trim="data.item.notes" @change="setNotes(data.item.chainId, data.item.account, data.item.notes)" placeholder="notes" rows="2" max-rows="20" class="mt-1"></b-form-textarea>
+              <b-form-input type="text" size="sm" v-model.trim="data.item.name" @change="setAccountInfoField(data.item.chainId, data.item.account, 'name', data.item.name)" debounce="600" placeholder="name"></b-form-input>
+              <b-form-textarea size="sm" v-model.trim="data.item.notes" @change="setAccountInfoField(data.item.chainId, data.item.account, 'notes', data.item.notes)" placeholder="notes" rows="2" max-rows="20" class="mt-1"></b-form-textarea>
             </span>
             <span v-if="!settings.editAccounts">
               {{ data.item.name }}
@@ -339,6 +339,9 @@ const Accounts = {
     accounts() {
       return store.getters['data/accounts'];
     },
+    accountsInfo() {
+      return store.getters['data/accountsInfo'];
+    },
     txs() {
       return store.getters['data/txs'];
     },
@@ -366,23 +369,24 @@ const Accounts = {
       const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
       for (const [chainId, chainData] of Object.entries(this.accounts)) {
         for (const [account, data] of Object.entries(chainData)) {
+          const accountInfo = this.accountsInfo && this.accountsInfo[chainId] && this.accountsInfo[chainId][account] || {};
           const ensName = this.ensMap[account] || null;
           let include = filterLower == null ||
             (account.toLowerCase().includes(filterLower)) ||
-            (data.name && data.name.toLowerCase().includes(filterLower)) ||
-            (data.group && data.group.toLowerCase().includes(filterLower)) ||
-            (data.notes && data.notes.toLowerCase().includes(filterLower)) ||
+            (accountInfo.name && accountInfo.name.toLowerCase().includes(filterLower)) ||
+            (accountInfo.group && accountInfo.group.toLowerCase().includes(filterLower)) ||
+            (accountInfo.notes && accountInfo.notes.toLowerCase().includes(filterLower)) ||
             (ensName != null && ensName.toLowerCase().includes(filterLower));
           if (include && this.settings.accountMineFilter != null) {
-            if (this.settings.accountMineFilter == 'mine' && data.mine) {
-            } else if (this.settings.accountMineFilter == 'notmine' && !data.mine) {
+            if (this.settings.accountMineFilter == 'mine' && accountInfo.mine) {
+            } else if (this.settings.accountMineFilter == 'notmine' && !accountInfo.mine) {
             } else {
               include = false;
             }
           }
           if (include && this.settings.accountTypeFilter != null) {
-            if (this.settings.accountTypeFilter == 'unknown' && data.type == null) {
-            } else if (this.settings.accountTypeFilter == data.type) {
+            if (this.settings.accountTypeFilter == 'unknown' && accountInfo.type == null) {
+            } else if (this.settings.accountTypeFilter == accountInfo.type) {
             } else {
               include = false;
             }
@@ -391,18 +395,18 @@ const Accounts = {
             results.push({
               chainId,
               account,
-              group: data.group,
-              name: data.name,
-              type: data.type,
-              mine: data.mine,
-              sync: data.sync,
-              report: data.report,
-              junk: data.junk,
-              tags: data.tags,
-              notes: data.notes,
-              contract: data.contract,
-              collection: data.collection,
-              balances: data.balances,
+              group: accountInfo.group,
+              name: accountInfo.name || data.name,
+              type: accountInfo.type || data.type,
+              mine: accountInfo.mine,
+              sync: accountInfo.sync,
+              report: accountInfo.report,
+              junk: accountInfo.junk,
+              tags: accountInfo.tags,
+              notes: accountInfo.notes,
+              // contract: data.contract,
+              // collection: data.collection,
+              // balances: data.balances,
               created: data.created,
               updated: data.updated,
             });
@@ -516,29 +520,11 @@ const Accounts = {
       this.settings.selectedAccounts = {};
       this.saveSettings();
     },
-    async toggleAccountMine(chainId, account) {
-      store.dispatch('data/toggleAccountMine', { chainId, account });
+    async toggleAccountInfoField(chainId, account, field) {
+      store.dispatch('data/toggleAccountInfoField', { chainId, account, field });
     },
-    async toggleAccountSync(chainId, account) {
-      store.dispatch('data/toggleAccountSync', { chainId, account });
-    },
-    async toggleAccountReport(chainId, account) {
-      store.dispatch('data/toggleAccountReport', { chainId, account });
-    },
-    async toggleAccountJunk(chainId, account) {
-      store.dispatch('data/toggleAccountJunk', { chainId, account });
-    },
-    async setAccountType(chainId, account, accountType) {
-      store.dispatch('data/setAccountType', { chainId, account, accountType });
-    },
-    async setGroup(chainId, account, group) {
-      store.dispatch('data/setGroup', { chainId, account, group });
-    },
-    async setName(chainId, account, name) {
-      store.dispatch('data/setName', { chainId, account, name });
-    },
-    async setNotes(chainId, account, notes) {
-      store.dispatch('data/setNotes', { chainId, account, notes });
+    async setAccountInfoField(chainId, account, field, value) {
+      store.dispatch('data/setAccountInfoField', { chainId, account, field, value });
     },
     async syncIt(info) {
       store.dispatch('data/syncIt', info);

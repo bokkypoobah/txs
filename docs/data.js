@@ -86,8 +86,10 @@ const Data = {
 const dataModule = {
   namespaced: true,
   state: {
-    accounts: {},
-    txs: {},
+    accounts: {}, // [chainId][account] => Account(type, name, symbol, decimals, transactions, internalTransactions, events, ...)
+    accountsInfo: {}, // [chainId][account] => Account Info(type, name, symbol, decimals)
+    txs: {}, // [chainId][account] => Txs(timestamp, tx, txReceipt)
+    txsInfo: {}, // [chainId][account] => Txs Info
     assets: {},
     ensMap: {},
     exchangeRates: {},
@@ -102,7 +104,7 @@ const dataModule = {
       halt: false,
     },
     db: {
-      name: "txs090h",
+      name: "txs091a",
       version: 1,
       schemaDefinition: {
         cache: '&objectName',
@@ -112,7 +114,9 @@ const dataModule = {
   },
   getters: {
     accounts: state => state.accounts,
+    accountsInfo: state => state.accountsInfo,
     txs: state => state.txs,
+    txsInfo: state => state.txsInfo,
     assets: state => state.assets,
     ensMap: state => state.ensMap,
     exchangeRates: state => state.exchangeRates,
@@ -120,67 +124,61 @@ const dataModule = {
     sync: state => state.sync,
   },
   mutations: {
-    toggleAccountMine(state, info) {
-      Vue.set(state.accounts[info.chainId][info.account], 'mine', !state.accounts[info.chainId][info.account].mine);
+    toggleAccountInfoField(state, info) {
+      Vue.set(state.accountsInfo[info.chainId][info.account], info.field, !state.accountsInfo[info.chainId][info.account][info.field]);
     },
-    toggleAccountSync(state, info) {
-      Vue.set(state.accounts[info.chainId][info.account], 'sync', !state.accounts[info.chainId][info.account].sync);
+    setAccountInfoField(state, info) {
+      Vue.set(state.accountsInfo[info.chainId][info.account], info.field, info.value);
     },
-    toggleAccountReport(state, info) {
-      Vue.set(state.accounts[info.chainId][info.account], 'report', !state.accounts[info.chainId][info.account].report);
-    },
-    toggleAccountJunk(state, info) {
-      Vue.set(state.accounts[info.chainId][info.account], 'junk', !state.accounts[info.chainId][info.account].junk);
-    },
-    setAccountType(state, info) {
-      Vue.set(state.accounts[info.chainId][info.account], 'type', info.accountType);
-    },
-    setGroup(state, info) {
-      Vue.set(state.accounts[info.chainId][info.account], 'group', info.group);
-    },
-    setName(state, info) {
-      Vue.set(state.accounts[info.chainId][info.account], 'name', info.name);
-    },
-    setNotes(state, info) {
-      Vue.set(state.accounts[info.chainId][info.account], 'notes', info.notes);
+    addNewAccountInfo(state, info) {
+      logInfo("dataModule", "mutations.addNewAccountInfo(" + JSON.stringify(info) + ")");
+      const [block, chainId] = [store.getters['connection/block'], store.getters['connection/chainId']];
+      if (!(chainId in state.accountsInfo)) {
+        Vue.set(state.accountsInfo, chainId, {});
+      }
+      if (!(info.accountsInfo in state.accountsInfo[chainId])) {
+        Vue.set(state.accountsInfo[chainId], info.account, {
+          type: info && info.type || null,
+          group: null,
+          name: null,
+          mine: info.account == store.getters['connection/coinbase'],
+          sync: info.account == store.getters['connection/coinbase'],
+          report: info.account == store.getters['connection/coinbase'],
+          junk: false,
+          tags: [],
+          notes: null,
+        });
+      }
     },
     addNewAccount(state, info) {
-      // logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(info) + ")");
+      logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(info) + ")");
       const [block, chainId] = [store.getters['connection/block'], store.getters['connection/chainId']];
       if (!(chainId in state.accounts)) {
         Vue.set(state.accounts, chainId, {});
       }
-      Vue.set(state.accounts[chainId], info.account, {
-        group: null,
-        name: null,
-        type: info && info.type || null,
-        mine: info.account == store.getters['connection/coinbase'],
-        sync: info.account == store.getters['connection/coinbase'],
-        report: info.account == store.getters['connection/coinbase'],
-        junk: false,
-        tags: [],
-        notes: null,
-        contract: {
+      if (!(info.account in state.accounts[chainId])) {
+        Vue.set(state.accounts[chainId], info.account, {
+          type: info && info.type || null,
           name: info && info.name || null,
           symbol: info && info.symbol || null,
           decimals: info && info.decimals || null,
-        },
-        collection: info && info.collection || {},
-        balances: info && info.balances || {},
-        created: {
-          timestamp: block && block.timestamp || null,
-          blockNumber: block && block.number || null,
-        },
-        transactions: {},
-        internalTransactions: {},
-        events: {},
-        assets: {},
-        erc20transfers: {},
-        updated: {
-          timestamp: null,
-          blockNumber: null,
-        },
-      });
+          collection: info && info.collection || {},
+          balances: info && info.balances || {},
+          created: {
+            timestamp: block && block.timestamp || null,
+            blockNumber: block && block.number || null,
+          },
+          transactions: {},
+          internalTransactions: {},
+          events: {},
+          assets: {},
+          erc20transfers: {},
+          updated: {
+            timestamp: null,
+            blockNumber: null,
+          },
+        });
+      }
     },
     addAccountEvent(state, info) {
       const [account, eventRecord, chainId] = [info.account, info.eventRecord, store.getters['connection/chainId']];
@@ -188,22 +186,30 @@ const dataModule = {
       if (!(eventRecord.txHash in accountData.events)) {
         accountData.events[eventRecord.txHash] = {};
       }
-      const tempEvent = {...eventRecord};
-      delete tempEvent.txHash;
-      delete tempEvent.logIndex;
+      const tempEvent = { ...eventRecord, txHash: undefined, logIndex: undefined };
       accountData.events[eventRecord.txHash][eventRecord.logIndex] = tempEvent;
     },
     addAccountInternalTransactions(state, info) {
       const [account, results, chainId] = [info.account, info.results, store.getters['connection/chainId']];
       const accountData = state.accounts[chainId][account];
+      const groupByHashes = {};
       for (const result of results) {
         if (!(result.hash in accountData.internalTransactions)) {
-          accountData.internalTransactions[result.hash] = {};
+          if (!(result.hash in groupByHashes)) {
+            groupByHashes[result.hash] = [];
+          }
+          groupByHashes[result.hash].push(result);
         }
-        const tempResult = {...result, processed: null};
-        delete tempResult.hash;
-        delete tempResult.traceId;
-        accountData.internalTransactions[result.hash][result.traceId] = tempResult;
+      }
+      for (const [txHash, results] of Object.entries(groupByHashes)) {
+        for (let resultIndex in results) {
+          const result = results[resultIndex];
+          if (!(txHash in accountData.internalTransactions)) {
+            accountData.internalTransactions[txHash] = {};
+          }
+          const tempResult = { ...result, hash: undefined };
+          accountData.internalTransactions[txHash][resultIndex] = tempResult;
+        }
       }
     },
     addAccountTransactions(state, info) {
@@ -347,25 +353,11 @@ const dataModule = {
       if (Object.keys(context.state.txs) == 0) {
         const db0 = new Dexie(context.state.db.name);
         db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-        const ensMap = await db0.cache.where("objectName").equals('ensMap').toArray();
-        if (ensMap.length == 1) {
-          context.state.ensMap = ensMap[0].object;
-        }
-        const assets = await db0.cache.where("objectName").equals('assets').toArray();
-        if (assets.length == 1) {
-          context.state.assets = assets[0].object;
-        }
-        const txs = await db0.cache.where("objectName").equals('txs').toArray();
-        if (txs.length == 1) {
-          context.state.txs = txs[0].object;
-        }
-        const accounts = await db0.cache.where("objectName").equals('accounts').toArray();
-        if (accounts.length == 1) {
-          context.state.accounts = accounts[0].object;
-        }
-        const exchangeRates = await db0.cache.where("objectName").equals('exchangeRates').toArray();
-        if (exchangeRates.length == 1) {
-          context.state.exchangeRates = exchangeRates[0].object;
+        for (let type of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'ensMap', 'assets', 'exchangeRates']) {
+          const data = await db0.cache.where("objectName").equals(type).toArray();
+          if (data.length == 1) {
+            context.state[type] = data[0].object;
+          }
         }
       }
     },
@@ -381,37 +373,13 @@ const dataModule = {
       }
       db0.close();
     },
-    async toggleAccountMine(context, info) {
-      context.commit('toggleAccountMine', info);
-      context.dispatch('saveData', ['accounts']);
+    async toggleAccountInfoField(context, info) {
+      context.commit('toggleAccountInfoField', info);
+      context.dispatch('saveData', ['accounts', 'accountsInfo']);
     },
-    async toggleAccountSync(context, info) {
-      context.commit('toggleAccountSync', info);
-      context.dispatch('saveData', ['accounts']);
-    },
-    async toggleAccountReport(context, info) {
-      context.commit('toggleAccountReport', info);
-      context.dispatch('saveData', ['accounts']);
-    },
-    async toggleAccountJunk(context, info) {
-      context.commit('toggleAccountJunk', info);
-      context.dispatch('saveData', ['accounts']);
-    },
-    async setAccountType(context, info) {
-      context.commit('setAccountType', info);
-      context.dispatch('saveData', ['accounts']);
-    },
-    async setGroup(context, info) {
-      context.commit('setGroup', info);
-      context.dispatch('saveData', ['accounts']);
-    },
-    async setName(context, info) {
-      context.commit('setName', info);
-      context.dispatch('saveData', ['accounts']);
-    },
-    async setNotes(context, info) {
-      context.commit('setNotes', info);
-      context.dispatch('saveData', ['accounts']);
+    async setAccountInfoField(context, info) {
+      context.commit('setAccountInfoField', info);
+      context.dispatch('saveData', ['accounts', 'accountsInfo']);
     },
     async setSyncHalt(context, halt) {
       context.commit('setSyncHalt', halt);
@@ -432,6 +400,7 @@ const dataModule = {
       for (let account of accounts) {
         const accountInfo = await getAccountInfo(account, provider)
         if (accountInfo.account) {
+          context.commit('addNewAccountInfo', accountInfo);
           context.commit('addNewAccount', accountInfo);
         }
         const names = await ensReverseRecordsContract.getNames([account]);
@@ -440,7 +409,7 @@ const dataModule = {
           context.commit('addENSName', { account, name });
         }
       }
-      context.dispatch('saveData', ['accounts', 'ensMap']);
+      context.dispatch('saveData', ['accountsInfo', 'accounts', 'ensMap']);
     },
     async syncIt(context, info) {
       const sections = info.sections;
@@ -453,6 +422,8 @@ const dataModule = {
       const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
       const confirmations = store.getters['config/settings'].confirmations && parseInt(store.getters['config/settings'].confirmations) || 10;
       const reportingCurrency = store.getters['config/settings'].reportingCurrency;
+      const devSettings = store.getters['config/devSettings'];
+      const interfaces = getInterfaces();
       const block = await provider.getBlock();
       const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
       const confirmedBlock = await provider.getBlock(confirmedBlockNumber);
@@ -463,10 +434,13 @@ const dataModule = {
       for (let section of sections) {
         if (section == 'importFromEtherscan') {
           const accountsToSync = [];
-          const chainData = context.state.accounts[chainId] || {};
-          for (const [account, data] of Object.entries(chainData)) {
+          const accountsData = context.state.accounts[chainId] || {};
+          for (const [account, accountData] of Object.entries(accountsData)) {
             console.log("account: " + account);
-            if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
+            console.log("accountData: " + JSON.stringify(accountData));
+            const accountsInfo = context.state.accountsInfo[chainId][account];
+            console.log("accountsInfo: " + JSON.stringify(accountsInfo));
+            if ((parameters.length == 0 && accountsInfo.sync) || parameters.includes(account)) {
                 accountsToSync.push(account);
             }
           }
@@ -508,48 +482,60 @@ const dataModule = {
                   null,
                   '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
                 ],
+                [
+                  '0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb', // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
+                  null,
+                  '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
+                  null,
+                ],
+                [
+                  '0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb', // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
+                  null,
+                  null,
+                  '0x000000000000000000000000' + account.substring(2, 42).toLowerCase(),
+                ],
               ];
               for (let topics of topicsList) {
                 console.log(JSON.stringify(topics));
-                const filter = {
-                  address: null,
-                  fromBlock: startBatch,
-                  toBlock: endBatch,
-                  topics,
-                };
-                const logs = await provider.getLogs(filter);
-                for (const log of logs) {
+                const logs = await provider.getLogs({ address: null, fromBlock: startBatch, toBlock: endBatch, topics });
+                for (const event of logs) {
                   let eventRecord = {};
-                  const txHash = log.transactionHash;
-                  const blockNumber = log.blockNumber;
-                  const logIndex = log.logIndex;
-                  const contract = log.address;
-                  if (log.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" && !log.removed) {
-                    const from = ethers.utils.getAddress("0x" + log.topics[1].substring(26));
-                    const to = ethers.utils.getAddress("0x" + log.topics[2].substring(26));
+                  const txHash = event.transactionHash;
+                  const blockNumber = event.blockNumber;
+                  const logIndex = event.logIndex;
+                  const contract = event.address;
+                  if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" && !event.removed) {
+                    const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+                    const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
                     if ((from == account || to == account)) {
                       // ERC-721 Transfer
-                      if (log.topics.length == 4) {
-                        const tokenId = ethers.BigNumber.from(log.topics[3]).toString();
+                      if (event.topics.length == 4) {
+                        const tokenId = ethers.BigNumber.from(event.topics[3]).toString();
                         eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc721", tokenId, tokens: null };
                         // ERC-20 Transfer
                       } else {
-                        const tokens = ethers.BigNumber.from(log.data).toString();
+                        const tokens = ethers.BigNumber.from(event.data).toString();
                         eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc20", tokenId: null, tokens };
                       }
+                      // console.log("eventRecord: " + JSON.stringify(eventRecord));
                       context.commit('addAccountEvent', { account, eventRecord });
                     }
                     // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
-                  } else if (log.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62" && !log.removed) {
-                    const operator = ethers.utils.getAddress("0x" + log.topics[1].substring(26));
-                    const from = ethers.utils.getAddress("0x" + log.topics[2].substring(26));
-                    const to = ethers.utils.getAddress("0x" + log.topics[3].substring(26));
-                    if ((from == account || to == account)) {
-                      let tokenId = ethers.BigNumber.from(log.data.substring(0, 66)).toString();
-                      let tokens = ethers.BigNumber.from("0x" + log.data.substring(67, 130)).toString();
-                      eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenId, tokens, type: "erc1155" };
-                      context.commit('addAccountEvent', { account, eventRecord });
-                    }
+                  } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62" && !event.removed) {
+                    const log = interfaces.erc1155.parseLog(event);
+                    const [operator, from, to, tokenId, tokens] = log.args;
+                    eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenIds: [ethers.BigNumber.from(tokenId).toString()], tokens: [ethers.BigNumber.from(tokens).toString()], type: "erc1155" };
+                    // console.log("eventRecord: " + JSON.stringify(eventRecord));
+                    context.commit('addAccountEvent', { account, eventRecord });
+                    // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
+                  } else if (event.topics[0] == "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb" && !event.removed) {
+                    const log = interfaces.erc1155.parseLog(event);
+                    const [operator, from, to, tokenIds, tokens] = log.args;
+                    const formattedTokenIds = tokenIds.map(e => ethers.BigNumber.from(e).toString());
+                    const formattedTokens = tokens.map(e => ethers.BigNumber.from(e).toString());
+                    eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenIds: formattedTokenIds, tokens: formattedTokens, type: "erc1155" };
+                    // console.log("eventRecord: " + JSON.stringify(eventRecord));
+                    context.commit('addAccountEvent', { account, eventRecord });
                   }
                 }
               }
@@ -611,17 +597,18 @@ const dataModule = {
             context.commit('updateAccountTimestampAndBlock', { chainId, account, timestamp: confirmedTimestamp, blockNumber: confirmedBlockNumber });
           }
           console.log("accounts: " + JSON.stringify(context.state.accounts[chainId], null, 2));
-          context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
+          context.dispatch('saveData', ['accounts', 'accountsInfo', 'txs', 'ensMap']);
           context.commit('setSyncSection', { section: null, total: null });
 
         } else if (section == 'downloadData') {
           const accountsToSync = [];
-          const chainData = context.state.accounts[chainId] || {};
-          for (const [account, data] of Object.entries(chainData)) {
+          const accountsData = context.state.accounts[chainId] || {};
+          for (const [account, data] of Object.entries(accountsData)) {
             console.log("account: " + account);
-            if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
+            // TODO
+            // if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
                 accountsToSync.push(account);
-            }
+            // }
           }
           console.log("accountsToSync: " + JSON.stringify(accountsToSync));
 
@@ -655,7 +642,7 @@ const dataModule = {
                 txHashes[txHash] = tx.blockNumber;
               }
             }
-            console.log("txHashes: " + JSON.stringify(txHashes));
+            // console.log("txHashes: " + JSON.stringify(txHashes));
             let txHashList = [];
             const TESTMAXBLOCKNUMBER = null; // 4000000;
             for (const [txHash, blockNumber] of Object.entries(txHashes)) {
@@ -664,6 +651,10 @@ const dataModule = {
               }
             }
             txHashList.sort((a, b) => a.blockNumber - b.blockNumber);
+            // console.log("devSettings: " + JSON.stringify(devSettings));
+            txHashList = txHashList.slice(devSettings.skipTransactions, parseInt(devSettings.maxTransactions) + 1);
+            console.log("txHashList: " + JSON.stringify(txHashList));
+
             // TODO: Test
             // txHashList = txHashList.slice(0, 10);
             // console.log("txHashList: " + JSON.stringify(txHashList));
@@ -691,8 +682,8 @@ const dataModule = {
           // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
         } else if (section == 'buildAssets') {
           const accountsToSync = [];
-          const chainData = context.state.accounts[chainId] || {};
-          for (const [account, data] of Object.entries(chainData)) {
+          const accountsData = context.state.accounts[chainId] || {};
+          for (const [account, data] of Object.entries(accountsData)) {
             if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
                 accountsToSync.push(account);
             }
@@ -734,6 +725,7 @@ const dataModule = {
               context.commit('setSyncCompleted', parseInt(contractsToCreateIndex) + 1);
               const accountInfo = await getAccountInfo(contractToCreate, provider)
               if (accountInfo.account) {
+                context.commit('addNewAccountInfo', accountInfo);
                 context.commit('addNewAccount', accountInfo);
                 console.log("Added contractToCreate: " + contractToCreate + " " + accountInfo.type + " " + accountInfo.name);
               }
@@ -823,15 +815,16 @@ const dataModule = {
               break;
             }
           }
-          context.dispatch('saveData', ['accounts']);
+          context.dispatch('saveData', ['accounts', 'accountsInfo']);
           console.log("accounts: " + JSON.stringify(context.state.accounts[chainId], null, 2));
+          console.log("accountsInfo: " + JSON.stringify(context.state.accountsInfo[chainId], null, 2));
           context.commit('setSyncSection', { section: null, total: null });
           console.log("end buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
 
         } else if (section == 'buildERC20sx') {
           const accountsToSync = [];
-          const chainData = context.state.accounts[chainId] || {};
-          for (const [account, data] of Object.entries(chainData)) {
+          const accountsData = context.state.accounts[chainId] || {};
+          for (const [account, data] of Object.entries(accountsData)) {
             if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
                 accountsToSync.push(account);
             }

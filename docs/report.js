@@ -598,7 +598,8 @@ const reportModule = {
         const txs = allTxs[chainId] || {};
         // console.log(JSON.stringify(txs, null, 2));
         for (const [account, accountData] of Object.entries(accounts)) {
-          if (accountData.mine && accountData.report) {
+          const accountsInfo = store.getters['data/accountsInfo'][chainId][account];
+          if (accountsInfo.mine && accountsInfo.report) {
             console.log("--- Processing " + chainId + ":" + account + " ---");
             const txHashes = {};
             const missingTxDataHashes = {};
@@ -641,6 +642,7 @@ const reportModule = {
               }
             });
 
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
             // let ethBalance = ethers.BigNumber.from(0);
             for (const txData of txList) {
               if ((!contractOrTx || txData.tx.to == contractOrTx || txData.tx.hash == contractOrTx) && txData.tx.blockNumber >= startBlock && txData.tx.blockNumber <= endBlock) {
@@ -648,7 +650,7 @@ const reportModule = {
                 // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
                 const exchangeRate = getExchangeRate(moment.unix(txData.timestamp), exchangeRates);
                 const results = parseTx(chainId, account, accounts, txData);
-                accumulateTxResults(accumulatedData, txData, results);
+                await accumulateTxResults(provider, account, accumulatedData, txData, results);
                 // console.log("  exchangeRate: " + JSON.stringify(exchangeRate));
                 // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
                 // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));

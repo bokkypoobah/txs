@@ -965,6 +965,10 @@ const _CUSTOMACCOUNTS = {
     decimals: null,
     abi: null,
     process: function(txData, account, accounts, events, results) {
+      console.log("GemSwap"); // No NFTExchangeEvent
+      // if (events.nftExchangeEvents.length > 0) {
+      //   console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents, null, 2));
+      // }
       // console.log("  GemSwap");
       // if (txData.tx.data.substring(0, 10) == "0x8813034e") {
       //   // results.info = "ENS.Vision Bulk Registration Commit";
