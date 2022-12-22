@@ -763,7 +763,7 @@ const dataModule = {
 
             const GETTOKENINFOBATCHSIZE = 50;
             const info = {};
-            const DELAYINMILLIS = 1000;
+            const DELAYINMILLIS = 2000;
             for (let i = 0; i < tokenIdsToCreate.length && !context.state.sync.halt; i += GETTOKENINFOBATCHSIZE) {
               const batch = tokenIdsToCreate.slice(i, parseInt(i) + GETTOKENINFOBATCHSIZE);
               let continuation = null;
@@ -776,11 +776,14 @@ const dataModule = {
                 }
                 url = url + (continuation != null ? "&continuation=" + continuation : '');
                 url = url + "&limit=50";
+                console.log(url);
                 const data = await fetch(url).then(response => response.json());
                 context.commit('setSyncCompleted', parseInt(i) + batch.length);
                 continuation = data.continuation;
-                for (let record of data.tokens) {
-                  context.commit('addAccountToken', record.token);
+                if (data.tokens) {
+                  for (let record of data.tokens) {
+                    context.commit('addAccountToken', record.token);
+                  }                  
                 }
                 await delay(DELAYINMILLIS);
               } while (continuation != null);
