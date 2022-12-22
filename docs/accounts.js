@@ -405,7 +405,7 @@ const Accounts = {
               tags: accountInfo.tags,
               notes: accountInfo.notes,
               // contract: data.contract,
-              // collection: data.collection,
+              collection: data.collection,
               // balances: data.balances,
               created: data.created,
               updated: data.updated,
