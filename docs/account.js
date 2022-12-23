@@ -363,6 +363,9 @@ const Account = {
     txs() {
       return store.getters['data/txs'];
     },
+    blocks() {
+      return store.getters['data/blocks'];
+    },
     assets() {
       return store.getters['data/assets'];
     },
@@ -405,8 +408,8 @@ const Account = {
       }
       for (const [chainId, chainData] of Object.entries(this.txs)) {
         for (const [txHash, item] of Object.entries(chainData)) {
-          let include = true;
-
+          const block = this.blocks[chainId] && this.blocks[chainId][item.txReceipt.blockNumber] || null;
+          let include = block != null;
           if (this.settings.selectedAccount != null) {
             if (
               !(item.tx.from == this.settings.selectedAccount) &&
@@ -418,10 +421,10 @@ const Account = {
             include = false;
           }
 
-          if (startPeriod != null && item.timestamp < startPeriod.unix()) {
+          if (startPeriod != null && block.timestamp < startPeriod.unix()) {
             include = false;
           }
-          if (include && endPeriod != null && item.timestamp > endPeriod.unix()) {
+          if (include && endPeriod != null && block.timestamp > endPeriod.unix()) {
             include = false;
           }
           if (include && txhashFilterLower != null) {
@@ -440,13 +443,14 @@ const Account = {
             }
           }
           if (include) {
-            const info = parseTx(item, this.settings.selectedAccount);
+            const info = parseTx(chainId, this.settings.selectedAccount, this.accounts, item);
+            // parseTx(chainId, account, accounts, txData)
             results.push({
               chainId,
               txHash,
               blockNumber: item.blockNumber,
               transactionIndex: item.transactionIndex,
-              timestamp: item.timestamp,
+              timestamp: block.timestamp,
               from: item.tx.from,
               to: item.tx.to,
               value: item.tx.value,

@@ -286,6 +286,9 @@ const Transactions = {
     txs() {
       return store.getters['data/txs'];
     },
+    blocks() {
+      return store.getters['data/blocks'];
+    },
     assets() {
       return store.getters['data/assets'];
     },
@@ -327,11 +330,12 @@ const Transactions = {
       }
       for (const [chainId, chainData] of Object.entries(this.txs)) {
         for (const [txHash, item] of Object.entries(chainData)) {
-          let include = true;
-          if (startPeriod != null && item.timestamp < startPeriod.unix()) {
+          const block = this.blocks[chainId] && this.blocks[chainId][item.txReceipt.blockNumber] || null;
+          let include = block != null;
+          if (startPeriod != null && block.timestamp < startPeriod.unix()) {
             include = false;
           }
-          if (include && endPeriod != null && item.timestamp > endPeriod.unix()) {
+          if (include && endPeriod != null && block.timestamp > endPeriod.unix()) {
             include = false;
           }
           if (include && txhashFilterLower != null) {
@@ -356,7 +360,7 @@ const Transactions = {
               txHash,
               blockNumber: item.blockNumber,
               transactionIndex: item.transactionIndex,
-              timestamp: item.timestamp,
+              timestamp: block.timestamp,
               from: item.tx.from,
               to: item.tx.to,
               value: item.tx.value,

@@ -131,27 +131,27 @@ async function getTxInfo(txHash, item, account, provider, signatures) {
       chainId: tx.chainId,
     };
   }
-  if (!results.timestamp) {
-    // console.log("getTxInfo - getBlock: " + results.tx.blockNumber);
-    const block = await provider.getBlock(results.tx.blockNumber);
-    results.timestamp = block.timestamp;
-  }
+  // if (!results.timestamp) {
+  //   // console.log("getTxInfo - getBlock: " + results.tx.blockNumber);
+  //   const block = await provider.getBlock(results.tx.blockNumber);
+  //   results.timestamp = block.timestamp;
+  // }
   // console.log("getTxInfo - getTransactionReceipt: " + txHash);
   results.txReceipt = item.txReceipt ? item.txReceipt : await provider.getTransactionReceipt(txHash);
   delete results.txReceipt.logsBloom;
-  console.log("getTxInfo - getBalance: " + account + " @ " + results.txReceipt.blockNumber);
-  try {
-    results.ethBalance = await provider.getBalance(account, results.txReceipt.blockNumber);
-  } catch (e) {
-    console.log("getTxInfo - getBalance error: " + account + " @ " + results.txReceipt.blockNumber);
-    results.ethBalance = null;
-  }
+  // console.log("getTxInfo - getBalance: " + account + " @ " + results.txReceipt.blockNumber);
+  // try {
+  //   results.ethBalance = await provider.getBalance(account, results.txReceipt.blockNumber);
+  // } catch (e) {
+  //   console.log("getTxInfo - getBalance error: " + account + " @ " + results.txReceipt.blockNumber);
+  //   results.ethBalance = null;
+  // }
   // console.log("getTxInfo - getBalance: " + results.tx.from + " @ " + results.txReceipt.blockNumber - 1);
   // try {
   //   results.ethBalancePreviousBlock = await provider.getBalance(results.tx.from, results.txReceipt.blockNumber - 1);
   // } catch (e) {
   //   console.log("getTxInfo - getBalance -1 error: " + results.tx.from + " @ " + results.txReceipt.blockNumber - 1);
-    results.ethBalancePreviousBlock = null;
+    // results.ethBalancePreviousBlock = null;
   // }
   // console.log("getTxInfo - completed");
   results.gasUsed = ethers.BigNumber.from(results.txReceipt.gasUsed);

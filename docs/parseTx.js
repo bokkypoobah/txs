@@ -415,7 +415,8 @@ async function accumulateTxResults(provider, account, accumulatedData, txData, r
 }
 
 function parseTx(chainId, account, accounts, txData) {
-  // console.log("parseTx: " + JSON.stringify(account));
+  console.log("parseTx - account: " + JSON.stringify(account));
+  console.log("parseTx - txData: " + JSON.stringify(txData));
   const results = {};
   const msgValue = ethers.BigNumber.from(txData.tx.value).toString();
   const gasUsed = ethers.BigNumber.from(txData.txReceipt.gasUsed);
