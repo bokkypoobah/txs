@@ -646,37 +646,8 @@ const dataModule = {
             console.log("--- Downloading for " + account + " --- ");
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
 
-            const txHashesByBlocks = {};
-            for (const [txHash, tx] of Object.entries(item.transactions)) {
-              if (!(tx.blockNumber in txHashesByBlocks)) {
-                txHashesByBlocks[tx.blockNumber] = {};
-              }
-              if (!(txHash in txHashesByBlocks[tx.blockNumber])) {
-                txHashesByBlocks[tx.blockNumber][txHash] = tx.blockNumber;
-              }
-            }
-            for (const [txHash, traceIds] of Object.entries(item.internalTransactions)) {
-              for (const [traceId, tx] of Object.entries(traceIds)) {
-                if (!(tx.blockNumber in txHashesByBlocks)) {
-                  txHashesByBlocks[tx.blockNumber] = {};
-                }
-                if (!(txHash in txHashesByBlocks[tx.blockNumber])) {
-                  txHashesByBlocks[tx.blockNumber][txHash] = tx.blockNumber;
-                }
-              }
-            }
-            for (const [txHash, logIndexes] of Object.entries(item.events)) {
-              for (const [logIndex, event] of Object.entries(logIndexes)) {
-                if (!(event.blockNumber in txHashesByBlocks)) {
-                  txHashesByBlocks[event.blockNumber] = {};
-                }
-                if (!(txHash in txHashesByBlocks[event.blockNumber])) {
-                  txHashesByBlocks[event.blockNumber][txHash] = event.blockNumber;
-                }
-              }
-            }
-            // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
-
+            const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
+            console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
             const blockNumbers = [];
             for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
               const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
@@ -684,7 +655,6 @@ const dataModule = {
                 blockNumbers.push(blockNumber);
               }
             }
-
             context.commit('setSyncSection', { section: 'Blocks', total: blockNumbers.length });
             for (const [z, blockNumber] of blockNumbers.entries()) {
               const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
