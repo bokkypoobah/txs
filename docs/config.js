@@ -54,7 +54,7 @@ const Config = {
                 <b-form-input type="text" size="sm" id="reset-unlock" v-model.trim="unlock" placeholder="gm" class="w-25"></b-form-input>
               </b-form-group>
               <b-form-group label="" label-for="reset-all" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset view preferences stored in your browser LocalStorage, plus accounts, assets, transactions and ENS names stored in your browser IndexedDB'" class="mx-0 my-1 p-0">
-                <b-button size="sm" :disabled="unlock != 'gmgmgm'" id="reset-all" @click="reset(['localStorage', 'accounts', 'accountsInfo', 'txs', 'txsInfo', 'assets', 'ensMap', 'exchangeRates'])" variant="warning">Reset</b-button>
+                <b-button size="sm" :disabled="unlock != 'gmgmgm'" id="reset-all" @click="reset(['localStorage', 'accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'assets', 'ensMap', 'exchangeRates'])" variant="warning">Reset</b-button>
               </b-form-group>
             </b-form-group>
           </b-card-body>

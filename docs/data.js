@@ -90,6 +90,7 @@ const dataModule = {
     accountsInfo: {}, // [chainId][account] => Account Info(type, name, symbol, decimals)
     txs: {}, // [chainId][account] => Txs(timestamp, tx, txReceipt)
     txsInfo: {}, // [chainId][account] => Txs Info
+    blocks: {}, // [chainId][blockNumber] => timestamp and account balances
     assets: {},
     ensMap: {},
     exchangeRates: {},
@@ -117,6 +118,7 @@ const dataModule = {
     accountsInfo: state => state.accountsInfo,
     txs: state => state.txs,
     txsInfo: state => state.txsInfo,
+    blocks: state => state.blocks,
     assets: state => state.assets,
     ensMap: state => state.ensMap,
     exchangeRates: state => state.exchangeRates,
@@ -284,6 +286,28 @@ const dataModule = {
         // console.log("Added event: " + JSON.stringify(state.accounts[chainId][event.contract].assets[event.tokenId], null, 2));
       }
     },
+    addBlock(state, info) {
+      // logInfo("dataModule", "mutations.addBlock - info: " + JSON.stringify(info));
+      const [chainId, blockNumber, timestamp, account, balance] = [store.getters['connection/chainId'], info.blockNumber, info.timestamp, info.account, info.balance];
+      // console.log("chainId: " + chainId);
+      // console.log("blockNumber: " + blockNumber);
+      // console.log("timestamp: " + timestamp);
+      // console.log("account: " + account);
+      // console.log("balance: " + balance);
+      if (!(chainId in state.blocks)) {
+        Vue.set(state.blocks, chainId, {});
+      }
+      if (!(blockNumber in state.blocks[chainId])) {
+        Vue.set(state.blocks[chainId], blockNumber, {
+          timestamp,
+          balances: {},
+        });
+      }
+      if (!(account in state.blocks[chainId][blockNumber].balances)) {
+        Vue.set(state.blocks[chainId][blockNumber].balances, account, balance);
+      }
+      // console.log(JSON.stringify(state.blocks, null, 2));
+    },
     addENSName(state, nameInfo) {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
     },
@@ -353,7 +377,7 @@ const dataModule = {
       if (Object.keys(context.state.txs) == 0) {
         const db0 = new Dexie(context.state.db.name);
         db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-        for (let type of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'ensMap', 'assets', 'exchangeRates']) {
+        for (let type of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'ensMap', 'assets', 'exchangeRates']) {
           const data = await db0.cache.where("objectName").equals(type).toArray();
           if (data.length == 1) {
             context.state[type] = data[0].object;
@@ -621,6 +645,65 @@ const dataModule = {
             // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Downloading for " + account + " --- ");
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
+
+            const txHashesByBlocks = {};
+            for (const [txHash, tx] of Object.entries(item.transactions)) {
+              if (!(tx.blockNumber in txHashesByBlocks)) {
+                txHashesByBlocks[tx.blockNumber] = {};
+              }
+              if (!(txHash in txHashesByBlocks[tx.blockNumber])) {
+                txHashesByBlocks[tx.blockNumber][txHash] = tx.blockNumber;
+              }
+            }
+            for (const [txHash, traceIds] of Object.entries(item.internalTransactions)) {
+              for (const [traceId, tx] of Object.entries(traceIds)) {
+                if (!(tx.blockNumber in txHashesByBlocks)) {
+                  txHashesByBlocks[tx.blockNumber] = {};
+                }
+                if (!(txHash in txHashesByBlocks[tx.blockNumber])) {
+                  txHashesByBlocks[tx.blockNumber][txHash] = tx.blockNumber;
+                }
+              }
+            }
+            for (const [txHash, logIndexes] of Object.entries(item.events)) {
+              for (const [logIndex, event] of Object.entries(logIndexes)) {
+                if (!(event.blockNumber in txHashesByBlocks)) {
+                  txHashesByBlocks[event.blockNumber] = {};
+                }
+                if (!(txHash in txHashesByBlocks[event.blockNumber])) {
+                  txHashesByBlocks[event.blockNumber][txHash] = event.blockNumber;
+                }
+              }
+            }
+            // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+
+            const blockNumbers = [];
+            for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+              const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
+              if (!existing) {
+                blockNumbers.push(blockNumber);
+              }
+            }
+
+            let z = 0;
+            context.commit('setSyncSection', { section: 'Blocks', total: blockNumbers.length });
+            for (let blockNumber of blockNumbers) {
+              const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
+              if (!existing) {
+                console.log(blockNumber);
+                const block = await provider.getBlock(parseInt(blockNumber));
+                const timestamp = block.timestamp;
+                const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
+                context.commit('addBlock', { blockNumber, timestamp, account, balance });
+                context.commit('setSyncCompleted', parseInt(z) + 1);
+                z++;
+              }
+              if (context.state.sync.halt) {
+                break;
+              }
+            }
+            context.dispatch('saveData', ['blocks']);
+            context.commit('setSyncSection', { section: null, total: null });
 
             const txHashes = {};
             for (const [txHash, logIndexes] of Object.entries(item.events)) {
