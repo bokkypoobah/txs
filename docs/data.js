@@ -655,8 +655,8 @@ const dataModule = {
                 blockNumbers.push(blockNumber);
               }
             }
-            context.commit('setSyncSection', { section: 'Blocks', total: blockNumbers.length });
-            for (const [z, blockNumber] of blockNumbers.entries()) {
+            context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
+            for (const [index, blockNumber] of blockNumbers.entries()) {
               const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
               if (!existing) {
                 console.log(blockNumber);
@@ -664,7 +664,7 @@ const dataModule = {
                 const timestamp = block.timestamp;
                 const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
                 context.commit('addBlock', { blockNumber, timestamp, account, balance });
-                context.commit('setSyncCompleted', parseInt(z) + 1);
+                context.commit('setSyncCompleted', parseInt(index) + 1);
               }
               if (context.state.sync.halt) {
                 break;
