@@ -91,7 +91,7 @@ async function getTxInfo(txHash, item, account, provider, signatures) {
   const newFunctionSigs = {};
   const newEventSigs = {};
   if (!results.tx) {
-    console.log("getTxInfo - getTransaction: " + txHash); // + " " + JSON.stringify(signatures));
+    // console.log("getTxInfo - getTransaction: " + txHash); // + " " + JSON.stringify(signatures));
     const tx = await provider.getTransaction(txHash);
     // if (tx.to != null && tx.data.length > 10) {
     //   console.log("tx.data: " + tx.data);

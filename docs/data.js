@@ -665,6 +665,10 @@ const dataModule = {
                 const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
                 context.commit('addBlock', { blockNumber, timestamp, account, balance });
                 context.commit('setSyncCompleted', parseInt(index) + 1);
+                if (index % 25 == 0) {
+                  console.log("Saving blocks");
+                  context.dispatch('saveData', ['blocks']);
+                }
               }
               if (context.state.sync.halt) {
                 break;
@@ -709,7 +713,7 @@ const dataModule = {
             // TODO: Test
             // txHashList = txHashList.slice(0, 10);
             // console.log("txHashList: " + JSON.stringify(txHashList));
-            context.commit('setSyncSection', { section: 'Download', total: txHashList.length });
+            context.commit('setSyncSection', { section: 'Tx & TxReceipts', total: txHashList.length });
             for (const [txItemIndex, txItem] of txHashList.entries()) {
               context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
               console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Processing: " + JSON.stringify(txItem));
@@ -717,6 +721,10 @@ const dataModule = {
               const [info, newSignatures] = await getTxInfo(txItem.txHash, currentInfo, account, provider, context.state.signatures);
               context.commit('addTxs', { chainId, txInfo: info});
               context.commit('addNewSignatures', newSignatures);
+              if (txItemIndex % 25 == 0) {
+                console.log("Saving txs");
+                context.dispatch('saveData', ['txs']);
+              }
               if (context.state.sync.halt) {
                 break;
               }
