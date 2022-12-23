@@ -154,9 +154,9 @@ async function getTxInfo(txHash, item, account, provider, signatures) {
     // results.ethBalancePreviousBlock = null;
   // }
   // console.log("getTxInfo - completed");
-  results.gasUsed = ethers.BigNumber.from(results.txReceipt.gasUsed);
-  results.effectiveGasPrice = ethers.BigNumber.from(results.txReceipt.effectiveGasPrice);
-  results.txFee = results.gasUsed.mul(results.effectiveGasPrice);
+  // results.gasUsed = ethers.BigNumber.from(results.txReceipt.gasUsed);
+  // results.effectiveGasPrice = ethers.BigNumber.from(results.txReceipt.effectiveGasPrice);
+  // results.txFee = results.gasUsed.mul(results.effectiveGasPrice);
   // console.log("results.tx: " + JSON.stringify(results.tx, null, 2));
   // console.log("results: " + JSON.stringify(results, null, 2));
 

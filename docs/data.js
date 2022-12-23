@@ -665,7 +665,7 @@ const dataModule = {
                 const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
                 context.commit('addBlock', { blockNumber, timestamp, account, balance });
                 context.commit('setSyncCompleted', parseInt(index) + 1);
-                if (index % 25 == 0) {
+                if ((index + 1) % 100 == 0) {
                   console.log("Saving blocks");
                   context.dispatch('saveData', ['blocks']);
                 }
@@ -721,7 +721,7 @@ const dataModule = {
               const [info, newSignatures] = await getTxInfo(txItem.txHash, currentInfo, account, provider, context.state.signatures);
               context.commit('addTxs', { chainId, txInfo: info});
               context.commit('addNewSignatures', newSignatures);
-              if (txItemIndex % 25 == 0) {
+              if ((txItemIndex + 1) % 100 == 0) {
                 console.log("Saving txs");
                 context.dispatch('saveData', ['txs']);
               }
