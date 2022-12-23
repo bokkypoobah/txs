@@ -379,7 +379,7 @@ function getEvents(account, accounts, txData) {
   return { erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents, ensEvents, sentInternalEvents, receivedInternalEvents };
 }
 
-async function accumulateTxResults(provider, account, accumulatedData, txData, results) {
+async function accumulateTxResults(provider, account, accumulatedData, txData, block, results) {
   if (!('ethBalance' in accumulatedData)) {
     accumulatedData.ethBalance = ethers.BigNumber.from(0);
   }
@@ -389,10 +389,10 @@ async function accumulateTxResults(provider, account, accumulatedData, txData, r
   const DEBUG = false;
   if (results.info) {
     if (!DEBUG) {
-      console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
+      console.log(moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
     }
   } else {
-    console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " TODO " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to) || ''));
+    console.log(moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " TODO " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to) || ''));
   }
   if (!DEBUG || !results.info) {
     console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
@@ -405,18 +405,20 @@ async function accumulateTxResults(provider, account, accumulatedData, txData, r
   }
 
   // if (txData.txReceipt.blockNumber > 15345896) { // } && txData.txReceipt.blockNumber < 14379871) {
-    const balance = ethers.BigNumber.from(txData.ethBalance);
+    // const balance = ethers.BigNumber.from(txData.ethBalance);
+    const balance = ethers.BigNumber.from(block.balances[account] || 0);
+    // console.log("balance: " + balance);
     // const balance = await provider.getBalance(account, txData.txReceipt.blockNumber);
     const diff = balance.sub(accumulatedData.ethBalance);
     if (diff != 0) {
-      console.log("balance - actual: " + ethers.utils.formatEther(balance) + " vs computed: " + ethers.utils.formatEther(accumulatedData.ethBalance) + " diff: " + ethers.utils.formatEther(diff) + " vs retrieved: " + ethers.utils.formatEther(txData.ethBalance));
+      console.log("balance - actual: " + ethers.utils.formatEther(balance) + " vs computed: " + ethers.utils.formatEther(accumulatedData.ethBalance) + " diff: " + ethers.utils.formatEther(diff));
     }
   // }
 }
 
 function parseTx(chainId, account, accounts, txData) {
-  console.log("parseTx - account: " + JSON.stringify(account));
-  console.log("parseTx - txData: " + JSON.stringify(txData));
+  // console.log("parseTx - account: " + JSON.stringify(account));
+  // console.log("parseTx - txData: " + JSON.stringify(txData));
   const results = {};
   const msgValue = ethers.BigNumber.from(txData.tx.value).toString();
   const gasUsed = ethers.BigNumber.from(txData.txReceipt.gasUsed);
@@ -967,7 +969,7 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
   if (!results.info) {
-    console.log("  TODO: " + txData.tx.hash + " " + JSON.stringify(accountInfo.name));
+    console.log("  TODO: " + txData.tx.hash);
   }
 
   return results;
