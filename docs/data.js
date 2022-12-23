@@ -685,9 +685,8 @@ const dataModule = {
               }
             }
 
-            let z = 0;
             context.commit('setSyncSection', { section: 'Blocks', total: blockNumbers.length });
-            for (let blockNumber of blockNumbers) {
+            for (const [z, blockNumber] of blockNumbers.entries()) {
               const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
               if (!existing) {
                 console.log(blockNumber);
@@ -696,7 +695,6 @@ const dataModule = {
                 const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
                 context.commit('addBlock', { blockNumber, timestamp, account, balance });
                 context.commit('setSyncCompleted', parseInt(z) + 1);
-                z++;
               }
               if (context.state.sync.halt) {
                 break;
@@ -742,8 +740,7 @@ const dataModule = {
             // txHashList = txHashList.slice(0, 10);
             // console.log("txHashList: " + JSON.stringify(txHashList));
             context.commit('setSyncSection', { section: 'Download', total: txHashList.length });
-            for (let txItemIndex in txHashList) {
-              const txItem = txHashList[txItemIndex];
+            for (const [txItemIndex, txItem] of txHashList.entries()) {
               context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
               console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Processing: " + JSON.stringify(txItem));
               const currentInfo = txs && txs[txItem.txHash] || {};
