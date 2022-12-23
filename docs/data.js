@@ -659,7 +659,7 @@ const dataModule = {
             for (const [index, blockNumber] of blockNumbers.entries()) {
               const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
               if (!existing) {
-                console.log(blockNumber);
+                console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber);
                 const block = await provider.getBlock(parseInt(blockNumber));
                 const timestamp = block.timestamp;
                 const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
@@ -716,7 +716,7 @@ const dataModule = {
             context.commit('setSyncSection', { section: 'Tx & TxReceipts', total: txHashList.length });
             for (const [txItemIndex, txItem] of txHashList.entries()) {
               context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
-              console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Processing: " + JSON.stringify(txItem));
+              console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Retrieving " + txItem.txHash + " @ " + txItem.blockNumber);
               const currentInfo = txs && txs[txItem.txHash] || {};
               const [info, newSignatures] = await getTxInfo(txItem.txHash, currentInfo, account, provider, context.state.signatures);
               context.commit('addTxs', { chainId, txInfo: info});
