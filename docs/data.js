@@ -91,6 +91,7 @@ const dataModule = {
     txs: {}, // [chainId][account] => Txs(timestamp, tx, txReceipt)
     txsInfo: {}, // [chainId][account] => Txs Info
     blocks: {}, // [chainId][blockNumber] => timestamp and account balances
+    functionSelectors: {}, // [selector] => [functions]
     assets: {},
     ensMap: {},
     exchangeRates: {},
@@ -119,6 +120,7 @@ const dataModule = {
     txs: state => state.txs,
     txsInfo: state => state.txsInfo,
     blocks: state => state.blocks,
+    functionSelectors: state => state.functionSelectors,
     assets: state => state.assets,
     ensMap: state => state.ensMap,
     exchangeRates: state => state.exchangeRates,
@@ -287,13 +289,7 @@ const dataModule = {
       }
     },
     addBlock(state, info) {
-      // logInfo("dataModule", "mutations.addBlock - info: " + JSON.stringify(info));
       const [chainId, blockNumber, timestamp, account, balance] = [store.getters['connection/chainId'], info.blockNumber, info.timestamp, info.account, info.balance];
-      // console.log("chainId: " + chainId);
-      // console.log("blockNumber: " + blockNumber);
-      // console.log("timestamp: " + timestamp);
-      // console.log("account: " + account);
-      // console.log("balance: " + balance);
       if (!(chainId in state.blocks)) {
         Vue.set(state.blocks, chainId, {});
       }
@@ -306,14 +302,24 @@ const dataModule = {
       if (!(account in state.blocks[chainId][blockNumber].balances)) {
         Vue.set(state.blocks[chainId][blockNumber].balances, account, balance);
       }
-      // console.log(JSON.stringify(state.blocks, null, 2));
+    },
+    addNewFunctionSelector(state, functionSelectors) {
+      // console.log("addNewFunctionSelector: " + JSON.stringify(functionSelectors));
+      for (const [functionSelector, functionCalls] of Object.entries(functionSelectors)) {
+        if (functionCalls.length > 0) {
+          console.log("addNewFunctionSelector: " + functionSelector + " => " + JSON.stringify(functionCalls[0].name));
+          if (!(functionSelector in state.functionSelectors)) {
+            Vue.set(state.functionSelectors, functionSelector, functionCalls[0].name);
+          }
+        }
+      }
+      // console.log("state.functionSelectors: " + JSON.stringify(state.functionSelectors));
     },
     addENSName(state, nameInfo) {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
     },
     addTxs(state, info) {
       const [chainId, txInfo] = [info.chainId, info.txInfo];
-      // logInfo("dataModule", "mutations.addTxs - info: " + JSON.stringify(info).substring(0, 100));
       if (!(chainId in state.txs)) {
         Vue.set(state.txs, chainId, {});
       }
@@ -377,7 +383,7 @@ const dataModule = {
       if (Object.keys(context.state.txs) == 0) {
         const db0 = new Dexie(context.state.db.name);
         db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-        for (let type of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'ensMap', 'assets', 'exchangeRates']) {
+        for (let type of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'ensMap', 'assets', 'exchangeRates']) {
           const data = await db0.cache.where("objectName").equals(type).toArray();
           if (data.length == 1) {
             context.state[type] = data[0].object;
@@ -727,29 +733,40 @@ const dataModule = {
               context.dispatch('saveData', ['txs']);
             }
 
-            if (false) {
+            if (true) {
               console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
               // const blockNumbers = [];
+              const functionSelectors = context.state.functionSelectors || {};
               let blocksProcessed = 0;
               for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
                 if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
-                  console.log(blocksProcessed + " " + blockNumber + " " + JSON.stringify(txHashes));
+                  // console.log(blocksProcessed + " " + blockNumber + " " + JSON.stringify(txHashes));
                   const block = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] || null;
-                  console.log("  block: " + JSON.stringify(block));
+                  // console.log("  block: " + JSON.stringify(block));
                   for (const [index, txHash] of Object.keys(txHashes).entries()) {
                     const txInfo = txs && txs[txHash] || {};
                     // console.log("  " + JSON.stringify(txInfo));
                     if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
-                      console.log(txInfo.tx.data);
                       const selector = txInfo.tx.data.substring(0, 10);
+                      if (!(selector in functionSelectors)) {
+                        console.log(blockNumber + " " + txHash + " " + selector);
+                        let url = "https://sig.eth.samczsun.com/api/v1/signatures?function=" + selector;
+                        // console.log(url);
+                        const data = await fetch(url)
+                          .then(response => response.json())
+                          .catch(function(e) {
+                            console.log("error: " + e);
+                          });
+                        // console.log(JSON.stringify(data, null, 2));
+                        if (data.ok && Object.keys(data.result.function).length > 0) {
+                          // console.log("  " + JSON.stringify(data.result.function, null, 2));
+                          context.commit('addNewFunctionSelector', data.result.function);
+                        }
+                      }
                     }
                   }
                 }
                 blocksProcessed++;
-              //   const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
-              //   if (!existing) {
-              //     blockNumbers.push(blockNumber);
-              //   }
               }
               // context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
               // for (const [index, blockNumber] of blockNumbers.entries()) {
@@ -770,7 +787,7 @@ const dataModule = {
               //     break;
               //   }
               // }
-              // context.dispatch('saveData', ['blocks']);
+              context.dispatch('saveData', ['functionSelectors']);
               // context.commit('setSyncSection', { section: null, total: null });
             }
 
