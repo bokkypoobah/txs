@@ -647,90 +647,134 @@ const dataModule = {
             console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
 
             const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
-            console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
-            const blockNumbers = [];
-            for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-              const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
-              if (!existing) {
-                blockNumbers.push(blockNumber);
-              }
-            }
-            context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
-            for (const [index, blockNumber] of blockNumbers.entries()) {
-              const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
-              if (!existing) {
-                console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber);
-                const block = await provider.getBlock(parseInt(blockNumber));
-                const timestamp = block.timestamp;
-                const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
-                context.commit('addBlock', { blockNumber, timestamp, account, balance });
-                context.commit('setSyncCompleted', parseInt(index) + 1);
-                if ((index + 1) % 100 == 0) {
-                  console.log("Saving blocks");
-                  context.dispatch('saveData', ['blocks']);
+            if (true) {
+              console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+              const blockNumbers = [];
+              for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+                const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
+                if (!existing) {
+                  blockNumbers.push(blockNumber);
                 }
               }
-              if (context.state.sync.halt) {
-                break;
+              context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
+              for (const [index, blockNumber] of blockNumbers.entries()) {
+                const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
+                if (!existing) {
+                  console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber);
+                  const block = await provider.getBlock(parseInt(blockNumber));
+                  const timestamp = block.timestamp;
+                  const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
+                  context.commit('addBlock', { blockNumber, timestamp, account, balance });
+                  context.commit('setSyncCompleted', parseInt(index) + 1);
+                  if ((index + 1) % 100 == 0) {
+                    console.log("Saving blocks");
+                    context.dispatch('saveData', ['blocks']);
+                  }
+                }
+                if (context.state.sync.halt) {
+                  break;
+                }
               }
+              context.dispatch('saveData', ['blocks']);
+              context.commit('setSyncSection', { section: null, total: null });
             }
-            context.dispatch('saveData', ['blocks']);
-            context.commit('setSyncSection', { section: null, total: null });
 
-            const txHashes = {};
-            for (const [txHash, logIndexes] of Object.entries(item.events)) {
-              if (!(txHash in txs) && !(txHash in txHashes)) {
-                for (const [logIndex, event] of Object.entries(logIndexes)) {
-                  txHashes[txHash] = event.blockNumber;
+            if (true) {
+              const txHashes = {};
+              for (const [txHash, logIndexes] of Object.entries(item.events)) {
+                if (!(txHash in txs) && !(txHash in txHashes)) {
+                  for (const [logIndex, event] of Object.entries(logIndexes)) {
+                    txHashes[txHash] = event.blockNumber;
+                  }
                 }
               }
-            }
-            for (const [txHash, traceIds] of Object.entries(item.internalTransactions)) {
-              if (!(txHash in txs) && !(txHash in txHashes)) {
-                for (const [traceId, tx] of Object.entries(traceIds)) {
+              for (const [txHash, traceIds] of Object.entries(item.internalTransactions)) {
+                if (!(txHash in txs) && !(txHash in txHashes)) {
+                  for (const [traceId, tx] of Object.entries(traceIds)) {
+                    txHashes[txHash] = tx.blockNumber;
+                  }
+                }
+              }
+              for (const [txHash, tx] of Object.entries(item.transactions)) {
+                if (!(txHash in txs) && !(txHash in txHashes)) {
                   txHashes[txHash] = tx.blockNumber;
                 }
               }
-            }
-            for (const [txHash, tx] of Object.entries(item.transactions)) {
-              if (!(txHash in txs) && !(txHash in txHashes)) {
-                txHashes[txHash] = tx.blockNumber;
-              }
-            }
-            // console.log("txHashes: " + JSON.stringify(txHashes));
-            let txHashList = [];
-            const TESTMAXBLOCKNUMBER = null; // 4000000;
-            for (const [txHash, blockNumber] of Object.entries(txHashes)) {
-              if (!TESTMAXBLOCKNUMBER || blockNumber <= TESTMAXBLOCKNUMBER) {
+              let txHashList = [];
+              for (const [txHash, blockNumber] of Object.entries(txHashes)) {
                 txHashList.push({ txHash, blockNumber });
               }
+              txHashList.sort((a, b) => a.blockNumber - b.blockNumber);
+              txHashList = txHashList.slice(devSettings.skipBlocks, parseInt(devSettings.maxBlocks) + 1);
+              console.log("txHashList: " + JSON.stringify(txHashList));
+              context.commit('setSyncSection', { section: 'Tx & TxReceipts', total: txHashList.length });
+              for (const [txItemIndex, txItem] of txHashList.entries()) {
+                context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
+                console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Retrieving " + txItem.txHash + " @ " + txItem.blockNumber);
+                const currentInfo = txs && txs[txItem.txHash] || {};
+                const [info, newSignatures] = await getTxInfo(txItem.txHash, currentInfo, account, provider, context.state.signatures);
+                context.commit('addTxs', { chainId, txInfo: info});
+                context.commit('addNewSignatures', newSignatures);
+                if ((txItemIndex + 1) % 100 == 0) {
+                  console.log("Saving txs");
+                  context.dispatch('saveData', ['txs']);
+                }
+                if (context.state.sync.halt) {
+                  break;
+                }
+              }
+              // context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
+              context.dispatch('saveData', ['txs']);
             }
-            txHashList.sort((a, b) => a.blockNumber - b.blockNumber);
-            // console.log("devSettings: " + JSON.stringify(devSettings));
-            txHashList = txHashList.slice(devSettings.skipTransactions, parseInt(devSettings.maxTransactions) + 1);
-            console.log("txHashList: " + JSON.stringify(txHashList));
 
-            // TODO: Test
-            // txHashList = txHashList.slice(0, 10);
-            // console.log("txHashList: " + JSON.stringify(txHashList));
-            context.commit('setSyncSection', { section: 'Tx & TxReceipts', total: txHashList.length });
-            for (const [txItemIndex, txItem] of txHashList.entries()) {
-              context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
-              console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Retrieving " + txItem.txHash + " @ " + txItem.blockNumber);
-              const currentInfo = txs && txs[txItem.txHash] || {};
-              const [info, newSignatures] = await getTxInfo(txItem.txHash, currentInfo, account, provider, context.state.signatures);
-              context.commit('addTxs', { chainId, txInfo: info});
-              context.commit('addNewSignatures', newSignatures);
-              if ((txItemIndex + 1) % 100 == 0) {
-                console.log("Saving txs");
-                context.dispatch('saveData', ['txs']);
+            if (false) {
+              console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+              // const blockNumbers = [];
+              let blocksProcessed = 0;
+              for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+                if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
+                  console.log(blocksProcessed + " " + blockNumber + " " + JSON.stringify(txHashes));
+                  const block = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] || null;
+                  console.log("  block: " + JSON.stringify(block));
+                  for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                    const txInfo = txs && txs[txHash] || {};
+                    // console.log("  " + JSON.stringify(txInfo));
+                    if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
+                      console.log(txInfo.tx.data);
+                      const selector = txInfo.tx.data.substring(0, 10);
+                    }
+                  }
+                }
+                blocksProcessed++;
+              //   const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
+              //   if (!existing) {
+              //     blockNumbers.push(blockNumber);
+              //   }
               }
-              if (context.state.sync.halt) {
-                break;
-              }
+              // context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
+              // for (const [index, blockNumber] of blockNumbers.entries()) {
+              //   const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
+              //   if (!existing) {
+              //     console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber);
+              //     const block = await provider.getBlock(parseInt(blockNumber));
+              //     const timestamp = block.timestamp;
+              //     const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
+              //     context.commit('addBlock', { blockNumber, timestamp, account, balance });
+              //     context.commit('setSyncCompleted', parseInt(index) + 1);
+              //     if ((index + 1) % 100 == 0) {
+              //       console.log("Saving blocks");
+              //       context.dispatch('saveData', ['blocks']);
+              //     }
+              //   }
+              //   if (context.state.sync.halt) {
+              //     break;
+              //   }
+              // }
+              // context.dispatch('saveData', ['blocks']);
+              // context.commit('setSyncSection', { section: null, total: null });
             }
-            // context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
-            context.dispatch('saveData', ['txs']);
+
+
             if (context.state.sync.halt) {
               break;
             }

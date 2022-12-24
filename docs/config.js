@@ -33,11 +33,11 @@ const Config = {
             </b-form-group>
             -->
             <b-form-group label-cols-lg="2" label="Development Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
-              <b-form-group label="Skip Transactions:" label-for="transaction-skip" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Number of transactions to skip. Set to 0 to include all'" class="mx-0 my-1 p-0">
-                <b-form-input type="text" size="sm" id="transaction-skip" :value="settings.skipTransactions" @change="setSkipTransactions($event)" placeholder="0" class="w-75"></b-form-input>
+              <b-form-group label="Skip Blocks:" label-for="skip-blocks" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Number of transactions to skip. Set to 0 to include all'" class="mx-0 my-1 p-0">
+                <b-form-input type="text" size="sm" id="skip-blocks" :value="settings.skipBlocks" @change="setSkipBlocks($event)" placeholder="0" class="w-75"></b-form-input>
               </b-form-group>
-              <b-form-group label="Max Transactions:" label-for="transaction-max" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Maximum number of transactions to process. Set to 99999 to include all'" class="mx-0 my-1 p-0">
-                <b-form-input type="text" size="sm" id="transaction-max" :value="settings.maxTransactions" @change="setMaxTransactions($event)" placeholder="99999" class="w-75"></b-form-input>
+              <b-form-group label="Max Blocks:" label-for="max-blocks" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Maximum number of transactions to process. Set to 99999 to include all'" class="mx-0 my-1 p-0">
+                <b-form-input type="text" size="sm" id="max-blocks" :value="settings.maxBlocks" @change="setMaxBlocks($event)" placeholder="99999" class="w-75"></b-form-input>
               </b-form-group>
               <b-form-group label="Check Balance:" label-for="check-balance" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Retrieve balance to check intermediate calculations'" class="mx-0 my-1 p-0">
                 <b-form-checkbox size="sm" id="check-balance" :checked="settings.checkBalance ? 1 : 0" value="1" @change="toggleCheckBalance" />
@@ -141,11 +141,11 @@ const Config = {
     setReportingCurrency(reportingCurrency) {
       store.dispatch('config/setReportingCurrency', reportingCurrency);
     },
-    setSkipTransactions(skipTransactions) {
-      store.dispatch('config/setSkipTransactions', skipTransactions);
+    setSkipBlocks(skipBlocks) {
+      store.dispatch('config/setSkipBlocks', skipBlocks);
     },
-    setMaxTransactions(maxTransactions) {
-      store.dispatch('config/setMaxTransactions', maxTransactions);
+    setMaxBlocks(maxBlocks) {
+      store.dispatch('config/setMaxBlocks', maxBlocks);
     },
     toggleCheckBalance(checkBalance) {
       store.dispatch('config/toggleCheckBalance', checkBalance);
@@ -206,10 +206,10 @@ const configModule = {
       confirmations: 10,
       periodStart: 'jul',
       reportingCurrency: 'USD',
-      skipTransactions: 0,
-      maxTransactions: 99999,
+      skipBlocks: 0,
+      maxBlocks: 99999,
       checkBalance: false,
-      version: 3,
+      version: 4,
     },
   },
   getters: {
@@ -241,7 +241,7 @@ const configModule = {
       return results;
     },
     devSettings(state) {
-      return { skipTransactions: state.settings.skipTransactions, maxTransactions: state.settings.maxTransactions, checkBalance: state.settings.checkBalance };
+      return { skipBlocks: state.settings.skipBlocks, maxBlocks: state.settings.maxBlocks, checkBalance: state.settings.checkBalance };
     },
   },
   mutations: {
@@ -260,11 +260,11 @@ const configModule = {
     setReportingCurrency(state, reportingCurrency) {
       state.settings.reportingCurrency = reportingCurrency;
     },
-    setSkipTransactions(state, skipTransactions) {
-      state.settings.skipTransactions = skipTransactions;
+    setSkipBlocks(state, skipBlocks) {
+      state.settings.skipBlocks = skipBlocks;
     },
-    setMaxTransactions(state, maxTransactions) {
-      state.settings.maxTransactions = maxTransactions;
+    setMaxBlocks(state, maxBlocks) {
+      state.settings.maxBlocks = maxBlocks;
     },
     toggleCheckBalance(state) {
       state.settings.checkBalance = !state.settings.checkBalance;
@@ -274,7 +274,7 @@ const configModule = {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 3) {
+        if ('version' in tempSettings && tempSettings.version == 4) {
           context.state.settings = tempSettings;
         }
       }
@@ -299,12 +299,12 @@ const configModule = {
       context.commit('setReportingCurrency', reportingCurrency);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
-    setSkipTransactions(context, skipTransactions) {
-      context.commit('setSkipTransactions', skipTransactions);
+    setSkipBlocks(context, skipBlocks) {
+      context.commit('setSkipBlocks', skipBlocks);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
-    setMaxTransactions(context, maxTransactions) {
-      context.commit('setMaxTransactions', maxTransactions);
+    setMaxBlocks(context, maxBlocks) {
+      context.commit('setMaxBlocks', maxBlocks);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
     toggleCheckBalance(context) {

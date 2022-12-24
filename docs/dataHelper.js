@@ -28,6 +28,6 @@ function getTxHashesByBlocks(account, chainId, accounts, accountsInfo) {
       }
     }
   }
-  console.log("getTxHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+  // console.log("getTxHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
   return txHashesByBlocks;
 }
