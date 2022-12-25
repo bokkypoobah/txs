@@ -584,10 +584,14 @@ const reportModule = {
   actions: {
     async generateReport(context, contractOrTxOrBlockRange) {
       logInfo("reportModule", "generateReport(): " + contractOrTxOrBlockRange);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       const allAccounts = store.getters['data/accounts'];
+      const allAccountsInfo = store.getters['data/accountsInfo'];
+      const functionSelectors = store.getters['data/functionSelectors'];
       const allTxs = store.getters['data/txs'];
       const exchangeRates = store.getters['data/exchangeRates'];
       const blocks = store.getters['data/blocks'];
+      const devSettings = store.getters['config/devSettings'];
       const blockRange = contractOrTxOrBlockRange ? contractOrTxOrBlockRange.match(/(\d+)-(\d+)/) : null;
       let startBlock = 0;
       let endBlock = 999999999999;
@@ -606,6 +610,46 @@ const reportModule = {
           const accountsInfo = store.getters['data/accountsInfo'][chainId][account];
           if (accountsInfo.mine && accountsInfo.report) {
             console.log("--- Processing " + chainId + ":" + account + " ---");
+            const txHashesByBlocks = getTxHashesByBlocks(account, chainId, allAccounts, allAccountsInfo);
+            let blocksProcessed = 0;
+            let prevBalance = ethers.BigNumber.from(0);
+            for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+              if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
+                const block = blocks[chainId] && blocks[chainId][blockNumber] || null;
+                const balance = ethers.BigNumber.from(block.balances[account] || 0);
+                // console.log(blockNumber + " " + JSON.stringify(block));
+                const exchangeRate = getExchangeRate(moment.unix(block.timestamp), exchangeRates);
+                let totalEthReceived = ethers.BigNumber.from(0);
+                let totalEthPaid = ethers.BigNumber.from(0);
+                let totalTxFee = ethers.BigNumber.from(0);
+                for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                  const tx = txs && txs[txHash] || {};
+
+                  let functionCall = null;
+                  if (tx.tx && tx.tx.to != null && tx.tx.data.length > 9) {
+                    const selector = tx.tx.data.substring(0, 10);
+                    functionCall = functionSelectors[selector] || null;
+                  }
+
+                  console.log("+ " + txHash + " " + functionCall);
+                  const results = parseTx(chainId, account, accounts, tx);
+                  totalEthPaid = totalEthPaid.add(results.ethPaid);
+                  totalEthReceived = totalEthReceived.add(results.ethReceived);
+                  const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
+                  const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
+                  totalTxFee = totalTxFee.add(txFee);
+
+                }
+                const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
+                const diff = balance.sub(expectedBalance);
+                const balanceInReportingCurrency = ethers.utils.formatEther(balance) * exchangeRate.rate;
+                console.log(moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
+                prevBalance = balance;
+              }
+              blocksProcessed++;
+            }
+
+            if (false) {
             const txHashes = {};
             const missingTxDataHashes = {};
             for (const [txHash, logIndexes] of Object.entries(accountData.events)) {
@@ -647,9 +691,8 @@ const reportModule = {
               }
             });
 
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
             // let ethBalance = ethers.BigNumber.from(0);
-            for (const txData of txList) {
+            for (const txData of txList.slice(0, 10)) {
               if ((!contractOrTx || txData.tx.to == contractOrTx || txData.tx.hash == contractOrTx) && txData.tx.blockNumber >= startBlock && txData.tx.blockNumber <= endBlock) {
                 const block = blocks[chainId] && blocks[chainId][txData.tx.blockNumber] || null;
                 // console.log("block: " + JSON.stringify(block));
@@ -664,6 +707,7 @@ const reportModule = {
               }
             }
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
+            }
           }
         }
       }
