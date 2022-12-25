@@ -636,6 +636,7 @@ const reportModule = {
         contractOrTx = contractOrTxOrBlockRange;
       }
       const accumulatedData = {};
+      const transactions = [];
       for (const [chainId, accounts] of Object.entries(allAccounts)) {
         const txs = allTxs[chainId] || {};
         // console.log(JSON.stringify(txs, null, 2));
@@ -665,10 +666,10 @@ const reportModule = {
                 }
                 txsToProcess.sort((a, b) => a.txReceipt.transactionIndex - b.txReceipt.transactionIndex);
                 for (const [index, tx] of txsToProcess.entries()) {
-                  let functionCall = null;
+                  let functionCall = "";
                   if (tx.tx && tx.tx.to != null && tx.tx.data.length > 9) {
                     const selector = tx.tx.data.substring(0, 10);
-                    functionCall = functionSelectors[selector] || null;
+                    functionCall = functionSelectors[selector] && functionSelectors[selector].length > 0 && functionSelectors[selector][0] || selector;
                   }
                   console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash + " " + functionCall);
                   const results = parseTx(chainId, account, accounts, tx);
@@ -677,6 +678,17 @@ const reportModule = {
                   const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
                   const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
                   totalTxFee = totalTxFee.add(txFee);
+                  transactions.push({
+                    chainId,
+                    txHash: tx.tx.hash,
+                    blockNumber: blockNumber,
+                    timestamp: block.timestamp,
+                    account,
+                    from: tx.tx.from,
+                    to: tx.tx.to,
+                    functionCall: functionCall,
+                    exchangeRate: exchangeRate.rate,
+                  });
                 }
                 const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
                 const diff = balance.sub(expectedBalance);
@@ -747,7 +759,8 @@ const reportModule = {
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
             }
 
-            context.commit('setReport', { hello: "Hello" });
+            console.log("transactions: " + JSON.stringify(transactions, null, 2));
+            context.commit('setReport', { transactions });
             context.dispatch('saveData', ['report']);
           }
         }
