@@ -92,6 +92,7 @@ const dataModule = {
     txsInfo: {}, // [chainId][account] => Txs Info
     blocks: {}, // [chainId][blockNumber] => timestamp and account balances
     functionSelectors: {}, // [selector] => [functions]
+    eventSelectors: {}, // [selector] => [events]
     assets: {},
     ensMap: {},
     exchangeRates: {},
@@ -121,6 +122,7 @@ const dataModule = {
     txsInfo: state => state.txsInfo,
     blocks: state => state.blocks,
     functionSelectors: state => state.functionSelectors,
+    eventSelectors: state => state.eventSelectors,
     assets: state => state.assets,
     ensMap: state => state.ensMap,
     exchangeRates: state => state.exchangeRates,
@@ -305,16 +307,23 @@ const dataModule = {
     },
     addNewFunctionSelectors(state, functionSelectors) {
       console.log("addNewFunctionSelectors: " + JSON.stringify(functionSelectors));
-      for (const [functionSelector, functionCalls] of Object.entries(functionSelectors)) {
-        console.log(functionSelector + " " + JSON.stringify(functionCalls));
-        // if (functionCalls.length > 0) {
-        //   console.log("addNewFunctionSelectors: " + functionSelector + " => " + JSON.stringify(functionCalls[0].name));
-          if (!(functionSelector in state.functionSelectors)) {
-            Vue.set(state.functionSelectors, functionSelector, functionCalls.map(e => e.name));
-          }
-        // }
+      for (const [functionSelector, functionNames] of Object.entries(functionSelectors)) {
+        // console.log(functionSelector + " " + JSON.stringify(functionNames));
+        if (!(functionSelector in state.functionSelectors)) {
+          Vue.set(state.functionSelectors, functionSelector, functionNames.map(e => e.name));
+        }
       }
-      console.log("state.functionSelectors: " + JSON.stringify(state.functionSelectors));
+      // console.log("state.functionSelectors: " + JSON.stringify(state.functionSelectors));
+    },
+    addNewEventSelectors(state, eventSelectors) {
+      console.log("addNewEventSelectors: " + JSON.stringify(eventSelectors));
+      for (const [eventSelector, eventNames] of Object.entries(eventSelectors)) {
+        // console.log(eventSelector + " " + JSON.stringify(eventNames));
+        if (!(eventSelector in state.eventSelectors)) {
+          Vue.set(state.eventSelectors, eventSelector, eventNames.map(e => e.name));
+        }
+      }
+      // console.log("state.eventSelectors: " + JSON.stringify(state.eventSelectors));
     },
     addENSName(state, nameInfo) {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
@@ -384,7 +393,7 @@ const dataModule = {
       if (Object.keys(context.state.txs) == 0) {
         const db0 = new Dexie(context.state.db.name);
         db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-        for (let type of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'ensMap', 'assets', 'exchangeRates']) {
+        for (let type of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'ensMap', 'assets', 'exchangeRates']) {
           const data = await db0.cache.where("objectName").equals(type).toArray();
           if (data.length == 1) {
             context.state[type] = data[0].object;
@@ -735,7 +744,7 @@ const dataModule = {
             }
 
             if (true) {
-              console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+              // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
               const missingSelectorsMap = {};
               const functionSelectors = context.state.functionSelectors || {};
               let blocksProcessed = 0;
@@ -772,10 +781,49 @@ const dataModule = {
               context.dispatch('saveData', ['functionSelectors']);
             }
 
+            if (true) {
+              // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+              const missingSelectorsMap = {};
+              const eventSelectors = context.state.eventSelectors || {};
+              let blocksProcessed = 0;
+              for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+                if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
+                  const block = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] || null;
+                  for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                    const txInfo = txs && txs[txHash] || {};
+                    for (const event of txInfo.txReceipt.logs) {
+                      if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingSelectorsMap)) {
+                        missingSelectorsMap[event.topics[0]] = true;
+                      }
+                    }
+                  }
+                }
+                blocksProcessed++;
+              }
+              const missingSelectors = Object.keys(missingSelectorsMap);
+              console.log(JSON.stringify(missingSelectors));
+              const BATCHSIZE = 50;
+              for (let i = 0; i < missingSelectors.length; i += BATCHSIZE) {
+                const batch = missingSelectors.slice(i, parseInt(i) + BATCHSIZE);
+                let url = "https://sig.eth.samczsun.com/api/v1/signatures?" + batch.map(e => ("event=" + e)).join("&");
+                console.log(url);
+                const data = await fetch(url)
+                  .then(response => response.json())
+                  .catch(function(e) {
+                    console.log("error: " + e);
+                  });
+                if (data.ok && Object.keys(data.result.event).length > 0) {
+                  context.commit('addNewEventSelectors', data.result.event);
+                }
+              }
+              context.dispatch('saveData', ['eventSelectors']);
+            }
+
             if (context.state.sync.halt) {
               break;
             }
           }
+
 
           // TODO
           // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
