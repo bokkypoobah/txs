@@ -616,29 +616,34 @@ const reportModule = {
             for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
               if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
                 const block = blocks[chainId] && blocks[chainId][blockNumber] || null;
-                const balance = ethers.BigNumber.from(block.balances[account] || 0);
+                const balance = ethers.BigNumber.from(block && block.balances[account] || 0);
                 // console.log(blockNumber + " " + JSON.stringify(block));
                 const exchangeRate = getExchangeRate(moment.unix(block.timestamp), exchangeRates);
                 let totalEthReceived = ethers.BigNumber.from(0);
                 let totalEthPaid = ethers.BigNumber.from(0);
                 let totalTxFee = ethers.BigNumber.from(0);
-                for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                  const tx = txs && txs[txHash] || {};
 
+                const txsToProcess = [];
+                for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                  const tx = txs && txs[txHash] || null;
+                  if (tx) {
+                    txsToProcess.push(tx);
+                  }
+                }
+                txsToProcess.sort((a, b) => a.txReceipt.transactionIndex - b.txReceipt.transactionIndex);
+                for (const [index, tx] of txsToProcess.entries()) {
                   let functionCall = null;
                   if (tx.tx && tx.tx.to != null && tx.tx.data.length > 9) {
                     const selector = tx.tx.data.substring(0, 10);
                     functionCall = functionSelectors[selector] || null;
                   }
-
-                  console.log("+ " + txHash + " " + functionCall);
+                  console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash + " " + functionCall);
                   const results = parseTx(chainId, account, accounts, tx);
                   totalEthPaid = totalEthPaid.add(results.ethPaid);
                   totalEthReceived = totalEthReceived.add(results.ethReceived);
                   const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
                   const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
                   totalTxFee = totalTxFee.add(txFee);
-
                 }
                 const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
                 const diff = balance.sub(expectedBalance);
