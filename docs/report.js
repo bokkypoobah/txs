@@ -557,6 +557,7 @@ const Report = {
   mounted() {
     logInfo("Report", "mounted() $route: " + JSON.stringify(this.$route.params) + ", props['contractOrTxOrBlockRange']: " + this.contractOrTxOrBlockRange);
     store.dispatch('data/restoreState');
+    store.dispatch('report/restoreState');
     if ('reportSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.reportSettings);
       if ('version' in tempSettings && tempSettings.version == 1) {
@@ -576,12 +577,44 @@ const Report = {
 const reportModule = {
   namespaced: true,
   state: {
+    report: {},
   },
   getters: {
+    report: state => state.report,
   },
   mutations: {
+    setReport(state, report) {
+      Vue.set(state, 'report', report);
+    },
   },
   actions: {
+    async restoreState(context) {
+      logInfo("reportModule", "restoreState()");
+      if (Object.keys(context.state.report) == 0) {
+        const db = store.getters['data/db'];
+        const db0 = new Dexie(db.name);
+        db0.version(db.version).stores(db.schemaDefinition);
+        for (let type of ['report']) {
+          const data = await db0.cache.where("objectName").equals(type).toArray();
+          if (data.length == 1) {
+            context.state[type] = data[0].object;
+          }
+        }
+      }
+    },
+    async saveData(context, types) {
+      logInfo("reportModule", "actions.saveData - types: " + JSON.stringify(types));
+      const db = store.getters['data/db'];
+      const db0 = new Dexie(db.name);
+      db0.version(db.version).stores(db.schemaDefinition);
+      for (let type of types) {
+        await db0.cache.put({ objectName: type, object: context.state[type] }).then (function() {
+        }).catch(function(error) {
+          console.log("error: " + error);
+        });
+      }
+      db0.close();
+    },
     async generateReport(context, contractOrTxOrBlockRange) {
       logInfo("reportModule", "generateReport(): " + contractOrTxOrBlockRange);
       const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -713,6 +746,9 @@ const reportModule = {
             }
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
             }
+
+            context.commit('setReport', { hello: "Hello" });
+            context.dispatch('saveData', ['report']);
           }
         }
       }

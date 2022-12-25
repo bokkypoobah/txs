@@ -96,7 +96,7 @@ const dataModule = {
     assets: {},
     ensMap: {},
     exchangeRates: {},
-    signatures: {
+    signatures: { // TODO: Delete
       functionSignatures: {},
       eventSignatures: {},
     },
@@ -128,6 +128,7 @@ const dataModule = {
     exchangeRates: state => state.exchangeRates,
     signatures: state => state.signatures,
     sync: state => state.sync,
+    db: state => state.db,
   },
   mutations: {
     toggleAccountInfoField(state, info) {
