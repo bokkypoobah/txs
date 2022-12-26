@@ -481,15 +481,31 @@ function parseTx(chainId, account, accounts, functionSelectors, txData) {
   if (gasUsed == 21000) {
     if (txData.tx.from == account && txData.tx.to == account) {
       results.txType = "ethtx";
-      results.info = "Cancel tx";
+      // results.info = "Cancel tx";
+      results.info = {
+        type: "ethcancel",
+        from: txData.tx.from,
+        to: txData.tx.to,
+        amount: msgValue,
+      };
     } else if (txData.tx.from == account) {
       results.txType = "ethtx";
       results.ethPaid = msgValue;
-      results.info = "Sent " + ethers.utils.formatEther(msgValue) + "Ξ to " + txData.tx.to;
+      // results.info = "Sent " + ethers.utils.formatEther(msgValue) + "Ξ to " + txData.tx.to;
+      results.info = {
+        type: "ethsent",
+        to: txData.tx.to,
+        amount: msgValue,
+      };
     } else if (txData.tx.to == account) {
       results.txType = "ethtx";
       results.ethReceived = msgValue;
-      results.info = "Received " + ethers.utils.formatEther(msgValue) + "Ξ from " + txData.tx.from;
+      // results.info = "Received " + ethers.utils.formatEther(msgValue) + "Ξ from " + txData.tx.from;
+      results.info = {
+        type: "ethreceived",
+        from: txData.tx.from,
+        amount: msgValue,
+      };
     }
   }
 
@@ -499,16 +515,30 @@ function parseTx(chainId, account, accounts, functionSelectors, txData) {
       if (event.address == txData.tx.to && event.topics[0] == "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925") {
         const tokenOwner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const operator = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-        let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
-        if (tokens > 1_000_000_100) {
-          results.info = "ERC-20 large approval";
-        } else {
-          results.info = "ERC-20 approved for " + event.address.substring(0, 16);
-        }
+        let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data).toString() : ethers.BigNumber.from(event.topics[3]).toString();
+        // if (tokens > 1_000_000_100) {
+        //   results.info = "ERC-20 large approval";
+        // } else {
+        //   results.info = "ERC-20 approved for " + event.address.substring(0, 16);
+        // }
+        results.info = {
+          type: "erc20approval",
+          tokenOwner,
+          operator,
+          token: event.address,
+          tokens,
+        };
       }
     }
     if (!results.info) {
-      results.info = "ERC-20 approval with no logs";
+      // results.info = "ERC-20 approval with no logs";
+      results.info = {
+        type: "erc20approval",
+        tokenOwner: null,
+        operator: null,
+        token: null,
+        tokens: null,
+      };
     }
   }
 
@@ -524,7 +554,13 @@ function parseTx(chainId, account, accounts, functionSelectors, txData) {
         } else if (from == account) {
           results.info = "Sent ERC-20:" + event.address + " " + tokens + " to " + to;
         } else if (to == account) {
-          results.info = "Received ERC-20:" + event.address + " " + tokens + " from " + from;
+          // results.info = "Received ERC-20:" + event.address + " " + tokens + " from " + from;
+          results.info = {
+            type: "erc20received",
+            from,
+            token: event.address,
+            tokens,
+          };
         }
       }
     }

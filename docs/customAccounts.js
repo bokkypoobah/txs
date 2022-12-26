@@ -280,14 +280,24 @@ const _CUSTOMACCOUNTS = {
           const tokenOwner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
           const tokens = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
           results.ethPaid = tokens;
-          results.info = "Wrapped " + ethers.utils.formatEther(tokens) + "Ξ";
+          // results.info = "Wrapped " + ethers.utils.formatEther(tokens) + "Ξ";
+          results.info = {
+            type: "wethwrap",
+            tokenOwner,
+            amount: tokens,
+          };
           // TODO: Handle WETH
           // Withdrawal (index_topic_1 address src, uint256 wad)
         } else if (event.topics[0] == "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65") {
           const tokenOwner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
           const tokens = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
           results.ethReceived = tokens;
-          results.info = "Unwrapped " + ethers.utils.formatEther(tokens) + "Ξ";
+          // results.info = "Unwrapped " + ethers.utils.formatEther(tokens) + "Ξ";
+          results.info = {
+            type: "wethunwrap",
+            tokenOwner,
+            amount: tokens,
+          };
           // TODO: Handle WETH
         }
       }

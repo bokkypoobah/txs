@@ -118,6 +118,13 @@ const Report = {
               <br />
             </b-popover>
           </template>
+          <template #cell(account)="data">
+            <b-link class="sm" :id="'popover-target-account-' + data.item.txHash + '-' + data.item.account">
+              {{ ensOrAccount(data.item.account) }}
+            </b-link>
+            <b-popover :target="'popover-target-account-' + data.item.txHash + '-' + data.item.account" placement="right" custom-class="popover-max-width">
+            </b-popover>
+          </template>
           <template #cell(from)="data">
             <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.from">
               {{ ensOrAccount(data.item.from) }}
@@ -256,8 +263,9 @@ const Report = {
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
         { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         // { key: 'txHash', label: 'Tx Hash', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-        { key: 'from', label: 'From', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-        { key: 'to', label: 'To', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        // { key: 'from', label: 'From', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        // { key: 'to', label: 'To', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         { key: 'info', label: 'Info', sortable: false, thStyle: 'width: 50%;', tdClass: 'text-truncate' },
         // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
       ],
