@@ -296,6 +296,9 @@ const Report = {
     blocks() {
       return store.getters['data/blocks'];
     },
+    report() {
+      return store.getters['report/report'];
+    },
     assets() {
       return store.getters['data/assets'];
     },
@@ -317,6 +320,33 @@ const Report = {
       return result;
     },
     filteredTransactions() {
+      const results = [];
+      results.push({ blah: "Blah" });
+      console.log(JSON.stringify(this.report, null, 2));
+      if (this.report.transactions) {
+        for (const [index, transaction] of this.report.transactions.entries()) {
+          console.log(index + " " + JSON.stringify(transaction));
+          let include = true;
+          if (include) {
+            results.push({
+              chainId: transaction.chainId,
+              txHash: transaction.txHash,
+              blockNumber: transaction.blockNumber,
+              transactionIndex: transaction.transactionIndex,
+              timestamp: transaction.timestamp,
+              account: transaction.account,
+              from: transaction.from,
+              to: transaction.to,
+              functionCall: transaction.functionCall,
+              exchangeRate: transaction.exchangeRate,
+              info: transaction.info,
+            });
+          }
+        }
+      }
+      return results;
+    },
+    filteredTransactionsOld() {
       const results = [];
       let startPeriod = null;
       let endPeriod = null;
@@ -380,27 +410,27 @@ const Report = {
     },
     filteredSortedTransactions() {
       const results = this.filteredTransactions;
-      if (this.settings.sortOption == 'timestampasc') {
-        results.sort((a, b) => a.timestamp - b.timestamp);
-      } else if (this.settings.sortOption == 'timestampdsc') {
-        results.sort((a, b) => b.timestamp - a.timestamp);
-      } else if (this.settings.sortOption == 'blocknumberasc') {
-        results.sort((a, b) => {
-          if (a.blockNumber == b.blockNumber) {
-            return a.transactionIndex - b.transactionIndex;
-          } else {
-            return a.blockNumber - b.blockNumber;
-          }
-        });
-      } else if (this.settings.sortOption == 'blocknumberdsc') {
-        results.sort((a, b) => {
-          if (a.blockNumber == b.blockNumber) {
-            return b.transactionIndex - a.transactionIndex;
-          } else {
-            return b.blockNumber - a.blockNumber
-          }
-        });
-      }
+      // if (this.settings.sortOption == 'timestampasc') {
+      //   results.sort((a, b) => a.timestamp - b.timestamp);
+      // } else if (this.settings.sortOption == 'timestampdsc') {
+      //   results.sort((a, b) => b.timestamp - a.timestamp);
+      // } else if (this.settings.sortOption == 'blocknumberasc') {
+      //   results.sort((a, b) => {
+      //     if (a.blockNumber == b.blockNumber) {
+      //       return a.transactionIndex - b.transactionIndex;
+      //     } else {
+      //       return a.blockNumber - b.blockNumber;
+      //     }
+      //   });
+      // } else if (this.settings.sortOption == 'blocknumberdsc') {
+      //   results.sort((a, b) => {
+      //     if (a.blockNumber == b.blockNumber) {
+      //       return b.transactionIndex - a.transactionIndex;
+      //     } else {
+      //       return b.blockNumber - a.blockNumber
+      //     }
+      //   });
+      // }
       return results;
     },
     pagedFilteredSortedTransactions() {
@@ -682,12 +712,14 @@ const reportModule = {
                     chainId,
                     txHash: tx.tx.hash,
                     blockNumber: blockNumber,
+                    transactionIndex: tx.txReceipt.transactionIndex,
                     timestamp: block.timestamp,
                     account,
                     from: tx.tx.from,
                     to: tx.tx.to,
                     functionCall: functionCall,
                     exchangeRate: exchangeRate.rate,
+                    info: results.info || {},
                   });
                 }
                 const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
