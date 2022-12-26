@@ -331,10 +331,14 @@ const Report = {
     },
     totalTransactions() {
       let result = 0;
-      for (const [chainId, chainData] of Object.entries(this.txs)) {
-        result = parseInt(result) + Object.keys(chainData).length;
-      }
-      return result;
+      // for (const [chainId, chainData] of Object.entries(this.txs)) {
+      //   result = parseInt(result) + Object.keys(chainData).length;
+      // }
+      // for (const [index, transaction] of this.report.transactions.entries()) {
+      //   result = parseInt(result) + Object.keys(chainData).length;
+      // }
+      // return result;
+      return this.report.transactions && this.report.transactions.length || 0;
     },
     filteredTransactions() {
       const results = [];
