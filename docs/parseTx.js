@@ -573,9 +573,16 @@ function parseTx(chainId, account, accounts, functionSelectors, txData) {
       if (event.address == txData.tx.to && event.topics[0] == "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31") {
         const owner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
         const operator = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-        let approved = ethers.BigNumber.from(event.data) > 0;
+        const approved = ethers.BigNumber.from(event.data) > 0;
         const info = getTokenContractInfo(event.address, accounts);
         results.info = "ERC-721 " + info.symbol + " setApprovalForAll(" + operator + ", " + approved + ")";
+        results.info = {
+          type: "erc721approvalforall",
+          owner,
+          operator,
+          token: event.address,
+          approved,
+        };
       }
     }
   }
@@ -661,6 +668,11 @@ function parseTx(chainId, account, accounts, functionSelectors, txData) {
       const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
       if (receivedERC20Events.length == 1) {
         results.info = "Airdropped ERC-20:" + receivedERC20Events[0].contract + " " + receivedERC20Events[0].tokens + " tokens";
+        results.info = {
+          type: "erc20airdropped",
+          token: receivedERC20Events[0].contract,
+          tokens: receivedERC20Events[0].tokens,
+        };
       } else {
         // TODO: Other cases?
         console.log("  Received Airdrop: " + JSON.stringify(receivedERC20Events));
