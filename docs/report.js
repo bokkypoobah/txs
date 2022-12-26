@@ -287,6 +287,15 @@ const Report = {
       // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
       return results;
     },
+    periodOptionsUnformatted() {
+      const results = [];
+      results.push({ value: null, text: "All", data: { startPeriod: null, endPeriod: null } });
+      results.push(... store.getters['config/periodOptions']);
+      results.push(... store.getters['config/quarterlyOptions']);
+      // results.push({ label: 'Quarterly Periods', options: store.getters['config/quarterlyOptions'] });
+      // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
+      return results;
+    },
     accounts() {
       return store.getters['data/accounts'];
     },
@@ -321,12 +330,48 @@ const Report = {
     },
     filteredTransactions() {
       const results = [];
-      results.push({ blah: "Blah" });
-      console.log(JSON.stringify(this.report, null, 2));
       if (this.report.transactions) {
+        let startPeriod = null;
+        let endPeriod = null;
+        const txhashFilterLower = this.settings.txhashFilter && this.settings.txhashFilter.toLowerCase() || null;
+        const accountFilterLower = this.settings.accountFilter && this.settings.accountFilter.toLowerCase() || null;
+        if (this.settings.period != null && this.settings.period != "nodata") {
+          const periodRecords = this.periodOptionsUnformatted.filter(e => e.value === this.settings.period);
+          if (periodRecords.length > 0) {
+            startPeriod = periodRecords[0].data.startPeriod;
+            endPeriod = periodRecords[0].data.endPeriod;
+          } else {
+            const quarterlyRecords = store.getters['config/quarterlyOptions'].filter(e => e.value == this.settings.period);
+            if (quarterlyRecords.length > 0) {
+              startPeriod = quarterlyRecords[0].data.startPeriod;
+              endPeriod = quarterlyRecords[0].data.endPeriod;
+            }
+          }
+        }
         for (const [index, transaction] of this.report.transactions.entries()) {
-          console.log(index + " " + JSON.stringify(transaction));
           let include = true;
+          if (startPeriod != null && transaction.timestamp < startPeriod.unix()) {
+            include = false;
+          }
+          if (include && endPeriod != null && transaction.timestamp > endPeriod.unix()) {
+            include = false;
+          }
+          if (include && txhashFilterLower != null) {
+            if (!(transaction.txHash.includes(txhashFilterLower))) {
+              include = false;
+            }
+          }
+          if (include && accountFilterLower != null) {
+            const fromENS = this.ensMap[transaction.from] || null;
+            if (
+              !(transaction.from.toLowerCase().includes(accountFilterLower)) &&
+              !(transaction.to.toLowerCase().includes(accountFilterLower)) &&
+              !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
+            ) {
+              include = false;
+            }
+          }
+
           if (include) {
             results.push({
               chainId: transaction.chainId,
@@ -410,27 +455,27 @@ const Report = {
     },
     filteredSortedTransactions() {
       const results = this.filteredTransactions;
-      // if (this.settings.sortOption == 'timestampasc') {
-      //   results.sort((a, b) => a.timestamp - b.timestamp);
-      // } else if (this.settings.sortOption == 'timestampdsc') {
-      //   results.sort((a, b) => b.timestamp - a.timestamp);
-      // } else if (this.settings.sortOption == 'blocknumberasc') {
-      //   results.sort((a, b) => {
-      //     if (a.blockNumber == b.blockNumber) {
-      //       return a.transactionIndex - b.transactionIndex;
-      //     } else {
-      //       return a.blockNumber - b.blockNumber;
-      //     }
-      //   });
-      // } else if (this.settings.sortOption == 'blocknumberdsc') {
-      //   results.sort((a, b) => {
-      //     if (a.blockNumber == b.blockNumber) {
-      //       return b.transactionIndex - a.transactionIndex;
-      //     } else {
-      //       return b.blockNumber - a.blockNumber
-      //     }
-      //   });
-      // }
+      if (this.settings.sortOption == 'timestampasc') {
+        results.sort((a, b) => a.timestamp - b.timestamp);
+      } else if (this.settings.sortOption == 'timestampdsc') {
+        results.sort((a, b) => b.timestamp - a.timestamp);
+      } else if (this.settings.sortOption == 'blocknumberasc') {
+        results.sort((a, b) => {
+          if (a.blockNumber == b.blockNumber) {
+            return a.transactionIndex - b.transactionIndex;
+          } else {
+            return a.blockNumber - b.blockNumber;
+          }
+        });
+      } else if (this.settings.sortOption == 'blocknumberdsc') {
+        results.sort((a, b) => {
+          if (a.blockNumber == b.blockNumber) {
+            return b.transactionIndex - a.transactionIndex;
+          } else {
+            return b.blockNumber - a.blockNumber
+          }
+        });
+      }
       return results;
     },
     pagedFilteredSortedTransactions() {
