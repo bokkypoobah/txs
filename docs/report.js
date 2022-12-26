@@ -741,13 +741,13 @@ const reportModule = {
                 }
                 txsToProcess.sort((a, b) => a.txReceipt.transactionIndex - b.txReceipt.transactionIndex);
                 for (const [index, tx] of txsToProcess.entries()) {
-                  let functionCall = "";
-                  if (tx.tx && tx.tx.to != null && tx.tx.data.length > 9) {
-                    const selector = tx.tx.data.substring(0, 10);
-                    functionCall = functionSelectors[selector] && functionSelectors[selector].length > 0 && functionSelectors[selector][0] || selector;
-                  }
-                  console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash + " " + functionCall);
-                  const results = parseTx(chainId, account, accounts, tx);
+                  // let functionCall = "";
+                  // if (tx.tx && tx.tx.to != null && tx.tx.data.length > 9) {
+                  //   const selector = tx.tx.data.substring(0, 10);
+                  //   functionCall = functionSelectors[selector] && functionSelectors[selector].length > 0 && functionSelectors[selector][0] || selector;
+                  // }
+                  console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
+                  const results = parseTx(chainId, account, accounts, functionSelectors, tx);
                   totalEthPaid = totalEthPaid.add(results.ethPaid);
                   totalEthReceived = totalEthReceived.add(results.ethReceived);
                   const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
@@ -762,9 +762,11 @@ const reportModule = {
                     account,
                     from: tx.tx.from,
                     to: tx.tx.to,
-                    functionCall: functionCall,
+                    functionSelector: results.functionSelector,
+                    functionCall: results.functionCall,
                     exchangeRate: exchangeRate.rate,
-                    info: results.info || {},
+                    info: results.info || "",
+                    txType: results.txType || "unknown",
                   });
                 }
                 const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);

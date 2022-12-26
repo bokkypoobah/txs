@@ -416,7 +416,7 @@ async function accumulateTxResults(provider, account, accumulatedData, txData, b
   // }
 }
 
-function parseTx(chainId, account, accounts, txData) {
+function parseTx(chainId, account, accounts, functionSelectors, txData) {
   // console.log("parseTx - account: " + JSON.stringify(account));
   // console.log("parseTx - txData: " + JSON.stringify(txData));
   const results = {};
@@ -447,6 +447,14 @@ function parseTx(chainId, account, accounts, txData) {
     console.log("receivedInternalEvents: " + txData.tx.hash + " " + JSON.stringify(events.receivedInternalEvents, null, 2));
   }
 
+  if (txData.tx.to != null && txData.tx.data.length > 9) {
+    results.functionSelector = txData.tx.data.substring(0, 10);
+    results.functionCall = functionSelectors[results.functionSelector] && functionSelectors[results.functionSelector].length > 0 && functionSelectors[results.functionSelector][0] || results.functionSelector;
+  } else {
+    results.functionSelector = "";
+    results.functionCall = "";
+  }
+
   if (txData.txReceipt.status == 0) {
     results.info = "Error tx with status 0";
   }
@@ -461,7 +469,7 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // Multisig execute internal transfer
-  if (events.receivedInternalEvents.length > 0 && txData.tx.data.substring(0, 10) == "0xb61d27f6") {
+  if (events.receivedInternalEvents.length > 0 && results.functionSelector == "0xb61d27f6") {
     // TODO: Handle > 1
     if (events.receivedInternalEvents.length == txData.txReceipt.logs.length) {
       results.ethReceived = events.receivedInternalEvents[0].value;
@@ -472,18 +480,21 @@ function parseTx(chainId, account, accounts, txData) {
   // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
     if (txData.tx.from == account && txData.tx.to == account) {
+      results.txType = "ethtx";
       results.info = "Cancel tx";
     } else if (txData.tx.from == account) {
+      results.txType = "ethtx";
       results.ethPaid = msgValue;
       results.info = "Sent " + ethers.utils.formatEther(msgValue) + "Ξ to " + txData.tx.to;
     } else if (txData.tx.to == account) {
+      results.txType = "ethtx";
       results.ethReceived = msgValue;
       results.info = "Received " + ethers.utils.formatEther(msgValue) + "Ξ from " + txData.tx.from;
     }
   }
 
   // ERC-20 approve(address guy, uint256 wad)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0x095ea7b3") {
+  if (!results.info && results.functionSelector == "0x095ea7b3") {
     for (const event of txData.txReceipt.logs) {
       if (event.address == txData.tx.to && event.topics[0] == "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925") {
         const tokenOwner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
@@ -502,7 +513,7 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // ERC-20 transfer(address _to, uint256 _value)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0xa9059cbb") {
+  if (!results.info && results.functionSelector == "0xa9059cbb") {
     for (const event of txData.txReceipt.logs) {
       if (event.address == txData.tx.to && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
         const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
@@ -520,7 +531,7 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // ERC-721 setApprovalForAll(address operator,bool approved)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0xa22cb465") {
+  if (!results.info && results.functionSelector == "0xa22cb465") {
     for (const event of txData.txReceipt.logs) {
       // ApprovalForAll (index_topic_1 address owner, index_topic_2 address operator, bool approved)
       if (event.address == txData.tx.to && event.topics[0] == "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31") {
@@ -534,7 +545,7 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // ERC-721 safeTransferFrom(address from, address to, uint256 tokenId) && transferFrom(address from, address to, uint256 tokenId)
-  if (!results.info && (txData.tx.data.substring(0, 10) == "0x42842e0e" || txData.tx.data.substring(0, 10) == "0x23b872dd")) {
+  if (!results.info && (results.functionSelector == "0x42842e0e" || results.functionSelector == "0x23b872dd")) {
     for (const event of txData.txReceipt.logs) {
       // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 tokenId)
       if (event.address == txData.tx.to && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
@@ -556,7 +567,7 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // ERC-1155 safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes _data)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0xf242432a") {
+  if (!results.info && results.functionSelector == "0xf242432a") {
     for (const event of txData.txReceipt.logs) {
       // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 tokenId)
       if (event.address == txData.tx.to && event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
@@ -627,7 +638,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0x6ba4c138": true, // claim(uint256[] tokenIndices) 0x8A9c4dfe8b9D8962B31e4e16F8321C44d48e246E
     "0x4972a7a7": true, // claim(uint256 amount,bytes32[] merkleProof,tuple makerAsk,bool isERC721) 0xA35dce3e0E6ceb67a30b8D7f4aEe721C949B5970
   };
-  if (!results.info && txData.tx.from == account && txData.tx.data.substring(0, 10) in CLAIMERC20AIRDROPS) {
+  if (!results.info && txData.tx.from == account && results.functionSelector in CLAIMERC20AIRDROPS) {
     const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
     if (receivedERC20Events.length == 1) {
       const info = getTokenContractInfo(receivedERC20Events[0].contract, accounts);
@@ -641,7 +652,7 @@ function parseTx(chainId, account, accounts, txData) {
   const ERC721DROP = {
     "0x7884af44": true, // mintBase(address to, string uri) 0xA8121B153c77cA4dd1da3a9D7cDC4729129c8c6D
   };
-  if (!results.info && txData.tx.from != account && txData.tx.data.substring(0, 10) in ERC721DROP) {
+  if (!results.info && txData.tx.from != account && results.functionSelector in ERC721DROP) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     if (receivedERC721Events.length == 1) {
       const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
@@ -693,7 +704,7 @@ function parseTx(chainId, account, accounts, txData) {
   const BULKINTERNALREFUNDS = {
     "0xfe132c63": true, // refundDifferenceToBidders(address[] bidderAddresses) 0xe0fA9Fb0e30ca86513642112BEE1CBbAA2A0580d
   };
-  if (!results.info && txData.tx.from != account && txData.tx.data.substring(0, 10) in BULKINTERNALREFUNDS) {
+  if (!results.info && txData.tx.from != account && results.functionSelector in BULKINTERNALREFUNDS) {
     const accountData = accounts[account];
     let ethBalance = ethers.BigNumber.from(0);
     for (const [txHash, traceData] of Object.entries(accountData.internalTransactions)) {
@@ -813,7 +824,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0x54ffbd23": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
     "0xe96c3edb": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
   };
-  if (!results.info && txData.tx.data.substring(0, 10) in BULKTRANSFERS) {
+  if (!results.info && results.functionSelector in BULKTRANSFERS) {
     const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
     const sentERC721Events = events.erc721Events.filter(e => e.from == account);
     const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
@@ -860,7 +871,7 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // TokenTrader.TradeListing (index_topic_1 address ownerAddress, index_topic_2 address tokenTraderAddress, index_topic_3 address asset, uint256 buyPrice, uint256 sellPrice, uint256 units, bool buysTokens, bool sellsTokens)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0x3d6a32bd") {
+  if (!results.info && results.functionSelector == "0x3d6a32bd") {
     for (const event of txData.txReceipt.logs) {
       if (event.topics[0] == "0x65ff0f5aef2091ad3616436792adf51be3068c631b081ac0f30f77e3a0e6502d") {
         // let amount = ethers.BigNumber.from(event.data);
@@ -869,7 +880,7 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
   // TokenTrader.MakerWithdrewEther
-  if (!results.info && txData.tx.data.substring(0, 10) == "0x2170ebf7") {
+  if (!results.info && results.functionSelector == "0x2170ebf7") {
     for (const event of txData.txReceipt.logs) {
       if (event.topics[0] == "0x8a93d70d792b644d97d7da8a5798e03bbee85be4537a860a331dbe3ee50eb982") {
         results.ethReceived = ethers.BigNumber.from(event.data);
@@ -878,7 +889,7 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
   // TokenTrader.MakerWithdrewAsset
-  if (!results.info && txData.tx.data.substring(0, 10) == "0xcd53a3b7") {
+  if (!results.info && results.functionSelector == "0xcd53a3b7") {
     for (const event of txData.txReceipt.logs) {
       if (event.topics[0] == "0x1ebbc515a759c3fe8e048867aac7fe458e3a37ac3dd44ffc73a6238cf3003981") {
         let amount = ethers.BigNumber.from(event.data);
@@ -887,7 +898,7 @@ function parseTx(chainId, account, accounts, txData) {
     }
   }
   // TokenTrader.MakerTransferredAsset
-  if (!results.info && txData.tx.data.substring(0, 10) == "0x52954e5a") {
+  if (!results.info && results.functionSelector == "0x52954e5a") {
     for (const event of txData.txReceipt.logs) {
       if (event.topics[0] == "0x127afec6b0ab48f803536010148b79615f4a518f9b574de5b45bc74991c46d51") {
         // let amount = ethers.BigNumber.from(event.data);
@@ -897,47 +908,47 @@ function parseTx(chainId, account, accounts, txData) {
   }
 
   // Umswap swap(uint256[] inTokenIds,uint256[] outTokenIds)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0x0a3cb72e") {
+  if (!results.info && results.functionSelector == "0x0a3cb72e") {
     results.info = "Umswap swap() TODO";
   }
 
   // Umswap newUmswap(address collection,string name,uint256[] tokenIds)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0x8945f054") {
+  if (!results.info && results.functionSelector == "0x8945f054") {
     results.info = "Umswap newUmswap() TODO";
   }
 
   // BokkyPooBahsFixedSupplyTokenFactory deployTokenContract(string symbol, string name, uint8 decimals, uint256 totalSupply)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0xcdaca7d5") {
+  if (!results.info && results.functionSelector == "0xcdaca7d5") {
     results.info = "BokkyPooBahsFixedSupplyTokenFactory deployTokenContract() TODO";
   }
 
   // BokkyPooBahsFixedSupplyTokenFactory transferOwnership(address _newOwner)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0xf2fde38b") {
+  if (!results.info && results.functionSelector == "0xf2fde38b") {
     results.info = "BokkyPooBahsFixedSupplyTokenFactory transferOwnership() TODO";
   }
 
   // BokkyPooBahsFixedSupplyTokenFactory transferOwnership(address _newOwner)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0xd0def521") {
+  if (!results.info && results.functionSelector == "0xd0def521") {
     results.info = "CryptoVoxels Name mint() TODO";
   }
 
   // ExtraBalDaoWithdraw withdraw()
-  if (!results.info && txData.tx.to == "0x755cdba6AE4F479f7164792B318b2a06c759833B" && txData.tx.data.substring(0, 10) == "0x3ccfd60b") {
+  if (!results.info && txData.tx.to == "0x755cdba6AE4F479f7164792B318b2a06c759833B" && results.functionSelector == "0x3ccfd60b") {
     results.info = "ExtraBalDaoWithdraw withdraw TOODO";
   }
 
   // Early contract testing moveToWaves(string wavesAddress, uint256 amount)
-  if (!results.info && txData.tx.data.substring(0, 10) == "0x7f09beca") {
+  if (!results.info && results.functionSelector == "0x7f09beca") {
     results.info = "Testing moveToWaves() TOODO";
   }
 
   // Parity token registry register(address _addr, string _tla, uint256 _base, string _name)
-  if (!results.info && txData.tx.to == "0x5F0281910Af44bFb5fC7e86A404d0304B0e042F1" && txData.tx.data.substring(0, 10) == "0x66b42dcb") {
+  if (!results.info && txData.tx.to == "0x5F0281910Af44bFb5fC7e86A404d0304B0e042F1" && results.functionSelector == "0x66b42dcb") {
     results.info = "Parity token registry register() TOODO";
   }
 
   // Parity signature registry register(string _method)
-  if (!results.info && txData.tx.to == "0x44691B39d1a75dC4E0A0346CBB15E310e6ED1E86" && txData.tx.data.substring(0, 10) == "0xf2c298be") {
+  if (!results.info && txData.tx.to == "0x44691B39d1a75dC4E0A0346CBB15E310e6ED1E86" && results.functionSelector == "0xf2c298be") {
     results.info = "Parity signature registry register() TOODO";
   }
 
@@ -953,7 +964,7 @@ function parseTx(chainId, account, accounts, txData) {
     "0xfc24100b": "buyAccessories(tuple[] orders)", // 0x8d33303023723dE93b213da4EB53bE890e747C63
     "0xc39cbef1": "changeName(uint256 tokenId, string newName)", // 0xC2C747E0F7004F9E8817Db2ca4997657a7746928
   };
-  if (!results.info && txData.tx.data.substring(0, 10) in GENERALCONTRACTMAINTENANCESIGS) {
+  if (!results.info && results.functionSelector in GENERALCONTRACTMAINTENANCESIGS) {
     results.info = "Call " + GENERALCONTRACTMAINTENANCESIGS[txData.tx.data.substring(0, 10)];
     results.ethPaid = msgValue;
   }
