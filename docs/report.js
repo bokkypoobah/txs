@@ -134,6 +134,10 @@ const Report = {
           </template>
           <template #cell(timestamp)="data">
             <b-link @click="showModalTx(data.item.txHash);">{{ formatTimestamp(data.item.timestamp) }}</b-link>
+            <br />
+            <font size="-2">
+              {{ data.item.txHash }}
+            </font>
           </template>
           <template #cell(account)="data">
             <b-link @click="showModalAddress(data.item.account);">{{ ensOrAccount(data.item.account) }}</b-link>
