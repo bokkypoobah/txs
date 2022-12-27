@@ -125,6 +125,52 @@ const Report = {
             <b-popover :target="'popover-target-account-' + data.item.txHash + '-' + data.item.account" placement="right" custom-class="popover-max-width">
             </b-popover>
           </template>
+          <template #cell(info)="data">
+            <div v-if="data.item.info">
+              <div v-if="data.item.info.type == 'ethcancel'">
+                Cancel Tx {{ formatETH(data.item.info.amount, 0) }}Ξ from & to
+                <b-link class="sm" :id="'popover-info-to-' + data.item.txHash">
+                  {{ ensOrAccount(data.item.info.to) }}
+                </b-link>
+              </div>
+              <div v-else-if="data.item.info.type == 'ethsent'">
+                Sent {{ formatETH(data.item.info.amount, 0) }}Ξ to
+                <b-link class="sm" :id="'popover-info-to-' + data.item.txHash">
+                  {{ ensOrAccount(data.item.info.to) }}
+                </b-link>
+              </div>
+              <div v-else-if="data.item.info.type == 'ethreceived'">
+                Received {{ formatETH(data.item.info.amount, 0) }}Ξ from
+                <b-link class="sm" :id="'popover-info-from-' + data.item.txHash">
+                  {{ ensOrAccount(data.item.info.from) }}
+                </b-link>
+              </div>
+              <div v-else>
+                <font size="-2">
+                  {{ data.item.info }}
+                </font>
+              </div>
+              <b-popover :target="'popover-info-to-' + data.item.txHash" placement="right" custom-class="popover-max-width">
+                <template #title>
+                  {{ ensOrAccount(data.item.info.to) }}
+                </template>
+                <b-link @click="copyToClipboard(data.item.info.to);">Copy account to clipboard</b-link>
+                <br />
+                <b-link :href="'https://etherscan.io/address/' + data.item.info.to" target="_blank">View 'to' account in etherscan.io</b-link>
+              </b-popover>
+              <b-popover :target="'popover-info-from-' + data.item.txHash" placement="right" custom-class="popover-max-width">
+                <template #title>
+                  {{ ensOrAccount(data.item.info.from) }}
+                </template>
+                <b-link @click="copyToClipboard(data.item.info.from);">Copy account to clipboard</b-link>
+                <br />
+                <b-link :href="'https://etherscan.io/address/' + data.item.info.from" target="_blank">View 'from' account in etherscan.io</b-link>
+              </b-popover>
+            </div>
+            <div v-else>
+              No Info
+            </div>
+          </template>
           <template #cell(from)="data">
             <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.from">
               {{ ensOrAccount(data.item.from) }}
@@ -501,12 +547,16 @@ const Report = {
       }
       return null;
     },
-    formatETH(e) {
+    formatETH(e, precision = 9) {
       try {
-        return e ? parseFloat(ethers.utils.formatEther(e)).toFixed(9) : null;
+        if (precision == 0) {
+          return e ? ethers.utils.formatEther(e) : null;
+        } else {
+          return e ? parseFloat(ethers.utils.formatEther(e)).toFixed(precision) : null;
+        }
       } catch (err) {
       }
-      return e.toFixed(9);
+      return e.toFixed(precision);
     },
     saveSettings() {
       localStorage.reportSettings = JSON.stringify(this.settings);
