@@ -131,6 +131,9 @@ const dataModule = {
     db: state => state.db,
   },
   mutations: {
+    setState(state, info) {
+      Vue.set(state, info.name, info.data);
+    },
     toggleAccountInfoField(state, info) {
       Vue.set(state.accountsInfo[info.chainId][info.account], info.field, !state.accountsInfo[info.chainId][info.account][info.field]);
     },
@@ -397,7 +400,7 @@ const dataModule = {
         for (let type of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'ensMap', 'assets', 'exchangeRates']) {
           const data = await db0.cache.where("objectName").equals(type).toArray();
           if (data.length == 1) {
-            context.state[type] = data[0].object;
+            context.commit('setState', { name: type, data: data[0].object });
           }
         }
       }

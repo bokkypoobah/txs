@@ -749,6 +749,9 @@ const reportModule = {
     report: state => state.report,
   },
   mutations: {
+    setState(state, info) {
+      Vue.set(state, info.name, info.data);
+    },
     setReport(state, report) {
       Vue.set(state, 'report', report);
     },
@@ -763,7 +766,7 @@ const reportModule = {
         for (let type of ['report']) {
           const data = await db0.cache.where("objectName").equals(type).toArray();
           if (data.length == 1) {
-            context.state[type] = data[0].object;
+            context.commit('setState', { name: type, data: data[0].object });
           }
         }
       }

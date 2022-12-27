@@ -447,6 +447,11 @@ function parseTx(chainId, account, accounts, functionSelectors, txData) {
     results.functionCall = "";
   }
 
+  if (results.functionCall != "") {
+    console.log("functionCall: " + results.functionCall);
+    console.log("txData.tx.data: " + txData.tx.data);
+  }
+
   if (txData.txReceipt.status == 0) {
     results.info = "Error tx with status 0";
   }
