@@ -26,6 +26,15 @@ const Report = {
           <b-link :href="'https://x2y2.io/user/' + modalAddress + '/items'" target="_blank">View account in x2y2.io</b-link>
         </b-modal>
 
+        <b-modal id="modal-tx" hide-footer size="lg">
+          <template #modal-title>
+            <font size="-1">{{ modalTx }}</font>
+          </template>
+          <b-link @click="copyToClipboard(modalTx);">Copy tx hash to clipboard</b-link>
+          <br />
+          <b-link :href="'https://etherscan.io/tx/' + modalTx" target="_blank">View tx in etherscan.io</b-link>
+        </b-modal>
+
         <div class="d-flex flex-wrap m-0 p-0">
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input>
@@ -124,22 +133,7 @@ const Report = {
             </b-form-checkbox>
           </template>
           <template #cell(timestamp)="data">
-            <b-link class="sm" :id="'popover-target-' + data.item.txHash">
-              {{ formatTimestamp(data.item.timestamp) }}
-            </b-link>
-            <br />
-            <font size="-2">
-              {{ data.item.txHash }}
-            </font>
-            <b-popover :target="'popover-target-' + data.item.txHash" placement="right" custom-class="popover-max-width">
-              <template #title>
-                {{ 'Tx: ' + data.item.txHash.substring(0, 16) + '...' }}
-              </template>
-              <b-link @click="copyToClipboard(data.item.txHash);">Copy tx hash to clipboard</b-link>
-              <br />
-              <b-link :href="'https://etherscan.io/tx/' + data.item.txHash" target="_blank">View tx in etherscan.io</b-link>
-              <br />
-            </b-popover>
+            <b-link @click="showModalTx(data.item.txHash);">{{ formatTimestamp(data.item.timestamp) }}</b-link>
           </template>
           <template #cell(account)="data">
             <b-link @click="showModalAddress(data.item.account);">{{ ensOrAccount(data.item.account) }}</b-link>
@@ -270,6 +264,7 @@ const Report = {
         version: 1,
       },
       modalAddress: null,
+      modalTx: null,
       accountTypes: [
         { value: null, text: '(unknown)' },
         { value: 'eoa', text: 'EOA' },
@@ -647,6 +642,10 @@ const Report = {
     showModalAddress(modalAddress) {
       this.modalAddress = modalAddress;
       this.$bvModal.show('modal-account');
+    },
+    showModalTx(modalTx) {
+      this.modalTx = modalTx;
+      this.$bvModal.show('modal-tx');
     },
     copyToClipboard(str) {
       navigator.clipboard.writeText(str);

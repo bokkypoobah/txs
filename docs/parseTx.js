@@ -18,8 +18,8 @@ function getTokenContractInfo(contract, accounts) {
   return { name, symbol, decimals };
 }
 
-let _interfaces = null;
 
+let _interfaces = null;
 function getInterfaces() {
   if (!_interfaces) {
     _interfaces = {
@@ -38,17 +38,9 @@ function getInterfaces() {
   return _interfaces;
 }
 
+
 function getEvents(account, accounts, txData) {
   const interfaces = getInterfaces();
-  // const erc1155Interface = new ethers.utils.Interface(ERC1155ABI);
-  // const wethInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"].abi);
-  // const seaportInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x00000000006c3852cbEf3e08E8dF289169EdE581"].abi);
-  // const blurInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x000000000000Ad05Ccc4F10045630fb830B95127"].abi);
-  // const wyvernInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x7Be8076f4EA4A4AD08075C2508e481d6C946D12b"].abi);
-  // const looksRareInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x59728544B08AB483533076417FbBB2fD0B17CE3a"].abi);
-  // const x2y2Interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3"].abi);
-  // const nftxInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d"].abi);
-  // const ensRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
   const erc20Events = [];
   const wethDepositEvents = [];
   const wethWithdrawalEvents = [];
