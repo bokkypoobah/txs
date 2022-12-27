@@ -377,7 +377,7 @@ const Report = {
             const fromENS = this.ensMap[transaction.from] || null;
             if (
               !(transaction.from.toLowerCase().includes(accountFilterLower)) &&
-              !(transaction.to.toLowerCase().includes(accountFilterLower)) &&
+              // !(transaction.to.toLowerCase().includes(accountFilterLower)) &&
               !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
             ) {
               include = false;
