@@ -128,19 +128,19 @@ const Report = {
           <template #cell(info)="data">
             <div v-if="data.item.info">
               <div v-if="data.item.info.type == 'ethcancel'">
-                Cancel Tx {{ formatETH(data.item.info.amount, 0) }}Ξ from & to
+                Cancel Tx {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> from & to
                 <b-link class="sm" :id="'popover-info-to-' + data.item.txHash">
                   {{ ensOrAccount(data.item.info.to) }}
                 </b-link>
               </div>
               <div v-else-if="data.item.info.type == 'ethsent'">
-                Sent {{ formatETH(data.item.info.amount, 0) }}Ξ to
+                Sent {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> to
                 <b-link class="sm" :id="'popover-info-to-' + data.item.txHash">
                   {{ ensOrAccount(data.item.info.to) }}
                 </b-link>
               </div>
               <div v-else-if="data.item.info.type == 'ethreceived'">
-                Received {{ formatETH(data.item.info.amount, 0) }}Ξ from
+                Received {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> from
                 <b-link class="sm" :id="'popover-info-from-' + data.item.txHash">
                   {{ ensOrAccount(data.item.info.from) }}
                 </b-link>
@@ -173,10 +173,10 @@ const Report = {
           </template>
           <template #cell(balance)="data">
             <div v-if="data.item.balance">
-              {{ formatETH(data.item.balance, 0) }}Ξ
+              {{ formatETH(data.item.balance, 0) }}<font size="-2">Ξ</font>
               <br />
               <font size="-2">
-                {{ reportingCurrency + ' ' + formatETH(data.item.balanceInReportingCurrency, 2) }} @ {{ formatETH(data.item.exchangeRate, 2) }}
+                {{ formatETH(data.item.balanceInReportingCurrency, 2) }} {{ reportingCurrency }} @ {{ formatETH(data.item.exchangeRate, 2) }}
               </font>
             </div>
           </template>
