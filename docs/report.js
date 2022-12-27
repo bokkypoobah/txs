@@ -174,10 +174,11 @@ const Report = {
           <template #cell(balance)="data">
             <div v-if="data.item.balance">
               {{ formatETH(data.item.balance, 0) }}Ξ
+              <br />
+              <font size="-2">
+                {{ reportingCurrency + ' ' + formatETH(data.item.balanceInReportingCurrency, 2) }} @ {{ formatETH(data.item.exchangeRate, 2) }}
+              </font>
             </div>
-            <font size="-2">
-              {{ reportingCurrency + ' ' + formatETH(data.item.balanceInReportingCurrency, 2) }} @ {{ formatETH(data.item.exchangeRate, 2) }}
-            </font>
           </template>
           <template #cell(from)="data">
             <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.from">
