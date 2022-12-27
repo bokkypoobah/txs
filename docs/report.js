@@ -171,6 +171,14 @@ const Report = {
               No Info
             </div>
           </template>
+          <template #cell(balance)="data">
+            <div v-if="data.item.balance">
+              {{ formatETH(data.item.balance, 0) }}Ξ
+            </div>
+            <font size="-2">
+              {{ reportingCurrency + ' ' + formatETH(data.item.balanceInReportingCurrency, 2) }} @ {{ formatETH(data.item.exchangeRate, 2) }}
+            </font>
+          </template>
           <template #cell(from)="data">
             <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.from">
               {{ ensOrAccount(data.item.from) }}
@@ -313,6 +321,7 @@ const Report = {
         // { key: 'from', label: 'From', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         // { key: 'to', label: 'To', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         { key: 'info', label: 'Info', sortable: false, thStyle: 'width: 50%;', tdClass: 'text-truncate' },
+        { key: 'balance', label: 'Balance', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
       ],
     }
@@ -349,6 +358,9 @@ const Report = {
       // results.push({ label: 'Quarterly Periods', options: store.getters['config/quarterlyOptions'] });
       // results.push({ value: "nodata", text: "(tx hashes with no data)", data: null });
       return results;
+    },
+    reportingCurrency() {
+      return store.getters['config/settings'].reportingCurrency;
     },
     accounts() {
       return store.getters['data/accounts'];
@@ -443,6 +455,8 @@ const Report = {
               functionCall: transaction.functionCall,
               exchangeRate: transaction.exchangeRate,
               info: transaction.info,
+              balance: transaction.balance,
+              balanceInReportingCurrency: transaction.balanceInReportingCurrency,
             });
           }
         }
@@ -802,13 +816,14 @@ const reportModule = {
                   }
                 }
                 txsToProcess.sort((a, b) => a.txReceipt.transactionIndex - b.txReceipt.transactionIndex);
+                const balanceInReportingCurrency = ethers.utils.formatEther(balance) * exchangeRate.rate;
                 for (const [index, tx] of txsToProcess.entries()) {
                   // let functionCall = "";
                   // if (tx.tx && tx.tx.to != null && tx.tx.data.length > 9) {
                   //   const selector = tx.tx.data.substring(0, 10);
                   //   functionCall = functionSelectors[selector] && functionSelectors[selector].length > 0 && functionSelectors[selector][0] || selector;
                   // }
-                  console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
+                  // console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
                   const results = parseTx(chainId, account, accounts, functionSelectors, tx);
                   totalEthPaid = totalEthPaid.add(results.ethPaid);
                   totalEthReceived = totalEthReceived.add(results.ethReceived);
@@ -829,12 +844,13 @@ const reportModule = {
                     exchangeRate: exchangeRate.rate,
                     info: results.info || "",
                     txType: results.txType || "unknown",
+                    balance: (index + 1 == txsToProcess.length) ? balance : null,
+                    balanceInReportingCurrency: (index + 1 == txsToProcess.length) ? balanceInReportingCurrency : null,
                   });
                 }
                 const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
                 const diff = balance.sub(expectedBalance);
-                const balanceInReportingCurrency = ethers.utils.formatEther(balance) * exchangeRate.rate;
-                console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
+                // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
                 prevBalance = balance;
               }
               blocksProcessed++;
