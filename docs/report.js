@@ -3,6 +3,35 @@ const Report = {
     <div class="m-0 p-0">
       <b-card no-body no-header class="border-0">
 
+        <b-modal id="modal-account" hide-footer size="md">
+          <template #modal-title>
+            <font size="-1">{{ ensOrAccount(modalAddress) }}</font>
+          </template>
+          <b-link @click="copyToClipboard(modalAddress);">Copy account to clipboard</b-link>
+          <br />
+          <b-link :href="'https://etherscan.io/address/' + modalAddress" target="_blank">View account in etherscan.io</b-link>
+          <br />
+          <b-link :href="'https://opensea.io/' + modalAddress + '/'" target="_blank">View account in opensea.io</b-link>
+          <br />
+          <b-link :href="'https://looksrare.org/accounts/' + modalAddress + '#owned'" target="_blank">View account in looksrare.org</b-link>
+
+
+          <!--
+          <b-link :href="'https://looksrare.org/accounts/0xBeeef66749B64Afe43Bbc9475635Eb510cFE4922#owned' + data.item.tokenId + '#owned'" v-b-popover.hover.bottom="'View in looksrare.org'" target="_blank">
+            LooksRare
+          </b-link>
+          <br />
+          <b-link :href="'https://x2y2.io/eth/0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85/' + data.item.tokenId" v-b-popover.hover.bottom="'View in x2y2.io'" target="_blank">
+            X2Y2
+          </b-link>
+          <br />
+          <b-link :href="'https://etherscan.io/enslookup-search?search=' + data.item.name" v-b-popover.hover.bottom="'View in etherscan.io'" target="_blank">
+            EtherScan
+          </b-link>
+          -->
+
+        </b-modal>
+
         <div class="d-flex flex-wrap m-0 p-0">
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input>
@@ -119,56 +148,32 @@ const Report = {
             </b-popover>
           </template>
           <template #cell(account)="data">
-            <b-link class="sm" :id="'popover-target-account-' + data.item.txHash + '-' + data.item.account">
-              {{ ensOrAccount(data.item.account) }}
-            </b-link>
-            <b-popover :target="'popover-target-account-' + data.item.txHash + '-' + data.item.account" placement="right" custom-class="popover-max-width">
-            </b-popover>
+            <b-link @click="showModalAddress(data.item.account);">{{ ensOrAccount(data.item.account) }}</b-link>
           </template>
           <template #cell(info)="data">
             <div v-if="data.item.info">
               <div v-if="data.item.info.type == 'ethcancel'">
                 Cancel Tx {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> from & to
-                <b-link class="sm" :id="'popover-info-to-' + data.item.txHash">
-                  {{ ensOrAccount(data.item.info.to) }}
-                </b-link>
+                <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
               </div>
               <div v-else-if="data.item.info.type == 'ethsent'">
                 Sent {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> to
-                <b-link class="sm" :id="'popover-info-to-' + data.item.txHash">
-                  {{ ensOrAccount(data.item.info.to) }}
-                </b-link>
+                <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
               </div>
               <div v-else-if="data.item.info.type == 'ethreceived'">
                 Received {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> from
-                <b-link class="sm" :id="'popover-info-from-' + data.item.txHash">
-                  {{ ensOrAccount(data.item.info.from) }}
-                </b-link>
+                <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
               </div>
               <div v-else>
                 <font size="-2">
                   {{ data.item.info }}
                 </font>
               </div>
-              <b-popover :target="'popover-info-to-' + data.item.txHash" placement="right" custom-class="popover-max-width">
-                <template #title>
-                  {{ ensOrAccount(data.item.info.to) }}
-                </template>
-                <b-link @click="copyToClipboard(data.item.info.to);">Copy account to clipboard</b-link>
-                <br />
-                <b-link :href="'https://etherscan.io/address/' + data.item.info.to" target="_blank">View 'to' account in etherscan.io</b-link>
-              </b-popover>
-              <b-popover :target="'popover-info-from-' + data.item.txHash" placement="right" custom-class="popover-max-width">
-                <template #title>
-                  {{ ensOrAccount(data.item.info.from) }}
-                </template>
-                <b-link @click="copyToClipboard(data.item.info.from);">Copy account to clipboard</b-link>
-                <br />
-                <b-link :href="'https://etherscan.io/address/' + data.item.info.from" target="_blank">View 'from' account in etherscan.io</b-link>
-              </b-popover>
             </div>
             <div v-else>
-              No Info
+              <font size="-2">
+                TODO: {{ data.item.functionCall }}
+              </font>
             </div>
           </template>
           <template #cell(balance)="data">
@@ -270,6 +275,7 @@ const Report = {
         sortOption: 'timestampdsc',
         version: 1,
       },
+      modalAddress: null,
       accountTypes: [
         { value: null, text: '(unknown)' },
         { value: 'eoa', text: 'EOA' },
@@ -643,6 +649,10 @@ const Report = {
         }
       }
       return result == null || result.length == 0 ? null : (length == 0 ? result : result.substring(0, length));
+    },
+    showModalAddress(modalAddress) {
+      this.modalAddress = modalAddress;
+      this.$bvModal.show('modal-account');
     },
     copyToClipboard(str) {
       // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/copyToClipboard.md
