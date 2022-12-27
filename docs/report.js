@@ -9,27 +9,21 @@ const Report = {
           </template>
           <b-link @click="copyToClipboard(modalAddress);">Copy account to clipboard</b-link>
           <br />
+          <span v-if="ensOrNull(modalAddress) != null && ensOrNull(modalAddress).length > 0">
+            <b-link @click="copyToClipboard(ensOrNull(modalAddress));">Copy ENS name to clipboard</b-link>
+            <br />
+            <b-link :href="'https://app.ens.domains/name/' + ensOrNull(modalAddress)" target="_blank">View ENS name in app.ens.domains</b-link>
+            <br />
+            <b-link :href="'https://etherscan.io/enslookup-search?search=' + ensOrNull(modalAddress)" target="_blank">View ENS name in etherscan.io</b-link>
+            <br />
+          </span>
           <b-link :href="'https://etherscan.io/address/' + modalAddress" target="_blank">View account in etherscan.io</b-link>
           <br />
           <b-link :href="'https://opensea.io/' + modalAddress + '/'" target="_blank">View account in opensea.io</b-link>
           <br />
           <b-link :href="'https://looksrare.org/accounts/' + modalAddress + '#owned'" target="_blank">View account in looksrare.org</b-link>
-
-
-          <!--
-          <b-link :href="'https://looksrare.org/accounts/0xBeeef66749B64Afe43Bbc9475635Eb510cFE4922#owned' + data.item.tokenId + '#owned'" v-b-popover.hover.bottom="'View in looksrare.org'" target="_blank">
-            LooksRare
-          </b-link>
           <br />
-          <b-link :href="'https://x2y2.io/eth/0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85/' + data.item.tokenId" v-b-popover.hover.bottom="'View in x2y2.io'" target="_blank">
-            X2Y2
-          </b-link>
-          <br />
-          <b-link :href="'https://etherscan.io/enslookup-search?search=' + data.item.name" v-b-popover.hover.bottom="'View in etherscan.io'" target="_blank">
-            EtherScan
-          </b-link>
-          -->
-
+          <b-link :href="'https://x2y2.io/user/' + modalAddress + '/items'" target="_blank">View account in x2y2.io</b-link>
         </b-modal>
 
         <div class="d-flex flex-wrap m-0 p-0">
@@ -655,24 +649,31 @@ const Report = {
       this.$bvModal.show('modal-account');
     },
     copyToClipboard(str) {
-      // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/copyToClipboard.md
-      const el = document.createElement('textarea');
-      el.value = str;
-      el.setAttribute('readonly', '');
-      el.style.position = 'absolute';
-      el.style.left = '-9999px';
-      document.body.appendChild(el);
-      const selected =
-        document.getSelection().rangeCount > 0
-          ? document.getSelection().getRangeAt(0)
-          : false;
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-      if (selected) {
-        document.getSelection().removeAllRanges();
-        document.getSelection().addRange(selected);
-      }
+      navigator.clipboard.writeText(str);
+      // Below does not work when copying from modal dialog window
+      // // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/copyToClipboard.md
+      // const el = document.createElement('textarea');
+      // console.log("HERE 1");
+      // el.value = str;
+      // el.setAttribute('readonly', '');
+      // el.style.position = 'absolute';
+      // el.style.left = '-9999px';
+      // document.body.appendChild(el);
+      // console.log("HERE 2");
+      // const selected =
+      //   document.getSelection().rangeCount > 0
+      //     ? document.getSelection().getRangeAt(0)
+      //     : false;
+      // el.select();
+      // console.log("HERE 3");
+      // document.execCommand('copy');
+      // document.body.removeChild(el);
+      // console.log("HERE 4");
+      // if (selected) {
+      //   document.getSelection().removeAllRanges();
+      //   document.getSelection().addRange(selected);
+      // }
+      // console.log("HERE 5");
     },
     exportTransactions() {
       console.log("exportTransactions");
