@@ -125,6 +125,9 @@ const _CUSTOMACCOUNTS = {
           }
         }
       }
+      if (!results.info) {
+        results.info = "CryptoPunksV1.FailedTx?";
+      }
     },
   },
   "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB": {
@@ -139,7 +142,7 @@ const _CUSTOMACCOUNTS = {
       for (const event of txData.txReceipt.logs) {
         if (event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
           const log = interface.parseLog(event);
-          console.log(JSON.stringify(log));
+          // console.log(JSON.stringify(log));
           if (log.name == "Assign") {
             const [to, punkIndex] = log.args;
               results.info = "CryptoPunks.Assign " + punkIndex + " to " + to;
@@ -173,6 +176,9 @@ const _CUSTOMACCOUNTS = {
             results.info = "CryptoPunks.PunkNoLongerForSale " + punkIndex;
           }
         }
+      }
+      if (!results.info) {
+        results.info = "CryptoPunks.FailedTx?";
       }
     },
   },
