@@ -64,7 +64,7 @@ const Report = {
             <b-form-input type="text" readonly size="sm" id="modaltx-from" :value="modalTx.tx.from" class="w-75"></b-form-input>
           </b-form-group>
           <b-form-group v-if="modalTx.tx" label="To:" label-for="modaltx-to" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-to" :value="modalTx.tx.to" class="w-75"></b-form-input>
+            <b-form-input type="text" readonly size="sm" id="modaltx-to" :value="modalTx.tx.to && modalTx.tx.to.length > 2 && modalTx.tx.to || 'Contract Deployment'" class="w-75"></b-form-input>
           </b-form-group>
           <b-form-group v-if="modalTx.functionCall" label="Function Call:" label-for="modaltx-functioncall" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
             <b-form-input type="text" readonly size="sm" id="modaltx-functioncall" :value="modalTx.functionCall" class="w-75"></b-form-input>
