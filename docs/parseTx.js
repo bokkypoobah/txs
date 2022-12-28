@@ -477,29 +477,28 @@ function parseTx(chainId, account, accounts, functionSelectors, txData) {
   // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
     if (txData.tx.from == account && txData.tx.to == account) {
-      results.txType = "ethtx";
-      // results.info = "Cancel tx";
       results.info = {
-        type: "ethcancel",
+        type: "eth",
+        action: "cancel",
         from: txData.tx.from,
         to: txData.tx.to,
         amount: msgValue,
       };
     } else if (txData.tx.from == account) {
-      results.txType = "ethtx";
       results.ethPaid = msgValue;
       // results.info = "Sent " + ethers.utils.formatEther(msgValue) + "Ξ to " + txData.tx.to;
       results.info = {
-        type: "ethsent",
+        type: "eth",
+        action: "sent",
         to: txData.tx.to,
         amount: msgValue,
       };
     } else if (txData.tx.to == account) {
-      results.txType = "ethtx";
       results.ethReceived = msgValue;
       // results.info = "Received " + ethers.utils.formatEther(msgValue) + "Ξ from " + txData.tx.from;
       results.info = {
-        type: "ethreceived",
+        type: "eth",
+        action: "received",
         from: txData.tx.from,
         amount: msgValue,
       };

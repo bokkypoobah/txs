@@ -192,17 +192,19 @@ const Report = {
           </template>
           <template #cell(info)="data">
             <div v-if="data.item.info">
-              <div v-if="data.item.info.type == 'ethcancel'">
-                Cancel Tx {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> from & to
-                <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
-              </div>
-              <div v-else-if="data.item.info.type == 'ethsent'">
-                Sent {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> to
-                <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
-              </div>
-              <div v-else-if="data.item.info.type == 'ethreceived'">
-                Received {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> from
-                <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
+              <div v-if="data.item.info.type == 'eth'">
+                <div v-if="data.item.info.action == 'cancel'">
+                  Cancel Tx {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> from & to
+                  <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
+                </div>
+                <div v-else-if="data.item.info.action == 'sent'">
+                  Sent {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> to
+                  <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
+                </div>
+                <div v-else-if="data.item.info.action == 'received'">
+                  Received {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font> from
+                  <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
+                </div>
               </div>
               <div v-else>
                 <font size="-2">
@@ -943,7 +945,8 @@ const reportModule = {
                     functionCall: results.functionCall,
                     exchangeRate: exchangeRate.rate,
                     info: results.info || "",
-                    txType: results.txType || "unknown",
+                    txType: results.info && results.info.type || "unknown",
+                    txAction: results.info && results.info.action || "unknown",
                     balance: (index + 1 == txsToProcess.length) ? balance : null,
                     balanceInReportingCurrency: (index + 1 == txsToProcess.length) ? balanceInReportingCurrency : null,
                   });
