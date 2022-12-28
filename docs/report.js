@@ -1016,7 +1016,7 @@ const reportModule = {
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
             }
 
-            console.log("transactions: " + JSON.stringify(transactions, null, 2));
+            // console.log("transactions: " + JSON.stringify(transactions, null, 2));
             context.commit('setReport', { transactions });
             context.dispatch('saveData', ['report']);
           }

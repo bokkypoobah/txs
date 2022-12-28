@@ -85,6 +85,97 @@ const _CUSTOMACCOUNTS = {
       results.ethPaid = ethers.BigNumber.from(txData.tx.value).toString();
     },
   },
+  "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D": {
+    mask: MASK_ISCONTRACT,
+    symbol: "CryptoPunksV1",
+    name: "CryptoPunksV1",
+    decimals: null,
+    abi: [{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"maxForThisRun","type":"uint256"}],"name":"reservePunksForOwner","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"punksOfferedForSale","outputs":[{"name":"isForSale","type":"bool"},{"name":"punkIndex","type":"uint256"},{"name":"seller","type":"address"},{"name":"minValue","type":"uint256"},{"name":"onlySellTo","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"withdraw","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"imageHash","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"nextPunkIndexToAssign","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"punkIndexToAddress","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"standard","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"}],"name":"buyPunk","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"punkIndex","type":"uint256"}],"name":"transferPunk","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"numberOfPunksToReserve","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"numberOfPunksReserved","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"},{"name":"minSalePriceInWei","type":"uint256"},{"name":"toAddress","type":"address"}],"name":"offerPunkForSaleToAddress","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"punksRemainingToAssign","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"},{"name":"minSalePriceInWei","type":"uint256"}],"name":"offerPunkForSale","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"}],"name":"getPunk","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"pendingWithdrawals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"}],"name":"punkNoLongerForSale","outputs":[],"payable":false,"type":"function"},{"inputs":[],"payable":true,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"punkIndex","type":"uint256"}],"name":"Assign","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"punkIndex","type":"uint256"}],"name":"PunkTransfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"punkIndex","type":"uint256"},{"indexed":false,"name":"minValue","type":"uint256"},{"indexed":true,"name":"toAddress","type":"address"}],"name":"PunkOffered","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"punkIndex","type":"uint256"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":true,"name":"fromAddress","type":"address"},{"indexed":true,"name":"toAddress","type":"address"}],"name":"PunkBought","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"punkIndex","type":"uint256"}],"name":"PunkNoLongerForSale","type":"event"}],
+    process: function(txData, account, accounts, events, results) {
+      console.log("CryptoPunksV1");
+      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D"].abi);
+      for (const event of txData.txReceipt.logs) {
+        if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D") {
+          const log = interface.parseLog(event);
+          if (log.name == "Assign") {
+            const [to, punkIndex] = log.args;
+              results.info = "CryptoPunksV1.Assign " + punkIndex + " to " + to;
+            // if (to == account) {
+            //   results.info = "Purchased/Received MoonCatRescue " + catId + " from " + from + " for " + ethers.utils.formatEther(price) + "Ξ";
+            //   results.ethPaid = price;
+            // } else if (from == account) {
+            //   results.info = "Sold/Sent MoonCatRescue " + catId + " to " + to + " for " + ethers.utils.formatEther(price) + "Ξ";
+            //   results.ethReceived = price;
+            // }
+          } else if (log.name == "Transfer") {
+            const [from, to, value] = log.args;
+            results.info = "CryptoPunksV1.Transfer " + value + " from " + from + " to " + to;
+          } else if (log.name == "PunkTransfer") {
+            const [from, to, punkIndex] = log.args;
+            results.info = "CryptoPunksV1.PunkTransfer " + punkIndex + " from " + from + " to " + to;
+          } else if (log.name == "PunkOffered") {
+            const [punkIndex, minValue, toAddress] = log.args;
+            results.info = "CryptoPunksV1.PunkOffered " + punkIndex + " " + minValue + " " + toAddress;
+          } else if (log.name == "PunkBought") {
+            const [punkIndex, value, fromAddress, toAddress] = log.args;
+            results.info = "CryptoPunksV1.PunkBought " + punkIndex + " " + value + " from " + fromAddress + " to " + toAddress;
+          } else if (log.name == "PunkNoLongerForSale") {
+            const [punkIndex] = log.args;
+            results.info = "CryptoPunksV1.PunkNoLongerForSale " + punkIndex;
+          }
+        }
+      }
+    },
+  },
+  "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB": {
+    mask: MASK_ISCONTRACT,
+    symbol: "CryptoPunks",
+    name: "CryptoPunks",
+    decimals: null,
+    abi: [{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"punksOfferedForSale","outputs":[{"name":"isForSale","type":"bool"},{"name":"punkIndex","type":"uint256"},{"name":"seller","type":"address"},{"name":"minValue","type":"uint256"},{"name":"onlySellTo","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"}],"name":"enterBidForPunk","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"},{"name":"minPrice","type":"uint256"}],"name":"acceptBidForPunk","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"addresses","type":"address[]"},{"name":"indices","type":"uint256[]"}],"name":"setInitialOwners","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"withdraw","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"imageHash","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"nextPunkIndexToAssign","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"punkIndexToAddress","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"standard","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"punkBids","outputs":[{"name":"hasBid","type":"bool"},{"name":"punkIndex","type":"uint256"},{"name":"bidder","type":"address"},{"name":"value","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"allInitialOwnersAssigned","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"allPunksAssigned","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"}],"name":"buyPunk","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"punkIndex","type":"uint256"}],"name":"transferPunk","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"}],"name":"withdrawBidForPunk","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"to","type":"address"},{"name":"punkIndex","type":"uint256"}],"name":"setInitialOwner","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"},{"name":"minSalePriceInWei","type":"uint256"},{"name":"toAddress","type":"address"}],"name":"offerPunkForSaleToAddress","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"punksRemainingToAssign","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"},{"name":"minSalePriceInWei","type":"uint256"}],"name":"offerPunkForSale","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"}],"name":"getPunk","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"pendingWithdrawals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"punkIndex","type":"uint256"}],"name":"punkNoLongerForSale","outputs":[],"payable":false,"type":"function"},{"inputs":[],"payable":true,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"punkIndex","type":"uint256"}],"name":"Assign","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"punkIndex","type":"uint256"}],"name":"PunkTransfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"punkIndex","type":"uint256"},{"indexed":false,"name":"minValue","type":"uint256"},{"indexed":true,"name":"toAddress","type":"address"}],"name":"PunkOffered","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"punkIndex","type":"uint256"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":true,"name":"fromAddress","type":"address"}],"name":"PunkBidEntered","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"punkIndex","type":"uint256"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":true,"name":"fromAddress","type":"address"}],"name":"PunkBidWithdrawn","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"punkIndex","type":"uint256"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":true,"name":"fromAddress","type":"address"},{"indexed":true,"name":"toAddress","type":"address"}],"name":"PunkBought","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"punkIndex","type":"uint256"}],"name":"PunkNoLongerForSale","type":"event"}],
+    process: function(txData, account, accounts, events, results) {
+      console.log("CryptoPunks");
+      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB"].abi);
+      for (const event of txData.txReceipt.logs) {
+        if (event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
+          const log = interface.parseLog(event);
+          console.log(JSON.stringify(log));
+          if (log.name == "Assign") {
+            const [to, punkIndex] = log.args;
+              results.info = "CryptoPunks.Assign " + punkIndex + " to " + to;
+            // if (to == account) {
+            //   results.info = "Purchased/Received MoonCatRescue " + catId + " from " + from + " for " + ethers.utils.formatEther(price) + "Ξ";
+            //   results.ethPaid = price;
+            // } else if (from == account) {
+            //   results.info = "Sold/Sent MoonCatRescue " + catId + " to " + to + " for " + ethers.utils.formatEther(price) + "Ξ";
+            //   results.ethReceived = price;
+            // }
+          } else if (log.name == "Transfer") {
+            const [from, to, value] = log.args;
+            results.info = "CryptoPunks.Transfer " + value + " from " + from + " to " + to;
+          } else if (log.name == "PunkTransfer") {
+            const [from, to, punkIndex] = log.args;
+            results.info = "CryptoPunks.PunkTransfer " + punkIndex + " from " + from + " to " + to;
+          } else if (log.name == "PunkOffered") {
+            const [punkIndex, minValue, toAddress] = log.args;
+            results.info = "CryptoPunks.PunkOffered " + punkIndex + " " + minValue + " " + toAddress;
+          } else if (log.name == "PunkBidEntered") {
+            const [punkIndex, value, fromAddress] = log.args;
+            results.info = "CryptoPunks.PunkBidEntered " + punkIndex + " " + value + " from " + fromAddress;
+          } else if (log.name == "PunkBidWithdrawn") {
+            const [punkIndex, value, fromAddress] = log.args;
+            results.info = "CryptoPunks.PunkBidWithdrawn " + punkIndex + " " + value + " from " + fromAddress;
+          } else if (log.name == "PunkBought") {
+            const [punkIndex, value, fromAddress, toAddress] = log.args;
+            results.info = "CryptoPunks.PunkBought " + punkIndex + " " + value + " from " + fromAddress + " to " + toAddress;
+          } else if (log.name == "PunkNoLongerForSale") {
+            const [punkIndex] = log.args;
+            results.info = "CryptoPunks.PunkNoLongerForSale " + punkIndex;
+          }
+        }
+      }
+    },
+  },
   "0x60cd862c9C687A9dE49aecdC3A99b74A4fc54aB6": {
     mask: MASK_ISCONTRACT,
     symbol: "MoonCatRescue",
