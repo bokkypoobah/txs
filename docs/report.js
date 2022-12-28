@@ -66,6 +66,9 @@ const Report = {
           <b-form-group v-if="modalTx.tx" label="To:" label-for="modaltx-to" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
             <b-form-input type="text" readonly size="sm" id="modaltx-to" :value="modalTx.tx.to" class="w-75"></b-form-input>
           </b-form-group>
+          <b-form-group v-if="modalTx.functionCall" label="Function Call:" label-for="modaltx-functioncall" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-functioncall" :value="modalTx.functionCall" class="w-75"></b-form-input>
+          </b-form-group>
           <b-form-group v-if="modalTx.tx" label="Value:" label-for="modaltx-value" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
             <b-form-input type="text" readonly size="sm" id="modaltx-value" :value="formatETH(modalTx.tx.value)" class="w-50"></b-form-input>
           </b-form-group>
@@ -319,6 +322,8 @@ const Report = {
         tx: null,
         txReceipt: null,
         txFee: null,
+        functionSelector: null,
+        functionCall: null,
         info: null,
       },
       accountTypes: [
@@ -422,6 +427,9 @@ const Report = {
     },
     blocks() {
       return store.getters['data/blocks'];
+    },
+    functionSelectors() {
+      return store.getters['data/functionSelectors'];
     },
     report() {
       return store.getters['report/report'];
@@ -707,13 +715,20 @@ const Report = {
     },
     showModalTx(modalTxHash) {
       this.modalTx.hash = modalTxHash;
-      const txInfo = this.txs[this.network.chainId] && this.txs[this.network.chainId][modalTxHash] || null;
-      const block = txInfo && txInfo.txReceipt && this.blocks[this.network.chainId] && this.blocks[this.network.chainId][txInfo.txReceipt.blockNumber] || null;
+      const txData = this.txs[this.network.chainId] && this.txs[this.network.chainId][modalTxHash] || null;
+      const block = txData && txData.txReceipt && this.blocks[this.network.chainId] && this.blocks[this.network.chainId][txData.txReceipt.blockNumber] || null;
       this.modalTx.timestamp = block && block.timestamp || null;
-      this.modalTx.tx = txInfo && txInfo.tx || null;
-      this.modalTx.txReceipt = txInfo && txInfo.txReceipt || null;
-      const gasUsed = ethers.BigNumber.from(txInfo.txReceipt.gasUsed);
-      this.modalTx.txFee = gasUsed.mul(txInfo.txReceipt.effectiveGasPrice);
+      this.modalTx.tx = txData && txData.tx || null;
+      this.modalTx.txReceipt = txData && txData.txReceipt || null;
+      const gasUsed = ethers.BigNumber.from(txData.txReceipt.gasUsed);
+      this.modalTx.txFee = gasUsed.mul(txData.txReceipt.effectiveGasPrice);
+      if (txData.tx.to != null && txData.tx.data.length > 9) {
+        this.modalTx.functionSelector = txData.tx.data.substring(0, 10);
+        this.modalTx.functionCall = this.functionSelectors[this.modalTx.functionSelector] && this.functionSelectors[this.modalTx.functionSelector].length > 0 && this.functionSelectors[this.modalTx.functionSelector][0] || this.modalTx.functionSelector;
+      } else {
+        this.modalTx.functionSelector = "";
+        this.modalTx.functionCall = "";
+      }
       this.modalTx.info = "info";
       console.log("modalTx: " + JSON.stringify(this.modalTx, null, 2));
       this.$bvModal.show('modal-tx');
