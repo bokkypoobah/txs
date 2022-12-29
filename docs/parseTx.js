@@ -39,7 +39,7 @@ function getInterfaces() {
 }
 
 
-function getEvents(account, accounts, txData) {
+function getEvents(account, accounts, preERC721s, txData) {
   const interfaces = getInterfaces();
   const erc20Events = [];
   const wethDepositEvents = [];
@@ -54,6 +54,9 @@ function getEvents(account, accounts, txData) {
   const erc20FromMap = {};
   const erc20ToMap = {};
   for (const event of txData.txReceipt.logs) {
+    // if (event.address in preERC721s) {
+    //   console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);
+    // }
     // console.log(JSON.stringify(event));
     // ERC-20 event Transfer(address indexed _from, address indexed _to, uint256 _value)
     // ERC-721 event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
@@ -77,8 +80,11 @@ function getEvents(account, accounts, txData) {
         tokensOrTokenId = ethers.BigNumber.from('0x' + event.data.substring(130, 193)).toString();
       }
       // console.log("from: " + from + ", to: " + to + ", tokensOrTokenId: " + tokensOrTokenId);
-      // ERC-721 Transfer, including CryptoVoxels & CryptoKitties
-      if (event.topics.length == 4 || event.address == "0x79986aF15539de2db9A5086382daEdA917A9CF0C" || event.address == "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d") {
+      // ERC-721 Transfer, including pre-ERC721s like CryptoPunks, MoonCatRescue, CryptoCats, CryptoVoxels & CryptoKitties
+      if (event.topics.length == 4 || event.address in preERC721s) {
+        if (event.address in preERC721s) {
+          console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);
+        }
         erc721Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId });
         // ERC-20 Transfer
       } else {
@@ -408,7 +414,7 @@ async function accumulateTxResults(provider, account, accumulatedData, txData, b
   // }
 }
 
-function parseTx(chainId, account, accounts, functionSelectors, txData) {
+function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txData) {
   // console.log("parseTx - account: " + JSON.stringify(account));
   // console.log("parseTx - txData: " + JSON.stringify(txData));
   const results = {};
@@ -419,7 +425,7 @@ function parseTx(chainId, account, accounts, functionSelectors, txData) {
   results.txFee = txData.tx.from == account ? txFee : 0;
   results.ethReceived = 0;
   results.ethPaid = 0;
-  const events = getEvents(account, accounts, txData);
+  const events = getEvents(account, accounts, preERC721s, txData);
   // if (events.nftExchangeEvents.length > 0) {
   //   console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents, null, 2));
   // }

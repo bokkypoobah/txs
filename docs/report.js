@@ -886,6 +886,7 @@ const reportModule = {
       const exchangeRates = store.getters['data/exchangeRates'];
       const blocks = store.getters['data/blocks'];
       const devSettings = store.getters['config/devSettings'];
+      const preERC721s = store.getters['config/settings'].preERC721s;
       const blockRange = contractOrTxOrBlockRange ? contractOrTxOrBlockRange.match(/(\d+)-(\d+)/) : null;
       let startBlock = 0;
       let endBlock = 999999999999;
@@ -934,7 +935,7 @@ const reportModule = {
                   //   functionCall = functionSelectors[selector] && functionSelectors[selector].length > 0 && functionSelectors[selector][0] || selector;
                   // }
                   // console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
-                  const results = parseTx(chainId, account, accounts, functionSelectors, tx);
+                  const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
                   totalEthPaid = totalEthPaid.add(results.ethPaid);
                   totalEthReceived = totalEthReceived.add(results.ethReceived);
                   const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
