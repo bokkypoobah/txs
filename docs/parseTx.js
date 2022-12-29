@@ -41,6 +41,12 @@ function getInterfaces() {
 
 function getEvents(account, accounts, preERC721s, txData) {
   const interfaces = getInterfaces();
+  const receivedNFTEvents = [];
+  const sentNFTEvents = [];
+  // const receivedERC20Events = [];
+  // const sentERC20Events = [];
+
+
   const erc20Events = [];
   const wethDepositEvents = [];
   const wethWithdrawalEvents = [];
@@ -82,9 +88,17 @@ function getEvents(account, accounts, preERC721s, txData) {
       // console.log("from: " + from + ", to: " + to + ", tokensOrTokenId: " + tokensOrTokenId);
       // ERC-721 Transfer, including pre-ERC721s like CryptoPunks, MoonCatRescue, CryptoCats, CryptoVoxels & CryptoKitties
       if (event.topics.length == 4 || event.address in preERC721s) {
-        if (event.address in preERC721s) {
-          console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);
+        // if (event.address in preERC721s) {
+        //   console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);
+        // } else {
+        // }
+        const nftType = (event.address in preERC721s) ? "preerc721" : "erc721";
+        if (to == account) {
+          receivedNFTEvents.push({ type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId });
+        } else {
+          sentNFTEvents.push({ type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId });
         }
+        // TODO: Remove below
         erc721Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId });
         // ERC-20 Transfer
       } else {
@@ -108,12 +122,28 @@ function getEvents(account, accounts, preERC721s, txData) {
       const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
       const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
       const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
+
+      if (to == account) {
+        receivedNFTEvents.push({ type: "erc1155", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens });
+      } else {
+        sentNFTEvents.push({ type: "erc1155", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens });
+      }
+
+      // TODO: Remove below
       erc1155Events.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens });
 
       // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
     } else if (event.topics[0] == "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb") {
       const log = interfaces.erc1155.parseLog(event);
       const [operator, from, to, tokenIds, tokens] = log.args;
+
+      if (to == account) {
+        receivedNFTEvents.push({ type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
+      } else {
+        sentNFTEvents.push({ type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
+      }
+
+      // TODO: Remove below
       erc1155BatchEvents.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
 
       // ENS ETHRegistrarController
@@ -374,7 +404,7 @@ function getEvents(account, accounts, preERC721s, txData) {
       }
     }
   }
-  return { erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents, ensEvents, sentInternalEvents, receivedInternalEvents };
+  return { receivedNFTEvents, sentNFTEvents, erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents, ensEvents, sentInternalEvents, receivedInternalEvents };
 }
 
 async function accumulateTxResults(provider, account, accumulatedData, txData, block, results) {
@@ -426,6 +456,15 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
   results.ethReceived = 0;
   results.ethPaid = 0;
   const events = getEvents(account, accounts, preERC721s, txData);
+
+  // if (events.receivedNFTEvents.length > 0) {
+  //   console.log("receivedNFTEvents: " + JSON.stringify(events.receivedNFTEvents, null, 2));
+  // }
+  // if (events.sentNFTEvents.length > 0) {
+  //   console.log("sentNFTEvents: " + JSON.stringify(events.sentNFTEvents, null, 2));
+  // }
+
+
   // if (events.nftExchangeEvents.length > 0) {
   //   console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents, null, 2));
   // }
@@ -454,8 +493,8 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
   }
 
   if (results.functionCall != "") {
-    console.log("functionCall: " + results.functionCall);
-    console.log("txData.tx.data: " + txData.tx.data);
+    console.log("functionSelector: " + results.functionSelector + " => " + results.functionCall);
+    // console.log("txData.tx.data: " + txData.tx.data);
   }
 
   if (txData.txReceipt.status == 0) {
@@ -589,48 +628,31 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     }
   }
 
-  // ERC-721 safeTransferFrom(address from, address to, uint256 tokenId) && transferFrom(address from, address to, uint256 tokenId)
-  if (!results.info && (results.functionSelector == "0x42842e0e" || results.functionSelector == "0x23b872dd")) {
-    for (const event of txData.txReceipt.logs) {
-      // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 tokenId)
-      if (event.address == txData.tx.to && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
-        const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
-        const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-//        let tokenId = ethers.BigNumber.from(event.topics[3]);
-        const tokenId = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
-        // console.log("  ERC-721 transfer of " + event.address + " from " + from + " to " + to + " tokenId " + tokenId);
-        const info = getTokenContractInfo(event.address, accounts);
-        if (from == account && to == account) {
-          results.info = "Self Transfer ERC-721:" + info.name + " " + tokenId;
-        } else if (from == account) {
-          results.info = "Sent ERC-721:" + info.name + " " + tokenId + " to " + to;
-        } else if (to == account) {
-          results.info = "Received ERC-721:" + info.name + " " + tokenId + " from " + from;
-        }
-      }
+  // NFT Transfers
+  const NFTTRANSFERSIGS = {
+    "0x42842e0e": "safeTransferFrom(address,address,uint256)", // ERC-721
+    "0x23b872dd": "transferFrom(address,address,uint256)", // ERC-721
+    "0xf242432a": "safeTransferFrom(address,address,uint256,uint256,bytes)", // ERC-1155
+    "0x2eb2c2d6": "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)", // ERC-1155
+  };
+  if (!results.info && results.functionSelector in NFTTRANSFERSIGS) {
+    if (events.receivedNFTEvents.length > 0) {
+      // console.log("receivedNFTEvents: " + JSON.stringify(events.receivedNFTEvents, null, 2));
+      results.info = {
+        type: "nft",
+        action: "received",
+        from: txData.tx.from,
+        events: events.receivedNFTEvents,
+      };
     }
-  }
-
-  // ERC-1155 safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes _data)
-  if (!results.info && results.functionSelector == "0xf242432a") {
-    for (const event of txData.txReceipt.logs) {
-      // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 tokenId)
-      if (event.address == txData.tx.to && event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
-        const operator = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
-        const from = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
-        const to = ethers.utils.getAddress("0x" + event.topics[3].substring(26));
-        const tokenId = ethers.BigNumber.from(event.data.substring(0, 66)).toString();
-        const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
-        const info = getTokenContractInfo(event.address, accounts);
-        // console.log("    ERC-1155 transfer of " + info.symbol + ", from: " + from + ", to: " + to + ", tokenId: " + tokenId + ", tokens: " + tokens);
-        if (from == account && to == account) {
-          results.info = "Self Transfer ERC-1155:" + info.name + " " + tokenId + " x " + tokens;
-        } else if (from == account) {
-          results.info = "Sent ERC-1155:" + info.name + " " + tokenId + " x " + tokens + " to " + to;
-        } else if (to == account) {
-          results.info = "Received ERC-1155:" + info.name + " " + tokenId + " x " + tokens + " from " + from;
-        }
-      }
+    if (events.sentNFTEvents.length > 0) {
+      // console.log("sentNFTEvents: " + JSON.stringify(events.sentNFTEvents, null, 2));
+      results.info = {
+        type: "nft",
+        action: "sent",
+        from: txData.tx.from,
+        events: events.sentNFTEvents,
+      };
     }
   }
 
