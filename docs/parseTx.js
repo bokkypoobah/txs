@@ -564,9 +564,9 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
         // }
         results.info = {
           type: "erc20approval",
+          contract: event.address,
           tokenOwner,
           operator,
-          token: event.address,
           tokens,
         };
       }
@@ -575,9 +575,9 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       // results.info = "ERC-20 approval with no logs";
       results.info = {
         type: "erc20approval",
+        contract: event.address,
         tokenOwner: null,
         operator: null,
-        token: null,
         tokens: null,
       };
     }
@@ -598,8 +598,8 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
           // results.info = "Received ERC-20:" + event.address + " " + tokens + " from " + from;
           results.info = {
             type: "erc20received",
+            contract: event.address,
             from,
-            token: event.address,
             tokens,
           };
         }
@@ -619,9 +619,9 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
         results.info = "ERC-721 " + info.symbol + " setApprovalForAll(" + operator + ", " + approved + ")";
         results.info = {
           type: "erc721approvalforall",
+          contract: event.address,
           owner,
           operator,
-          token: event.address,
           approved,
         };
       }
@@ -634,6 +634,11 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     "0x23b872dd": "transferFrom(address,address,uint256)", // ERC-721
     "0xf242432a": "safeTransferFrom(address,address,uint256,uint256,bytes)", // ERC-1155
     "0x2eb2c2d6": "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)", // ERC-1155
+    "0x3f801f91": true, // Old Opensea Bulk Transfers @ 0xA64528Ce3c465C47258F14106FE903C201b07374
+    "0x32389b71": true, // Opensea Bulk Transfers @ 0x0000000000c2d145a2526bD8C716263bFeBe1A72
+    "0xd9eccc2e": true, // sendToMany(address from, address[] to, uint256 id, uint256 amount, bytes data) @ 0xD9c8e3d79B44679A4837E2D53c5da43Ca582DADf
+    "0x54ffbd23": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
+    "0xe96c3edb": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
   };
   if (!results.info && results.functionSelector in NFTTRANSFERSIGS) {
     if (events.receivedNFTEvents.length > 0) {
@@ -650,7 +655,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       results.info = {
         type: "nft",
         action: "sent",
-        from: txData.tx.from,
+        to: txData.tx.to,
         events: events.sentNFTEvents,
       };
     }
@@ -658,11 +663,13 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
 
   // ENS Registrations and renewals, can be executed via ENS Batch Renewal, ENS.Vision, ...
   if (!results.info && events.ensEvents.length > 0) {
+    console.log("ensEvents: " + JSON.stringify(events.ensEvents, null, 2));
     const registrationEvents = events.ensEvents.filter(e => e.type == "NameRegistered");
     const renewalEvents = events.ensEvents.filter(e => e.type == "NameRenewed");
     let totalCost = ethers.BigNumber.from(0);
     const names = [];
     if (registrationEvents.length > 0) {
+      // ENS.vision does not refund, and will take leftover as fees
       if (events.receivedInternalEvents.length > 0) {
         for (const event of registrationEvents) {
           names.push(event.name + ".eth");
@@ -671,7 +678,14 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       } else {
         totalCost = msgValue;
       }
-      results.info = "Registered ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
+      results.info = {
+        type: "ens",
+        action: "registered",
+        from: txData.tx.from,
+        events: registrationEvents,
+        totalCost: totalCost.toString(),
+      };
+      // results.info = "Registered ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
     } else if (renewalEvents.length > 0) {
       if (events.receivedInternalEvents.length > 0) {
         for (const event of renewalEvents) {
@@ -681,7 +695,14 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       } else {
         totalCost = msgValue;
       }
-      results.info = "Renewed ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
+      results.info = {
+        type: "ens",
+        action: "renewed",
+        from: txData.tx.from,
+        events: events.renewalEvents,
+        totalCost: totalCost.toString(),
+      };
+      // results.info = "Renewed ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
     }
     results.ethPaid = totalCost;
   }
@@ -889,44 +910,44 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     }
   }
 
-  const BULKTRANSFERS = {
-    "0x3f801f91": true, // Old Opensea Bulk Transfers @ 0xA64528Ce3c465C47258F14106FE903C201b07374
-    "0x32389b71": true, // Opensea Bulk Transfers @ 0x0000000000c2d145a2526bD8C716263bFeBe1A72
-    "0xd9eccc2e": true, // sendToMany(address from, address[] to, uint256 id, uint256 amount, bytes data) @ 0xD9c8e3d79B44679A4837E2D53c5da43Ca582DADf
-    "0x54ffbd23": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
-    "0xe96c3edb": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
-  };
-  if (!results.info && results.functionSelector in BULKTRANSFERS) {
-    const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
-    const sentERC721Events = events.erc721Events.filter(e => e.from == account);
-    const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
-    const sentERC1155Events = events.erc1155Events.filter(e => e.from == account);
-    const receivedERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.to == account);
-    const sentERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.from == account);
-    if (receivedERC721Events.length > 0) {
-      const tokenIds = receivedERC721Events.map(e => e.tokenId);
-      const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
-      results.info = "Receive Bulk Transfer ERC-721:" + info.name + " x" + receivedERC721Events.length + " " + tokenIds.join(", ") + " from " + receivedERC721Events[0].from;
-    } else if (sentERC721Events.length > 0) {
-      const tokenIds = sentERC721Events.map(e => e.tokenId);
-      const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
-      results.info = "Sent Bulk Transfer ERC-721:" + info.name + " x" + sentERC721Events.length + " " + tokenIds.join(", ") + " to " + sentERC721Events[0].to;
-    } else if (receivedERC1155Events.length > 0) {
-      const tokenIds = receivedERC1155Events.map(e => e.tokenId);
-      const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
-      results.info = "Receive Bulk Transfer ERC-1155:" + info.name + " x" + receivedERC1155Events.length + " " + tokenIds.join(", ") + " from " + receivedERC1155Events[0].from;
-    } else if (sentERC1155Events.length > 0) {
-      const tokenIds = sentERC1155Events.map(e => e.tokenId);
-      const info = getTokenContractInfo(sentERC1155Events[0].contract, accounts);
-      results.info = "Sent Bulk Transfer ERC-1155:" + info.name + " x" + sentERC1155Events.length + " " + tokenIds.join(", ") + " to " + sentERC1155Events[0].to;
-    } else if (receivedERC1155BatchEvents.length > 0) {
-      const info = getTokenContractInfo(receivedERC1155BatchEvents[0].contract, accounts);
-      results.info = "Receive Bulk Transfer ERC-1155:" + info.name + " x" + receivedERC1155BatchEvents.length + " " + receivedERC1155BatchEvents[0].tokenIds.join(", ") + " from " + receivedERC1155BatchEvents[0].from;
-    } else if (sentERC1155BatchEvents.length > 0) {
-      const info = getTokenContractInfo(sentERC1155BatchEvents[0].contract, accounts);
-      results.info = "Sent Bulk Transfer ERC-1155:" + info.name + " x" + sentERC1155BatchEvents.length + " " + sentERC1155BatchEvents[0].tokenIds.join(", ") + " from " + sentERC1155BatchEvents[0].from;
-    }
-  }
+  // const BULKTRANSFERS = {
+  //   "0x3f801f91": true, // Old Opensea Bulk Transfers @ 0xA64528Ce3c465C47258F14106FE903C201b07374
+  //   "0x32389b71": true, // Opensea Bulk Transfers @ 0x0000000000c2d145a2526bD8C716263bFeBe1A72
+  //   "0xd9eccc2e": true, // sendToMany(address from, address[] to, uint256 id, uint256 amount, bytes data) @ 0xD9c8e3d79B44679A4837E2D53c5da43Ca582DADf
+  //   "0x54ffbd23": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
+  //   "0xe96c3edb": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
+  // };
+  // if (!results.info && results.functionSelector in BULKTRANSFERS) {
+  //   const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
+  //   const sentERC721Events = events.erc721Events.filter(e => e.from == account);
+  //   const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
+  //   const sentERC1155Events = events.erc1155Events.filter(e => e.from == account);
+  //   const receivedERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.to == account);
+  //   const sentERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.from == account);
+  //   if (receivedERC721Events.length > 0) {
+  //     const tokenIds = receivedERC721Events.map(e => e.tokenId);
+  //     const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
+  //     results.info = "Receive Bulk Transfer ERC-721:" + info.name + " x" + receivedERC721Events.length + " " + tokenIds.join(", ") + " from " + receivedERC721Events[0].from;
+  //   } else if (sentERC721Events.length > 0) {
+  //     const tokenIds = sentERC721Events.map(e => e.tokenId);
+  //     const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
+  //     results.info = "Sent Bulk Transfer ERC-721:" + info.name + " x" + sentERC721Events.length + " " + tokenIds.join(", ") + " to " + sentERC721Events[0].to;
+  //   } else if (receivedERC1155Events.length > 0) {
+  //     const tokenIds = receivedERC1155Events.map(e => e.tokenId);
+  //     const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
+  //     results.info = "Receive Bulk Transfer ERC-1155:" + info.name + " x" + receivedERC1155Events.length + " " + tokenIds.join(", ") + " from " + receivedERC1155Events[0].from;
+  //   } else if (sentERC1155Events.length > 0) {
+  //     const tokenIds = sentERC1155Events.map(e => e.tokenId);
+  //     const info = getTokenContractInfo(sentERC1155Events[0].contract, accounts);
+  //     results.info = "Sent Bulk Transfer ERC-1155:" + info.name + " x" + sentERC1155Events.length + " " + tokenIds.join(", ") + " to " + sentERC1155Events[0].to;
+  //   } else if (receivedERC1155BatchEvents.length > 0) {
+  //     const info = getTokenContractInfo(receivedERC1155BatchEvents[0].contract, accounts);
+  //     results.info = "Receive Bulk Transfer ERC-1155:" + info.name + " x" + receivedERC1155BatchEvents.length + " " + receivedERC1155BatchEvents[0].tokenIds.join(", ") + " from " + receivedERC1155BatchEvents[0].from;
+  //   } else if (sentERC1155BatchEvents.length > 0) {
+  //     const info = getTokenContractInfo(sentERC1155BatchEvents[0].contract, accounts);
+  //     results.info = "Sent Bulk Transfer ERC-1155:" + info.name + " x" + sentERC1155BatchEvents.length + " " + sentERC1155BatchEvents[0].tokenIds.join(", ") + " from " + sentERC1155BatchEvents[0].from;
+  //   }
+  // }
 
   // ETH -> ERC-20 Swap
   if (!results.info && msgValue > 0) {

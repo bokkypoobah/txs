@@ -387,7 +387,7 @@ const Report = {
         { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         // { key: 'from', label: 'From', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         // { key: 'to', label: 'To', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-        { key: 'info', label: 'Info', sortable: false, thStyle: 'width: 50%;', tdClass: 'text-truncate' },
+        { key: 'info', label: 'Info', sortable: false, thStyle: 'width: 50%;' /*, tdClass: 'text-truncate' */ },
         { key: 'balance', label: 'Balance', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
       ],
