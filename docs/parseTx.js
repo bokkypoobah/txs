@@ -575,7 +575,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       // results.info = "ERC-20 approval with no logs";
       results.info = {
         type: "erc20approval",
-        contract: event.address,
+        contract: txData.tx.to,
         tokenOwner: null,
         operator: null,
         tokens: null,
