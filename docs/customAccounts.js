@@ -379,7 +379,8 @@ const _CUSTOMACCOUNTS = {
           results.ethPaid = tokens;
           // results.info = "Wrapped " + ethers.utils.formatEther(tokens) + "Ξ";
           results.info = {
-            type: "wethwrap",
+            type: "weth",
+            action: "wrap",
             tokenOwner,
             amount: tokens,
           };
@@ -391,7 +392,8 @@ const _CUSTOMACCOUNTS = {
           results.ethReceived = tokens;
           // results.info = "Unwrapped " + ethers.utils.formatEther(tokens) + "Ξ";
           results.info = {
-            type: "wethunwrap",
+            type: "weth",
+            action: "unwrap",
             tokenOwner,
             amount: tokens,
           };

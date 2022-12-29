@@ -206,6 +206,14 @@ const Report = {
                   <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
                 </div>
               </div>
+              <div v-else-if="data.item.info.type == 'weth'">
+                <div v-if="data.item.info.action == 'wrap'">
+                  Wrap {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
+                </div>
+                <div v-else-if="data.item.info.action == 'unwrap'">
+                  Unwrap {{ formatETH(data.item.info.amount, 0) }}<font size="-2">wΞ</font>
+                </div>
+              </div>
               <div v-else>
                 <font size="-2">
                   {{ data.item.info }}

@@ -32,6 +32,15 @@ const Config = {
               </b-form-group>
             </b-form-group>
             -->
+            <b-form-group label-cols-lg="2" label="Pre ERC-721 NFTs" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0" description="Pre ERC-721 NFTs with ERC-20 Transfer events">
+              <!-- TODO: Edit table -->
+              <!-- <b-form-group label="Pre ERC-721 NFTs:" label-for="preerc721-list" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Pre ERC-721 NFTs with ERC-20 transfers'" class="mx-0 my-1 p-0"> -->
+                <!-- <b-form-input type="text" size="sm" id="preerc721-list" :value="settings.skipBlocks" @change="setSkipBlocks($event)" placeholder="0" class="w-75"></b-form-input> -->
+                <!-- <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1"> -->
+                <b-table small fixed striped responsive hover id="preerc721-list" :items="preERC721TableData" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1">
+                </b-table>
+              <!-- </b-form-group> -->
+            </b-form-group>
             <b-form-group label-cols-lg="2" label="Development Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Skip Blocks:" label-for="skip-blocks" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Number of transactions to skip. Set to 0 to include all'" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="skip-blocks" :value="settings.skipBlocks" @change="setSkipBlocks($event)" placeholder="0" class="w-75"></b-form-input>
@@ -124,6 +133,16 @@ const Config = {
     periodOptions() {
       return store.getters['config/periodOptions'];
     },
+    preERC721TableData() {
+      const results = [];
+      for (const [account, name] of Object.entries(this.settings.preERC721s)) {
+        results.push({ account, name });
+      }
+      results.sort((a, b) => {
+        return ('' + a.name).localeCompare(b.name);
+      });
+      return results;
+    },
   },
   methods: {
     setEtherscanAPIKey(etherscanAPIKey) {
@@ -209,7 +228,18 @@ const configModule = {
       skipBlocks: 0,
       maxBlocks: 99999,
       checkBalance: false,
-      version: 4,
+      preERC721s: {
+        "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D": "CryptoPunksV1",
+        "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB": "CryptoPunksV3Official",
+        "0x60cd862c9C687A9dE49aecdC3A99b74A4fc54aB6": "MoonCatRescue",
+        "0x19c320b43744254ebdBcb1F1BD0e2a3dc08E01dc": "CryptoCatsV1",
+        "0x9508008227b6b3391959334604677d60169EF540": "CryptoCatsV2",
+        "0x088C6Ad962812b5Aa905BA6F3c5c145f9D4C079f": "CryptoCatsV3Official",
+        "0x011C77fa577c500dEeDaD364b8af9e8540b808C0": "ImmortalPlayerCharacter",
+        "0x79986aF15539de2db9A5086382daEdA917A9CF0C": "CryptoVoxels",
+        "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d": "CryptoKitties", // Note that the transfer parameters are not indexed - Transfer (address from, address to, uint256 tokenId)
+      },
+      version: 5,
     },
   },
   getters: {
@@ -274,7 +304,7 @@ const configModule = {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 4) {
+        if ('version' in tempSettings && tempSettings.version == 5) {
           context.state.settings = tempSettings;
         }
       }
