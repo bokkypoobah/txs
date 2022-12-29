@@ -230,7 +230,7 @@ const configModule = {
       checkBalance: false,
       preERC721s: {
         "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D": "CryptoPunksV1",
-        "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB": "CryptoPunksV3Official",
+        "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB": "CryptoPunksV2Official",
         "0x60cd862c9C687A9dE49aecdC3A99b74A4fc54aB6": "MoonCatRescue",
         "0x19c320b43744254ebdBcb1F1BD0e2a3dc08E01dc": "CryptoCatsV1",
         "0x9508008227b6b3391959334604677d60169EF540": "CryptoCatsV2",
