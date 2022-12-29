@@ -156,7 +156,9 @@ function getEvents(account, accounts, preERC721s, txData) {
       const log = interfaces.ensRegistrarController.parseLog(event);
       if (log.name == "NameRegistered") {
         const [name, label, owner, cost, expires] = log.args;
-        ensEvents.push({ logIndex: event.logIndex, contract: event.address, type: log.name, name, label, owner, cost: ethers.BigNumber.from(cost).toString(), expires: ethers.BigNumber.from(expires).toString() });
+        const tokenId = ethers.BigNumber.from(label).toString();
+        // console.log("Registered: 0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85/" + tokenId);
+        ensEvents.push({ logIndex: event.logIndex, contract: "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85", tokenId, type: log.name, name, label, owner, cost: ethers.BigNumber.from(cost).toString(), expires: ethers.BigNumber.from(expires).toString() });
       } else if (log.name == "NameRenewed") {
         const [name, label, cost, expires] = log.args;
         ensEvents.push({ logIndex: event.logIndex, contract: event.address, type: log.name, name, label, cost: ethers.BigNumber.from(cost).toString(), expires: ethers.BigNumber.from(expires).toString() });

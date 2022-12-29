@@ -76,7 +76,7 @@ const Report = {
               <b-img rounded="0" width="16px" height="16px" src="images/OpenSea-Logomark-Blue.svg" blank-color="#777" target="_blank"></b-img>
             </b-button>
           </template>
-            <p>{{ modalNFT.event }}</p>
+            <p>{{ modalNFT.nftEvent }}</p>
           <!--
           <b-form-group label="Tx hash:" label-for="modaltx-txhash" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
             <b-form-input type="text" readonly size="sm" id="modaltx-txhash" :value="modalTx.hash" class="w-100"></b-form-input>
@@ -109,6 +109,19 @@ const Report = {
             <b-form-input type="text" readonly size="sm" id="modaltx-txfee" :value="formatETH(modalTx.txFee)" class="w-50"></b-form-input>
           </b-form-group>
           -->
+        </b-modal>
+
+        <b-modal id="modal-ens" hide-footer size="lg">
+          <template #modal-title>
+            <font size="-1">ENS {{ modalENS.ensEvent.name + '.eth' }}</font>
+            <!--
+            <b-button size="sm" @click="copyToClipboard(modalTx.hash);" variant="link" class="m-0 p-0" v-b-popover.hover.top="'Copy to clipboard'"><b-icon-clipboard shift-v="+1" font-scale="1.1"></b-icon-clipboard></b-button>
+            -->
+            <b-button size="sm" :href="'https://opensea.io/assets/ethereum/' + modalENS.ensEvent.contract + '/' + modalENS.ensEvent.tokenId" target="_blank" variant="link" class="m-0 p-0" v-b-popover.hover.top="'View in opensea.io'">
+              <b-img rounded="0" width="16px" height="16px" src="images/OpenSea-Logomark-Blue.svg" blank-color="#777" target="_blank"></b-img>
+            </b-button>
+          </template>
+          <p>{{ modalENS }}</p>
         </b-modal>
 
         <div class="d-flex flex-wrap m-0 p-0">
@@ -246,7 +259,8 @@ const Report = {
                 <div v-if="data.item.info.action == 'sent'">
                   Sent
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId + ' ' }}</b-link>
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                   to
                   <b-link @click="showModalAddress(data.item.info.events[0].to);">{{ ensOrAccount(data.item.info.events[0].to) }}</b-link>
@@ -254,14 +268,23 @@ const Report = {
                 <div v-else-if="data.item.info.action == 'minted'">
                   Minted
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId + ' ' }}</b-link>
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                   for {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
+                </div>
+                <div v-else-if="data.item.info.action == 'airdropped'">
+                  Airdropped
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                  </span>
                 </div>
                 <div v-else-if="data.item.info.action == 'sold'">
                   Sold
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId + ' ' }}</b-link>
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                   for {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
                 </div>
@@ -269,6 +292,17 @@ const Report = {
                   <font size="-2">
                     NFT: {{ data.item.info }}
                   </font>
+                </div>
+              </div>
+              <div v-else-if="data.item.info.type == 'ens'">
+                <div v-if="data.item.info.action == 'registered'">
+                  Registered
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalENS(event);">{{ event.name }}</b-link> until {{ formatTimestamp(event.expires) }}
+                  </span>
+                  for
+                  {{ formatETH(data.item.info.totalCost, 0) }}<font size="-2">Ξ</font>
                 </div>
               </div>
               <div v-else>
@@ -395,6 +429,9 @@ const Report = {
       },
       modalNFT: {
         nftEvent: null,
+      },
+      modalENS: {
+        ensEvent: null,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -806,6 +843,10 @@ const Report = {
     showModalNFT(nftEvent) {
       this.modalNFT.nftEvent = nftEvent;
       this.$bvModal.show('modal-nft');
+    },
+    showModalENS(ensEvent) {
+      this.modalENS.ensEvent = ensEvent;
+      this.$bvModal.show('modal-ens');
     },
     copyToClipboard(str) {
       navigator.clipboard.writeText(str);
