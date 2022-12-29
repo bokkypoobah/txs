@@ -34,25 +34,8 @@ const Report = {
               <b-img rounded="0" width="16px" height="16px" src="images/etherscan-logo-circle.svg" blank-color="#777" target="_blank"></b-img>
             </b-button>
           </template>
-          <!--
-          <b-link @click="copyToClipboard(modalTx.hash);">Copy tx hash to clipboard</b-link>
-          <br />
-          <b-link :href="'https://etherscan.io/tx/' + modalTx.hash" target="_blank">View tx in etherscan.io</b-link>
-          <br />
-          -->
-          <!--
-          <b-form-group label="Etherscan API Key:" label-for="etherscan-apikey" label-size="sm" label-cols-sm="2" label-align-sm="right" description="This key is stored in your local browser storage and is sent with Etherscan API requests. If not supplied, imports from Etherscan will be rate limited to 1 request every 5 seconds" class="mx-0 my-1 p-0">
-            <b-form-input type="text" size="sm" id="etherscan-apikey" :value="settings.etherscanAPIKey" @change="setEtherscanAPIKey($event)" placeholder="See https://docs.etherscan.io/ to obtain an API key" class="w-75"></b-form-input>
-          </b-form-group>
-          -->
           <b-form-group label="Tx hash:" label-for="modaltx-txhash" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <!-- <b-form-input type="text" size="sm" id="modaltx-txhash" :value="settings.etherscanAPIKey" @change="setEtherscanAPIKey($event)" placeholder="See https://docs.etherscan.io/ to obtain an API key" class="w-75"></b-form-input> -->
-            <!-- <b-link id="modaltx-txhash" :href="'https://etherscan.io/tx/' + modalTx.hash" target="_blank"></b-link> -->
             <b-form-input type="text" readonly size="sm" id="modaltx-txhash" :value="modalTx.hash" class="w-100"></b-form-input>
-            <!--
-            <p>{{ modalTx.hash }}</p>
-            <b-avatar size="1em" :href="'https://etherscan.io/tx/' + modalTx.hash" src="images/etherscan-logo-circle.png" target="_blank"></b-avatar>
-            -->
           </b-form-group>
           <b-form-group v-if="modalTx.txReceipt" label="Block:" label-for="modaltx-blocknumber" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
             <b-form-input type="text" readonly size="sm" id="modaltx-blocknumber" :value="modalTx.txReceipt.blockNumber" class="w-50"></b-form-input>
@@ -70,7 +53,7 @@ const Report = {
             <b-form-input type="text" readonly size="sm" id="modaltx-functioncall" :value="modalTx.functionCall" class="w-75"></b-form-input>
           </b-form-group>
           <b-form-group v-if="modalTx.tx" label="Value:" label-for="modaltx-value" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-value" :value="formatETH(modalTx.tx.value)" class="w-50"></b-form-input>
+            <b-form-input type="text" readonly size="sm" id="modaltx-value" :value="formatETH(modalTx.tx.value, 18)" class="w-50"></b-form-input>
           </b-form-group>
           <b-form-group v-if="modalTx.txReceipt" label="Gas Used:" label-for="modaltx-gasused" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
             <b-form-input type="text" readonly size="sm" id="modaltx-gasused" :value="formatNumber(modalTx.txReceipt.gasUsed)" class="w-50"></b-form-input>
@@ -81,6 +64,51 @@ const Report = {
           <b-form-group v-if="modalTx.txReceipt" label="Tx Fee (Ξ):" label-for="modaltx-txfee" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
             <b-form-input type="text" readonly size="sm" id="modaltx-txfee" :value="formatETH(modalTx.txFee)" class="w-50"></b-form-input>
           </b-form-group>
+        </b-modal>
+
+        <b-modal id="modal-nft" hide-footer size="lg">
+          <template #modal-title>
+            <font size="-1">NFT {{ modalNFT.nftEvent.contract + ':' + modalNFT.nftEvent.tokenId }}</font>
+            <!--
+            <b-button size="sm" @click="copyToClipboard(modalTx.hash);" variant="link" class="m-0 p-0" v-b-popover.hover.top="'Copy to clipboard'"><b-icon-clipboard shift-v="+1" font-scale="1.1"></b-icon-clipboard></b-button>
+            -->
+            <b-button size="sm" :href="'https://opensea.io/assets/ethereum/' + modalNFT.nftEvent.contract + '/' + modalNFT.nftEvent.tokenId" target="_blank" variant="link" class="m-0 p-0" v-b-popover.hover.top="'View in etherscan.io'">
+              <b-img rounded="0" width="16px" height="16px" src="images/OpenSea-Logomark-Blue.svg" blank-color="#777" target="_blank"></b-img>
+            </b-button>
+          </template>
+            <p>{{ modalNFT.event }}</p>
+          <!--
+          <b-form-group label="Tx hash:" label-for="modaltx-txhash" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-txhash" :value="modalTx.hash" class="w-100"></b-form-input>
+          </b-form-group>
+          <b-form-group v-if="modalTx.txReceipt" label="Block:" label-for="modaltx-blocknumber" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-blocknumber" :value="modalTx.txReceipt.blockNumber" class="w-50"></b-form-input>
+          </b-form-group>
+          <b-form-group v-if="modalTx.timestamp" label="Timestamp:" label-for="modaltx-timestamp" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-timestamp" :value="formatTimestamp(modalTx.timestamp)" class="w-50"></b-form-input>
+          </b-form-group>
+          <b-form-group v-if="modalTx.tx" label="From:" label-for="modaltx-from" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-from" :value="modalTx.tx.from" class="w-75"></b-form-input>
+          </b-form-group>
+          <b-form-group v-if="modalTx.tx" label="To:" label-for="modaltx-to" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-to" :value="modalTx.tx.to && modalTx.tx.to.length > 2 && modalTx.tx.to || 'Contract Deployment'" class="w-75"></b-form-input>
+          </b-form-group>
+          <b-form-group v-if="modalTx.functionCall" label="Function Call:" label-for="modaltx-functioncall" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-functioncall" :value="modalTx.functionCall" class="w-75"></b-form-input>
+          </b-form-group>
+          <b-form-group v-if="modalTx.tx" label="Value:" label-for="modaltx-value" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-value" :value="formatETH(modalTx.tx.value, 18)" class="w-50"></b-form-input>
+          </b-form-group>
+          <b-form-group v-if="modalTx.txReceipt" label="Gas Used:" label-for="modaltx-gasused" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-gasused" :value="formatNumber(modalTx.txReceipt.gasUsed)" class="w-50"></b-form-input>
+          </b-form-group>
+          <b-form-group v-if="modalTx.txReceipt" label="Gas Price (gwei):" label-for="modaltx-gasprice" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-gasprice" :value="formatGwei(modalTx.txReceipt.effectiveGasPrice)" class="w-50"></b-form-input>
+          </b-form-group>
+          <b-form-group v-if="modalTx.txReceipt" label="Tx Fee (Ξ):" label-for="modaltx-txfee" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modaltx-txfee" :value="formatETH(modalTx.txFee)" class="w-50"></b-form-input>
+          </b-form-group>
+          -->
         </b-modal>
 
         <div class="d-flex flex-wrap m-0 p-0">
@@ -214,6 +242,35 @@ const Report = {
                   Unwrap {{ formatETH(data.item.info.amount, 0) }}<font size="-2">wΞ</font>
                 </div>
               </div>
+              <div v-else-if="data.item.info.type == 'nft'">
+                <div v-if="data.item.info.action == 'sent'">
+                  Sent
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId + ' ' }}</b-link>
+                  </span>
+                  to
+                  <b-link @click="showModalAddress(data.item.info.events[0].to);">{{ ensOrAccount(data.item.info.events[0].to) }}</b-link>
+                </div>
+                <div v-else-if="data.item.info.action == 'minted'">
+                  Minted
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId + ' ' }}</b-link>
+                  </span>
+                  for {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
+                </div>
+                <div v-else-if="data.item.info.action == 'sold'">
+                  Sold
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId + ' ' }}</b-link>
+                  </span>
+                  for {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
+                </div>
+                <div v-else>
+                  <font size="-2">
+                    NFT: {{ data.item.info }}
+                  </font>
+                </div>
+              </div>
               <div v-else>
                 <font size="-2">
                   {{ data.item.info }}
@@ -335,6 +392,9 @@ const Report = {
         functionSelector: null,
         functionCall: null,
         info: null,
+      },
+      modalNFT: {
+        nftEvent: null,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -742,6 +802,10 @@ const Report = {
       this.modalTx.info = "info";
       console.log("modalTx: " + JSON.stringify(this.modalTx, null, 2));
       this.$bvModal.show('modal-tx');
+    },
+    showModalNFT(nftEvent) {
+      this.modalNFT.nftEvent = nftEvent;
+      this.$bvModal.show('modal-nft');
     },
     copyToClipboard(str) {
       navigator.clipboard.writeText(str);
