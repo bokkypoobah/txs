@@ -792,10 +792,10 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     if (msgValue == 0 && (Object.keys(events.erc20FromMap).length < 3) && (Object.keys(events.erc20ToMap).length > 3) && (account in events.erc20ToMap)) {
       const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
       if (receivedERC20Events.length == 1) {
-        results.info = "Airdropped ERC-20:" + receivedERC20Events[0].contract + " " + receivedERC20Events[0].tokens + " tokens";
         results.info = {
-          type: "erc20airdropped",
-          token: receivedERC20Events[0].contract,
+          type: "erc20",
+          action: "airdropped",
+          contract: receivedERC20Events[0].contract,
           tokens: receivedERC20Events[0].tokens,
         };
       } else {
