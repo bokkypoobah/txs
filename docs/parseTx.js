@@ -775,44 +775,6 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     };
   }
 
-  // // ERC-721 Mints
-  // if (!results.info && events.nftExchangeEvents.length == 0) {
-  //   const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
-  //   const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
-  //   const receivedERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.to == account);
-  //   if (receivedERC721Events.length > 0) {
-  //     const tokenIds = receivedERC721Events.map(e => e.tokenId);
-  //     const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
-  //     if (txData.tx.from == account) {
-  //       results.ethPaid = msgValue;
-  //       if (events.receivedInternalEvents.length == 1) {
-  //         results.ethReceived = events.receivedInternalEvents[0].value;
-  //       }
-  //     }
-  //     results.info = "Minted ERC-721:" + info.name + " x" + receivedERC721Events.length + " " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
-  //   } else if (receivedERC1155Events.length > 0) {
-  //     const tokenIds = receivedERC1155Events.map(e => e.tokenId);
-  //     const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
-  //     if (txData.tx.from == account) {
-  //       results.ethPaid = msgValue;
-  //       if (events.receivedInternalEvents.length == 1) {
-  //         results.ethReceived = events.receivedInternalEvents[0].value;
-  //       }
-  //     }
-  //     results.info = "Minted ERC-1155:" + info.name + " x" + receivedERC1155Events.length + " " + tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
-  //   } else if (receivedERC1155BatchEvents.length > 0) {
-  //     const info = getTokenContractInfo(receivedERC1155BatchEvents[0].contract, accounts);
-  //     if (txData.tx.from == account) {
-  //       results.ethPaid = msgValue;
-  //       if (events.receivedInternalEvents.length == 1) {
-  //         results.ethReceived = events.receivedInternalEvents[0].value;
-  //       }
-  //     }
-  //     results.info = "Batch Minted ERC-1155:" + info.name + " x" + receivedERC1155BatchEvents.length + " " + receivedERC1155BatchEvents[0].tokenIds.join(", ") + " for " + ethers.utils.formatEther(msgValue) + "Ξ";
-  //   }
-  // }
-
-
   // TODO Check remaining
   if (!results.info && results.functionCall != "") {
     console.log("functionSelector: " + results.functionSelector + " => " + results.functionCall);
@@ -890,47 +852,6 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       results.ethReceived = ethers.BigNumber.from(ethBalance).toString();
     }
   }
-
-
-
-  // const BULKTRANSFERS = {
-  //   "0x3f801f91": true, // Old Opensea Bulk Transfers @ 0xA64528Ce3c465C47258F14106FE903C201b07374
-  //   "0x32389b71": true, // Opensea Bulk Transfers @ 0x0000000000c2d145a2526bD8C716263bFeBe1A72
-  //   "0xd9eccc2e": true, // sendToMany(address from, address[] to, uint256 id, uint256 amount, bytes data) @ 0xD9c8e3d79B44679A4837E2D53c5da43Ca582DADf
-  //   "0x54ffbd23": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
-  //   "0xe96c3edb": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
-  // };
-  // if (!results.info && results.functionSelector in BULKTRANSFERS) {
-  //   const receivedERC721Events = events.erc721Events.filter(e => e.to == account);
-  //   const sentERC721Events = events.erc721Events.filter(e => e.from == account);
-  //   const receivedERC1155Events = events.erc1155Events.filter(e => e.to == account);
-  //   const sentERC1155Events = events.erc1155Events.filter(e => e.from == account);
-  //   const receivedERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.to == account);
-  //   const sentERC1155BatchEvents = events.erc1155BatchEvents.filter(e => e.from == account);
-  //   if (receivedERC721Events.length > 0) {
-  //     const tokenIds = receivedERC721Events.map(e => e.tokenId);
-  //     const info = getTokenContractInfo(receivedERC721Events[0].contract, accounts);
-  //     results.info = "Receive Bulk Transfer ERC-721:" + info.name + " x" + receivedERC721Events.length + " " + tokenIds.join(", ") + " from " + receivedERC721Events[0].from;
-  //   } else if (sentERC721Events.length > 0) {
-  //     const tokenIds = sentERC721Events.map(e => e.tokenId);
-  //     const info = getTokenContractInfo(sentERC721Events[0].contract, accounts);
-  //     results.info = "Sent Bulk Transfer ERC-721:" + info.name + " x" + sentERC721Events.length + " " + tokenIds.join(", ") + " to " + sentERC721Events[0].to;
-  //   } else if (receivedERC1155Events.length > 0) {
-  //     const tokenIds = receivedERC1155Events.map(e => e.tokenId);
-  //     const info = getTokenContractInfo(receivedERC1155Events[0].contract, accounts);
-  //     results.info = "Receive Bulk Transfer ERC-1155:" + info.name + " x" + receivedERC1155Events.length + " " + tokenIds.join(", ") + " from " + receivedERC1155Events[0].from;
-  //   } else if (sentERC1155Events.length > 0) {
-  //     const tokenIds = sentERC1155Events.map(e => e.tokenId);
-  //     const info = getTokenContractInfo(sentERC1155Events[0].contract, accounts);
-  //     results.info = "Sent Bulk Transfer ERC-1155:" + info.name + " x" + sentERC1155Events.length + " " + tokenIds.join(", ") + " to " + sentERC1155Events[0].to;
-  //   } else if (receivedERC1155BatchEvents.length > 0) {
-  //     const info = getTokenContractInfo(receivedERC1155BatchEvents[0].contract, accounts);
-  //     results.info = "Receive Bulk Transfer ERC-1155:" + info.name + " x" + receivedERC1155BatchEvents.length + " " + receivedERC1155BatchEvents[0].tokenIds.join(", ") + " from " + receivedERC1155BatchEvents[0].from;
-  //   } else if (sentERC1155BatchEvents.length > 0) {
-  //     const info = getTokenContractInfo(sentERC1155BatchEvents[0].contract, accounts);
-  //     results.info = "Sent Bulk Transfer ERC-1155:" + info.name + " x" + sentERC1155BatchEvents.length + " " + sentERC1155BatchEvents[0].tokenIds.join(", ") + " from " + sentERC1155BatchEvents[0].from;
-  //   }
-  // }
 
   // ETH -> ERC-20 Swap
   if (!results.info && msgValue > 0) {
