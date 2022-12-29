@@ -570,7 +570,8 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
         //   results.info = "ERC-20 approved for " + event.address.substring(0, 16);
         // }
         results.info = {
-          type: "erc20approval",
+          type: "erc20",
+          action: "approval",
           contract: event.address,
           tokenOwner,
           operator,
@@ -580,8 +581,10 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     }
     if (!results.info) {
       // results.info = "ERC-20 approval with no logs";
+      // TODO Get from function call params
       results.info = {
-        type: "erc20approval",
+        type: "erc20",
+        action: "approval",
         contract: txData.tx.to,
         tokenOwner: null,
         operator: null,
@@ -623,9 +626,10 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
         const operator = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
         const approved = ethers.BigNumber.from(event.data) > 0;
         const info = getTokenContractInfo(event.address, accounts);
-        results.info = "ERC-721 " + info.symbol + " setApprovalForAll(" + operator + ", " + approved + ")";
+        // results.info = "ERC-721 " + info.symbol + " setApprovalForAll(" + operator + ", " + approved + ")";
         results.info = {
-          type: "erc721approvalforall",
+          type: "nft",
+          action: "approvalforall",
           contract: event.address,
           owner,
           operator,
@@ -653,7 +657,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       results.info = {
         type: "nft",
         action: "received",
-        // from: txData.tx.from,
+        from: txData.tx.from,
         events: events.receivedNFTEvents,
       };
     }
@@ -668,7 +672,8 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     }
   }
 
-  // ENS Registrations and renewals, can be executed via ENS Batch Renewal, ENS.Vision, ...
+  // ENS Registrations and renewals, can be executed via ENS Batch Renewal, ENS.vision, ...
+  // ENS commits when executed via ENS.vision will not be detectable
   if (!results.info && events.ensEvents.length > 0) {
     console.log("ensEvents: " + JSON.stringify(events.ensEvents, null, 2));
     const registrationEvents = events.ensEvents.filter(e => e.type == "NameRegistered");

@@ -66,6 +66,27 @@ const Report = {
           </b-form-group>
         </b-modal>
 
+        modalNFTCollection: {
+          nftCollection: null,
+        },
+
+        <b-modal id="modal-nft-collection" hide-footer size="lg">
+          <template #modal-title>
+            <font size="-1">NFT Collection {{ modalNFTCollection.nftCollection }}</font>
+            <b-button size="sm" :href="'https://etherscan.io/token/' + modalNFTCollection.nftCollection + '#balances'" target="_blank" variant="link" class="m-0 p-0" v-b-popover.hover.top="'View in etherscan.io'">
+              <b-img rounded="0" width="16px" height="16px" src="images/etherscan-logo-circle.svg" blank-color="#777" target="_blank"></b-img>
+            </b-button>
+            <!--
+            <b-button size="sm" @click="copyToClipboard(modalTx.hash);" variant="link" class="m-0 p-0" v-b-popover.hover.top="'Copy to clipboard'"><b-icon-clipboard shift-v="+1" font-scale="1.1"></b-icon-clipboard></b-button>
+            <b-button size="sm" :href="'https://opensea.io/assets/ethereum/' + modalNFT.nftEvent.contract + '/' + modalNFT.nftEvent.tokenId" target="_blank" variant="link" class="m-0 p-0" v-b-popover.hover.top="'View in etherscan.io'">
+              <b-img rounded="0" width="16px" height="16px" src="images/OpenSea-Logomark-Blue.svg" blank-color="#777" target="_blank"></b-img>
+            </b-button>
+            -->
+          </template>
+            <p>{{ modalNFTCollection.nftCollection }}</p>
+        </b-modal>
+
+
         <b-modal id="modal-nft" hide-footer size="lg">
           <template #modal-title>
             <font size="-1">NFT {{ modalNFT.nftEvent.contract + ':' + modalNFT.nftEvent.tokenId }}</font>
@@ -255,9 +276,25 @@ const Report = {
                   Unwrap {{ formatETH(data.item.info.amount, 0) }}<font size="-2">wΞ</font>
                 </div>
               </div>
+              <div v-else-if="data.item.info.type == 'erc20'">
+                <div v-if="data.item.info.action == 'approval'">
+                  Approved for
+                  <b-link @click="showModalAddress(data.item.info.operator);">{{ ensOrAccount(data.item.info.operator) }}</b-link>
+                  to spend
+                  <span v-if="data.item.info.tokens > 1000000000000000000000"> a large amount</span>
+                  <span v-else>{{ data.item.info.tokens }}</span>
+                  of ERC-20
+                  <b-link @click="showModalAddress(data.item.info.contract);">{{ ensOrAccount(data.item.info.contract) }}</b-link>
+                </div>
+                <div v-else>
+                  <font size="-2">
+                    ERC-20: {{ data.item.info }}
+                  </font>
+                </div>
+              </div>
               <div v-else-if="data.item.info.type == 'nft'">
                 <div v-if="data.item.info.action == 'sent'">
-                  Sent
+                  Sent NFT(s)
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -265,8 +302,17 @@ const Report = {
                   to
                   <b-link @click="showModalAddress(data.item.info.events[0].to);">{{ ensOrAccount(data.item.info.events[0].to) }}</b-link>
                 </div>
+                <div v-else-if="data.item.info.action == 'received'">
+                  Received NFT(s)
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                  </span>
+                  from
+                  <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
+                </div>
                 <div v-else-if="data.item.info.action == 'minted'">
-                  Minted
+                  Minted NFT(s)
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -274,19 +320,35 @@ const Report = {
                   for {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
                 </div>
                 <div v-else-if="data.item.info.action == 'airdropped'">
-                  Airdropped
+                  Airdropped NFT(s)
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                 </div>
-                <div v-else-if="data.item.info.action == 'sold'">
-                  Sold
+                <div v-else-if="data.item.info.action == 'purchased'">
+                  Purchased NFT(s)
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                   for {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
+                </div>
+                <div v-else-if="data.item.info.action == 'sold'">
+                  Sold NFT(s)
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                  </span>
+                  for {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
+                </div>
+                <div v-else-if="data.item.info.action == 'approvalforall'">
+                  <span v-if="data.item.info.approved">Approved</span>
+                  <span v-else>Revoked Approval</span>
+                  for
+                  <b-link @click="showModalAddress(data.item.info.operator);">{{ ensOrAccount(data.item.info.operator) }}</b-link>
+                  to transfer NFT collection
+                  <b-link @click="showModalNFTCollection(data.item.info.contract);">{{ data.item.info.contract.substring(0, 12) }}</b-link>
                 </div>
                 <div v-else>
                   <font size="-2">
@@ -295,11 +357,14 @@ const Report = {
                 </div>
               </div>
               <div v-else-if="data.item.info.type == 'ens'">
-                <div v-if="data.item.info.action == 'registered'">
-                  Registered
+                <div v-if="data.item.info.action == 'commit'">
+                  Commit to Register ENS
+                </div>
+                <div v-else-if="data.item.info.action == 'registered'">
+                  Registered ENS
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
-                    <b-link @click="showModalENS(event);">{{ event.name }}</b-link> until {{ formatTimestamp(event.expires) }}
+                    <b-link @click="showModalENS(event);">{{ event.name + '.eth' }}</b-link> until {{ formatTimestamp(event.expires) }}
                   </span>
                   for
                   {{ formatETH(data.item.info.totalCost, 0) }}<font size="-2">Ξ</font>
@@ -310,9 +375,12 @@ const Report = {
                   to
                   <b-link @click="showModalAddress(data.item.info.address);">{{ data.item.info.address }}</b-link>
                 </div>
+                <div v-else-if="data.item.info.action == 'textset'">
+                  Set ENS Text (avatar, ...)
+                </div>
                 <div v-else>
                   <font size="-2">
-                    {{ data.item.info }}
+                    ENS: {{ data.item.info }}
                   </font>
                 </div>
               </div>
@@ -437,6 +505,9 @@ const Report = {
         functionSelector: null,
         functionCall: null,
         info: null,
+      },
+      modalNFTCollection: {
+        nftCollection: null,
       },
       modalNFT: {
         nftEvent: null,
@@ -850,6 +921,10 @@ const Report = {
       this.modalTx.info = "info";
       console.log("modalTx: " + JSON.stringify(this.modalTx, null, 2));
       this.$bvModal.show('modal-tx');
+    },
+    showModalNFTCollection(nftCollection) {
+      this.modalNFTCollection.nftCollection = nftCollection;
+      this.$bvModal.show('modal-nft-collection');
     },
     showModalNFT(nftEvent) {
       this.modalNFT.nftEvent = nftEvent;
