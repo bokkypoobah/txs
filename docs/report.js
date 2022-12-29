@@ -304,6 +304,17 @@ const Report = {
                   for
                   {{ formatETH(data.item.info.totalCost, 0) }}<font size="-2">Ξ</font>
                 </div>
+                <div v-else-if="data.item.info.action == 'reverseensset'">
+                  Set Reverse ENS for
+                  {{ data.item.info.name }}
+                  to
+                  <b-link @click="showModalAddress(data.item.info.address);">{{ data.item.info.address }}</b-link>
+                </div>
+                <div v-else>
+                  <font size="-2">
+                    {{ data.item.info }}
+                  </font>
+                </div>
               </div>
               <div v-else>
                 <font size="-2">
