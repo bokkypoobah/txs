@@ -550,7 +550,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
   // ENS Registrations and renewals, can be executed via ENS Batch Renewal, ENS.vision, ...
   // ENS commits when executed via ENS.vision will not be detectable
   if (!results.info && events.ensEvents.length > 0) {
-    console.log("ensEvents: " + JSON.stringify(events.ensEvents, null, 2));
+    // console.log("ensEvents: " + JSON.stringify(events.ensEvents, null, 2));
     const registrationEvents = events.ensEvents.filter(e => e.type == "NameRegistered");
     const renewalEvents = events.ensEvents.filter(e => e.type == "NameRenewed");
     let totalCost = ethers.BigNumber.from(0);
@@ -565,14 +565,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       } else {
         totalCost = msgValue;
       }
-      results.info = {
-        type: "ens",
-        action: "registered",
-        // from: txData.tx.from,
-        events: registrationEvents,
-        totalCost: totalCost.toString(),
-      };
-      // results.info = "Registered ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
+      results.info = { type: "ens",  action: "registered", /* from: txData.tx.from, */ events: registrationEvents, totalCost: totalCost.toString() };
     } else if (renewalEvents.length > 0) {
       if (events.receivedInternalEvents.length > 0) {
         for (const event of renewalEvents) {
@@ -582,14 +575,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       } else {
         totalCost = msgValue;
       }
-      results.info = {
-        type: "ens",
-        action: "renewed",
-        // from: txData.tx.from,
-        events: events.renewalEvents,
-        totalCost: totalCost.toString(),
-      };
-      // results.info = "Renewed ENS " + names.length + "x " + names.join(", ") + " for " + ethers.utils.formatEther(totalCost) + "Ξ";
+      results.info = { type: "ens", action: "renewed", /* from: txData.tx.from, */ events: events.renewalEvents, totalCost: totalCost.toString() };
     }
     results.ethPaid = totalCost;
   }
