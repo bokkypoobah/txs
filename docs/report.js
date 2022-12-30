@@ -82,7 +82,6 @@ const Report = {
             <p>{{ modalNFTCollection.nftCollection }}</p>
         </b-modal>
 
-
         <b-modal id="modal-nft" hide-footer size="lg">
           <template #modal-title>
             <font size="-1">NFT {{ modalNFT.nftEvent.contract + ':' + modalNFT.nftEvent.tokenId }}</font>
@@ -94,38 +93,6 @@ const Report = {
             </b-button>
           </template>
             <p>{{ modalNFT.nftEvent }}</p>
-          <!--
-          <b-form-group label="Tx hash:" label-for="modaltx-txhash" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-txhash" :value="modalTx.hash" class="w-100"></b-form-input>
-          </b-form-group>
-          <b-form-group v-if="modalTx.txReceipt" label="Block:" label-for="modaltx-blocknumber" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-blocknumber" :value="modalTx.txReceipt.blockNumber" class="w-50"></b-form-input>
-          </b-form-group>
-          <b-form-group v-if="modalTx.timestamp" label="Timestamp:" label-for="modaltx-timestamp" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-timestamp" :value="formatTimestamp(modalTx.timestamp)" class="w-50"></b-form-input>
-          </b-form-group>
-          <b-form-group v-if="modalTx.tx" label="From:" label-for="modaltx-from" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-from" :value="modalTx.tx.from" class="w-75"></b-form-input>
-          </b-form-group>
-          <b-form-group v-if="modalTx.tx" label="To:" label-for="modaltx-to" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-to" :value="modalTx.tx.to && modalTx.tx.to.length > 2 && modalTx.tx.to || 'Contract Deployment'" class="w-75"></b-form-input>
-          </b-form-group>
-          <b-form-group v-if="modalTx.functionCall" label="Function Call:" label-for="modaltx-functioncall" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-functioncall" :value="modalTx.functionCall" class="w-75"></b-form-input>
-          </b-form-group>
-          <b-form-group v-if="modalTx.tx" label="Value:" label-for="modaltx-value" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-value" :value="formatETH(modalTx.tx.value, 18)" class="w-50"></b-form-input>
-          </b-form-group>
-          <b-form-group v-if="modalTx.txReceipt" label="Gas Used:" label-for="modaltx-gasused" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-gasused" :value="formatNumber(modalTx.txReceipt.gasUsed)" class="w-50"></b-form-input>
-          </b-form-group>
-          <b-form-group v-if="modalTx.txReceipt" label="Gas Price (gwei):" label-for="modaltx-gasprice" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-gasprice" :value="formatGwei(modalTx.txReceipt.effectiveGasPrice)" class="w-50"></b-form-input>
-          </b-form-group>
-          <b-form-group v-if="modalTx.txReceipt" label="Tx Fee (Ξ):" label-for="modaltx-txfee" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
-            <b-form-input type="text" readonly size="sm" id="modaltx-txfee" :value="formatETH(modalTx.txFee)" class="w-50"></b-form-input>
-          </b-form-group>
-          -->
         </b-modal>
 
         <b-modal id="modal-ens" hide-footer size="lg">
@@ -156,6 +123,9 @@ const Report = {
           </div>
           <div class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
+          </div>
+          <div class="mt-0 pr-1">
+            <b-button size="sm" :pressed.sync="settings.showAdditionalFilters" @click="saveSettings" variant="link" v-b-popover.hover.top="'Additional filters'"><span v-if="settings.showAdditionalFilters"><b-icon-funnel-fill shift-v="+1" font-scale="1.0"></b-icon-funnel-fill></span><span v-else><b-icon-funnel shift-v="+1" font-scale="1.0"></b-icon-funnel></span></b-button>
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
@@ -210,6 +180,10 @@ const Report = {
           <div class="mt-0 pl-1">
             <b-form-select size="sm" v-model="settings.pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
           </div>
+        </div>
+
+        <div v-if="settings.showAdditionalFilters" class="mt-0 pr-1">
+          <p>Additional Filters {{ settings }}</p>
         </div>
 
         <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1">
@@ -532,7 +506,8 @@ const Report = {
         currentPage: 1,
         pageSize: 100,
         sortOption: 'timestampdsc',
-        version: 1,
+        showAdditionalFilters: false,
+        version: 2,
       },
       modalAddress: null,
       modalTx: {
@@ -1048,7 +1023,7 @@ const Report = {
     store.dispatch('report/restoreState');
     if ('reportSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.reportSettings);
-      if ('version' in tempSettings && tempSettings.version == 1) {
+      if ('version' in tempSettings && tempSettings.version == 2) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
