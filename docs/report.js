@@ -182,8 +182,92 @@ const Report = {
           </div>
         </div>
 
-        <div v-if="settings.showAdditionalFilters" class="mt-0 pr-1">
-          <p>Additional Filters {{ settings }}</p>
+        <div v-if="settings.showAdditionalFilters" class="d-flex flex-wrap m-0 p-0">
+          <div class="mt-0 pr-1" style="width: 10.0rem;">
+            <b-card-body class="m-0 mt-1 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
+              <b-card header-class="m-0 p-0" body-class="p-0" class="m-0 p-0 border-0">
+                <template #header>
+                  Accounts
+                </template>
+                <font size="-2">
+                  <b-table small fixed striped :fields="accountsFilterFields" :items="getAllAccounts" head-variant="light">
+                    <template #cell(select)="data">
+                      <!-- <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox> -->
+                      <b-form-checkbox size="sm" :checked="1" value="1"></b-form-checkbox>
+                    </template>
+                    <template #cell(account)="data">
+                      {{ ensOrAccount(data.item.account, 20) }}
+                    </template>
+                  </b-table>
+                  <!--
+                  <b-table small fixed striped sticky-header="200px" :fields="tokenAttributesFields" :items="attributeType.attributeList" head-variant="light">
+                    <template #cell(select)="data">
+                      <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox>
+                    </template>
+                    <template #cell(attributeOption)="data">
+                      {{ data.item.attribute }}
+                    </template>
+                    <template #cell(attributeTotal)="data">
+                      {{ data.item.tokens.length }}
+                    </template>
+                  </b-table>
+                  -->
+                </font>
+              </b-card>
+              <!-- <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input> -->
+            </b-card-body>
+          </div>
+          <div class="mt-0 pr-1" style="width: 10.0rem;">
+            <b-card-body class="m-0 mt-1 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
+              <b-card header-class="m-0 p-0" body-class="p-0" class="m-0 p-0 border-0">
+                <template #header>
+                  Types
+                </template>
+                <font size="-2">
+                  <b-table small fixed striped :fields="typesFilterFields" :items="getAllTypes" head-variant="light">
+                    <template #cell(select)="data">
+                      <!-- <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox> -->
+                      <b-form-checkbox size="sm" :checked="1" value="1"></b-form-checkbox>
+                    </template>
+                  </b-table>
+                </font>
+              </b-card>
+            </b-card-body>
+          </div>
+          <div class="mt-0 pr-1" style="width: 10.0rem;">
+            <b-card-body class="m-0 mt-1 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
+              <b-card header-class="m-0 p-0" body-class="p-0" class="m-0 p-0 border-0">
+                <template #header>
+                  Actions
+                </template>
+                <font size="-2">
+                  <b-table small fixed striped :fields="actionsFilterFields" :items="getAllActions" head-variant="light">
+                    <template #cell(select)="data">
+                      <!-- <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox> -->
+                      <b-form-checkbox size="sm" :checked="1" value="1"></b-form-checkbox>
+                    </template>
+                  </b-table>
+                </font>
+              </b-card>
+            </b-card-body>
+          </div>
+          <div class="mt-0 pr-1" style="width: 30.0rem;">
+            <b-card-body class="m-0 mt-1 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
+              <b-card header-class="m-0 p-0" body-class="p-0" class="m-0 p-0 border-0">
+                <template #header>
+                  Function Calls
+                </template>
+                <font size="-2">
+                  <b-table small fixed striped :fields="functionCallsFilterFields" :items="getAllFunctionCalls" head-variant="light">
+                    <template #cell(select)="data">
+                      <!-- <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox> -->
+                      <b-form-checkbox size="sm" :checked="1" value="1"></b-form-checkbox>
+                    </template>
+                  </b-table>
+                </font>
+              </b-card>
+            </b-card-body>
+          </div>
         </div>
 
         <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1">
@@ -584,6 +668,22 @@ const Report = {
         { key: 'balance', label: 'Balance', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
       ],
+      accountsFilterFields: [
+        { key: 'select', label: '', thStyle: 'width: 10%;' },
+        { key: 'account', label: 'Account' },
+      ],
+      typesFilterFields: [
+        { key: 'select', label: '', thStyle: 'width: 10%;' },
+        { key: 'type', label: 'Type' },
+      ],
+      actionsFilterFields: [
+        { key: 'select', label: '', thStyle: 'width: 10%;' },
+        { key: 'action', label: 'Action' },
+      ],
+      functionCallsFilterFields: [
+        { key: 'select', label: '', thStyle: 'width: 10%;' },
+        { key: 'functionCall', label: 'Function Call' },
+      ],
     }
   },
   computed: {
@@ -726,6 +826,58 @@ const Report = {
       }
       return results;
     },
+    getAllAccounts() {
+      const results = [];
+      if (this.report.accountsList) {
+        for (let a of this.report.accountsList) {
+          results.push({ account: a });
+        }
+        results.sort((a, b) => {
+          return ('' + a.account).localeCompare(b.account);
+        });
+      }
+      return results;
+    },
+    getAllTypes() {
+      const results = [];
+      if (this.report.typesList) {
+        for (let t of this.report.typesList) {
+          results.push({ type: t });
+        }
+        results.sort((a, b) => {
+          return ('' + a.type).localeCompare(b.type);
+        });
+        results.push({ type: "(unknown)" });
+      }
+      return results;
+    },
+    getAllActions() {
+      const results = [];
+      if (this.report.actionsList) {
+        for (let t of this.report.actionsList) {
+          results.push({ action: t });
+        }
+        results.sort((a, b) => {
+          return ('' + a.action).localeCompare(b.action);
+        });
+        results.push({ action: "(unknown)" });
+      }
+      return results;
+    },
+    getAllFunctionCalls() {
+      const results = [];
+      if (this.report.functionCallsList) {
+        for (let fc of this.report.functionCallsList) {
+          results.push({ functionCall: fc });
+        }
+        results.sort((a, b) => {
+          return ('' + a.functionCall).localeCompare(b.functionCall);
+        });
+        results.push({ functionCall: "(unknown)" });
+      }
+      return results;
+    },
+
     filteredTransactionsOld() {
       const results = [];
       let startPeriod = null;
@@ -1104,6 +1256,7 @@ const reportModule = {
       }
       const accountsListMap = {};
       const typesListMap = {};
+      const actionsListMap = {};
       const functionCallsListMap = {};
       const accumulatedData = {};
       const transactions = [];
@@ -1156,6 +1309,11 @@ const reportModule = {
                     if (results.info.type) {
                       if (!(results.info.type in typesListMap)) {
                         typesListMap[results.info.type] = true;
+                      }
+                    }
+                    if (results.info.action) {
+                      if (!(results.info.action in actionsListMap)) {
+                        actionsListMap[results.info.action] = true;
                       }
                     }
                     if (results.functionCall && results.functionCall.length > 2) {
@@ -1258,12 +1416,14 @@ const reportModule = {
       console.log("accountsList: " + JSON.stringify(accountsList));
       const typesList = Object.keys(typesListMap);
       console.log("typesList: " + JSON.stringify(typesList));
+      const actionsList = Object.keys(actionsListMap);
+      console.log("actionsList: " + JSON.stringify(actionsList));
       const functionCallsList = Object.keys(functionCallsListMap);
       console.log("functionCallsList: " + JSON.stringify(functionCallsList));
 
 
       // console.log("transactions: " + JSON.stringify(transactions, null, 2));
-      context.commit('setReport', { transactions, accountsList, typesList, functionCallsList });
+      context.commit('setReport', { transactions, accountsList, typesList, actionsList, functionCallsList });
       context.dispatch('saveData', ['report']);
     },
   },

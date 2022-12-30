@@ -607,7 +607,8 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
         } else if (to == account) {
           // results.info = "Received ERC-20:" + event.address + " " + tokens + " from " + from;
           results.info = {
-            type: "erc20received",
+            type: "erc20",
+            action: "received",
             contract: event.address,
             from,
             tokens,
