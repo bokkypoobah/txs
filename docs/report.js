@@ -327,7 +327,19 @@ const Report = {
                 </div>
               </div>
               <div v-else-if="data.item.info.type == 'erc20'">
-                <div v-if="data.item.info.action == 'approval'">
+                <div v-if="data.item.info.action == 'sent'">
+                  <b-badge variant="info">erc20</b-badge>
+                  <b-badge variant="primary">sent</b-badge>
+                  <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
+                  {{ data.item.info.tokens }}
+                </div>
+                <div v-else-if="data.item.info.action == 'received'">
+                  <b-badge variant="info">erc20</b-badge>
+                  <b-badge variant="success">received</b-badge>
+                  <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
+                  {{ data.item.info.tokens }}
+                </div>
+                <div v-else-if="data.item.info.action == 'approved'">
                   <b-badge variant="info">erc20</b-badge>
                   <b-badge variant="primary">approved</b-badge>
                   <b-link @click="showModalAddress(data.item.info.operator);">{{ ensOrAccount(data.item.info.operator) }}</b-link>
@@ -405,7 +417,7 @@ const Report = {
                   <span v-else-if="data.item.info.valueToken == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'"><font size="-2">wΞ</font></span>
                   <span v-else><font size="-2"><b-link @click="showModalAddress(data.item.info.valueToken);">{{ ensOrAccount(data.item.info.valueToken) }}</b-link></font></span>
                 </div>
-                <div v-else-if="data.item.info.action == 'approvalforall'">
+                <div v-else-if="data.item.info.action == 'approvedforall'">
                   <b-badge variant="info">nft</b-badge>
                   <span v-if="data.item.info.approved"><b-badge variant="primary">approvedforall</b-badge></span>
                   <span v-else><b-badge variant="primary">unapprovedforall</b-badge></span>

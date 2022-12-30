@@ -529,148 +529,21 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
   // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
     if (txData.tx.from == account && txData.tx.to == account) {
-      results.info = {
-        type: "eth",
-        action: "cancel",
-        from: txData.tx.from,
-        to: txData.tx.to,
-        amount: msgValue,
-      };
+      results.info = { type: "eth", action: "cancel", from: txData.tx.from, to: txData.tx.to, amount: msgValue };
     } else if (txData.tx.from == account) {
       results.ethPaid = msgValue;
-      // results.info = "Sent " + ethers.utils.formatEther(msgValue) + "Ξ to " + txData.tx.to;
-      results.info = {
-        type: "eth",
-        action: "sent",
-        to: txData.tx.to,
-        amount: msgValue,
-      };
+      results.info = { type: "eth", action: "sent", to: txData.tx.to, amount: msgValue };
     } else if (txData.tx.to == account) {
       results.ethReceived = msgValue;
-      // results.info = "Received " + ethers.utils.formatEther(msgValue) + "Ξ from " + txData.tx.from;
-      results.info = {
-        type: "eth",
-        action: "received",
-        from: txData.tx.from,
-        amount: msgValue,
-      };
+      results.info = { type: "eth", action: "received", from: txData.tx.from, amount: msgValue };
     }
   }
 
-  // ERC-20 approve(address guy, uint256 wad)
-  if (!results.info && results.functionSelector == "0x095ea7b3") {
-    for (const event of txData.txReceipt.logs) {
-      if (event.address == txData.tx.to && event.topics[0] == "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925") {
-        const tokenOwner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
-        const operator = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-        let tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data).toString() : ethers.BigNumber.from(event.topics[3]).toString();
-        // if (tokens > 1_000_000_100) {
-        //   results.info = "ERC-20 large approval";
-        // } else {
-        //   results.info = "ERC-20 approved for " + event.address.substring(0, 16);
-        // }
-        results.info = {
-          type: "erc20",
-          action: "approval",
-          contract: event.address,
-          tokenOwner,
-          operator,
-          tokens,
-        };
+  if (!results.info && results.functionSelector.length > 9) {
+    for (const [index, handler] of _FUNCTIONSELECTORHANDLER.entries()) {
+      if (results.functionSelector in handler.functionSelectors) {
+        handler.process(txData, account, accounts, events, results);
       }
-    }
-    if (!results.info) {
-      // results.info = "ERC-20 approval with no logs";
-      // TODO Get from function call params
-      results.info = {
-        type: "erc20",
-        action: "approval",
-        contract: txData.tx.to,
-        tokenOwner: null,
-        operator: null,
-        tokens: null,
-      };
-    }
-  }
-
-  // ERC-20 transfer(address _to, uint256 _value)
-  if (!results.info && results.functionSelector == "0xa9059cbb") {
-    for (const event of txData.txReceipt.logs) {
-      if (event.address == txData.tx.to && event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
-        const from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
-        const to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-        const tokens = event.topics.length == 3 ? ethers.BigNumber.from(event.data) : ethers.BigNumber.from(event.topics[3]);
-        if (from == account && to == account) {
-          results.info = "Self Transfer ERC-20:" + event.address + " " + tokens;
-        } else if (from == account) {
-          results.info = "Sent ERC-20:" + event.address + " " + tokens + " to " + to;
-        } else if (to == account) {
-          // results.info = "Received ERC-20:" + event.address + " " + tokens + " from " + from;
-          results.info = {
-            type: "erc20",
-            action: "received",
-            contract: event.address,
-            from,
-            tokens,
-          };
-        }
-      }
-    }
-  }
-
-  // ERC-721 setApprovalForAll(address operator,bool approved)
-  if (!results.info && results.functionSelector == "0xa22cb465") {
-    for (const event of txData.txReceipt.logs) {
-      // ApprovalForAll (index_topic_1 address owner, index_topic_2 address operator, bool approved)
-      if (event.address == txData.tx.to && event.topics[0] == "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31") {
-        const owner = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
-        const operator = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
-        const approved = ethers.BigNumber.from(event.data) > 0;
-        const info = getTokenContractInfo(event.address, accounts);
-        // results.info = "ERC-721 " + info.symbol + " setApprovalForAll(" + operator + ", " + approved + ")";
-        results.info = {
-          type: "nft",
-          action: "approvalforall",
-          contract: event.address,
-          owner,
-          operator,
-          approved,
-        };
-      }
-    }
-  }
-
-  // NFT Transfers
-  const NFTTRANSFERSIGS = {
-    // Handle in customAccounts "0x8b72a2ec": "transferPunk(address to, uint256 punkIndex)", // CryptoPunks @ 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB
-    "0x42842e0e": "safeTransferFrom(address,address,uint256)", // ERC-721
-    "0x23b872dd": "transferFrom(address,address,uint256)", // ERC-721
-    "0xf242432a": "safeTransferFrom(address,address,uint256,uint256,bytes)", // ERC-1155
-    "0x2eb2c2d6": "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)", // ERC-1155
-    "0x3f801f91": true, // Old Opensea Bulk Transfers @ 0xA64528Ce3c465C47258F14106FE903C201b07374
-    "0x32389b71": true, // Opensea Bulk Transfers @ 0x0000000000c2d145a2526bD8C716263bFeBe1A72
-    "0xd9eccc2e": true, // sendToMany(address from, address[] to, uint256 id, uint256 amount, bytes data) @ 0xD9c8e3d79B44679A4837E2D53c5da43Ca582DADf
-    "0x54ffbd23": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
-    "0xe96c3edb": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
-  };
-  if (!results.info && results.functionSelector in NFTTRANSFERSIGS) {
-    if (events.receivedNFTEvents.length > 0) {
-      // console.log("receivedNFTEvents: " + JSON.stringify(events.receivedNFTEvents, null, 2));
-      results.info = {
-        type: "nft",
-        action: "received",
-        from: txData.tx.from,
-        events: events.receivedNFTEvents,
-      };
-    }
-    if (events.sentNFTEvents.length > 0) {
-      // console.log("sentNFTEvents: " + JSON.stringify(events.sentNFTEvents, null, 2));
-      results.info = {
-        type: "nft",
-        action: "sent",
-        // to: txData.tx.to,
-        events: events.sentNFTEvents,
-      };
     }
   }
 
