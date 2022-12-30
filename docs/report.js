@@ -188,11 +188,8 @@ const Report = {
 
         <div v-if="settings.showAdditionalFilters" class="d-flex flex-wrap m-0 p-0">
           <div class="mt-0 pr-1" style="width: 10.0rem;">
-            <b-card-body class="m-0 mt-1 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
-              <b-card header-class="m-0 p-0" body-class="p-0" class="m-0 p-0 border-0">
-                <template #header>
-                  Accounts
-                </template>
+            <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
+              <b-card-body class="m-0 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
                 <font size="-2">
                   <b-table small fixed striped :fields="accountsFilterFields" :items="getAllAccounts" head-variant="light">
                     <template #cell(select)="data">
@@ -203,15 +200,12 @@ const Report = {
                     </template>
                   </b-table>
                 </font>
-              </b-card>
-            </b-card-body>
+              </b-card-body>
+            </b-card>
           </div>
           <div class="mt-0 pr-1" style="width: 10.0rem;">
-            <b-card-body class="m-0 mt-1 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
-              <b-card header-class="m-0 p-0" body-class="p-0" class="m-0 p-0 border-0">
-                <template #header>
-                  Types
-                </template>
+            <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
+              <b-card-body class="m-0 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
                 <font size="-2">
                   <b-table small fixed striped :fields="typesFilterFields" :items="getAllTypes" head-variant="light">
                     <template #cell(select)="data">
@@ -219,15 +213,12 @@ const Report = {
                     </template>
                   </b-table>
                 </font>
-              </b-card>
-            </b-card-body>
+              </b-card-body>
+            </b-card>
           </div>
           <div class="mt-0 pr-1" style="width: 10.0rem;">
-            <b-card-body class="m-0 mt-1 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
-              <b-card header-class="m-0 p-0" body-class="p-0" class="m-0 p-0 border-0">
-                <template #header>
-                  Actions
-                </template>
+            <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
+              <b-card-body class="m-0 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
                 <font size="-2">
                   <b-table small fixed striped :fields="actionsFilterFields" :items="getAllActions" head-variant="light">
                     <template #cell(select)="data">
@@ -235,15 +226,12 @@ const Report = {
                     </template>
                   </b-table>
                 </font>
-              </b-card>
-            </b-card-body>
+              </b-card-body>
+            </b-card>
           </div>
           <div class="mt-0 pr-1" style="width: 30.0rem;">
-            <b-card-body class="m-0 mt-1 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
-              <b-card header-class="m-0 p-0" body-class="p-0" class="m-0 p-0 border-0">
-                <template #header>
-                  Function Calls
-                </template>
+            <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
+              <b-card-body class="m-0 p-0" style="flex-grow: 1; max-height: 250px; overflow-y: auto;">
                 <font size="-2">
                   <b-table small fixed striped :fields="functionCallsFilterFields" :items="getAllFunctionCalls" head-variant="light">
                     <template #cell(select)="data">
@@ -251,8 +239,8 @@ const Report = {
                     </template>
                   </b-table>
                 </font>
-              </b-card>
-            </b-card-body>
+              </b-card-body>
+            </b-card>
           </div>
         </div>
 
