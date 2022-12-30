@@ -243,7 +243,7 @@ const Report = {
                 <font size="-2">
                   <b-table small fixed striped :fields="functionCallsFilterFields" :items="getAllFunctionCalls" head-variant="light">
                     <template #cell(select)="data">
-                      <b-form-checkbox size="sm" :checked="(settings.filters['functionCalls'] && settings.filters['functionCalls'][data.item.functionCall]) ? 1 : 0" value="1" @change="filterChanged('functions', data.item.functionCall)"></b-form-checkbox>
+                      <b-form-checkbox size="sm" :checked="(settings.filters['functionCalls'] && settings.filters['functionCalls'][data.item.functionCall]) ? 1 : 0" value="1" @change="filterChanged('functionCalls', data.item.functionCall)"></b-form-checkbox>
                     </template>
                   </b-table>
                 </font>
@@ -746,6 +746,22 @@ const Report = {
     },
     filteredTransactions() {
       const results = [];
+      let accountFilter = null;
+      if (this.settings.filters.accounts && Object.keys(this.settings.filters.accounts).length > 0) {
+        accountFilter = this.settings.filters.accounts;
+      }
+      let typeFilter = null;
+      if (this.settings.filters.types && Object.keys(this.settings.filters.types).length > 0) {
+        typeFilter = this.settings.filters.types;
+      }
+      let actionFilter = null;
+      if (this.settings.filters.actions && Object.keys(this.settings.filters.actions).length > 0) {
+        actionFilter = this.settings.filters.actions;
+      }
+      let functionCallFilter = null;
+      if (this.settings.filters.functionCalls && Object.keys(this.settings.filters.functionCalls).length > 0) {
+        functionCallFilter = this.settings.filters.functionCalls;
+      }
       if (this.report.transactions) {
         let startPeriod = null;
         let endPeriod = null;
@@ -785,6 +801,44 @@ const Report = {
               !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
             ) {
               include = false;
+            }
+          }
+          if (include && accountFilter != null) {
+            if (!(transaction.account in accountFilter)) {
+              include = false;
+            }
+          }
+          if (include && typeFilter != null) {
+            if (transaction.info && transaction.info.type) {
+              if (!(transaction.info.type in typeFilter)) {
+                include = false;
+              }
+            } else {
+              if (!("(unknown)" in typeFilter)) {
+                include = false;
+              }
+            }
+          }
+          if (include && actionFilter != null) {
+            if (transaction.info && transaction.info.action) {
+              if (!(transaction.info.action in actionFilter)) {
+                include = false;
+              }
+            } else {
+              if (!("(unknown)" in actionFilter)) {
+                include = false;
+              }
+            }
+          }
+          if (include && functionCallFilter != null) {
+            if (transaction.functionCall && transaction.functionCall.length > 2) {
+              if (!(transaction.functionCall in functionCallFilter)) {
+                include = false;
+              }
+            } else {
+              if (!("(unknown)" in functionCallFilter)) {
+                include = false;
+              }
             }
           }
 
