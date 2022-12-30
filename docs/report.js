@@ -191,7 +191,7 @@ const Report = {
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
-                  <b-table small fixed striped sticky-header :fields="accountsFilterFields" :items="getAllAccounts" head-variant="light">
+                  <b-table small fixed striped sticky-header="200px" :fields="accountsFilterFields" :items="getAllAccounts" head-variant="light">
                     <template #cell(select)="data">
                       <b-form-checkbox size="sm" :checked="(settings.filters['accounts'] && settings.filters['accounts'][data.item.account]) ? 1 : 0" value="1" @change="filterChanged('accounts', data.item.account)"></b-form-checkbox>
                     </template>
@@ -207,7 +207,7 @@ const Report = {
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
-                  <b-table small fixed striped sticky-header :fields="typesFilterFields" :items="getAllTypes" head-variant="light">
+                  <b-table small fixed striped sticky-header="200px" :fields="typesFilterFields" :items="getAllTypes" head-variant="light">
                     <template #cell(select)="data">
                       <b-form-checkbox size="sm" :checked="(settings.filters['types'] && settings.filters['types'][data.item.type]) ? 1 : 0" value="1" @change="filterChanged('types', data.item.type)"></b-form-checkbox>
                     </template>
@@ -220,7 +220,7 @@ const Report = {
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
-                  <b-table small fixed striped sticky-header :fields="actionsFilterFields" :items="getAllActions" head-variant="light">
+                  <b-table small fixed striped sticky-header="200px" :fields="actionsFilterFields" :items="getAllActions" head-variant="light">
                     <template #cell(select)="data">
                       <b-form-checkbox size="sm" :checked="(settings.filters['actions'] && settings.filters['actions'][data.item.action]) ? 1 : 0" value="1" @change="filterChanged('actions', data.item.action)"></b-form-checkbox>
                     </template>
@@ -233,7 +233,7 @@ const Report = {
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
-                  <b-table small fixed striped sticky-header :fields="functionCallsFilterFields" :items="getAllFunctionCalls" head-variant="light">
+                  <b-table small fixed striped sticky-header="200px" :fields="functionCallsFilterFields" :items="getAllFunctionCalls" head-variant="light">
                     <template #cell(select)="data">
                       <b-form-checkbox size="sm" :checked="(settings.filters['functionCalls'] && settings.filters['functionCalls'][data.item.functionCall]) ? 1 : 0" value="1" @change="filterChanged('functionCalls', data.item.functionCall)"></b-form-checkbox>
                     </template>
