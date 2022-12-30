@@ -563,7 +563,7 @@ const _CUSTOMACCOUNTS = {
       if (txData.tx.data.substring(0, 10) == "0xf14fcbc8") {
         results.info = {
           type: "ens",
-          action: "commit",
+          action: "committed",
         };
       } else {
         const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
@@ -1067,7 +1067,7 @@ const _CUSTOMACCOUNTS = {
         // results.info = "ENS.Vision Bulk Registration Commit";
         results.info = {
           type: "ens",
-          action: "bulkcommit",
+          action: "bulkcommitted",
         };
       } else {
         const ethRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);

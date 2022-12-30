@@ -103,9 +103,9 @@ function getEvents(account, accounts, preERC721s, txData) {
         // ERC-20 Transfer
       } else {
         if (to == account) {
-          receivedERC20Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId });
+          receivedERC20Events.push({ type: "erc20", logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId });
         } else if (from == account) {
-          sentERC20Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId });
+          sentERC20Events.push({ type: "erc20", logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId });
         }
         erc20Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId });
         if (!(from in erc20FromMap)) {
@@ -414,6 +414,7 @@ function getEvents(account, accounts, preERC721s, txData) {
   return { receivedNFTEvents, sentNFTEvents, receivedERC20Events, sentERC20Events, erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents, ensEvents, sentInternalEvents, receivedInternalEvents };
 }
 
+
 async function accumulateTxResults(provider, account, accumulatedData, txData, block, results) {
   if (!('ethBalance' in accumulatedData)) {
     accumulatedData.ethBalance = ethers.BigNumber.from(0);
@@ -451,6 +452,7 @@ async function accumulateTxResults(provider, account, accumulatedData, txData, b
   // }
 }
 
+
 function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txData) {
   // console.log("parseTx - account: " + JSON.stringify(account));
   // console.log("parseTx - txData: " + JSON.stringify(txData));
@@ -470,7 +472,13 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
   // if (events.sentNFTEvents.length > 0) {
   //   console.log("sentNFTEvents: " + JSON.stringify(events.sentNFTEvents, null, 2));
   // }
-
+  // if (events.receivedERC20Events.length > 0) {
+  //   console.log("receivedERC20Events: " + JSON.stringify(events.receivedERC20Events, null, 2));
+  // }
+  // if (events.sentERC20Events.length > 0) {
+  //   console.log("sentERC20Events: " + JSON.stringify(events.sentERC20Events, null, 2));
+  // }
+  // console.log(txData.tx.hash + " - " + JSON.stringify([...events.receivedNFTEvents, ...events.sentNFTEvents, ...events.receivedERC20Events, ...events.sentERC20Events], null, 2));
 
   // if (events.nftExchangeEvents.length > 0) {
   //   console.log("nftExchangeEvents: " + JSON.stringify(events.nftExchangeEvents, null, 2));
@@ -529,7 +537,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
   // EOA to EOA ETH transfer
   if (gasUsed == 21000) {
     if (txData.tx.from == account && txData.tx.to == account) {
-      results.info = { type: "eth", action: "cancel", from: txData.tx.from, to: txData.tx.to, amount: msgValue };
+      results.info = { type: "eth", action: "cancelled", from: txData.tx.from, to: txData.tx.to, amount: msgValue };
     } else if (txData.tx.from == account) {
       results.ethPaid = msgValue;
       results.info = { type: "eth", action: "sent", to: txData.tx.to, amount: msgValue };
@@ -823,8 +831,8 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     "0x73311631": "addBrand(address brandAccount, string brandName)", //
     "0x0a40fb8c": "permissionMarker(address marker, bool permission)", //
     "0x34f14c0a": "addEntry(address token, uint8 permission)", //
-    "0xddd81f82": "registerProxy()", // OpenSea  0xa5409ec958C83C3f309868babACA7c86DCB077c1
-    "0x2385554c": "hatchEgg(uint256 egg)", //  0x7685376aF33104dD02be287ed857a19Bb4A24EA2
+    "0xddd81f82": "registerProxy()", // OpenSea 0xa5409ec958C83C3f309868babACA7c86DCB077c1
+    "0x2385554c": "hatchEgg(uint256 egg)", // 0x7685376aF33104dD02be287ed857a19Bb4A24EA2
     "0x4e71d92d": "claim()", //  0xfdD7399e22918ba7234f5568cc2eF922489F7Ba6 - TODO ERC-20
     "0xfc24100b": "buyAccessories(tuple[] orders)", // 0x8d33303023723dE93b213da4EB53bE890e747C63
     "0xc39cbef1": "changeName(uint256 tokenId, string newName)", // 0xC2C747E0F7004F9E8817Db2ca4997657a7746928

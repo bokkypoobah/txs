@@ -283,9 +283,9 @@ const Report = {
           <template #cell(info)="data">
             <div v-if="data.item.info">
               <div v-if="data.item.info.type == 'eth'">
-                <div v-if="data.item.info.action == 'cancel'">
+                <div v-if="data.item.info.action == 'cancelled'">
                   <b-badge variant="info">eth</b-badge>
-                  <b-badge variant="primary">cancel</b-badge>
+                  <b-badge variant="primary">cancelled</b-badge>
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
                   <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
                 </div>
@@ -436,11 +436,11 @@ const Report = {
                 </div>
               </div>
               <div v-else-if="data.item.info.type == 'ens'">
-                <div v-if="data.item.info.action == 'commit'">
+                <div v-if="data.item.info.action == 'committed'">
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">committed</b-badge>
                 </div>
-                <div v-else-if="data.item.info.action == 'bulkcommit'">
+                <div v-else-if="data.item.info.action == 'bulkcommitted'">
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">bulkcommitted</b-badge>
                 </div>
@@ -1338,66 +1338,65 @@ const reportModule = {
               blocksProcessed++;
             }
 
-            if (false) {
-            const txHashes = {};
-            const missingTxDataHashes = {};
-            for (const [txHash, logIndexes] of Object.entries(accountData.events)) {
-              for (const [logIndex, event] of Object.entries(logIndexes)) {
-                if (txHash in txs) {
-                  txHashes[txHash] = event.blockNumber;
-                } else {
-                  missingTxDataHashes[txHash] = event.blockNumber;
-                }
-              }
-            }
-            for (const [txHash, traceIds] of Object.entries(accountData.internalTransactions)) {
-              for (const [traceId, tx] of Object.entries(traceIds)) {
-                if (txHash in txs) {
-                  txHashes[txHash] = tx.blockNumber;
-                } else {
-                  missingTxDataHashes[txHash] = null;
-                }
-              }
-            }
-            for (const [txHash, tx] of Object.entries(accountData.transactions)) {
-              if (txHash in txs) {
-                txHashes[txHash] = tx.blockNumber;
-              } else {
-                missingTxDataHashes[txHash] = tx.blockNumber;
-              }
-            }
-            const txList = [];
-            for (const [txHash, blockNumber] of Object.entries(txHashes)) {
-              txList.push(txs[txHash]);
-            }
-            txList.sort((a, b) => {
-              const aBlockNumber = parseInt(a.tx.blockNumber);
-              const bBlockNumber = parseInt(b.tx.blockNumber);
-              if (aBlockNumber == bBlockNumber) {
-                return parseInt(a.tx.transactionIndex) - parseInt(b.tx.transactionIndex);
-              } else {
-                return aBlockNumber - bBlockNumber;
-              }
-            });
-
-            // let ethBalance = ethers.BigNumber.from(0);
-            for (const txData of txList.slice(0, 10)) {
-              if ((!contractOrTx || txData.tx.to == contractOrTx || txData.tx.hash == contractOrTx) && txData.tx.blockNumber >= startBlock && txData.tx.blockNumber <= endBlock) {
-                const block = blocks[chainId] && blocks[chainId][txData.tx.blockNumber] || null;
-                // console.log("block: " + JSON.stringify(block));
-                // console.log("txData: " + JSON.stringify(txData));
-                // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
-                const exchangeRate = getExchangeRate(moment.unix(txData.timestamp), exchangeRates);
-                const results = parseTx(chainId, account, accounts, txData);
-                await accumulateTxResults(provider, account, accumulatedData, txData, block, results);
-                // console.log("  exchangeRate: " + JSON.stringify(exchangeRate));
-                // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
-                // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
-              }
-            }
-            console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
-            }
-
+            // if (false) {
+            //   const txHashes = {};
+            //   const missingTxDataHashes = {};
+            //   for (const [txHash, logIndexes] of Object.entries(accountData.events)) {
+            //     for (const [logIndex, event] of Object.entries(logIndexes)) {
+            //       if (txHash in txs) {
+            //         txHashes[txHash] = event.blockNumber;
+            //       } else {
+            //         missingTxDataHashes[txHash] = event.blockNumber;
+            //       }
+            //     }
+            //   }
+            //   for (const [txHash, traceIds] of Object.entries(accountData.internalTransactions)) {
+            //     for (const [traceId, tx] of Object.entries(traceIds)) {
+            //       if (txHash in txs) {
+            //         txHashes[txHash] = tx.blockNumber;
+            //       } else {
+            //         missingTxDataHashes[txHash] = null;
+            //       }
+            //     }
+            //   }
+            //   for (const [txHash, tx] of Object.entries(accountData.transactions)) {
+            //     if (txHash in txs) {
+            //       txHashes[txHash] = tx.blockNumber;
+            //     } else {
+            //       missingTxDataHashes[txHash] = tx.blockNumber;
+            //     }
+            //   }
+            //   const txList = [];
+            //   for (const [txHash, blockNumber] of Object.entries(txHashes)) {
+            //     txList.push(txs[txHash]);
+            //   }
+            //   txList.sort((a, b) => {
+            //     const aBlockNumber = parseInt(a.tx.blockNumber);
+            //     const bBlockNumber = parseInt(b.tx.blockNumber);
+            //     if (aBlockNumber == bBlockNumber) {
+            //       return parseInt(a.tx.transactionIndex) - parseInt(b.tx.transactionIndex);
+            //     } else {
+            //       return aBlockNumber - bBlockNumber;
+            //     }
+            //   });
+            //
+            //   // let ethBalance = ethers.BigNumber.from(0);
+            //   for (const txData of txList.slice(0, 10)) {
+            //     if ((!contractOrTx || txData.tx.to == contractOrTx || txData.tx.hash == contractOrTx) && txData.tx.blockNumber >= startBlock && txData.tx.blockNumber <= endBlock) {
+            //       const block = blocks[chainId] && blocks[chainId][txData.tx.blockNumber] || null;
+            //       // console.log("block: " + JSON.stringify(block));
+            //       // console.log("txData: " + JSON.stringify(txData));
+            //       // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
+            //       const exchangeRate = getExchangeRate(moment.unix(txData.timestamp), exchangeRates);
+            //       const results = parseTx(chainId, account, accounts, txData);
+            //       await accumulateTxResults(provider, account, accumulatedData, txData, block, results);
+            //       // console.log("  exchangeRate: " + JSON.stringify(exchangeRate));
+            //       // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
+            //       // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
+            //     }
+            //   }
+            //   console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
+            // }
           }
         }
       }
