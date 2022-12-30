@@ -192,29 +192,14 @@ const Report = {
                 <font size="-2">
                   <b-table small fixed striped :fields="accountsFilterFields" :items="getAllAccounts" head-variant="light">
                     <template #cell(select)="data">
-                      <!-- <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox> -->
-                      <b-form-checkbox size="sm" :checked="1" value="1"></b-form-checkbox>
+                      <b-form-checkbox size="sm" :checked="(settings.filters['accounts'] && settings.filters['accounts'][data.item.account]) ? 1 : 0" value="1" @change="filterChanged('accounts', data.item.account)"></b-form-checkbox>
                     </template>
                     <template #cell(account)="data">
                       {{ ensOrAccount(data.item.account, 20) }}
                     </template>
                   </b-table>
-                  <!--
-                  <b-table small fixed striped sticky-header="200px" :fields="tokenAttributesFields" :items="attributeType.attributeList" head-variant="light">
-                    <template #cell(select)="data">
-                      <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox>
-                    </template>
-                    <template #cell(attributeOption)="data">
-                      {{ data.item.attribute }}
-                    </template>
-                    <template #cell(attributeTotal)="data">
-                      {{ data.item.tokens.length }}
-                    </template>
-                  </b-table>
-                  -->
                 </font>
               </b-card>
-              <!-- <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input> -->
             </b-card-body>
           </div>
           <div class="mt-0 pr-1" style="width: 10.0rem;">
@@ -226,8 +211,7 @@ const Report = {
                 <font size="-2">
                   <b-table small fixed striped :fields="typesFilterFields" :items="getAllTypes" head-variant="light">
                     <template #cell(select)="data">
-                      <!-- <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox> -->
-                      <b-form-checkbox size="sm" :checked="1" value="1"></b-form-checkbox>
+                      <b-form-checkbox size="sm" :checked="(settings.filters['types'] && settings.filters['types'][data.item.type]) ? 1 : 0" value="1" @change="filterChanged('types', data.item.type)"></b-form-checkbox>
                     </template>
                   </b-table>
                 </font>
@@ -243,8 +227,7 @@ const Report = {
                 <font size="-2">
                   <b-table small fixed striped :fields="actionsFilterFields" :items="getAllActions" head-variant="light">
                     <template #cell(select)="data">
-                      <!-- <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox> -->
-                      <b-form-checkbox size="sm" :checked="1" value="1"></b-form-checkbox>
+                      <b-form-checkbox size="sm" :checked="(settings.filters['actions'] && settings.filters['actions'][data.item.action]) ? 1 : 0" value="1" @change="filterChanged('actions', data.item.action)"></b-form-checkbox>
                     </template>
                   </b-table>
                 </font>
@@ -260,8 +243,7 @@ const Report = {
                 <font size="-2">
                   <b-table small fixed striped :fields="functionCallsFilterFields" :items="getAllFunctionCalls" head-variant="light">
                     <template #cell(select)="data">
-                      <!-- <b-form-checkbox size="sm" :checked="(tokenAttributesFilter[attributeType.attributeType] && tokenAttributesFilter[attributeType.attributeType].attributeOption) ? 1 : 0" value="1" @change="collectionFilterChange(attributeType.attributeType, data.item.attribute)"></b-form-checkbox> -->
-                      <b-form-checkbox size="sm" :checked="1" value="1"></b-form-checkbox>
+                      <b-form-checkbox size="sm" :checked="(settings.filters['functionCalls'] && settings.filters['functionCalls'][data.item.functionCall]) ? 1 : 0" value="1" @change="filterChanged('functions', data.item.functionCall)"></b-form-checkbox>
                     </template>
                   </b-table>
                 </font>
@@ -591,7 +573,8 @@ const Report = {
         pageSize: 100,
         sortOption: 'timestampdsc',
         showAdditionalFilters: false,
-        version: 2,
+        filters: {},
+        version: 3,
       },
       modalAddress: null,
       modalTx: {
@@ -669,19 +652,19 @@ const Report = {
         // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
       ],
       accountsFilterFields: [
-        { key: 'select', label: '', thStyle: 'width: 10%;' },
+        { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'account', label: 'Account' },
       ],
       typesFilterFields: [
-        { key: 'select', label: '', thStyle: 'width: 10%;' },
+        { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'type', label: 'Type' },
       ],
       actionsFilterFields: [
-        { key: 'select', label: '', thStyle: 'width: 10%;' },
+        { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'action', label: 'Action' },
       ],
       functionCallsFilterFields: [
-        { key: 'select', label: '', thStyle: 'width: 10%;' },
+        { key: 'select', label: '', thStyle: 'width: 5%;' },
         { key: 'functionCall', label: 'Function Call' },
       ],
     }
@@ -1006,6 +989,20 @@ const Report = {
     addCoinbase() {
       store.dispatch('data/addNewAccounts', this.coinbase);
     },
+    filterChanged(dataType, option) {
+      if (!this.settings.filters[dataType]) {
+        Vue.set(this.settings.filters, dataType, {});
+      }
+      if (this.settings.filters[dataType][option]) {
+        Vue.delete(this.settings.filters[dataType], option);
+        if (Object.keys(this.settings.filters[dataType]) == 0) {
+          Vue.delete(this.settings.filters, dataType);
+        }
+      } else {
+        Vue.set(this.settings.filters[dataType], option, true);
+      }
+      localStorage.reportSettings = JSON.stringify(this.settings);
+    },
     toggleSelectedTransactions(items) {
       let someFalse = false;
       let someTrue = false;
@@ -1175,7 +1172,7 @@ const Report = {
     store.dispatch('report/restoreState');
     if ('reportSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.reportSettings);
-      if ('version' in tempSettings && tempSettings.version == 2) {
+      if ('version' in tempSettings && tempSettings.version == 3) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
