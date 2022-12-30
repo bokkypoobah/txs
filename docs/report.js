@@ -743,13 +743,6 @@ const Report = {
     },
     totalTransactions() {
       let result = 0;
-      // for (const [chainId, chainData] of Object.entries(this.txs)) {
-      //   result = parseInt(result) + Object.keys(chainData).length;
-      // }
-      // for (const [index, transaction] of this.report.transactions.entries()) {
-      //   result = parseInt(result) + Object.keys(chainData).length;
-      // }
-      // return result;
       return this.report.transactions && this.report.transactions.length || 0;
     },
     filteredTransactions() {
@@ -871,6 +864,34 @@ const Report = {
       }
       return results;
     },
+    filteredSortedTransactions() {
+      const results = this.filteredTransactions;
+      if (this.settings.sortOption == 'timestampasc') {
+        results.sort((a, b) => a.timestamp - b.timestamp);
+      } else if (this.settings.sortOption == 'timestampdsc') {
+        results.sort((a, b) => b.timestamp - a.timestamp);
+      } else if (this.settings.sortOption == 'blocknumberasc') {
+        results.sort((a, b) => {
+          if (a.blockNumber == b.blockNumber) {
+            return a.transactionIndex - b.transactionIndex;
+          } else {
+            return a.blockNumber - b.blockNumber;
+          }
+        });
+      } else if (this.settings.sortOption == 'blocknumberdsc') {
+        results.sort((a, b) => {
+          if (a.blockNumber == b.blockNumber) {
+            return b.transactionIndex - a.transactionIndex;
+          } else {
+            return b.blockNumber - a.blockNumber
+          }
+        });
+      }
+      return results;
+    },
+    pagedFilteredSortedTransactions() {
+      return this.filteredSortedTransactions.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
+    },
     getAllAccounts() {
       const results = [];
       if (this.report.accountsList) {
@@ -921,97 +942,6 @@ const Report = {
         results.push({ functionCall: "(unknown)" });
       }
       return results;
-    },
-
-    filteredTransactionsOld() {
-      const results = [];
-      let startPeriod = null;
-      let endPeriod = null;
-      const txhashFilterLower = this.settings.txhashFilter && this.settings.txhashFilter.toLowerCase() || null;
-      const accountFilterLower = this.settings.accountFilter && this.settings.accountFilter.toLowerCase() || null;
-      if (this.settings.period != null && this.settings.period != "nodata") {
-        const periodRecords = this.periodOptions.filter(e => e.value == this.settings.period);
-        if (periodRecords.length > 0) {
-          startPeriod = periodRecords[0].data.startPeriod;
-          endPeriod = periodRecords[0].data.endPeriod;
-        } else {
-          const quarterlyRecords = store.getters['config/quarterlyOptions'].filter(e => e.value == this.settings.period);
-          if (quarterlyRecords.length > 0) {
-            startPeriod = quarterlyRecords[0].data.startPeriod;
-            endPeriod = quarterlyRecords[0].data.endPeriod;
-          }
-        }
-      }
-      for (const [chainId, chainData] of Object.entries(this.txs)) {
-        for (const [txHash, item] of Object.entries(chainData)) {
-          const block = this.blocks[chainId] && this.blocks[chainId][item.txReceipt.blockNumber] || null;
-          let include = block != null;
-          if (startPeriod != null && block.timestamp < startPeriod.unix()) {
-            include = false;
-          }
-          if (include && endPeriod != null && block.timestamp > endPeriod.unix()) {
-            include = false;
-          }
-          if (include && txhashFilterLower != null) {
-            if (!(txHash.includes(txhashFilterLower))) {
-              include = false;
-            }
-          }
-          if (include && accountFilterLower != null) {
-            const fromENS = this.ensMap[item.tx.from] || null;
-            if (
-              !(item.tx.from.toLowerCase().includes(accountFilterLower)) &&
-              !(item.tx.to.toLowerCase().includes(accountFilterLower)) &&
-              !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
-            ) {
-              include = false;
-            }
-          }
-          if (include) {
-            const info = parseTxOld(item, null);
-            results.push({
-              chainId,
-              txHash,
-              blockNumber: item.blockNumber,
-              transactionIndex: item.transactionIndex,
-              timestamp: block.timestamp,
-              from: item.tx.from,
-              to: item.tx.to,
-              value: item.tx.value,
-              ...info,
-            });
-          }
-        }
-      }
-      return results;
-    },
-    filteredSortedTransactions() {
-      const results = this.filteredTransactions;
-      if (this.settings.sortOption == 'timestampasc') {
-        results.sort((a, b) => a.timestamp - b.timestamp);
-      } else if (this.settings.sortOption == 'timestampdsc') {
-        results.sort((a, b) => b.timestamp - a.timestamp);
-      } else if (this.settings.sortOption == 'blocknumberasc') {
-        results.sort((a, b) => {
-          if (a.blockNumber == b.blockNumber) {
-            return a.transactionIndex - b.transactionIndex;
-          } else {
-            return a.blockNumber - b.blockNumber;
-          }
-        });
-      } else if (this.settings.sortOption == 'blocknumberdsc') {
-        results.sort((a, b) => {
-          if (a.blockNumber == b.blockNumber) {
-            return b.transactionIndex - a.transactionIndex;
-          } else {
-            return b.blockNumber - a.blockNumber
-          }
-        });
-      }
-      return results;
-    },
-    pagedFilteredSortedTransactions() {
-      return this.filteredSortedTransactions.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
     },
   },
   methods: {
