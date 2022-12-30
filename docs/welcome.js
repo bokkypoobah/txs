@@ -39,11 +39,13 @@ const Welcome = {
                       </li>
                     </ul>
                   </li>
+                  <!--
                   <li>
                     View your transactions by accounts in the Account tab
                   </li>
+                  -->
                   <li>
-                    View your transactions in the Transactions tab
+                    View your transactions in the Reports tab. Click on the Generate Report icon <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-newspaper shift-v="+1" font-scale="1.0"></b-icon-newspaper></b-button> for the results to be displayed.
                   </li>
                   <li>
                     Enter your Etherscan API key in the Config tab to avoid your API data retrieval being throttled to 1 request per 6 seconds

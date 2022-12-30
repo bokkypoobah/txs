@@ -1064,7 +1064,11 @@ const _CUSTOMACCOUNTS = {
     process: function(txData, account, accounts, events, results) {
       // console.log("  ENSVisionBatchRegistration");
       if (txData.tx.data.substring(0, 10) == "0x8813034e") {
-        results.info = "ENS.Vision Bulk Registration Commit";
+        // results.info = "ENS.Vision Bulk Registration Commit";
+        results.info = {
+          type: "ens",
+          action: "bulkcommit",
+        };
       } else {
         const ethRegistrarControllerInterface = new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi);
         let totalCost = ethers.BigNumber.from(0);

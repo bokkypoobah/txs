@@ -132,12 +132,16 @@ const Report = {
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['importFromEtherscan', 'downloadData', 'buildAssets', 'getExchangeRates'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import Etherscan transactions and web3 transfer events for accounts configured to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
+          <!--
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['downloadData'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import transaction data via web3 for accounts configured to be synced'"><b-icon-cloud shift-v="+1" font-scale="1.2"></b-icon-cloud></b-button>
           </div>
+          -->
+          <!--
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['getExchangeRates'], parameters: [] })" variant="link" v-b-popover.hover.top="'Get exchange rates'"><b-icon-bar-chart shift-v="+1" font-scale="1.2"></b-icon-bar-chart></b-button>
           </div>
+          -->
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="generateReport(contractOrTxOrBlockRange)" variant="link" v-b-popover.hover.top="'Generate Report'"><b-icon-newspaper shift-v="+1" font-scale="1.2"></b-icon-newspaper></b-button>
           </div>
@@ -403,8 +407,8 @@ const Report = {
                 </div>
                 <div v-else-if="data.item.info.action == 'approvalforall'">
                   <b-badge variant="info">nft</b-badge>
-                  <span v-if="data.item.info.approved"><b-badge variant="primary">approved</b-badge></span>
-                  <span v-else><b-badge variant="primary">revoked</b-badge></span>
+                  <span v-if="data.item.info.approved"><b-badge variant="primary">approvedforall</b-badge></span>
+                  <span v-else><b-badge variant="primary">unapprovedforall</b-badge></span>
                   <b-link @click="showModalAddress(data.item.info.operator);">{{ ensOrAccount(data.item.info.operator) }}</b-link>
                   <b-link @click="showModalNFTCollection(data.item.info.contract);">{{ data.item.info.contract.substring(0, 12) }}</b-link>
                 </div>
@@ -435,6 +439,10 @@ const Report = {
                 <div v-if="data.item.info.action == 'commit'">
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">committed</b-badge>
+                </div>
+                <div v-else-if="data.item.info.action == 'bulkcommit'">
+                  <b-badge variant="info">ens</b-badge>
+                  <b-badge variant="primary">bulkcommitted</b-badge>
                 </div>
                 <div v-else-if="data.item.info.action == 'registered'">
                   <b-badge variant="info">ens</b-badge>
