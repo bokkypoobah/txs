@@ -155,13 +155,51 @@ const _CUSTOMACCOUNTS = {
             // }
           } else if (log.name == "Transfer") {
             const [from, to, value] = log.args;
-            results.info = "CryptoPunks.Transfer " + value + " from " + from + " to " + to;
+            // results.info = "CryptoPunks.Transfer " + value + " from " + from + " to " + to;
+            // if (to == account) {
+            //   results.info = {
+            //     type: "nft",
+            //     action: "received",
+            //     from,
+            //     events: events.receivedNFTEvents,
+            //   };
+            // } else if (from == account) {
+            //   results.info = {
+            //     type: "nft",
+            //     action: "sent",
+            //     to,
+            //     events: events.receivedNFTEvents,
+            //   };
+            // }
           } else if (log.name == "PunkTransfer") {
             const [from, to, punkIndex] = log.args;
-            results.info = "CryptoPunks.PunkTransfer " + punkIndex + " from " + from + " to " + to;
+            if (to == account) {
+              results.info = {
+                type: "nft",
+                action: "received",
+                from,
+                events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
+              };
+            } else if (from == account) {
+              results.info = {
+                type: "nft",
+                action: "sent",
+                to,
+                events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
+              };
+            }
           } else if (log.name == "PunkOffered") {
             const [punkIndex, minValue, toAddress] = log.args;
-            results.info = "CryptoPunks.PunkOffered " + punkIndex + " " + minValue + " " + toAddress;
+            // results.info = "CryptoPunks.PunkOffered " + punkIndex + " " + minValue + " " + toAddress;
+            results.info = {
+              type: "nft",
+              action: "offered",
+              contract: event.address,
+              tokenId: punkIndex.toString(),
+              minValue: minValue.toString(),
+              // toAddress,
+              events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from: null, to: toAddress } ], // events.receivedNFTEvents,
+            };
           } else if (log.name == "PunkBidEntered") {
             const [punkIndex, value, fromAddress] = log.args;
             results.info = "CryptoPunks.PunkBidEntered " + punkIndex + " " + value + " from " + fromAddress;
@@ -173,7 +211,14 @@ const _CUSTOMACCOUNTS = {
             results.info = "CryptoPunks.PunkBought " + punkIndex + " " + value + " from " + fromAddress + " to " + toAddress;
           } else if (log.name == "PunkNoLongerForSale") {
             const [punkIndex] = log.args;
-            results.info = "CryptoPunks.PunkNoLongerForSale " + punkIndex;
+            // results.info = "CryptoPunks.PunkNoLongerForSale " + punkIndex;
+            results.info = {
+              type: "nft",
+              action: "offerremoved",
+              // contract: event.address,
+              // tokenId: punkIndex.toString(),
+              events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from: null, to: null } ], // events.receivedNFTEvents,
+            };
           }
         }
       }

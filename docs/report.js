@@ -292,7 +292,7 @@ const Report = {
                   <span v-if="data.item.info.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">wΞ</span>
                   <span v-else><b-link @click="showModalAddress(data.item.info.contract);">{{ ensOrAccount(data.item.info.contract) }}</b-link></span>
                 </div>
-                <div v-if="data.item.info.action == 'airdropped'">
+                <div v-else-if="data.item.info.action == 'airdropped'">
                   <b-badge variant="info">erc20</b-badge>
                   <b-badge variant="danger">airdropped</b-badge>
                   {{ data.item.info.tokens }}
@@ -367,6 +367,23 @@ const Report = {
                   <span v-else><b-badge variant="primary">revoked</b-badge></span>
                   <b-link @click="showModalAddress(data.item.info.operator);">{{ ensOrAccount(data.item.info.operator) }}</b-link>
                   <b-link @click="showModalNFTCollection(data.item.info.contract);">{{ data.item.info.contract.substring(0, 12) }}</b-link>
+                </div>
+                <div v-else-if="data.item.info.action == 'offered'">
+                  <b-badge variant="info">nft</b-badge>
+                  <b-badge variant="primary">offered</b-badge>
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                  </span>
+                  <span v-if="data.item.info.minValue">{{ formatETH(data.item.info.minValue, 0) }}<font size="-2">Ξ</font></span>
+                </div>
+                <div v-else-if="data.item.info.action == 'offerremoved'">
+                  <b-badge variant="info">nft</b-badge>
+                  <b-badge variant="primary">offerremoved</b-badge>
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                  </span>
                 </div>
                 <div v-else>
                   <font size="-2">
@@ -1110,6 +1127,9 @@ const reportModule = {
       } else {
         contractOrTx = contractOrTxOrBlockRange;
       }
+      const accountsListMap = {};
+      const typesListMap = {};
+      const functionCallsListMap = {};
       const accumulatedData = {};
       const transactions = [];
       for (const [chainId, accounts] of Object.entries(allAccounts)) {
@@ -1119,6 +1139,9 @@ const reportModule = {
           const accountsInfo = store.getters['data/accountsInfo'][chainId][account];
           if (accountsInfo.mine && accountsInfo.report) {
             console.log("--- Processing " + chainId + ":" + account + " ---");
+            if (!(account in accountsListMap)) {
+              accountsListMap[account] = true;
+            }
             const txHashesByBlocks = getTxHashesByBlocks(account, chainId, allAccounts, allAccountsInfo);
             let blocksProcessed = 0;
             let prevBalance = ethers.BigNumber.from(0);
@@ -1154,6 +1177,18 @@ const reportModule = {
                   const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
                   const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
                   totalTxFee = totalTxFee.add(txFee);
+                  if (results.info) {
+                    if (results.info.type) {
+                      if (!(results.info.type in typesListMap)) {
+                        typesListMap[results.info.type] = true;
+                      }
+                    }
+                    if (results.functionCall && results.functionCall.length > 2) {
+                      if (!(results.functionCall in functionCallsListMap)) {
+                        functionCallsListMap[results.functionCall] = true;
+                      }
+                    }
+                  }
                   transactions.push({
                     chainId,
                     txHash: tx.tx.hash,
@@ -1241,12 +1276,20 @@ const reportModule = {
             console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
             }
 
-            // console.log("transactions: " + JSON.stringify(transactions, null, 2));
-            context.commit('setReport', { transactions });
-            context.dispatch('saveData', ['report']);
           }
         }
       }
+      const accountsList = Object.keys(accountsListMap);
+      console.log("accountsList: " + JSON.stringify(accountsList));
+      const typesList = Object.keys(typesListMap);
+      console.log("typesList: " + JSON.stringify(typesList));
+      const functionCallsList = Object.keys(functionCallsListMap);
+      console.log("functionCallsList: " + JSON.stringify(functionCallsList));
+
+
+      // console.log("transactions: " + JSON.stringify(transactions, null, 2));
+      context.commit('setReport', { transactions, accountsList, typesList, functionCallsList });
+      context.dispatch('saveData', ['report']);
     },
   },
 };

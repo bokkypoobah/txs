@@ -641,6 +641,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
 
   // NFT Transfers
   const NFTTRANSFERSIGS = {
+    // Handle in customAccounts "0x8b72a2ec": "transferPunk(address to, uint256 punkIndex)", // CryptoPunks @ 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB
     "0x42842e0e": "safeTransferFrom(address,address,uint256)", // ERC-721
     "0x23b872dd": "transferFrom(address,address,uint256)", // ERC-721
     "0xf242432a": "safeTransferFrom(address,address,uint256,uint256,bytes)", // ERC-1155
