@@ -1413,16 +1413,9 @@ const reportModule = {
         }
       }
       const accountsList = Object.keys(accountsListMap);
-      console.log("accountsList: " + JSON.stringify(accountsList));
       const typesList = Object.keys(typesListMap);
-      console.log("typesList: " + JSON.stringify(typesList));
       const actionsList = Object.keys(actionsListMap);
-      console.log("actionsList: " + JSON.stringify(actionsList));
       const functionCallsList = Object.keys(functionCallsListMap);
-      console.log("functionCallsList: " + JSON.stringify(functionCallsList));
-
-
-      // console.log("transactions: " + JSON.stringify(transactions, null, 2));
       context.commit('setReport', { transactions, accountsList, typesList, actionsList, functionCallsList });
       context.dispatch('saveData', ['report']);
     },
