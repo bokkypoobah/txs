@@ -80,6 +80,7 @@ const _FUNCTIONSELECTORHANDLER = [
       "0x304e6ade": "function setContenthash(bytes32 node, bytes hash)", // Set ENS field
       "0x1896f70a": "function setResolver(bytes32 node, address resolver)", // Set ENS resolver
       "0x10f13a8c": "function setText(bytes32 node, string key, string value)", // Set ENS text
+      "0xac9650d8": "function multicall(bytes[] data)", // ENS Multicall - may have to restrict by address
       "0xf2fde38b": "function transferOwnership(address newOwner)",
     },
     process: function(txData, account, accounts, events, results) {
@@ -89,6 +90,7 @@ const _FUNCTIONSELECTORHANDLER = [
         "function setContenthash(bytes32 node, bytes hash)",
         "function setResolver(bytes32 node, address resolver)",
         "function setText(bytes32 node, string key, string value)",
+        "function multicall(bytes[] data)",
         "function transferOwnership(address newOwner)",
       ]);
       let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
@@ -144,6 +146,13 @@ const _FUNCTIONSELECTORHANDLER = [
           node,
           key,
           value,
+        };
+      } else if (decodedData.functionFragment.name == "multicall") {
+        const data = decodedData.args[0];
+        results.info = {
+          type: "ens",
+          action: "multicalled",
+          data,
         };
       } else if (decodedData.functionFragment.name == "transferOwnership") {
         const newOwner = decodedData.args[0];

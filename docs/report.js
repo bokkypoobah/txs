@@ -493,6 +493,14 @@ const Report = {
                   {{ data.item.info.key }}
                   {{ data.item.info.value }}
                 </div>
+                <div v-else-if="data.item.info.action == 'multicalled'">
+                  <b-badge variant="info">ens</b-badge>
+                  <b-badge variant="primary">multicalled</b-badge>
+                  <span v-for="(item, itemIndex) in data.item.info.data" :key="itemIndex">
+                    <span v-if="itemIndex != 0">,</span>
+                    {{ itemIndex + 1 }}. {{ item }}
+                  </span>
+                </div>
                 <div v-else>
                   <font size="-2">
                     ENS: {{ data.item.info }}
