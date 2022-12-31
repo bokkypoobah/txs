@@ -712,22 +712,22 @@ const Report = {
       accountsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'account', label: 'Account' },
-        { key: 'count', label: '#', sortable: true, thStyle: 'width: 15%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       typesFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'type', label: 'Type' },
-        { key: 'count', label: '#', sortable: true, thStyle: 'width: 15%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       actionsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'action', label: 'Action' },
-        { key: 'count', label: '#', sortable: true, thStyle: 'width: 15%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       functionCallsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 5%;' },
         { key: 'functionCall', label: 'Function Call' },
-        { key: 'count', label: '#', sortable: true, thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
     }
   },
