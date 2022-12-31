@@ -287,93 +287,95 @@ const Report = {
           <template #cell(info)="data">
             <font size="-1">
               <b-badge v-if="data.item.info.type" pill variant="info">{{ data.item.info.type }}</b-badge>
+              <b-badge v-else pill variant="warning">???</b-badge>
               <b-badge v-if="data.item.info.action" pill variant="primary">{{ data.item.info.action }}</b-badge>
+              <b-badge v-else pill variant="warning">?????</b-badge>
             </font>
-            <div v-if="data.item.info">
-              <div v-if="data.item.info.type == 'eth'">
-                <div v-if="data.item.info.action == 'cancelled'">
+            <span v-if="data.item.info">
+              <span v-if="data.item.info.type == 'eth'">
+                <span v-if="data.item.info.action == 'cancelled'">
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
                   <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
-                </div>
-                <div v-else-if="data.item.info.action == 'sent'">
+                </span>
+                <span v-else-if="data.item.info.action == 'sent'">
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
                   <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
-                </div>
-                <div v-else-if="data.item.info.action == 'received'">
+                </span>
+                <span v-else-if="data.item.info.action == 'received'">
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
                   <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
-                </div>
-              </div>
-              <div v-else-if="data.item.info.type == 'weth'">
-                <div v-if="data.item.info.action == 'wrap'">
+                </span>
+              </span>
+              <span v-else-if="data.item.info.type == 'weth'">
+                <span v-if="data.item.info.action == 'wrap'">
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
-                </div>
-                <div v-else-if="data.item.info.action == 'unwrap'">
+                </span>
+                <span v-else-if="data.item.info.action == 'unwrap'">
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">wΞ</font>
-                </div>
-              </div>
-              <div v-else-if="data.item.info.type == 'erc20'">
-                <div v-if="data.item.info.action == 'sent'">
+                </span>
+              </span>
+              <span v-else-if="data.item.info.type == 'erc20'">
+                <span v-if="data.item.info.action == 'sent'">
                   <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
                   {{ data.item.info.tokens }}
-                </div>
-                <div v-else-if="data.item.info.action == 'received'">
+                </span>
+                <span v-else-if="data.item.info.action == 'received'">
                   <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
                   {{ data.item.info.tokens }}
-                </div>
-                <div v-else-if="data.item.info.action == 'approved'">
+                </span>
+                <span v-else-if="data.item.info.action == 'approved'">
                   <b-link @click="showModalAddress(data.item.info.operator);">{{ ensOrAccount(data.item.info.operator) }}</b-link>
                   <span v-if="data.item.info.tokens > 1000000000000000000000"> a large amount</span>
                   <span v-else>{{ data.item.info.tokens }}</span>
                   <span v-if="data.item.info.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">wΞ</span>
                   <span v-else><b-link @click="showModalAddress(data.item.info.contract);">{{ ensOrAccount(data.item.info.contract) }}</b-link></span>
-                </div>
-                <div v-else-if="data.item.info.action == 'airdropped'">
+                </span>
+                <span v-else-if="data.item.info.action == 'airdropped'">
                   {{ data.item.info.tokens }}
                   <b-link @click="showModalAddress(data.item.info.contract);">{{ ensOrAccount(data.item.info.contract) }}</b-link>
-                </div>
-                <div v-else>
+                </span>
+                <span v-else>
                   <font size="-2">
                     ERC-20: {{ data.item.info }}
                   </font>
-                </div>
-              </div>
-              <div v-else-if="data.item.info.type == 'nft'">
-                <div v-if="data.item.info.action == 'sent'">
+                </span>
+              </span>
+              <span v-else-if="data.item.info.type == 'nft'">
+                <span v-if="data.item.info.action == 'sent'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                   <b-link @click="showModalAddress(data.item.info.events[0].to);">{{ ensOrAccount(data.item.info.events[0].to) }}</b-link>
-                </div>
-                <div v-else-if="data.item.info.action == 'received'">
+                </span>
+                <span v-else-if="data.item.info.action == 'received'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                   <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
-                </div>
-                <div v-else-if="data.item.info.action == 'minted'">
+                </span>
+                <span v-else-if="data.item.info.action == 'minted'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                   {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
-                </div>
-                <div v-else-if="data.item.info.action == 'airdropped'">
+                </span>
+                <span v-else-if="data.item.info.action == 'airdropped'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
-                </div>
-                <div v-else-if="data.item.info.action == 'purchased'">
+                </span>
+                <span v-else-if="data.item.info.action == 'purchased'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                   {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
-                </div>
-                <div v-else-if="data.item.info.action == 'sold'">
+                </span>
+                <span v-else-if="data.item.info.action == 'sold'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -382,13 +384,13 @@ const Report = {
                   <span v-if="data.item.info.valueToken == 'eth'"><font size="-2">Ξ</font></span>
                   <span v-else-if="data.item.info.valueToken == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'"><font size="-2">wΞ</font></span>
                   <span v-else><font size="-2"><b-link @click="showModalAddress(data.item.info.valueToken);">{{ ensOrAccount(data.item.info.valueToken) }}</b-link></font></span>
-                </div>
-                <div v-else-if="data.item.info.action == 'approvedforall'">
+                </span>
+                <span v-else-if="data.item.info.action == 'approvedforall'">
                   <b-link @click="showModalAddress(data.item.info.operator);">{{ ensOrAccount(data.item.info.operator) }}</b-link>
                   <b-link @click="showModalNFTCollection(data.item.info.contract);">{{ data.item.info.contract.substring(0, 12) }}</b-link>
                   {{ data.item.info.approved }}
-                </div>
-                <div v-else-if="data.item.info.action == 'offered'">
+                </span>
+                <span v-else-if="data.item.info.action == 'offered'">
                   <span v-if="data.item.info.events" v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -396,97 +398,97 @@ const Report = {
                   <span v-if="data.item.info.minValue">{{ formatETH(data.item.info.minValue, 0) }}<font size="-2">Ξ</font></span>
                   <span v-if="data.item.info.to"><b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link></span>
 
-                </div>
-                <div v-else-if="data.item.info.action == 'offerremoved'">
+                </span>
+                <span v-else-if="data.item.info.action == 'offerremoved'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
-                </div>
-                <div v-else>
+                </span>
+                <span v-else>
                   <font size="-2">
                     NFT: {{ data.item.info }}
                   </font>
-                </div>
-              </div>
-              <div v-else-if="data.item.info.type == 'ens'">
-                <div v-if="data.item.info.action == 'committed'">
+                </span>
+              </span>
+              <span v-else-if="data.item.info.type == 'ens'">
+                <span v-if="data.item.info.action == 'committed'">
                   {{ data.item.info.commitment.substring(0, 20) + '...' }}
-                </div>
-                <div v-else-if="data.item.info.action == 'bulkcommitted'">
-                </div>
-                <div v-else-if="data.item.info.action == 'registered'">
+                </span>
+                <span v-else-if="data.item.info.action == 'bulkcommitted'">
+                </span>
+                <span v-else-if="data.item.info.action == 'registered'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalENS(event);">{{ event.name + '.eth' }}</b-link> until {{ formatTimestamp(event.expires) }}
                   </span>
                   for
                   {{ formatETH(data.item.info.totalCost, 0) }}<font size="-2">Ξ</font>
-                </div>
-                <div v-else-if="data.item.info.action == 'renewed'">
+                </span>
+                <span v-else-if="data.item.info.action == 'renewed'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalENS(event);">{{ event.name + '.eth' }}</b-link> until {{ formatTimestamp(event.expires) }}
                   </span>
                   for
                   {{ formatETH(data.item.info.totalCost, 0) }}<font size="-2">Ξ</font>
-                </div>
-                <div v-else-if="data.item.info.action == 'reverseensset'">
+                </span>
+                <span v-else-if="data.item.info.action == 'reverseensset'">
                   {{ data.item.info.tokenId }}
                   <!-- {{ data.item.info.node }} -->
                   <b-link @click="showModalAddress(data.item.info.a);">{{ data.item.info.a }}</b-link>
-                </div>
-                <div v-else-if="data.item.info.action == 'contenthashset'">
+                </span>
+                <span v-else-if="data.item.info.action == 'contenthashset'">
                   {{ data.item.info.tokenId }}
                   <!-- {{ data.item.info.node }} -->
                   {{ data.item.info.hash.substring(0, 20) + '...' }}
-                </div>
-                <div v-else-if="data.item.info.action == 'resolverset'">
+                </span>
+                <span v-else-if="data.item.info.action == 'resolverset'">
                   {{ data.item.info.tokenId }}
                   <!-- {{ data.item.info.node }} -->
                   <b-link @click="showModalAddress(data.item.info.resolver);">{{ data.item.info.resolver }}</b-link>
-                </div>
-                <div v-else-if="data.item.info.action == 'textset'">
+                </span>
+                <span v-else-if="data.item.info.action == 'textset'">
                   {{ data.item.info.tokenId }}
                   {{ data.item.info.key }}
                   {{ data.item.info.value }}
-                </div>
-                <div v-else-if="data.item.info.action == 'nameset'">
+                </span>
+                <span v-else-if="data.item.info.action == 'nameset'">
                   {{ data.item.info.name }}
-                </div>
-                <div v-else-if="data.item.info.action == 'multicalled'">
+                </span>
+                <span v-else-if="data.item.info.action == 'multicalled'">
                   <span v-for="(item, itemIndex) in data.item.info.data" :key="itemIndex">
                     <span v-if="itemIndex != 0">,</span>
                     {{ itemIndex + 1 }}. {{ item }}
                   </span>
-                </div>
-                <div v-else>
+                </span>
+                <span v-else>
                   <font size="-2">
                     ENS: {{ data.item.info }}
                   </font>
-                </div>
-              </div>
-              <div v-else-if="data.item.info.type == 'contract'">
-                <div v-if="data.item.info.action == 'ownershiptransferred'">
+                </span>
+              </span>
+              <span v-else-if="data.item.info.type == 'contract'">
+                <span v-if="data.item.info.action == 'ownershiptransferred'">
                   <b-link @click="showModalAddress(data.item.info.newOwner);">{{ data.item.info.newOwner }}</b-link>
-                </div>
-                <div v-else>
+                </span>
+                <span v-else>
                   <font size="-2">
                     contract: {{ data.item.info }}
                   </font>
-                </div>
-              </div>
-              <div v-else>
+                </span>
+              </span>
+              <span v-else>
                 <font size="-2">
                   {{ data.item.info }}
                 </font>
-              </div>
-            </div>
-            <div v-else>
+              </span>
+            </span>
+            <span v-else>
               <font size="-2">
                 TODO: {{ data.item.functionCall }}
               </font>
-            </div>
+            </span>
           </template>
           <template #cell(balance)="data">
             <div v-if="data.item.balance">
