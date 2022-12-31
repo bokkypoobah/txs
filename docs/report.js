@@ -468,8 +468,9 @@ const Report = {
                 <div v-else-if="data.item.info.action == 'reverseensset'">
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">reverseensset</b-badge>
-                  {{ data.item.info.name }}
-                  <b-link @click="showModalAddress(data.item.info.address);">{{ data.item.info.address }}</b-link>
+                  {{ data.item.info.tokenId }}
+                  {{ data.item.info.node }}
+                  <b-link @click="showModalAddress(data.item.info.a);">{{ data.item.info.a }}</b-link>
                 </div>
                 <div v-else-if="data.item.info.action == 'textset'">
                   <b-badge variant="info">ens</b-badge>
