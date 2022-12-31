@@ -127,6 +127,14 @@ const Report = {
           <div class="mt-0 pr-1">
             <b-button size="sm" :pressed.sync="settings.showAdditionalFilters" @click="saveSettings" variant="link" v-b-popover.hover.top="'Additional filters'"><span v-if="settings.showAdditionalFilters"><b-icon-funnel-fill shift-v="+1" font-scale="1.0"></b-icon-funnel-fill></span><span v-else><b-icon-funnel shift-v="+1" font-scale="1.0"></b-icon-funnel></span></b-button>
           </div>
+          <div v-if="Object.keys(settings.filters).length > 0" class="mt-0 pr-1">
+            <b-button size="sm" @click="resetAdditionalFilters();" variant="link" class="m-0 p-0" v-b-popover.hover.top="'Reset additional filters'">
+              <b-iconstack shift-v="-1" font-scale="1">
+                <b-icon stacked icon="funnel-fill" variant="info" scale="1"></b-icon>
+                <b-icon stacked icon="x" variant="danger" scale="1.3"></b-icon>
+              </b-iconstack>
+            </b-button>
+          </div>
           <div class="mt-0 flex-grow-1">
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
@@ -203,6 +211,7 @@ const Report = {
               </b-card-body>
             </b-card>
           </div>
+
           <div class="mt-0 pr-1" style="width: 15.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
@@ -986,6 +995,10 @@ const Report = {
       } else {
         Vue.set(this.settings.filters[dataType], option, true);
       }
+      localStorage.reportSettings = JSON.stringify(this.settings);
+    },
+    resetAdditionalFilters() {
+      Vue.set(this.settings, 'filters', {});
       localStorage.reportSettings = JSON.stringify(this.settings);
     },
     toggleSelectedTransactions(items) {
