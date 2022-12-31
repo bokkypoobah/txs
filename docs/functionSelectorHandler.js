@@ -78,6 +78,7 @@ const _FUNCTIONSELECTORHANDLER = [
       "0xf14fcbc8": "function commit(bytes32 commitment)", // ENS commit
       "0xd5fa2b00": "function setAddr(bytes32 node, address a)", // Reverse ENS set
       "0x304e6ade": "function setContenthash(bytes32 node, bytes hash)", // Set ENS field
+      "0x1896f70a": "function setResolver(bytes32 node, address resolver)", // Set ENS resolver
       "0xf2fde38b": "function transferOwnership(address newOwner)",
     },
     process: function(txData, account, accounts, events, results) {
@@ -85,6 +86,7 @@ const _FUNCTIONSELECTORHANDLER = [
         "function commit(bytes32 commitment)",
         "function setAddr(bytes32 node, address a)",
         "function setContenthash(bytes32 node, bytes hash)",
+        "function setResolver(bytes32 node, address resolver)",
         "function transferOwnership(address newOwner)",
       ]);
       let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
@@ -116,6 +118,17 @@ const _FUNCTIONSELECTORHANDLER = [
           tokenId,
           node,
           hash,
+        };
+      } else if (decodedData.functionFragment.name == "setResolver") {
+        const node = decodedData.args[0];
+        const tokenId = ethers.BigNumber.from(node).toString();
+        const resolver = decodedData.args[1];
+        results.info = {
+          type: "ens",
+          action: "resolverset",
+          tokenId,
+          node,
+          resolver,
         };
       } else if (decodedData.functionFragment.name == "transferOwnership") {
         const newOwner = decodedData.args[0];
