@@ -187,7 +187,7 @@ const Report = {
         </div>
 
         <div v-if="settings.showAdditionalFilters" class="d-flex flex-wrap m-0 p-0">
-          <div class="mt-0 pr-1" style="width: 10.0rem;">
+          <div class="mt-0 pr-1" style="width: 15.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
@@ -203,7 +203,7 @@ const Report = {
               </b-card-body>
             </b-card>
           </div>
-          <div class="mt-0 pr-1" style="width: 10.0rem;">
+          <div class="mt-0 pr-1" style="width: 15.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
@@ -216,7 +216,7 @@ const Report = {
               </b-card-body>
             </b-card>
           </div>
-          <div class="mt-0 pr-1" style="width: 10.0rem;">
+          <div class="mt-0 pr-1" style="width: 15.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
@@ -662,18 +662,22 @@ const Report = {
       accountsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'account', label: 'Account' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 15%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       typesFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'type', label: 'Type' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 15%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       actionsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'action', label: 'Action' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 15%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       functionCallsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 5%;' },
         { key: 'functionCall', label: 'Function Call' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
     }
   },
@@ -810,36 +814,21 @@ const Report = {
             }
           }
           if (include && typeFilter != null) {
-            if (transaction.info && transaction.info.type) {
-              if (!(transaction.info.type in typeFilter)) {
-                include = false;
-              }
-            } else {
-              if (!("(unknown)" in typeFilter)) {
-                include = false;
-              }
+            const infoType = transaction.info && transaction.info.type || "(unknown)";
+            if (!(infoType in typeFilter)) {
+              include = false;
             }
           }
           if (include && actionFilter != null) {
-            if (transaction.info && transaction.info.action) {
-              if (!(transaction.info.action in actionFilter)) {
-                include = false;
-              }
-            } else {
-              if (!("(unknown)" in actionFilter)) {
-                include = false;
-              }
+            const infoAction = transaction.info && transaction.info.action || "(unknown)";
+            if (!(infoAction in actionFilter)) {
+              include = false;
             }
           }
           if (include && functionCallFilter != null) {
-            if (transaction.functionCall && transaction.functionCall.length > 2) {
-              if (!(transaction.functionCall in functionCallFilter)) {
-                include = false;
-              }
-            } else {
-              if (!("(unknown)" in functionCallFilter)) {
-                include = false;
-              }
+            const tempFunctionCall = transaction.functionCall.length > 0 && transaction.functionCall || "(none)";
+            if (!(tempFunctionCall in functionCallFilter)) {
+              include = false;
             }
           }
 
@@ -894,9 +883,9 @@ const Report = {
     },
     getAllAccounts() {
       const results = [];
-      if (this.report.accountsList) {
-        for (let a of this.report.accountsList) {
-          results.push({ account: a });
+      if (this.report.accountsMap) {
+        for (const [k, v] of Object.entries(this.report.accountsMap)) {
+          results.push({ account: k, count: v });
         }
         results.sort((a, b) => {
           return ('' + a.account).localeCompare(b.account);
@@ -906,40 +895,37 @@ const Report = {
     },
     getAllTypes() {
       const results = [];
-      if (this.report.typesList) {
-        for (let t of this.report.typesList) {
-          results.push({ type: t });
+      if (this.report.typesMap) {
+        for (const [k, v] of Object.entries(this.report.typesMap)) {
+          results.push({ type: k, count: v });
         }
         results.sort((a, b) => {
           return ('' + a.type).localeCompare(b.type);
         });
-        results.push({ type: "(unknown)" });
       }
       return results;
     },
     getAllActions() {
       const results = [];
-      if (this.report.actionsList) {
-        for (let t of this.report.actionsList) {
-          results.push({ action: t });
+      if (this.report.actionsMap) {
+        for (const [k, v] of Object.entries(this.report.actionsMap)) {
+          results.push({ action: k, count: v });
         }
         results.sort((a, b) => {
           return ('' + a.action).localeCompare(b.action);
         });
-        results.push({ action: "(unknown)" });
       }
       return results;
     },
     getAllFunctionCalls() {
       const results = [];
-      if (this.report.functionCallsList) {
-        for (let fc of this.report.functionCallsList) {
-          results.push({ functionCall: fc });
+      if (this.report.functionCallsMap) {
+        for (const [k, v] of Object.entries(this.report.functionCallsMap)) {
+          results.push({ functionCall: k, count: v });
         }
         results.sort((a, b) => {
           return ('' + a.functionCall).localeCompare(b.functionCall);
         });
-        results.push({ functionCall: "(unknown)" });
       }
       return results;
     },
@@ -1243,10 +1229,10 @@ const reportModule = {
       } else {
         contractOrTx = contractOrTxOrBlockRange;
       }
-      const accountsListMap = {};
-      const typesListMap = {};
-      const actionsListMap = {};
-      const functionCallsListMap = {};
+      const accountsMap = {};
+      const typesMap = {};
+      const actionsMap = {};
+      const functionCallsMap = {};
       const accumulatedData = {};
       const transactions = [];
       for (const [chainId, accounts] of Object.entries(allAccounts)) {
@@ -1256,9 +1242,6 @@ const reportModule = {
           const accountsInfo = store.getters['data/accountsInfo'][chainId][account];
           if (accountsInfo.mine && accountsInfo.report) {
             console.log("--- Processing " + chainId + ":" + account + " ---");
-            if (!(account in accountsListMap)) {
-              accountsListMap[account] = true;
-            }
             const txHashesByBlocks = getTxHashesByBlocks(account, chainId, allAccounts, allAccountsInfo);
             let blocksProcessed = 0;
             let prevBalance = ethers.BigNumber.from(0);
@@ -1294,23 +1277,46 @@ const reportModule = {
                   const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
                   const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
                   totalTxFee = totalTxFee.add(txFee);
-                  if (results.info) {
-                    if (results.info.type) {
-                      if (!(results.info.type in typesListMap)) {
-                        typesListMap[results.info.type] = true;
-                      }
-                    }
-                    if (results.info.action) {
-                      if (!(results.info.action in actionsListMap)) {
-                        actionsListMap[results.info.action] = true;
-                      }
-                    }
-                    if (results.functionCall && results.functionCall.length > 2) {
-                      if (!(results.functionCall in functionCallsListMap)) {
-                        functionCallsListMap[results.functionCall] = true;
-                      }
-                    }
+                  if (!(account in accountsMap)) {
+                    accountsMap[account] = 0;
                   }
+                  accountsMap[account]++;
+                  const infoType = results.info && results.info.type || "(unknown)";
+                  if (!(infoType in typesMap)) {
+                    typesMap[infoType] = 0;
+                  }
+                  typesMap[infoType]++;
+                  const infoAction = results.info && results.info.action || "(unknown)";
+                  if (!(infoAction in actionsMap)) {
+                    actionsMap[infoAction] = 0;
+                  }
+                  actionsMap[infoAction]++;
+                  const tempFunctionCall = results.functionCall.length > 0 && results.functionCall || "(none)";
+                  if (!(tempFunctionCall in functionCallsMap)) {
+                    functionCallsMap[tempFunctionCall] = 0;
+                  }
+                  functionCallsMap[tempFunctionCall]++;
+
+                  // if (results.info) {
+                  //   if (results.info.type) {
+                  //     if (!(results.info.type in typesMap)) {
+                  //       typesMap[results.info.type] = 0;
+                  //     }
+                  //     typesMap[results.info.type]++;
+                  //   }
+                  //   if (results.info.action) {
+                  //     if (!(results.info.action in actionsMap)) {
+                  //       actionsMap[results.info.action] = 0;
+                  //     }
+                  //     actionsMap[results.info.action]++;
+                  //   }
+                  //   if (results.functionCall && results.functionCall.length > 2) {
+                  //     if (!(results.functionCall in functionCallsMap)) {
+                  //       functionCallsMap[results.functionCall] = 0;
+                  //     }
+                  //     functionCallsMap[results.functionCall]++;
+                  //   }
+                  // }
                   transactions.push({
                     chainId,
                     txHash: tx.tx.hash,
@@ -1400,11 +1406,12 @@ const reportModule = {
           }
         }
       }
-      const accountsList = Object.keys(accountsListMap);
-      const typesList = Object.keys(typesListMap);
-      const actionsList = Object.keys(actionsListMap);
-      const functionCallsList = Object.keys(functionCallsListMap);
-      context.commit('setReport', { transactions, accountsList, typesList, actionsList, functionCallsList });
+
+      console.log("accountsMap: " + JSON.stringify(accountsMap));
+      console.log("typesMap: " + JSON.stringify(typesMap));
+      console.log("actionsMap: " + JSON.stringify(actionsMap));
+      console.log("functionCallsMap: " + JSON.stringify(functionCallsMap));
+      context.commit('setReport', { transactions, accountsMap, typesMap, actionsMap, functionCallsMap });
       context.dispatch('saveData', ['report']);
     },
   },
