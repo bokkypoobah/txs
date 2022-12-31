@@ -472,6 +472,13 @@ const Report = {
                   {{ data.item.info.node }}
                   <b-link @click="showModalAddress(data.item.info.a);">{{ data.item.info.a }}</b-link>
                 </div>
+                <div v-else-if="data.item.info.action == 'contenthashset'">
+                  <b-badge variant="info">ens</b-badge>
+                  <b-badge variant="primary">contenthashset</b-badge>
+                  {{ data.item.info.tokenId }}
+                  {{ data.item.info.node }}
+                  {{ data.item.info.hash.substring(0, 20) + '...' }}
+                </div>
                 <div v-else-if="data.item.info.action == 'textset'">
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">textset</b-badge>
