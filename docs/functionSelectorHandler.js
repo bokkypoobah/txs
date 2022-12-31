@@ -81,7 +81,8 @@ const _FUNCTIONSELECTORHANDLER = [
       "0x1896f70a": "function setResolver(bytes32 node, address resolver)", // Set ENS resolver
       "0x10f13a8c": "function setText(bytes32 node, string key, string value)", // Set ENS text
       "0xac9650d8": "function multicall(bytes[] data)", // ENS Multicall - may have to restrict by address
-      "0xf2fde38b": "function transferOwnership(address newOwner)",
+      "0xbf31196f": "function offerPunkForSaleToAddress(uint256 punkIndex, uint256 minSalePriceInWei, address toAddress)", // CryptoPunks
+      "0xf2fde38b": "function transferOwnership(address newOwner)", // Contracts
     },
     process: function(txData, account, accounts, events, results) {
       const interface = new ethers.utils.Interface([
@@ -91,6 +92,7 @@ const _FUNCTIONSELECTORHANDLER = [
         "function setResolver(bytes32 node, address resolver)",
         "function setText(bytes32 node, string key, string value)",
         "function multicall(bytes[] data)",
+        "function offerPunkForSaleToAddress(uint256 punkIndex, uint256 minSalePriceInWei, address toAddress)",
         "function transferOwnership(address newOwner)",
       ]);
       let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
@@ -153,6 +155,17 @@ const _FUNCTIONSELECTORHANDLER = [
           type: "ens",
           action: "multicalled",
           data,
+        };
+      } else if (decodedData.functionFragment.name == "offerPunkForSaleToAddress") {
+        const [punkIndex, minSalePriceInWei, toAddress] = decodedData.args;
+        results.info = {
+          type: "nft",
+          action: "offered",
+          contract: txData.tx.to,
+          tokenId: punkIndex.toString(),
+          minValue: minSalePriceInWei.toString(),
+          to: toAddress,
+          events: [ { type: "preerc721", logIndex: 0, contract: txData.tx.to, tokenId: punkIndex.toString(), from: null, to: toAddress } ], // events.receivedNFTEvents,
         };
       } else if (decodedData.functionFragment.name == "transferOwnership") {
         const newOwner = decodedData.args[0];

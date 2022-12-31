@@ -415,11 +415,13 @@ const Report = {
                 <div v-else-if="data.item.info.action == 'offered'">
                   <b-badge variant="info">nft</b-badge>
                   <b-badge variant="primary">offered</b-badge>
-                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                  <span v-if="data.item.info.events" v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                   <span v-if="data.item.info.minValue">{{ formatETH(data.item.info.minValue, 0) }}<font size="-2">Ξ</font></span>
+                  <span v-if="data.item.info.to"><b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link></span>
+
                 </div>
                 <div v-else-if="data.item.info.action == 'offerremoved'">
                   <b-badge variant="info">nft</b-badge>
