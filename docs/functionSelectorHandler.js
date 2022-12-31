@@ -80,6 +80,7 @@ const _FUNCTIONSELECTORHANDLER = [
       "0x304e6ade": "function setContenthash(bytes32 node, bytes hash)", // Set ENS field
       "0x1896f70a": "function setResolver(bytes32 node, address resolver)", // Set ENS resolver
       "0x10f13a8c": "function setText(bytes32 node, string key, string value)", // Set ENS text
+      "0xc47f0027": "function setName(string name)", // ENS: Old Reverse Registrar
       "0xac9650d8": "function multicall(bytes[] data)", // ENS Multicall - may have to restrict by address
       "0xbf31196f": "function offerPunkForSaleToAddress(uint256 punkIndex, uint256 minSalePriceInWei, address toAddress)", // CryptoPunks
       "0xf2fde38b": "function transferOwnership(address newOwner)", // Contracts
@@ -91,6 +92,7 @@ const _FUNCTIONSELECTORHANDLER = [
         "function setContenthash(bytes32 node, bytes hash)",
         "function setResolver(bytes32 node, address resolver)",
         "function setText(bytes32 node, string key, string value)",
+        "function setName(string name)",
         "function multicall(bytes[] data)",
         "function offerPunkForSaleToAddress(uint256 punkIndex, uint256 minSalePriceInWei, address toAddress)",
         "function transferOwnership(address newOwner)",
@@ -148,6 +150,13 @@ const _FUNCTIONSELECTORHANDLER = [
           node,
           key,
           value,
+        };
+      } else if (decodedData.functionFragment.name == "setName") {
+        const name = decodedData.args[0];
+        results.info = {
+          type: "ens",
+          action: "nameset",
+          name,
         };
       } else if (decodedData.functionFragment.name == "multicall") {
         const data = decodedData.args[0];

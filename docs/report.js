@@ -279,57 +279,77 @@ const Report = {
           </template>
           <template #cell(account)="data">
             <b-link @click="showModalAddress(data.item.account);">{{ ensOrAccount(data.item.account) }}</b-link>
+            <br />
+            <b-badge v-if="data.item.account != data.item.from" pill variant="warning" @click="showModalAddress(data.item.from);" v-b-popover.hover.top="'Transaction sender, if different from account'">{{ ensOrAccount(data.item.from, 20) }}</b-badge>
           </template>
           <template #cell(info)="data">
+            <b-badge v-if="data.item.info.type" pill variant="info">{{ data.item.info.type }}</b-badge>
+            <b-badge v-if="data.item.info.action" pill variant="primary">{{ data.item.info.action }}</b-badge>
             <div v-if="data.item.info">
               <div v-if="data.item.info.type == 'eth'">
                 <div v-if="data.item.info.action == 'cancelled'">
+                  <!--
                   <b-badge variant="info">eth</b-badge>
                   <b-badge variant="primary">cancelled</b-badge>
+                  -->
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
                   <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
                 </div>
                 <div v-else-if="data.item.info.action == 'sent'">
+                  <!--
                   <b-badge variant="info">eth</b-badge>
                   <b-badge variant="primary">sent</b-badge>
+                  -->
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
                   <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
                 </div>
                 <div v-else-if="data.item.info.action == 'received'">
+                  <!--
                   <b-badge variant="info">eth</b-badge>
                   <b-badge variant="success">received</b-badge>
+                  -->
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
                   <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
                 </div>
               </div>
               <div v-else-if="data.item.info.type == 'weth'">
                 <div v-if="data.item.info.action == 'wrap'">
+                  <!--
                   <b-badge variant="info">weth</b-badge>
                   <b-badge variant="primary">wrapped</b-badge>
+                  -->
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
                 </div>
                 <div v-else-if="data.item.info.action == 'unwrap'">
+                  <!--
                   <b-badge variant="info">weth</b-badge>
                   <b-badge variant="success">unwrapped</b-badge>
+                  -->
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">wΞ</font>
                 </div>
               </div>
               <div v-else-if="data.item.info.type == 'erc20'">
                 <div v-if="data.item.info.action == 'sent'">
+                  <!--
                   <b-badge variant="info">erc20</b-badge>
                   <b-badge variant="primary">sent</b-badge>
+                  -->
                   <b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link>
                   {{ data.item.info.tokens }}
                 </div>
                 <div v-else-if="data.item.info.action == 'received'">
+                  <!--
                   <b-badge variant="info">erc20</b-badge>
                   <b-badge variant="success">received</b-badge>
+                  -->
                   <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
                   {{ data.item.info.tokens }}
                 </div>
                 <div v-else-if="data.item.info.action == 'approved'">
+                  <!--
                   <b-badge variant="info">erc20</b-badge>
                   <b-badge variant="primary">approved</b-badge>
+                  -->
                   <b-link @click="showModalAddress(data.item.info.operator);">{{ ensOrAccount(data.item.info.operator) }}</b-link>
                   <span v-if="data.item.info.tokens > 1000000000000000000000"> a large amount</span>
                   <span v-else>{{ data.item.info.tokens }}</span>
@@ -337,8 +357,10 @@ const Report = {
                   <span v-else><b-link @click="showModalAddress(data.item.info.contract);">{{ ensOrAccount(data.item.info.contract) }}</b-link></span>
                 </div>
                 <div v-else-if="data.item.info.action == 'airdropped'">
+                  <!--
                   <b-badge variant="info">erc20</b-badge>
                   <b-badge variant="danger">airdropped</b-badge>
+                  -->
                   {{ data.item.info.tokens }}
                   <b-link @click="showModalAddress(data.item.info.contract);">{{ ensOrAccount(data.item.info.contract) }}</b-link>
                 </div>
@@ -350,8 +372,10 @@ const Report = {
               </div>
               <div v-else-if="data.item.info.type == 'nft'">
                 <div v-if="data.item.info.action == 'sent'">
+                  <!--
                   <b-badge variant="info">nft</b-badge>
                   <b-badge variant="primary">sent</b-badge>
+                  -->
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -359,8 +383,10 @@ const Report = {
                   <b-link @click="showModalAddress(data.item.info.events[0].to);">{{ ensOrAccount(data.item.info.events[0].to) }}</b-link>
                 </div>
                 <div v-else-if="data.item.info.action == 'received'">
+                  <!--
                   <b-badge variant="info">nft</b-badge>
                   <b-badge variant="success">received</b-badge>
+                  -->
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -368,8 +394,10 @@ const Report = {
                   <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
                 </div>
                 <div v-else-if="data.item.info.action == 'minted'">
+                  <!--
                   <b-badge variant="info">nft</b-badge>
                   <b-badge variant="primary">minted</b-badge>
+                  -->
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -377,16 +405,20 @@ const Report = {
                   {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
                 </div>
                 <div v-else-if="data.item.info.action == 'airdropped'">
+                  <!--
                   <b-badge variant="info">nft</b-badge>
                   <b-badge variant="danger">airdropped</b-badge>
+                  -->
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
                   </span>
                 </div>
                 <div v-else-if="data.item.info.action == 'purchased'">
+                  <!--
                   <b-badge variant="info">nft</b-badge>
                   <b-badge variant="primary">purchased</b-badge>
+                  -->
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -394,8 +426,10 @@ const Report = {
                   {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
                 </div>
                 <div v-else-if="data.item.info.action == 'sold'">
+                  <!--
                   <b-badge variant="info">nft</b-badge>
                   <b-badge variant="success">sold</b-badge>
+                  -->
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -406,15 +440,20 @@ const Report = {
                   <span v-else><font size="-2"><b-link @click="showModalAddress(data.item.info.valueToken);">{{ ensOrAccount(data.item.info.valueToken) }}</b-link></font></span>
                 </div>
                 <div v-else-if="data.item.info.action == 'approvedforall'">
+                  <!--
                   <b-badge variant="info">nft</b-badge>
                   <span v-if="data.item.info.approved"><b-badge variant="primary">approvedforall</b-badge></span>
                   <span v-else><b-badge variant="primary">unapprovedforall</b-badge></span>
+                  -->
                   <b-link @click="showModalAddress(data.item.info.operator);">{{ ensOrAccount(data.item.info.operator) }}</b-link>
                   <b-link @click="showModalNFTCollection(data.item.info.contract);">{{ data.item.info.contract.substring(0, 12) }}</b-link>
+                  {{ data.item.info.approved }}
                 </div>
                 <div v-else-if="data.item.info.action == 'offered'">
+                  <!--
                   <b-badge variant="info">nft</b-badge>
                   <b-badge variant="primary">offered</b-badge>
+                  -->
                   <span v-if="data.item.info.events" v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -424,8 +463,10 @@ const Report = {
 
                 </div>
                 <div v-else-if="data.item.info.action == 'offerremoved'">
+                  <!--
                   <b-badge variant="info">nft</b-badge>
                   <b-badge variant="primary">offerremoved</b-badge>
+                  -->
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
@@ -439,17 +480,23 @@ const Report = {
               </div>
               <div v-else-if="data.item.info.type == 'ens'">
                 <div v-if="data.item.info.action == 'committed'">
+                  <!--
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">committed</b-badge>
+                  -->
                   {{ data.item.info.commitment.substring(0, 20) + '...' }}
                 </div>
                 <div v-else-if="data.item.info.action == 'bulkcommitted'">
+                  <!--
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">bulkcommitted</b-badge>
+                  -->
                 </div>
                 <div v-else-if="data.item.info.action == 'registered'">
+                  <!--
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">registered</b-badge>
+                  -->
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalENS(event);">{{ event.name + '.eth' }}</b-link> until {{ formatTimestamp(event.expires) }}
@@ -458,8 +505,10 @@ const Report = {
                   {{ formatETH(data.item.info.totalCost, 0) }}<font size="-2">Ξ</font>
                 </div>
                 <div v-else-if="data.item.info.action == 'renewed'">
+                  <!--
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">renewed</b-badge>
+                  -->
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalENS(event);">{{ event.name + '.eth' }}</b-link> until {{ formatTimestamp(event.expires) }}
@@ -468,36 +517,53 @@ const Report = {
                   {{ formatETH(data.item.info.totalCost, 0) }}<font size="-2">Ξ</font>
                 </div>
                 <div v-else-if="data.item.info.action == 'reverseensset'">
+                  <!--
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">reverseensset</b-badge>
+                  -->
                   {{ data.item.info.tokenId }}
                   <!-- {{ data.item.info.node }} -->
                   <b-link @click="showModalAddress(data.item.info.a);">{{ data.item.info.a }}</b-link>
                 </div>
                 <div v-else-if="data.item.info.action == 'contenthashset'">
+                  <!--
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">contenthashset</b-badge>
+                  -->
                   {{ data.item.info.tokenId }}
                   <!-- {{ data.item.info.node }} -->
                   {{ data.item.info.hash.substring(0, 20) + '...' }}
                 </div>
                 <div v-else-if="data.item.info.action == 'resolverset'">
+                  <!--
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">resolverset</b-badge>
+                  -->
                   {{ data.item.info.tokenId }}
                   <!-- {{ data.item.info.node }} -->
                   <b-link @click="showModalAddress(data.item.info.resolver);">{{ data.item.info.resolver }}</b-link>
                 </div>
                 <div v-else-if="data.item.info.action == 'textset'">
+                  <!--
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">textset</b-badge>
+                  -->
                   {{ data.item.info.tokenId }}
                   {{ data.item.info.key }}
                   {{ data.item.info.value }}
                 </div>
+                <div v-else-if="data.item.info.action == 'nameset'">
+                  <!--
+                  <b-badge variant="info">ens</b-badge>
+                  <b-badge variant="primary">nameset</b-badge>
+                  -->
+                  {{ data.item.info.name }}
+                </div>
                 <div v-else-if="data.item.info.action == 'multicalled'">
+                  <!--
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">multicalled</b-badge>
+                  -->
                   <span v-for="(item, itemIndex) in data.item.info.data" :key="itemIndex">
                     <span v-if="itemIndex != 0">,</span>
                     {{ itemIndex + 1 }}. {{ item }}
@@ -511,8 +577,10 @@ const Report = {
               </div>
               <div v-else-if="data.item.info.type == 'contract'">
                 <div v-if="data.item.info.action == 'ownershiptransferred'">
+                  <!--
                   <b-badge variant="info">contract</b-badge>
                   <b-badge variant="primary">ownershiptransferred</b-badge>
+                  -->
                   <b-link @click="showModalAddress(data.item.info.newOwner);">{{ data.item.info.newOwner }}</b-link>
                 </div>
                 <div v-else>
@@ -1382,7 +1450,7 @@ const reportModule = {
                     info: results.info || "",
                     txType: results.info && results.info.type || "unknown",
                     txAction: results.info && results.info.action || "unknown",
-                    balance: (index + 1 == txsToProcess.length) ? balance : null,
+                    balance: (index + 1 == txsToProcess.length) ? balance.toString() : null,
                     balanceInReportingCurrency: (index + 1 == txsToProcess.length) ? balanceInReportingCurrency : null,
                   });
                 }
