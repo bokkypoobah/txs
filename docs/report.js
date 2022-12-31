@@ -439,6 +439,7 @@ const Report = {
                 <div v-if="data.item.info.action == 'committed'">
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">committed</b-badge>
+                  {{ data.item.info.commitment.substring(0, 20) + '...' }}
                 </div>
                 <div v-else-if="data.item.info.action == 'bulkcommitted'">
                   <b-badge variant="info">ens</b-badge>
@@ -447,6 +448,16 @@ const Report = {
                 <div v-else-if="data.item.info.action == 'registered'">
                   <b-badge variant="info">ens</b-badge>
                   <b-badge variant="primary">registered</b-badge>
+                  <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
+                    <span v-if="eventIndex != 0">,</span>
+                    <b-link @click="showModalENS(event);">{{ event.name + '.eth' }}</b-link> until {{ formatTimestamp(event.expires) }}
+                  </span>
+                  for
+                  {{ formatETH(data.item.info.totalCost, 0) }}<font size="-2">Ξ</font>
+                </div>
+                <div v-else-if="data.item.info.action == 'renewed'">
+                  <b-badge variant="info">ens</b-badge>
+                  <b-badge variant="primary">renewed</b-badge>
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
                     <b-link @click="showModalENS(event);">{{ event.name + '.eth' }}</b-link> until {{ formatTimestamp(event.expires) }}
@@ -468,6 +479,18 @@ const Report = {
                 <div v-else>
                   <font size="-2">
                     ENS: {{ data.item.info }}
+                  </font>
+                </div>
+              </div>
+              <div v-else-if="data.item.info.type == 'contract'">
+                <div v-if="data.item.info.action == 'ownershiptransferred'">
+                  <b-badge variant="info">contract</b-badge>
+                  <b-badge variant="primary">ownershiptransferred</b-badge>
+                  <b-link @click="showModalAddress(data.item.info.newOwner);">{{ data.item.info.newOwner }}</b-link>
+                </div>
+                <div v-else>
+                  <font size="-2">
+                    contract: {{ data.item.info }}
                   </font>
                 </div>
               </div>

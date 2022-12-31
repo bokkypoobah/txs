@@ -583,7 +583,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
       } else {
         totalCost = msgValue;
       }
-      results.info = { type: "ens", action: "renewed", /* from: txData.tx.from, */ events: events.renewalEvents, totalCost: totalCost.toString() };
+      results.info = { type: "ens", action: "renewed", /* from: txData.tx.from, */ events: renewalEvents, totalCost: totalCost.toString() };
     }
     results.ethPaid = totalCost;
   }

@@ -73,6 +73,35 @@ const _FUNCTIONSELECTORHANDLER = [
     },
   },
   {
+    name: "General",
+    functionSelectors: {
+      "0xf14fcbc8": "commit(bytes32 commitment)", // ENS commit
+      "0xf2fde38b": "transferOwnership(address newOwner)",
+    },
+    process: function(txData, account, accounts, events, results) {
+      const interface = new ethers.utils.Interface([
+        "function commit(bytes32 commitment)",
+        "function transferOwnership(address newOwner)",
+      ]);
+      let decodedData = interface.parseTransaction({ data: txData.tx.data, value: txData.tx.value });
+      if (decodedData.functionFragment.name == "commit") {
+        const commitment = decodedData.args[0];
+        results.info = {
+          type: "ens",
+          action: "committed",
+          commitment,
+        };
+      } else if (decodedData.functionFragment.name == "transferOwnership") {
+        const newOwner = decodedData.args[0];
+        results.info = {
+          type: "contract",
+          action: "ownershiptransferred",
+          newOwner,
+        };
+      }
+    },
+  },
+  {
     name: "TokenTrader*",
     functionSelectors: {
       "0x3d6a32bd": "createTradeContract(address asset, uint256 buyPrice, uint256 sellPrice, uint256 units, bool buysTokens, bool sellsTokens)", // 0xA9F801f160fe6A866dD3404599350AbBCAA95274
