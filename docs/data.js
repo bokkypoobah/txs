@@ -537,7 +537,7 @@ const dataModule = {
                 ],
               ];
               for (let topics of topicsList) {
-                console.log("Web3 filter: " + JSON.stringify(topics));
+                console.log("Web3 event filter #" + startBatch + "-#" + endBatch + ": " + JSON.stringify(topics));
                 const logs = await provider.getLogs({ address: null, fromBlock: startBatch, toBlock: endBatch, topics });
                 for (const event of logs) {
                   if (!event.removed) {
@@ -586,7 +586,7 @@ const dataModule = {
                       eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc1155", tokenIds: formattedTokenIds, tokens: formattedTokens };
                     }
                     if (eventRecord) {
-                      console.log("eventRecord: " + JSON.stringify(eventRecord));
+                      // console.log("eventRecord: " + JSON.stringify(eventRecord));
                       context.commit('addAccountEvent', { account, eventRecord });
                     }
                   }
@@ -668,11 +668,11 @@ const dataModule = {
           let sleepUntil = null;
           for (const [accountIndex, account] of accountsToSync.entries()) {
             // context.commit('setSyncSection', { section: ' Import', total: accountKeysToSync.length });
-            const item = context.state.accounts[chainId][account] || {};
+            const accountData = context.state.accounts[chainId][account] || {};
             const txs = context.state.txs[chainId] || {};
             // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Downloading for " + account + " --- ");
-            console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
+            console.log("accountData: " + JSON.stringify(accountData, null, 2).substring(0, 1000) + "...");
 
             const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
             if (true) {
@@ -709,21 +709,21 @@ const dataModule = {
 
             if (true) {
               const txHashes = {};
-              for (const [txHash, logIndexes] of Object.entries(item.events)) {
+              for (const [txHash, logIndexes] of Object.entries(accountData.events)) {
                 if (!(txHash in txs) && !(txHash in txHashes)) {
                   for (const [logIndex, event] of Object.entries(logIndexes)) {
                     txHashes[txHash] = event.blockNumber;
                   }
                 }
               }
-              for (const [txHash, traceIds] of Object.entries(item.internalTransactions)) {
+              for (const [txHash, traceIds] of Object.entries(accountData.internalTransactions)) {
                 if (!(txHash in txs) && !(txHash in txHashes)) {
                   for (const [traceId, tx] of Object.entries(traceIds)) {
                     txHashes[txHash] = tx.blockNumber;
                   }
                 }
               }
-              for (const [txHash, tx] of Object.entries(item.transactions)) {
+              for (const [txHash, tx] of Object.entries(accountData.transactions)) {
                 if (!(txHash in txs) && !(txHash in txHashes)) {
                   txHashes[txHash] = tx.blockNumber;
                 }
