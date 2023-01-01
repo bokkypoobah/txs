@@ -874,6 +874,17 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     console.log("  TODO: " + txData.tx.hash);
   }
 
-  results.myEvents = events.myEvents;
+  results.myEvents = [];
+  if (txData.tx.from == account || txData.tx.to == account) {
+    const record = { type: "msgvalue", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
+    results.myEvents.push(record);
+  }
+  results.myEvents = [...results.myEvents, ...events.myEvents];
+  for (const [eventIndex, event] of events.receivedInternalEvents.entries()) {
+    console.log(eventIndex + " => " + JSON.stringify(event));
+    const record = { type: "receivedInternal", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
+    results.myEvents.push(record);
+  }
+
   return results;
 }

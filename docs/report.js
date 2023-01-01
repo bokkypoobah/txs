@@ -500,8 +500,42 @@ const Report = {
               </font>
             </span>
             <font size="-2">
+              <!--
               <b-table small fixed striped sticky-header="200px" :items="data.item.myEvents" head-variant="light">
               </b-table>
+
+              { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
+              { key: 'logIndex', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+              { key: 'contract', label: 'Token', thStyle: 'width: 20%;' },
+              { key: 'from', label: 'From', thStyle: 'width: 20%;' },
+              { key: 'to', label: 'To', thStyle: 'width: 20%;' },
+              { key: 'tokens', label: 'Tokens', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
+
+              -->
+
+              <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
+                <template #cell(select)="data">
+                  <b-form-checkbox size="sm" :checked="(settings.filters['accounts'] && settings.filters['accounts'][data.item.account]) ? 1 : 0" value="1" @change="filterChanged('accounts', data.item.account)"></b-form-checkbox>
+                </template>
+                <template #cell(contract)="data">
+                  {{ ensOrAccount(data.item.contract, 20) }}
+                </template>
+                <template #cell(from)="data">
+                  <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 20) }}</b-link>
+                </template>
+                <template #cell(to)="data">
+                  <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 20) }}</b-link>
+                </template>
+                <template #cell(tokenIdOrTokens)="data">
+                  <span div="data.item.tokenId">
+                    {{ data.item.tokenId }}
+                  </span>
+                  <span div="data.item.tokens">
+                    {{ data.item.tokens }}
+                  </span>
+                </template>
+              </b-table>
+
             </font>
           </template>
           <template #cell(balance)="data">
@@ -700,6 +734,14 @@ const Report = {
         { key: 'select', label: '', thStyle: 'width: 5%;' },
         { key: 'functionCall', label: 'Function Call' },
         { key: 'count', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+      ],
+      myEventsFields: [
+        { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
+        { key: 'logIndex', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'contract', label: 'Token', thStyle: 'width: 20%;' },
+        { key: 'from', label: 'From', thStyle: 'width: 20%;' },
+        { key: 'to', label: 'To', thStyle: 'width: 20%;' },
+        { key: 'tokenIdOrTokens', label: 'TokenId/Tokens', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
     }
   },
