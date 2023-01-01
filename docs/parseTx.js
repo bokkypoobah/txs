@@ -875,7 +875,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
   }
 
   results.myEvents = [];
-  if (txData.tx.from == account || txData.tx.to == account) {
+  if ((txData.tx.from == account || txData.tx.to == account) && msgValue > 0) {
     const record = { type: "msgvalue", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
     results.myEvents.push(record);
   }

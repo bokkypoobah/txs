@@ -499,48 +499,50 @@ const Report = {
                 TODO: {{ data.item.functionCall }}
               </font>
             </span>
-            <font size="-2">
-              <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
-                <template #cell(from)="data">
-                  <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 16) }}</b-link>
-                </template>
-                <template #cell(to)="data">
-                  <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 16) }}</b-link>
-                </template>
-                <template #cell(contract)="data">
-                  <span v-if="data.item.contract == 'eth'">
-                    eth
-                  </span>
-                  <span v-else-if="data.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
-                    <b-link @click="showModalAddress(data.item.contract);">weth</b-link>
-                  </span>
-                  <span v-else>
-                    <span v-if="data.item.type == 'preerc721' || data.item.type == 'erc721' || data.item.type == 'erc1155'">
-                      <b-link @click="showModalNFTCollection(data.item.contract);">{{ ensOrAccount(data.item.contract, 16) }}</b-link>
-                    </span>
-                    <span v-else>
-                      <b-link @click="showModalAddress(data.item.contract);">{{ ensOrAccount(data.item.contract, 16) }}</b-link>
-                    </span>
-                  </span>
-                </template>
-                <template #cell(tokenIdOrTokens)="data">
-                  <span div="data.item.tokenId">
-                    {{ data.item.tokenId }}
-                  </span>
-                  <span div="data.item.tokens">
+            <div v-if="data.item.myEvents && data.item.myEvents.length > 0">
+              <font size="-2">
+                <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
+                  <template #cell(from)="data">
+                    <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 16) }}</b-link>
+                  </template>
+                  <template #cell(to)="data">
+                    <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 16) }}</b-link>
+                  </template>
+                  <template #cell(contract)="data">
                     <span v-if="data.item.contract == 'eth'">
-                      {{ formatETH(data.item.tokens) }}
+                      eth
                     </span>
                     <span v-else-if="data.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
-                      {{ formatETH(data.item.tokens) }}
+                      <b-link @click="showModalAddress(data.item.contract);">weth</b-link>
                     </span>
                     <span v-else>
-                      {{ data.item.tokens }}
+                      <span v-if="data.item.type == 'preerc721' || data.item.type == 'erc721' || data.item.type == 'erc1155'">
+                        <b-link @click="showModalNFTCollection(data.item.contract);">{{ ensOrAccount(data.item.contract, 16) }}</b-link>
+                      </span>
+                      <span v-else>
+                        <b-link @click="showModalAddress(data.item.contract);">{{ ensOrAccount(data.item.contract, 16) }}</b-link>
+                      </span>
                     </span>
-                  </span>
-                </template>
-              </b-table>
-            </font>
+                  </template>
+                  <template #cell(tokenIdOrTokens)="data">
+                    <span div="data.item.tokenId">
+                      {{ data.item.tokenId }}
+                    </span>
+                    <span div="data.item.tokens">
+                      <span v-if="data.item.contract == 'eth'">
+                        {{ formatETH(data.item.tokens) }}
+                      </span>
+                      <span v-else-if="data.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
+                        {{ formatETH(data.item.tokens) }}
+                      </span>
+                      <span v-else>
+                        {{ data.item.tokens }}
+                      </span>
+                    </span>
+                  </template>
+                </b-table>
+              </font>
+            </div>
           </template>
           <template #cell(balance)="data">
             <div v-if="data.item.balance">
