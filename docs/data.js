@@ -809,7 +809,7 @@ const dataModule = {
 
           // TODO
           // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
-        } else if (section == 'x buildAssets') {
+        } else if (section == 'buildAssets') {
           console.log("buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
 
           const accounts = context.state.accounts[chainId] || {};
