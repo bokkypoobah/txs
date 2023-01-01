@@ -96,10 +96,6 @@ const dataModule = {
     assets: {},
     ensMap: {},
     exchangeRates: {},
-    signatures: { // TODO: Delete
-      functionSignatures: {},
-      eventSignatures: {},
-    },
     sync: {
       section: null,
       total: null,
@@ -126,7 +122,6 @@ const dataModule = {
     assets: state => state.assets,
     ensMap: state => state.ensMap,
     exchangeRates: state => state.exchangeRates,
-    signatures: state => state.signatures,
     sync: state => state.sync,
     db: state => state.db,
   },
@@ -338,17 +333,6 @@ const dataModule = {
         Vue.set(state.txs, chainId, {});
       }
       Vue.set(state.txs[chainId], txInfo.tx.hash, txInfo);
-    },
-    addNewSignatures(state, newSignatures) {
-      // console.log("addNewSignatures: " + JSON.stringify(newSignatures));
-      for (const [methodId, signatures] of Object.entries(newSignatures.functionSignatures)) {
-        // console.log(methodId + " => " + JSON.stringify(signatures));
-        // TODO: Merge new array with old array
-        if (!(methodId in state.signatures.functionSignatures)) {
-          Vue.set(state.signatures.functionSignatures, methodId, signatures);
-          // console.log("state.signatures.functionSignatures: " + JSON.stringify(state.signatures.functionSignatures));
-        }
-      }
     },
     updateTxData(state, info) {
       // logInfo("dataModule", "mutations.updateTxData - info: " + JSON.stringify(info).substring(0, 1000));
@@ -723,9 +707,8 @@ const dataModule = {
                 context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
                 console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Retrieving " + txItem.txHash + " @ " + txItem.blockNumber);
                 const currentInfo = txs && txs[txItem.txHash] || {};
-                const [info, newSignatures] = await getTxInfo(txItem.txHash, currentInfo, account, provider, context.state.signatures);
+                const info = await getTxInfo(txItem.txHash, currentInfo, account, provider);
                 context.commit('addTxs', { chainId, txInfo: info});
-                context.commit('addNewSignatures', newSignatures);
                 if ((txItemIndex + 1) % 100 == 0) {
                   console.log("Saving txs");
                   context.dispatch('saveData', ['txs']);
