@@ -1297,6 +1297,8 @@ const reportModule = {
                   const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
                   const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
                   totalTxFee = totalTxFee.add(txFee);
+                  const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
+                  const diff = balance.sub(expectedBalance);
                   if (!(account in accountsMap)) {
                     accountsMap[account] = 0;
                   }
@@ -1337,6 +1339,7 @@ const reportModule = {
                   //     functionCallsMap[results.functionCall]++;
                   //   }
                   // }
+                  const isLastTxInBlock = (index + 1 == txsToProcess.length);
                   transactions.push({
                     chainId,
                     txHash: tx.tx.hash,
@@ -1352,12 +1355,12 @@ const reportModule = {
                     info: results.info || "",
                     txType: results.info && results.info.type || "unknown",
                     txAction: results.info && results.info.action || "unknown",
-                    balance: (index + 1 == txsToProcess.length) ? balance.toString() : null,
-                    balanceInReportingCurrency: (index + 1 == txsToProcess.length) ? balanceInReportingCurrency : null,
+                    balance: isLastTxInBlock ? balance.toString() : null,
+                    balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
+                    expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
+                    diff: isLastTxInBlock ? diff.toString() : null,
                   });
                 }
-                const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
-                const diff = balance.sub(expectedBalance);
                 // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
                 prevBalance = balance;
               }

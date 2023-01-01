@@ -795,9 +795,11 @@ const dataModule = {
                   const block = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] || null;
                   for (const [index, txHash] of Object.keys(txHashes).entries()) {
                     const txInfo = txs && txs[txHash] || {};
-                    for (const event of txInfo.txReceipt.logs) {
-                      if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingSelectorsMap)) {
-                        missingSelectorsMap[event.topics[0]] = true;
+                    if ('txReceipt' in txInfo) {
+                      for (const event of txInfo.txReceipt.logs) {
+                        if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingSelectorsMap)) {
+                          missingSelectorsMap[event.topics[0]] = true;
+                        }
                       }
                     }
                   }
