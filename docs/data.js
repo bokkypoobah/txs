@@ -468,6 +468,7 @@ const dataModule = {
       const reportingCurrency = store.getters['config/settings'].reportingCurrency;
       const devSettings = store.getters['config/devSettings'];
       const preERC721s = store.getters['config/settings'].preERC721s;
+      const functionSelectors = store.getters['data/functionSelectors'];
       const interfaces = getInterfaces();
       const block = await provider.getBlock();
       const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
@@ -832,8 +833,25 @@ const dataModule = {
 
           // TODO
           // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
-        } else if (section == 'xbuildAssets') {
+        } else if (section == 'x buildAssets') {
           console.log("buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
+
+          const accounts = context.state.accounts[chainId] || {};
+          for (const [accountIndex, account] of accountsToSync.entries()) {
+            const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
+            const txs = context.state.txs[chainId] || {};
+            console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+            for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+              for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                const tx = txs && txs[txHash] || null;
+                console.log(blockNumber + ": " + txHash + " " + JSON.stringify(tx));
+                const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
+                console.log("results: " + JSON.stringify(results));
+              }
+            }
+          }
+
+          breakhere();
           for (const [accountIndex, account] of accountsToSync.entries()) {
             context.commit('setSyncSection', { section: 'Build assets', total: null });
             const accountData = context.state.accounts[chainId][account];
