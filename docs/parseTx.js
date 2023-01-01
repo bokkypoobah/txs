@@ -874,5 +874,6 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     console.log("  TODO: " + txData.tx.hash);
   }
 
+  results.myEvents = events.myEvents;
   return results;
 }

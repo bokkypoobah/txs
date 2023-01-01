@@ -253,7 +253,7 @@ const Report = {
           </div>
         </div>
 
-        <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add accounts, sync, then generate report" head-variant="light" class="m-0 mt-1">
           <!--
           <template #thead-top="data">
             <b-tr>
@@ -499,6 +499,10 @@ const Report = {
                 TODO: {{ data.item.functionCall }}
               </font>
             </span>
+            <font size="-2">
+              <b-table small fixed striped sticky-header="200px" :items="data.item.myEvents" head-variant="light">
+              </b-table>
+            </font>
           </template>
           <template #cell(balance)="data">
             <div v-if="data.item.balance">
@@ -867,6 +871,7 @@ const Report = {
               balanceInReportingCurrency: transaction.balanceInReportingCurrency,
               expectedBalance: transaction.expectedBalance,
               diff: transaction.diff,
+              myEvents: transaction.myEvents,
             });
           }
         }
@@ -1334,6 +1339,7 @@ const reportModule = {
                     balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
                     expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
                     diff: isLastTxInBlock ? diff.toString() : null,
+                    myEvents: results.myEvents,
                   });
                 }
                 // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
