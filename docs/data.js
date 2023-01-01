@@ -467,6 +467,7 @@ const dataModule = {
       const confirmations = store.getters['config/settings'].confirmations && parseInt(store.getters['config/settings'].confirmations) || 10;
       const reportingCurrency = store.getters['config/settings'].reportingCurrency;
       const devSettings = store.getters['config/devSettings'];
+      const preERC721s = store.getters['config/settings'].preERC721s;
       const interfaces = getInterfaces();
       const block = await provider.getBlock();
       const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
@@ -480,25 +481,21 @@ const dataModule = {
           const accountsToSync = [];
           const accountsData = context.state.accounts[chainId] || {};
           for (const [account, accountData] of Object.entries(accountsData)) {
-            console.log("account: " + account);
-            console.log("accountData: " + JSON.stringify(accountData));
             const accountsInfo = context.state.accountsInfo[chainId][account];
-            console.log("accountsInfo: " + JSON.stringify(accountsInfo));
             if ((parameters.length == 0 && accountsInfo.sync) || parameters.includes(account)) {
                 accountsToSync.push(account);
             }
           }
-          console.log("accountsToSync: " + JSON.stringify(accountsToSync));
+          console.log("importFromEtherscan - accountsToSync: " + JSON.stringify(accountsToSync));
 
           let sleepUntil = null;
-          for (const accountIndex in accountsToSync) {
+          for (const [accountIndex, account] of accountsToSync.entries()) {
             context.commit('setSyncSection', { section: 'Import', total: accountsToSync.length });
-            const account = accountsToSync[accountIndex];
-            const item = context.state.accounts[chainId][account] || {};
+            const accountData = context.state.accounts[chainId][account] || {};
             context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
             console.log("--- Syncing " + account + " --- ");
-            console.log("item: " + JSON.stringify(item, null, 2).substring(0, 1000) + "...");
-            const startBlock = item && item.updated && item.updated.blockNumber && (parseInt(item.updated.blockNumber) - OVERLAPBLOCKS) || 0;
+            // console.log("accountData: " + JSON.stringify(accountData, null, 2).substring(0, 1000) + "...");
+            const startBlock = accountData && accountData.updated && accountData.updated.blockNumber && (parseInt(accountData.updated.blockNumber) - OVERLAPBLOCKS) || 0;
 
             context.commit('setSyncSection', { section: 'Web3 Events', total: accountsToSync.length });
             for (let startBatch = startBlock; startBatch < confirmedBlockNumber; startBatch += etherscanBatchSize) {
@@ -540,46 +537,58 @@ const dataModule = {
                 ],
               ];
               for (let topics of topicsList) {
-                console.log(JSON.stringify(topics));
+                console.log("Web3 filter: " + JSON.stringify(topics));
                 const logs = await provider.getLogs({ address: null, fromBlock: startBatch, toBlock: endBatch, topics });
                 for (const event of logs) {
-                  let eventRecord = {};
-                  const txHash = event.transactionHash;
-                  const blockNumber = event.blockNumber;
-                  const logIndex = event.logIndex;
-                  const contract = event.address;
-                  if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" && !event.removed) {
-                    const from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
-                    const to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
-                    if ((from == account || to == account)) {
-                      // ERC-721 Transfer
+                  if (!event.removed) {
+                    let eventRecord = null;
+                    const [txHash, blockNumber, logIndex, contract]  = [event.transactionHash, event.blockNumber, event.logIndex, event.address];
+                    if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+                      let from;
+                      let to;
+                      let tokensOrTokenId;
                       if (event.topics.length == 4) {
-                        const tokenId = ethers.BigNumber.from(event.topics[3]).toString();
-                        eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc721", tokenId, tokens: null };
-                        // ERC-20 Transfer
-                      } else {
-                        const tokens = ethers.BigNumber.from(event.data).toString();
-                        eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc20", tokenId: null, tokens };
+                        from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
+                        to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+                        tokensOrTokenId = ethers.BigNumber.from(event.topics[3]).toString();
+                      } else if (event.topics.length == 3) {
+                        from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
+                        to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+                        tokensOrTokenId = ethers.BigNumber.from(event.data).toString();
+                      } else if (event.topics.length == 1) {
+                        from = ethers.utils.getAddress('0x' + event.data.substring(26, 66));
+                        to = ethers.utils.getAddress('0x' + event.data.substring(90, 130));
+                        tokensOrTokenId = ethers.BigNumber.from('0x' + event.data.substring(130, 193)).toString();
                       }
-                      // console.log("eventRecord: " + JSON.stringify(eventRecord));
+                      if ((from == account || to == account)) {
+                        // ERC-721 Transfer, including pre-ERC721s like CryptoPunks, MoonCatRescue, CryptoCats, CryptoVoxels & CryptoKitties
+                        if (event.topics.length == 4 || event.address in preERC721s) {
+                          if (event.address in preERC721s) {
+                            eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: null, tokens: tokensOrTokenId };
+                          } else {
+                            eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc721", tokenId: tokensOrTokenId, tokens: null };
+                          }
+                        } else {
+                          eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc20", tokenId: null, tokens:tokensOrTokenId };
+                        }
+                      }
+                      // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+                    } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
+                      const log = interfaces.erc1155.parseLog(event);
+                      const [operator, from, to, tokenId, tokens] = log.args;
+                      eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc1155", tokenIds: [ethers.BigNumber.from(tokenId).toString()], tokens: [ethers.BigNumber.from(tokens).toString()] };
+                      // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
+                    } else if (event.topics[0] == "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb") {
+                      const log = interfaces.erc1155.parseLog(event);
+                      const [operator, from, to, tokenIds, tokens] = log.args;
+                      const formattedTokenIds = tokenIds.map(e => ethers.BigNumber.from(e).toString());
+                      const formattedTokens = tokens.map(e => ethers.BigNumber.from(e).toString());
+                      eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc1155", tokenIds: formattedTokenIds, tokens: formattedTokens };
+                    }
+                    if (eventRecord) {
+                      console.log("eventRecord: " + JSON.stringify(eventRecord));
                       context.commit('addAccountEvent', { account, eventRecord });
                     }
-                    // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
-                  } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62" && !event.removed) {
-                    const log = interfaces.erc1155.parseLog(event);
-                    const [operator, from, to, tokenId, tokens] = log.args;
-                    eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenIds: [ethers.BigNumber.from(tokenId).toString()], tokens: [ethers.BigNumber.from(tokens).toString()], type: "erc1155" };
-                    // console.log("eventRecord: " + JSON.stringify(eventRecord));
-                    context.commit('addAccountEvent', { account, eventRecord });
-                    // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
-                  } else if (event.topics[0] == "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb" && !event.removed) {
-                    const log = interfaces.erc1155.parseLog(event);
-                    const [operator, from, to, tokenIds, tokens] = log.args;
-                    const formattedTokenIds = tokenIds.map(e => ethers.BigNumber.from(e).toString());
-                    const formattedTokens = tokens.map(e => ethers.BigNumber.from(e).toString());
-                    eventRecord = { txHash, blockNumber, logIndex, contract, from, to, tokenIds: formattedTokenIds, tokens: formattedTokens, type: "erc1155" };
-                    // console.log("eventRecord: " + JSON.stringify(eventRecord));
-                    context.commit('addAccountEvent', { account, eventRecord });
                   }
                 }
               }
@@ -657,9 +666,8 @@ const dataModule = {
           console.log("accountsToSync: " + JSON.stringify(accountsToSync));
 
           let sleepUntil = null;
-          for (const accountIndex in accountsToSync) {
+          for (const [accountIndex, account] of accountsToSync.entries()) {
             // context.commit('setSyncSection', { section: ' Import', total: accountKeysToSync.length });
-            const account = accountsToSync[accountIndex];
             const item = context.state.accounts[chainId][account] || {};
             const txs = context.state.txs[chainId] || {};
             // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);

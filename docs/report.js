@@ -299,6 +299,7 @@ const Report = {
               <b-badge v-else pill variant="warning">???</b-badge>
               <b-badge v-if="data.item.info.action" pill variant="primary">{{ data.item.info.action }}</b-badge>
               <b-badge v-else pill variant="warning">?????</b-badge>
+              <b-badge v-if="!data.item.info.action" pill variant="primary" v-b-popover.hover="data.item.functionCall">{{ data.item.functionCall.substring(0, 30) + (data.item.functionCall.length > 30 ? '...' : '') }}</b-badge>
             </font>
             <span v-if="data.item.info">
               <span v-if="data.item.info.type == 'eth'">
