@@ -506,6 +506,7 @@ const Report = {
               <br />
               <font size="-2">
                 {{ formatETH(data.item.balanceInReportingCurrency, 2) }} {{ reportingCurrency }} @ {{ formatETH(data.item.exchangeRate, 2) }}
+                <span v-if="data.item.diff != 0">Diff {{ formatETH(data.item.diff) }}</span>
               </font>
             </div>
           </template>
@@ -864,6 +865,8 @@ const Report = {
               info: transaction.info,
               balance: transaction.balance,
               balanceInReportingCurrency: transaction.balanceInReportingCurrency,
+              expectedBalance: transaction.expectedBalance,
+              diff: transaction.diff,
             });
           }
         }
