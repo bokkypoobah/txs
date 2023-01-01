@@ -29,5 +29,12 @@ function getTxHashesByBlocks(account, chainId, accounts, accountsInfo) {
     }
   }
   // console.log("getTxHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+  // let count = 0;
+  // for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+  //   for (const [index, txHash] of Object.keys(txHashes).entries()) {
+  //     count++;
+  //     console.log(count + " " + blockNumber + " " + txHash);
+  //   }
+  // }
   return txHashesByBlocks;
 }

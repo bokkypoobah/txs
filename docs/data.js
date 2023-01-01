@@ -686,13 +686,16 @@ const dataModule = {
             if (true) {
               // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
               const txHashesToProcess = {};
+              let blocksProcessed = 0;
               for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-                console.log(blockNumber + " => " + JSON.stringify(txHashes))
-                for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                  if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
-                    txHashesToProcess[txHash] = blockNumber;
+                if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
+                  for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                    if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
+                      txHashesToProcess[txHash] = blockNumber;
+                    }
                   }
                 }
+                blocksProcessed++;
               }
               // console.log("txHashesToProcess: " + JSON.stringify(txHashesToProcess));
               let txHashList = [];
