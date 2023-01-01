@@ -843,10 +843,12 @@ const dataModule = {
             console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
             for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
               for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                const tx = txs && txs[txHash] || null;
-                console.log(blockNumber + ": " + txHash + " " + JSON.stringify(tx));
-                const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
-                console.log("results: " + JSON.stringify(results));
+                const txData = txs && txs[txHash] || null;
+                console.log(blockNumber + ": " + txHash + " " + JSON.stringify(txHash));
+                // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
+                // console.log("results: " + JSON.stringify(results));
+                const events = getEvents(account, accounts, preERC721s, txData);
+                console.log("events: " + JSON.stringify(events));
               }
             }
           }

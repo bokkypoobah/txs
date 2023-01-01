@@ -41,6 +41,8 @@ function getInterfaces() {
 
 function getEvents(account, accounts, preERC721s, txData) {
   const interfaces = getInterfaces();
+
+  const myEvents = [];
   const receivedNFTEvents = [];
   const sentNFTEvents = [];
   const receivedERC20Events = [];
@@ -94,18 +96,26 @@ function getEvents(account, accounts, preERC721s, txData) {
         // }
         const nftType = (event.address in preERC721s) ? "preerc721" : "erc721";
         if (to == account) {
-          receivedNFTEvents.push({ type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId });
+          const record = { type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId };
+          receivedNFTEvents.push(record);
+          myEvents.push(record);
         } else if (from == account) {
-          sentNFTEvents.push({ type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId });
+          const record = { type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId };
+          sentNFTEvents.push(record);
+          myEvents.push(record);
         }
         // TODO: Remove below
         erc721Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId });
         // ERC-20 Transfer
       } else {
         if (to == account) {
-          receivedERC20Events.push({ type: "erc20", logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId });
+          const record = { type: "erc20", logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId };
+          receivedERC20Events.push(record);
+          myEvents.push(record);
         } else if (from == account) {
-          sentERC20Events.push({ type: "erc20", logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId });
+          const record = { type: "erc20", logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId };
+          sentERC20Events.push(record);
+          myEvents.push(record);
         }
         erc20Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokens: tokensOrTokenId });
         if (!(from in erc20FromMap)) {
@@ -129,9 +139,13 @@ function getEvents(account, accounts, preERC721s, txData) {
       const tokens = ethers.BigNumber.from("0x" + event.data.substring(67, 130)).toString();
 
       if (to == account) {
-        receivedNFTEvents.push({ type: "erc1155", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens });
+        const record = { type: "erc1155", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens };
+        receivedNFTEvents.push(record);
+        myEvents.push(record);
       } else if (from == account) {
-        sentNFTEvents.push({ type: "erc1155", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens });
+        const record = { type: "erc1155", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenId, tokens };
+        sentNFTEvents.push(record);
+        myEvents.push(record);
       }
 
       // TODO: Remove below
@@ -143,9 +157,13 @@ function getEvents(account, accounts, preERC721s, txData) {
       const [operator, from, to, tokenIds, tokens] = log.args;
 
       if (to == account) {
-        receivedNFTEvents.push({ type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
+        const record = { type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens };
+        receivedNFTEvents.push(record);
+        myEvents.push(record);
       } else if (from == account) {
-        sentNFTEvents.push({ type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
+        const record = { type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens };
+        sentNFTEvents.push(record);
+        myEvents.push(record);
       }
 
       // TODO: Remove below
@@ -411,7 +429,7 @@ function getEvents(account, accounts, preERC721s, txData) {
       }
     }
   }
-  return { receivedNFTEvents, sentNFTEvents, receivedERC20Events, sentERC20Events, erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents, ensEvents, sentInternalEvents, receivedInternalEvents };
+  return { myEvents, receivedNFTEvents, sentNFTEvents, receivedERC20Events, sentERC20Events, erc20Events, wethDepositEvents, wethWithdrawalEvents, erc721Events, erc1155Events, erc1155BatchEvents, erc20FromMap, erc20ToMap, nftExchangeEvents, ensEvents, sentInternalEvents, receivedInternalEvents };
 }
 
 
