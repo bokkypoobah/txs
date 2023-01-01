@@ -500,42 +500,46 @@ const Report = {
               </font>
             </span>
             <font size="-2">
-              <!--
-              <b-table small fixed striped sticky-header="200px" :items="data.item.myEvents" head-variant="light">
-              </b-table>
-
-              { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
-              { key: 'logIndex', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
-              { key: 'contract', label: 'Token', thStyle: 'width: 20%;' },
-              { key: 'from', label: 'From', thStyle: 'width: 20%;' },
-              { key: 'to', label: 'To', thStyle: 'width: 20%;' },
-              { key: 'tokens', label: 'Tokens', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
-
-              -->
-
               <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
-                <template #cell(select)="data">
-                  <b-form-checkbox size="sm" :checked="(settings.filters['accounts'] && settings.filters['accounts'][data.item.account]) ? 1 : 0" value="1" @change="filterChanged('accounts', data.item.account)"></b-form-checkbox>
-                </template>
-                <template #cell(contract)="data">
-                  {{ ensOrAccount(data.item.contract, 20) }}
-                </template>
                 <template #cell(from)="data">
                   <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 20) }}</b-link>
                 </template>
                 <template #cell(to)="data">
                   <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 20) }}</b-link>
                 </template>
+                <template #cell(contract)="data">
+                  <span v-if="data.item.contract == 'eth'">
+                    eth
+                  </span>
+                  <span v-else-if="data.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
+                    <b-link @click="showModalAddress(data.item.contract);">weth</b-link>
+                  </span>
+                  <span v-else>
+                    <span v-if="data.item.type == 'preerc721' || data.item.type == 'erc721' || data.item.type == 'erc1155'">
+                      <b-link @click="showModalNFTCollection(data.item.contract);">{{ ensOrAccount(data.item.contract, 20) }}</b-link>
+                    </span>
+                    <span v-else>
+                      <b-link @click="showModalAddress(data.item.contract);">{{ ensOrAccount(data.item.contract, 20) }}</b-link>
+                    </span>
+                  </span>
+                </template>
                 <template #cell(tokenIdOrTokens)="data">
                   <span div="data.item.tokenId">
                     {{ data.item.tokenId }}
                   </span>
                   <span div="data.item.tokens">
-                    {{ data.item.tokens }}
+                    <span v-if="data.item.contract == 'eth'">
+                      {{ formatETH(data.item.tokens) }}
+                    </span>
+                    <span v-else-if="data.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
+                      {{ formatETH(data.item.tokens) }}
+                    </span>
+                    <span v-else>
+                      {{ data.item.tokens }}
+                    </span>
                   </span>
                 </template>
               </b-table>
-
             </font>
           </template>
           <template #cell(balance)="data">
@@ -547,71 +551,6 @@ const Report = {
                 <span v-if="data.item.diff != 0">Diff {{ formatETH(data.item.diff) }}</span>
               </font>
             </div>
-          </template>
-          <template #cell(from)="data">
-            <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.from">
-              {{ ensOrAccount(data.item.from) }}
-            </b-link>
-            <b-popover :target="'popover-target-' + data.item.txHash + '-' + data.item.from" placement="right" custom-class="popover-max-width">
-              <template #title>
-                {{ 'From: ' + ensOrAccount(data.item.from, 20) }}
-              </template>
-              <b-link @click="copyToClipboard(data.item.from);">Copy from account to clipboard</b-link>
-              <br />
-              <span v-if="ensOrNull(data.item.from) != null && ensOrNull(data.item.from).length > 0">
-                <b-link @click="copyToClipboard(ensOrNull(data.item.from));">Copy 'from' account ENS name to clipboard</b-link>
-                <br />
-                <b-link :href="'https://app.ens.domains/name/' + ensOrNull(data.item.from)" target="_blank">View 'from' account ENS name in app.ens.domains</b-link>
-                <br />
-              </span>
-              <b-link :href="'https://etherscan.io/address/' + data.item.from" target="_blank">View 'from' account in etherscan.io</b-link>
-              <br />
-              <b-link :href="'https://opensea.io/' + data.item.from" target="_blank">View 'from' account in opensea.io</b-link>
-              <br />
-              <b-link :href="'https://opensea.io/' + data.item.from + '?tab=bids'" target="_blank">View offers received in opensea.io for 'from' account</b-link>
-              <br />
-              <b-link :href="'https://looksrare.org/accounts/' + data.item.from + '#owned'" target="_blank">View 'from' account in looksrare.org</b-link>
-              <br />
-              <b-link :href="'https://x2y2.io/user/' + data.item.from + '/items'" target="_blank">View 'from' account in x2y2.io</b-link>
-              <br />
-              <b-link :href="'https://www.gem.xyz/profile/' + data.item.from" target="_blank">View 'from' account in gem.xyz</b-link>
-              <br />
-              <b-link :href="'https://blur.io/' + data.item.from" target="_blank">View 'from' account in blur.io</b-link>
-              <br />
-            </b-popover>
-          </template>
-          <template #cell(to)="data">
-            <b-link class="sm" :id="'popover-target-' + data.item.txHash + '-' + data.item.to">
-              {{ ensOrAccount(data.item.to) }}
-            </b-link>
-            <b-popover :target="'popover-target-' + data.item.txHash + '-' + data.item.to" placement="right" custom-class="popover-max-width">
-              <template #title>
-                {{ 'To: ' + ensOrAccount(data.item.to, 20) }}
-              </template>
-              <b-link @click="copyToClipboard(data.item.to);">Copy 'to' account to clipboard</b-link>
-              <br />
-              <span v-if="ensOrNull(data.item.to) != null && ensOrNull(data.item.to).length > 0">
-                <b-link @click="copyToClipboard(ensOrNull(data.item.to));">Copy 'to' account ENS name to clipboard</b-link>
-                <br />
-                <b-link :href="'https://app.ens.domains/name/' + ensOrNull(data.item.to)" target="_blank">View 'to' account ENS name in app.ens.domains</b-link>
-                <br />
-              </span>
-              <b-link :href="'https://etherscan.io/address/' + data.item.to" target="_blank">View 'to' account in etherscan.io</b-link>
-              <br />
-              <b-link :href="'https://opensea.io/' + data.item.to" target="_blank">View 'to' account in opensea.io</b-link>
-              <br />
-              <b-link :href="'https://opensea.io/' + data.item.to + '?tab=bids'" target="_blank">View offers received in opensea.io for 'to' account</b-link>
-              <br />
-              <b-link :href="'https://looksrare.org/accounts/' + data.item.to + '#owned'" target="_blank">View 'to' account in looksrare.org</b-link>
-              <br />
-              <b-link :href="'https://x2y2.io/user/' + data.item.to + '/items'" target="_blank">View 'to' account in x2y2.io</b-link>
-              <br />
-              <b-link :href="'https://www.gem.xyz/profile/' + data.item.to" target="_blank">View 'to' account in gem.xyz</b-link>
-              <br />
-              <b-link :href="'https://blur.io/' + data.item.to" target="_blank">View 'to' account in blur.io</b-link>
-              <br />
-            </b-popover>
-
           </template>
           <template #cell(value)="data">
             {{ formatETH(data.item.value) }}
@@ -738,9 +677,9 @@ const Report = {
       myEventsFields: [
         { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
         { key: 'logIndex', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
-        { key: 'contract', label: 'Token', thStyle: 'width: 20%;' },
         { key: 'from', label: 'From', thStyle: 'width: 20%;' },
         { key: 'to', label: 'To', thStyle: 'width: 20%;' },
+        { key: 'contract', label: 'Token', thStyle: 'width: 20%;' },
         { key: 'tokenIdOrTokens', label: 'TokenId/Tokens', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
     }
