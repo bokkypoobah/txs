@@ -473,19 +473,19 @@ const dataModule = {
       const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
       const confirmedBlock = await provider.getBlock(confirmedBlockNumber);
       const confirmedTimestamp = confirmedBlock && confirmedBlock.timestamp || null;
+      const accountsData = context.state.accounts[chainId] || {};
       const OVERLAPBLOCKS = 10000;
+      const accountsToSync = [];
+      for (const [account, accountData] of Object.entries(accountsData)) {
+        const accountsInfo = context.state.accountsInfo[chainId][account];
+        if ((parameters.length == 0 && accountsInfo.sync) || parameters.includes(account)) {
+            accountsToSync.push(account);
+        }
+      }
 
       context.commit('setSyncHalt', false);
       for (let section of sections) {
         if (section == 'importFromEtherscan') {
-          const accountsToSync = [];
-          const accountsData = context.state.accounts[chainId] || {};
-          for (const [account, accountData] of Object.entries(accountsData)) {
-            const accountsInfo = context.state.accountsInfo[chainId][account];
-            if ((parameters.length == 0 && accountsInfo.sync) || parameters.includes(account)) {
-                accountsToSync.push(account);
-            }
-          }
           console.log("importFromEtherscan - accountsToSync: " + JSON.stringify(accountsToSync));
 
           let sleepUntil = null;
@@ -654,16 +654,7 @@ const dataModule = {
           context.commit('setSyncSection', { section: null, total: null });
 
         } else if (section == 'downloadData') {
-          const accountsToSync = [];
-          const accountsData = context.state.accounts[chainId] || {};
-          for (const [account, data] of Object.entries(accountsData)) {
-            console.log("account: " + account);
-            // TODO
-            // if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
-                accountsToSync.push(account);
-            // }
-          }
-          console.log("accountsToSync: " + JSON.stringify(accountsToSync));
+          console.log("downloadData - accountsToSync: " + JSON.stringify(accountsToSync));
 
           let sleepUntil = null;
           for (const [accountIndex, account] of accountsToSync.entries()) {
@@ -672,7 +663,7 @@ const dataModule = {
             const txs = context.state.txs[chainId] || {};
             // context.commit('setSyncCompleted', parseInt(keyIndex) + 1);
             console.log("--- Downloading for " + account + " --- ");
-            console.log("accountData: " + JSON.stringify(accountData, null, 2).substring(0, 1000) + "...");
+            // console.log("accountData: " + JSON.stringify(accountData, null, 2).substring(0, 1000) + "...");
 
             const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
             if (true) {
@@ -841,22 +832,14 @@ const dataModule = {
 
           // TODO
           // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
-        } else if (section == 'buildAssets') {
-          const accountsToSync = [];
-          const accountsData = context.state.accounts[chainId] || {};
-          for (const [account, data] of Object.entries(accountsData)) {
-            if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
-                accountsToSync.push(account);
-            }
-          }
+        } else if (section == 'xbuildAssets') {
           console.log("buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
-          for (const accountIndex in accountsToSync) {
+          for (const [accountIndex, account] of accountsToSync.entries()) {
             context.commit('setSyncSection', { section: 'Build assets', total: null });
-            const account = accountsToSync[accountIndex];
-            const item = context.state.accounts[chainId][account];
+            const accountData = context.state.accounts[chainId][account];
             context.commit('setSyncCompleted', 1);
             console.log("--- Building assets for " + account + " --- ");
-            console.log("item: " + JSON.stringify(item, null, 2).substring(0, 200) + "...");
+            console.log("accountData: " + JSON.stringify(accountData, null, 2).substring(0, 200) + "...");
 
             // -- Create list of ERC-20, ERC-721 & ERC-1155 events
             const events = [];
