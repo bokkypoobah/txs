@@ -502,10 +502,10 @@ const Report = {
             <font size="-2">
               <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
                 <template #cell(from)="data">
-                  <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 20) }}</b-link>
+                  <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 16) }}</b-link>
                 </template>
                 <template #cell(to)="data">
-                  <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 20) }}</b-link>
+                  <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 16) }}</b-link>
                 </template>
                 <template #cell(contract)="data">
                   <span v-if="data.item.contract == 'eth'">
@@ -516,10 +516,10 @@ const Report = {
                   </span>
                   <span v-else>
                     <span v-if="data.item.type == 'preerc721' || data.item.type == 'erc721' || data.item.type == 'erc1155'">
-                      <b-link @click="showModalNFTCollection(data.item.contract);">{{ ensOrAccount(data.item.contract, 20) }}</b-link>
+                      <b-link @click="showModalNFTCollection(data.item.contract);">{{ ensOrAccount(data.item.contract, 16) }}</b-link>
                     </span>
                     <span v-else>
-                      <b-link @click="showModalAddress(data.item.contract);">{{ ensOrAccount(data.item.contract, 20) }}</b-link>
+                      <b-link @click="showModalAddress(data.item.contract);">{{ ensOrAccount(data.item.contract, 16) }}</b-link>
                     </span>
                   </span>
                 </template>
