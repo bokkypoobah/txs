@@ -668,7 +668,7 @@ const dataModule = {
 
             const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
             if (true) {
-              console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+              // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
               const blockNumbers = [];
               for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
                 const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
@@ -700,33 +700,24 @@ const dataModule = {
             }
 
             if (true) {
-              const txHashes = {};
-              for (const [txHash, logIndexes] of Object.entries(accountData.events)) {
-                if (!(txHash in txs) && !(txHash in txHashes)) {
-                  for (const [logIndex, event] of Object.entries(logIndexes)) {
-                    txHashes[txHash] = event.blockNumber;
+              // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
+              const txHashesToProcess = {};
+              for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+                console.log(blockNumber + " => " + JSON.stringify(txHashes))
+                for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                  if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
+                    txHashesToProcess[txHash] = blockNumber;
                   }
                 }
               }
-              for (const [txHash, traceIds] of Object.entries(accountData.internalTransactions)) {
-                if (!(txHash in txs) && !(txHash in txHashes)) {
-                  for (const [traceId, tx] of Object.entries(traceIds)) {
-                    txHashes[txHash] = tx.blockNumber;
-                  }
-                }
-              }
-              for (const [txHash, tx] of Object.entries(accountData.transactions)) {
-                if (!(txHash in txs) && !(txHash in txHashes)) {
-                  txHashes[txHash] = tx.blockNumber;
-                }
-              }
+              // console.log("txHashesToProcess: " + JSON.stringify(txHashesToProcess));
               let txHashList = [];
-              for (const [txHash, blockNumber] of Object.entries(txHashes)) {
+              for (const [txHash, blockNumber] of Object.entries(txHashesToProcess)) {
                 txHashList.push({ txHash, blockNumber });
               }
               txHashList.sort((a, b) => a.blockNumber - b.blockNumber);
               txHashList = txHashList.slice(devSettings.skipBlocks, parseInt(devSettings.maxBlocks) + 1);
-              console.log("txHashList: " + JSON.stringify(txHashList));
+              // console.log("txHashList: " + JSON.stringify(txHashList));
               context.commit('setSyncSection', { section: 'Tx & TxReceipts', total: txHashList.length });
               for (const [txItemIndex, txItem] of txHashList.entries()) {
                 context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
@@ -807,7 +798,7 @@ const dataModule = {
                 blocksProcessed++;
               }
               const missingSelectors = Object.keys(missingSelectorsMap);
-              console.log(JSON.stringify(missingSelectors));
+              // console.log(JSON.stringify(missingSelectors));
               const BATCHSIZE = 50;
               for (let i = 0; i < missingSelectors.length; i += BATCHSIZE) {
                 const batch = missingSelectors.slice(i, parseInt(i) + BATCHSIZE);
@@ -829,7 +820,6 @@ const dataModule = {
               break;
             }
           }
-
 
           // TODO
           // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
