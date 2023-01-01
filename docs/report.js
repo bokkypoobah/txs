@@ -1258,7 +1258,6 @@ const reportModule = {
       const transactions = [];
       for (const [chainId, accounts] of Object.entries(allAccounts)) {
         const txs = allTxs[chainId] || {};
-        // console.log(JSON.stringify(txs, null, 2));
         for (const [account, accountData] of Object.entries(accounts)) {
           const accountsInfo = store.getters['data/accountsInfo'][chainId][account];
           if (accountsInfo.mine && accountsInfo.report) {
@@ -1270,12 +1269,10 @@ const reportModule = {
               if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
                 const block = blocks[chainId] && blocks[chainId][blockNumber] || null;
                 const balance = ethers.BigNumber.from(block && block.balances[account] || 0);
-                // console.log(blockNumber + " " + JSON.stringify(block));
                 const exchangeRate = getExchangeRate(moment.unix(block.timestamp), exchangeRates);
                 let totalEthReceived = ethers.BigNumber.from(0);
                 let totalEthPaid = ethers.BigNumber.from(0);
                 let totalTxFee = ethers.BigNumber.from(0);
-
                 const txsToProcess = [];
                 for (const [index, txHash] of Object.keys(txHashes).entries()) {
                   const tx = txs && txs[txHash] || null;
@@ -1286,11 +1283,6 @@ const reportModule = {
                 txsToProcess.sort((a, b) => a.txReceipt.transactionIndex - b.txReceipt.transactionIndex);
                 const balanceInReportingCurrency = ethers.utils.formatEther(balance) * exchangeRate.rate;
                 for (const [index, tx] of txsToProcess.entries()) {
-                  // let functionCall = "";
-                  // if (tx.tx && tx.tx.to != null && tx.tx.data.length > 9) {
-                  //   const selector = tx.tx.data.substring(0, 10);
-                  //   functionCall = functionSelectors[selector] && functionSelectors[selector].length > 0 && functionSelectors[selector][0] || selector;
-                  // }
                   // console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
                   const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
                   totalEthPaid = totalEthPaid.add(results.ethPaid);
@@ -1319,27 +1311,6 @@ const reportModule = {
                     functionCallsMap[tempFunctionCall] = 0;
                   }
                   functionCallsMap[tempFunctionCall]++;
-
-                  // if (results.info) {
-                  //   if (results.info.type) {
-                  //     if (!(results.info.type in typesMap)) {
-                  //       typesMap[results.info.type] = 0;
-                  //     }
-                  //     typesMap[results.info.type]++;
-                  //   }
-                  //   if (results.info.action) {
-                  //     if (!(results.info.action in actionsMap)) {
-                  //       actionsMap[results.info.action] = 0;
-                  //     }
-                  //     actionsMap[results.info.action]++;
-                  //   }
-                  //   if (results.functionCall && results.functionCall.length > 2) {
-                  //     if (!(results.functionCall in functionCallsMap)) {
-                  //       functionCallsMap[results.functionCall] = 0;
-                  //     }
-                  //     functionCallsMap[results.functionCall]++;
-                  //   }
-                  // }
                   const isLastTxInBlock = (index + 1 == txsToProcess.length);
                   transactions.push({
                     chainId,
@@ -1367,74 +1338,9 @@ const reportModule = {
               }
               blocksProcessed++;
             }
-
-            // if (false) {
-            //   const txHashes = {};
-            //   const missingTxDataHashes = {};
-            //   for (const [txHash, logIndexes] of Object.entries(accountData.events)) {
-            //     for (const [logIndex, event] of Object.entries(logIndexes)) {
-            //       if (txHash in txs) {
-            //         txHashes[txHash] = event.blockNumber;
-            //       } else {
-            //         missingTxDataHashes[txHash] = event.blockNumber;
-            //       }
-            //     }
-            //   }
-            //   for (const [txHash, traceIds] of Object.entries(accountData.internalTransactions)) {
-            //     for (const [traceId, tx] of Object.entries(traceIds)) {
-            //       if (txHash in txs) {
-            //         txHashes[txHash] = tx.blockNumber;
-            //       } else {
-            //         missingTxDataHashes[txHash] = null;
-            //       }
-            //     }
-            //   }
-            //   for (const [txHash, tx] of Object.entries(accountData.transactions)) {
-            //     if (txHash in txs) {
-            //       txHashes[txHash] = tx.blockNumber;
-            //     } else {
-            //       missingTxDataHashes[txHash] = tx.blockNumber;
-            //     }
-            //   }
-            //   const txList = [];
-            //   for (const [txHash, blockNumber] of Object.entries(txHashes)) {
-            //     txList.push(txs[txHash]);
-            //   }
-            //   txList.sort((a, b) => {
-            //     const aBlockNumber = parseInt(a.tx.blockNumber);
-            //     const bBlockNumber = parseInt(b.tx.blockNumber);
-            //     if (aBlockNumber == bBlockNumber) {
-            //       return parseInt(a.tx.transactionIndex) - parseInt(b.tx.transactionIndex);
-            //     } else {
-            //       return aBlockNumber - bBlockNumber;
-            //     }
-            //   });
-            //
-            //   // let ethBalance = ethers.BigNumber.from(0);
-            //   for (const txData of txList.slice(0, 10)) {
-            //     if ((!contractOrTx || txData.tx.to == contractOrTx || txData.tx.hash == contractOrTx) && txData.tx.blockNumber >= startBlock && txData.tx.blockNumber <= endBlock) {
-            //       const block = blocks[chainId] && blocks[chainId][txData.tx.blockNumber] || null;
-            //       // console.log("block: " + JSON.stringify(block));
-            //       // console.log("txData: " + JSON.stringify(txData));
-            //       // console.log(moment.unix(txData.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash + " " + txData.tx.from.substring(0, 12) + " -> " + (txData.tx.to && txData.tx.to.substring(0, 12) || 'null'));
-            //       const exchangeRate = getExchangeRate(moment.unix(txData.timestamp), exchangeRates);
-            //       const results = parseTx(chainId, account, accounts, txData);
-            //       await accumulateTxResults(provider, account, accumulatedData, txData, block, results);
-            //       // console.log("  exchangeRate: " + JSON.stringify(exchangeRate));
-            //       // ethBalance = ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
-            //       // console.log((results.info || "TODO") + " eth +:" + ethers.utils.formatEther(results.ethReceived) + ", -:" + ethers.utils.formatEther(results.ethPaid) + ", txFee: " + ethers.utils.formatEther(results.txFee) + ", ethBalance: " + ethers.utils.formatEther(ethBalance));
-            //     }
-            //   }
-            //   console.log("missingTxDataHashes: " + JSON.stringify(missingTxDataHashes));
-            // }
           }
         }
       }
-
-      console.log("accountsMap: " + JSON.stringify(accountsMap));
-      console.log("typesMap: " + JSON.stringify(typesMap));
-      console.log("actionsMap: " + JSON.stringify(actionsMap));
-      console.log("functionCallsMap: " + JSON.stringify(functionCallsMap));
       context.commit('setReport', { transactions, accountsMap, typesMap, actionsMap, functionCallsMap });
       context.dispatch('saveData', ['report']);
     },
