@@ -325,7 +325,9 @@ const dataModule = {
       // console.log("state.eventSelectors: " + JSON.stringify(state.eventSelectors));
     },
     addENSName(state, nameInfo) {
+      console.log("mutation.addENSName: " + nameInfo.account + " => '" + nameInfo.name + "'");
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
+      console.log("ensMap: " + JSON.stringify(state.ensMap));
     },
     addTxs(state, info) {
       const [chainId, txInfo] = [info.chainId, info.txInfo];
@@ -654,11 +656,15 @@ const dataModule = {
             if (!context.state.sync.halt) {
               // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
               const blockNumbers = [];
+              let blocksProcessed = 0;
               for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-                const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
-                if (!existing) {
-                  blockNumbers.push(blockNumber);
+                if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
+                  const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
+                  if (!existing) {
+                    blockNumbers.push(blockNumber);
+                  }
                 }
+                blocksProcessed++;
               }
               context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
               for (const [index, blockNumber] of blockNumbers.entries()) {
@@ -684,7 +690,7 @@ const dataModule = {
             }
 
             if (!context.state.sync.halt) {
-              // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
+              console.log("HERE txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
               const txHashesToProcess = {};
               let blocksProcessed = 0;
               for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
@@ -697,31 +703,24 @@ const dataModule = {
                 }
                 blocksProcessed++;
               }
-              // console.log("txHashesToProcess: " + JSON.stringify(txHashesToProcess));
-              // TODO vvv - Replace below with let txHashList = Object.keys(txHashesToProcess));
-              let txHashList = [];
-              for (const [txHash, blockNumber] of Object.entries(txHashesToProcess)) {
-                txHashList.push({ txHash, blockNumber });
-              }
-              txHashList.sort((a, b) => a.blockNumber - b.blockNumber);
-              txHashList = txHashList.slice(devSettings.skipBlocks, parseInt(devSettings.maxBlocks) + 1);
-              // TODO ^^^
-
-              // console.log("txHashList: " + JSON.stringify(txHashList));
+              let txHashList = Object.keys(txHashesToProcess);
+              console.log("txHashList: " + JSON.stringify(txHashList));
               context.commit('setSyncSection', { section: 'Tx & TxReceipts', total: txHashList.length });
-              for (const [txItemIndex, txItem] of txHashList.entries()) {
-                context.commit('setSyncCompleted', parseInt(txItemIndex) + 1);
-                console.log((parseInt(txItemIndex) + 1) + "/" + txHashList.length + " Retrieving " + txItem.txHash + " @ " + txItem.blockNumber);
-                const currentInfo = txs && txs[txItem.txHash] || {};
-                const info = await getTxInfo(txItem.txHash, currentInfo, account, provider);
+              let processed = 1;
+              for (const [txHash, blockNumber] of Object.entries(txHashesToProcess)) {
+                context.commit('setSyncCompleted', processed);
+                console.log(processed + "/" + txHashList.length + " Retrieving " + txHash + " @ " + blockNumber);
+                const currentInfo = txs && txs[txHash] || {};
+                const info = await getTxInfo(txHash, currentInfo, account, provider);
                 context.commit('addTxs', { chainId, txInfo: info});
-                if ((txItemIndex + 1) % 100 == 0) {
+                if (processed % 50 == 0) {
                   console.log("Saving txs");
                   context.dispatch('saveData', ['txs']);
                 }
                 if (context.state.sync.halt) {
                   break;
                 }
+                processed++;
               }
               // context.dispatch('saveData', ['accounts', 'txs', 'ensMap']);
               context.dispatch('saveData', ['txs']);
@@ -814,7 +813,6 @@ const dataModule = {
           // Build ERC-721 and ERC-1155 assets (contracts + tokens), plus ERC-20 contracts
         } else if (section == 'buildAssets') {
           console.log("buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
-
           const accounts = context.state.accounts[chainId] || {};
           const missingAccountsMap = {};
           for (const [accountIndex, account] of accountsToSync.entries()) {
@@ -826,22 +824,21 @@ const dataModule = {
               if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
                 for (const [index, txHash] of Object.keys(txHashes).entries()) {
                   const txData = txs && txs[txHash] || null;
-                  // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
-                  // console.log("results: " + JSON.stringify(results));
-                  if (!(txData.tx.from in accounts) && !(txData.tx.from in missingAccountsMap)) {
-                    missingAccountsMap[txData.tx.from] = true;
-                  }
-                  if (txData.tx.to != null && (!(txData.tx.to in accounts) && !(txData.tx.to in missingAccountsMap))) {
-                    missingAccountsMap[txData.tx.to] = true;
-                  }
-                  const events = getEvents(account, accounts, preERC721s, txData);
-                  console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
-                  for (const [eventIndex, eventItem] of events.myEvents.entries()) {
-                    // console.log("  " + eventIndex + " " + JSON.stringify(eventItem));
-                    for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
-                      // console.log("    " + a);
-                      if (!(a in accounts) && !(a in missingAccountsMap)) {
-                        missingAccountsMap[a] = true;
+                  if (txData != null) {
+                    if (!(txData.tx.from in accounts) && !(txData.tx.from in missingAccountsMap)) {
+                      missingAccountsMap[txData.tx.from] = true;
+                    }
+                    if (txData.tx.to != null && (!(txData.tx.to in accounts) && !(txData.tx.to in missingAccountsMap))) {
+                      missingAccountsMap[txData.tx.to] = true;
+                    }
+                    const events = getEvents(account, accounts, preERC721s, txData);
+                    console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
+                    // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
+                    for (const [eventIndex, eventItem] of events.myEvents.entries()) {
+                      for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
+                        if (!(a in accounts) && !(a in missingAccountsMap)) {
+                          missingAccountsMap[a] = true;
+                        }
                       }
                     }
                   }
@@ -862,9 +859,15 @@ const dataModule = {
               context.commit('addNewAccount', accountInfo);
               console.log("Added " + accountItem + " " + accountInfo.type + " " + accountInfo.name);
             }
+            const names = await ensReverseRecordsContract.getNames([accountItem]);
+            const name = names.length == 1 ? names[0] : accountItem;
+            if (!(accountItem in context.state.ensMap)) {
+              // console.log("Added ENS " + accountItem + " " + name);
+              context.commit('addENSName', { account: accountItem, name });
+            }
             if ((accountItemIndex + 1) % 25 == 0) {
               console.log("Saving accounts");
-              context.dispatch('saveData', ['accounts']);
+              context.dispatch('saveData', ['accountsInfo', 'accounts', 'ensMap']);
             }
             if (context.state.sync.halt) {
               break;
@@ -1001,7 +1004,7 @@ const dataModule = {
           //   }
           // }
 
-          context.dispatch('saveData', ['accounts', 'accountsInfo']);
+          context.dispatch('saveData', ['accountsInfo', 'accounts', 'ensMap']);
           console.log("accounts: " + JSON.stringify(context.state.accounts[chainId], null, 2));
           console.log("accountsInfo: " + JSON.stringify(context.state.accountsInfo[chainId], null, 2));
           context.commit('setSyncSection', { section: null, total: null });

@@ -5,9 +5,9 @@ function getTokenContractInfo(contract, accounts) {
   let decimals = 18;
   if (contract in accounts) {
     const account = accounts[contract];
-    name = account.contract.name;
-    symbol = account.contract.symbol;
-    decimals = account.contract.decimals;
+    name = account.contract && account.contract.name || null;
+    symbol = account.contract && account.contract.symbol || null;
+    decimals = account.contract && account.contract.decimals || 18;
   }
   if (name == null || name.length == 0) {
     name = contract;
