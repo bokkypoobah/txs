@@ -521,8 +521,8 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
     results.functionSelector = txData.tx.data.substring(0, 10);
     results.functionCall = functionSelectors[results.functionSelector] && functionSelectors[results.functionSelector].length > 0 && functionSelectors[results.functionSelector][0] || results.functionSelector;
   } else {
-    results.functionSelector = "";
-    results.functionCall = "";
+    results.functionSelector = "(none)";
+    results.functionCall = "(none)";
   }
 
   // if (results.functionCall != "") {

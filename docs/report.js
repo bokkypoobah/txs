@@ -751,7 +751,6 @@ const Report = {
       return (key in this.accounts);
     },
     totalTransactions() {
-      let result = 0;
       return this.report.transactions && this.report.transactions.length || 0;
     },
     filteredTransactions() {
@@ -890,51 +889,64 @@ const Report = {
       return this.filteredSortedTransactions.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
     },
     getAllAccounts() {
-      const results = [];
-      if (this.report.accountsMap) {
-        for (const [k, v] of Object.entries(this.report.accountsMap)) {
-          results.push({ account: k, count: v });
+      const accountsMap = {};
+      for (const transaction of this.filteredTransactions) {
+        if (!(transaction.account in accountsMap)) {
+          accountsMap[transaction.account] = 0;
         }
-        results.sort((a, b) => {
-          return ('' + a.account).localeCompare(b.account);
-        });
+        accountsMap[transaction.account]++;
       }
+      const results = [];
+      for (const [k, v] of Object.entries(accountsMap)) {
+        results.push({ account: k, count: v });
+      }
+      results.sort((a, b) => {
+        return ('' + a.account).localeCompare(b.account);
+      });
       return results;
     },
     getAllTypes() {
-      const results = [];
-      if (this.report.typesMap) {
-        for (const [k, v] of Object.entries(this.report.typesMap)) {
-          results.push({ type: k, count: v });
-        }
-        results.sort((a, b) => {
-          return ('' + a.type).localeCompare(b.type);
-        });
+      const typesMap = {};
+      for (const transaction of this.filteredTransactions) {
+        const t = transaction.info.type && transaction.info.type.length > 0 && transaction.info.type || "(unknown)";
+        typesMap[t] = (t in typesMap) ? parseInt(typesMap[t]) + 1 : 1;
       }
+      const results = [];
+      for (const [k, v] of Object.entries(typesMap)) {
+        results.push({ type: k, count: v });
+      }
+      results.sort((a, b) => {
+        return ('' + a.type).localeCompare(b.type);
+      });
       return results;
     },
     getAllActions() {
-      const results = [];
-      if (this.report.actionsMap) {
-        for (const [k, v] of Object.entries(this.report.actionsMap)) {
-          results.push({ action: k, count: v });
-        }
-        results.sort((a, b) => {
-          return ('' + a.action).localeCompare(b.action);
-        });
+      const actionsMap = {};
+      for (const transaction of this.filteredTransactions) {
+        const a = transaction.info.action && transaction.info.action.length > 0 && transaction.info.action || "(unknown)";
+        actionsMap[a] = (a in actionsMap) ? parseInt(actionsMap[a]) + 1 : 1;
       }
+      const results = [];
+      for (const [k, v] of Object.entries(actionsMap)) {
+        results.push({ action: k, count: v });
+      }
+      results.sort((a, b) => {
+        return ('' + a.action).localeCompare(b.action);
+      });
       return results;
     },
     getAllFunctionCalls() {
-      const results = [];
-      if (this.report.functionCallsMap) {
-        for (const [k, v] of Object.entries(this.report.functionCallsMap)) {
-          results.push({ functionCall: k, count: v });
-        }
-        results.sort((a, b) => {
-          return ('' + a.functionCall).localeCompare(b.functionCall);
-        });
+      const functionCallsMap = {};
+      for (const transaction of this.filteredTransactions) {
+        functionCallsMap[transaction.functionCall] = (transaction.functionCall in functionCallsMap) ? parseInt(functionCallsMap[transaction.functionCall]) + 1 : 1;
       }
+      const results = [];
+      for (const [k, v] of Object.entries(functionCallsMap)) {
+        results.push({ functionCall: k, count: v });
+      }
+      results.sort((a, b) => {
+        return ('' + a.functionCall).localeCompare(b.functionCall);
+      });
       return results;
     },
   },
@@ -1333,6 +1345,7 @@ const reportModule = {
           }
         }
       }
+      // TODO: Delete accountsMap, typesMap, actionsMap, functionCallsMap
       context.commit('setReport', { transactions, accountsMap, typesMap, actionsMap, functionCallsMap });
       context.dispatch('saveData', ['report']);
     },
