@@ -325,9 +325,9 @@ const dataModule = {
       // console.log("state.eventSelectors: " + JSON.stringify(state.eventSelectors));
     },
     addENSName(state, nameInfo) {
-      console.log("mutation.addENSName: " + nameInfo.account + " => '" + nameInfo.name + "'");
+      // console.log("mutation.addENSName: " + nameInfo.account + " => '" + nameInfo.name + "'");
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
-      console.log("ensMap: " + JSON.stringify(state.ensMap));
+      // console.log("ensMap: " + JSON.stringify(state.ensMap));
     },
     addTxs(state, info) {
       const [chainId, txInfo] = [info.chainId, info.txInfo];

@@ -882,7 +882,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
   results.myEvents = [...results.myEvents, ...events.myEvents];
   for (const [eventIndex, event] of events.receivedInternalEvents.entries()) {
     console.log(eventIndex + " => " + JSON.stringify(event));
-    const record = { type: "receivedInternal", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
+    const record = { type: "internal", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
     results.myEvents.push(record);
   }
 
