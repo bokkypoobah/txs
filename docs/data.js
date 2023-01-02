@@ -212,8 +212,7 @@ const dataModule = {
           if (!(txHash in accountData.internalTransactions)) {
             accountData.internalTransactions[txHash] = {};
           }
-          const tempResult = { ...result, hash: undefined };
-          accountData.internalTransactions[txHash][resultIndex] = tempResult;
+          accountData.internalTransactions[txHash][resultIndex] = { ...result, hash: undefined };
         }
       }
     },
@@ -221,12 +220,8 @@ const dataModule = {
       const [account, results, chainId] = [info.account, info.results, store.getters['connection/chainId']];
       const accountData = state.accounts[chainId][account];
       for (const result of results) {
-        // console.log("addAccountTransactions: " + JSON.stringify(result));
         if (!(result.hash in accountData.transactions)) {
-          const tempResult = {...result, processed: null};
-          delete tempResult.hash;
-          accountData.transactions[result.hash] = tempResult;
-          // console.log("addAccountTransactions: " + JSON.stringify(accountData.transactions[result.hash]));
+          accountData.transactions[result.hash] = {...result, hash: undefined };
         }
       }
     },
@@ -262,9 +257,7 @@ const dataModule = {
         Vue.set(state.accounts[chainId][contract].erc20transfers, transfer.txHash, {});
       }
       if (!(transfer.logIndex in state.accounts[chainId][contract].erc20transfers[transfer.txHash])) {
-        const tempTransfer = {...transfer};
-        delete tempTransfer.txHash;
-        delete tempTransfer.logIndex;
+        const tempTransfer = { ...transfer, txHash: undefined, logIndex: undefined };
         Vue.set(state.accounts[chainId][contract].erc20transfers[transfer.txHash], transfer.logIndex, tempTransfer);
       }
       // console.log("Added " + transfer.txHash + " " + JSON.stringify(state.accounts[chainId][contract].erc20transfers[transfer.txHash]));
@@ -305,29 +298,21 @@ const dataModule = {
       }
     },
     addNewFunctionSelectors(state, functionSelectors) {
-      console.log("addNewFunctionSelectors: " + JSON.stringify(functionSelectors));
       for (const [functionSelector, functionNames] of Object.entries(functionSelectors)) {
-        // console.log(functionSelector + " " + JSON.stringify(functionNames));
         if (!(functionSelector in state.functionSelectors)) {
           Vue.set(state.functionSelectors, functionSelector, functionNames.map(e => e.name));
         }
       }
-      // console.log("state.functionSelectors: " + JSON.stringify(state.functionSelectors));
     },
     addNewEventSelectors(state, eventSelectors) {
-      console.log("addNewEventSelectors: " + JSON.stringify(eventSelectors));
       for (const [eventSelector, eventNames] of Object.entries(eventSelectors)) {
-        // console.log(eventSelector + " " + JSON.stringify(eventNames));
         if (!(eventSelector in state.eventSelectors)) {
           Vue.set(state.eventSelectors, eventSelector, eventNames.map(e => e.name));
         }
       }
-      // console.log("state.eventSelectors: " + JSON.stringify(state.eventSelectors));
     },
     addENSName(state, nameInfo) {
-      // console.log("mutation.addENSName: " + nameInfo.account + " => '" + nameInfo.name + "'");
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
-      // console.log("ensMap: " + JSON.stringify(state.ensMap));
     },
     addTxs(state, info) {
       const [chainId, txInfo] = [info.chainId, info.txInfo];
@@ -337,7 +322,6 @@ const dataModule = {
       Vue.set(state.txs[chainId], txInfo.tx.hash, txInfo);
     },
     updateTxData(state, info) {
-      // logInfo("dataModule", "mutations.updateTxData - info: " + JSON.stringify(info).substring(0, 1000));
       Vue.set(state.txs[info.txHash].dataImported, 'tx', {
         hash: info.tx.hash,
         type: info.tx.type,
@@ -392,7 +376,6 @@ const dataModule = {
       }
     },
     async saveData(context, types) {
-      // logInfo("dataModule", "actions.saveData - types: " + JSON.stringify(types));
       const db0 = new Dexie(context.state.db.name);
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
       for (let type of types) {
@@ -423,7 +406,6 @@ const dataModule = {
       db0.close();
     },
     async addNewAccounts(context, newAccounts) {
-      // logInfo("dataModule", "actions.addNewAccounts(" + JSON.stringify(newAccounts) + ")");
       const accounts = newAccounts == null ? [] : newAccounts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
