@@ -692,6 +692,70 @@ const dataModule = {
     },
     async syncTransactions(context, parameter) {
       logInfo("dataModule", "actions.syncTransactions: " + JSON.stringify(parameter));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const txs = context.state.txs[parameter.chainId] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        const txHashesToProcess = {};
+        if (!context.state.sync.halt) {
+          let blocksProcessed = 0;
+          for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
+              for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                // console.log(blockNumber + " " + index + " " + txHash);
+                if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
+                  txHashesToProcess[txHash] = blockNumber;
+                }
+              }
+            }
+            blocksProcessed++;
+          }
+          let txHashList = Object.keys(txHashesToProcess);
+          // console.log("txHashList: " + JSON.stringify(txHashList));
+          context.commit('setSyncSection', { section: 'Tx & TxReceipts', total: txHashList.length });
+          let processed = 1;
+          for (const [txHash, blockNumber] of Object.entries(txHashesToProcess)) {
+            context.commit('setSyncCompleted', processed);
+            console.log(processed + "/" + txHashList.length + " Retrieving " + txHash + " @ " + blockNumber);
+            const currentInfo = txs && txs[txHash] || {};
+            const info = await getTxInfo(txHash, currentInfo, account, provider);
+            context.commit('addTxs', { chainId: parameter.chainId, txInfo: info});
+            if (processed % 50 == 0) {
+              console.log("Saving txs");
+              context.dispatch('saveData', ['txs']);
+            }
+            if (context.state.sync.halt) {
+              break;
+            }
+            processed++;
+          }
+
+
+          // context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
+          // for (const [index, blockNumber] of blockNumbers.entries()) {
+          //   const existing = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] && context.state.blocks[parameter.chainId][blockNumber].balances[account] || null;
+          //   if (!existing) {
+          //     console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber);
+          //     const block = await provider.getBlock(parseInt(blockNumber));
+          //     const timestamp = block.timestamp;
+          //     const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
+          //     context.commit('addBlock', { blockNumber, timestamp, account, balance });
+          //     context.commit('setSyncCompleted', parseInt(index) + 1);
+          //     if ((index + 1) % 100 == 0) {
+          //       console.log("Saving blocks");
+          //       context.dispatch('saveData', ['blocks']);
+          //     }
+          //   }
+          //   if (context.state.sync.halt) {
+          //     break;
+          //   }
+          // }
+          // context.dispatch('saveData', ['blocks']);
+          // context.commit('setSyncSection', { section: null, total: null });
+        }
+      }
     },
     async syncFunctionSelectors(context, parameter) {
       logInfo("dataModule", "actions.syncFunctionSelectors: " + JSON.stringify(parameter));
