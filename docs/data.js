@@ -652,13 +652,9 @@ const dataModule = {
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
-        console.log("accountData: " + JSON.stringify(accountData));
         const txs = context.state.txs[parameter.chainId] || {};
         const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
-        console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
-
         if (!context.state.sync.halt) {
-          // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
           const blockNumbers = [];
           let blocksProcessed = 0;
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
@@ -685,15 +681,13 @@ const dataModule = {
                 context.dispatch('saveData', ['blocks']);
               }
             }
-            // if (context.state.sync.halt) {
-            //   break;
-            // }
+            if (context.state.sync.halt) {
+              break;
+            }
           }
           // context.dispatch('saveData', ['blocks']);
           // context.commit('setSyncSection', { section: null, total: null });
         }
-
-
       }
     },
     async syncTransactions(context, parameter) {
