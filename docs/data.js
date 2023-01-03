@@ -423,6 +423,221 @@ const dataModule = {
       }
       context.dispatch('saveData', ['accountsInfo', 'accounts', 'ensMap']);
     },
+
+    // "importFromEtherscan","downloadData","buildAssets","getExchangeRates"
+    async syncItNew(context, info) {
+      // TODO - Replaced below, for dev
+      let sections = info.sections;
+      const parameters = info.parameters || [];
+      logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections) + ", parameters: " + JSON.stringify(parameters).substring(0, 1000));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const chainId = store.getters['connection/chainId'];
+      const block = await provider.getBlock();
+      const confirmations = store.getters['config/settings'].confirmations && parseInt(store.getters['config/settings'].confirmations) || 10;
+      const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
+      const confirmedBlock = await provider.getBlock(confirmedBlockNumber);
+      const confirmedTimestamp = confirmedBlock && confirmedBlock.timestamp || null;
+      const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
+      const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
+      const OVERLAPBLOCKS = 10000;
+      const accountsByChain = context.state.accounts[chainId] || {};
+
+      const accountsToSync = [];
+      for (const [account, accountData] of Object.entries(accountsByChain)) {
+        const accountsInfo = context.state.accountsInfo[chainId][account];
+        if ((parameters.length == 0 && accountsInfo.sync) || parameters.includes(account)) {
+            accountsToSync.push(account);
+        }
+      }
+      // sections = ['syncTransferEvents', 'syncInternalTransactions', 'syncTransactions', 'scrapeTxs', 'retrieveSelectors', 'buildAssets'];
+      sections = ['all'];
+      for (const [sectionIndex, section] of sections.entries()) {
+        console.log(sectionIndex + "." + section);
+        const parameter = { chainId, accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS };
+        if (section == "syncTransferEvents" || section == "all") {
+          context.dispatch('syncTransferEvents', parameter);
+        }
+        if (section == "syncInternalTransactions" || section == "all") {
+          context.dispatch('syncInternalTransactions', parameter);
+        }
+        if (section == "syncTransactions" || section == "all") {
+          context.dispatch('syncTransactions', parameter);
+        }
+        // if (section == "syncTransferEvents") {
+        //   context.dispatch('syncTransferEvents', parameter);
+        // } else if (section == "syncInternalTransactions") {
+        //   context.dispatch('syncInternalTransactions', parameter);
+        // } else if (section == "syncTransactions") {
+        //   context.dispatch('syncTransactions', parameter);
+        // } else if (section == "getExchangeRates") {
+        //   // context.dispatch('syncItPartFour', parameter);
+        // }
+      }
+      context.commit('setSyncSection', { section: null, total: null });
+    },
+    async syncTransferEvents(context, parameter) {
+      logInfo("dataModule", "actions.syncTransferEvents: " + JSON.stringify(parameter));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const interfaces = getInterfaces();
+      const preERC721s = store.getters['config/settings'].preERC721s;
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncTransferEvents: " + accountIndex + " " + account);
+        context.commit('setSyncSection', { section: 'Import', total: parameter.accountsToSync.length });
+        context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const startBlock = accountData && accountData.updated && accountData.updated.blockNumber && (parseInt(accountData.updated.blockNumber) - parameter.OVERLAPBLOCKS) || 0;
+
+        context.commit('setSyncSection', { section: 'Transfer Events', total: parameter.accountsToSync.length });
+        const accountAs32Bytes = '0x000000000000000000000000' + account.substring(2, 42).toLowerCase();
+        for (let startBatch = startBlock; startBatch < parameter.confirmedBlockNumber; startBatch += parameter.etherscanBatchSize) {
+          const endBatch = (parseInt(startBatch) + parameter.etherscanBatchSize < parameter.confirmedBlockNumber) ? (parseInt(startBatch) + parameter.etherscanBatchSize) : parameter.confirmedBlockNumber;
+          const topicsList = [
+            // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 id)
+            [ '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', accountAs32Bytes, null ],
+            [ '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', null, accountAs32Bytes ],
+            // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+            [ '0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62', null, accountAs32Bytes, null ],
+            [ '0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62', null, null, accountAs32Bytes ],
+            // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
+            [ '0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb', null, accountAs32Bytes, null ],
+            [ '0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb', null, null, accountAs32Bytes ],
+          ];
+          for (let topics of topicsList) {
+            console.log("Web3 event filter #" + startBatch + "-#" + endBatch + ": " + JSON.stringify(topics));
+            const logs = await provider.getLogs({ address: null, fromBlock: startBatch, toBlock: endBatch, topics });
+            for (const event of logs) {
+              if (!event.removed) {
+                let eventRecord = null;
+                const [txHash, blockNumber, logIndex, contract]  = [event.transactionHash, event.blockNumber, event.logIndex, event.address];
+                if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+                  let from;
+                  let to;
+                  let tokensOrTokenId;
+                  if (event.topics.length == 4) {
+                    from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
+                    to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+                    tokensOrTokenId = ethers.BigNumber.from(event.topics[3]).toString();
+                  } else if (event.topics.length == 3) {
+                    from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
+                    to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+                    tokensOrTokenId = ethers.BigNumber.from(event.data).toString();
+                  } else if (event.topics.length == 1) {
+                    from = ethers.utils.getAddress('0x' + event.data.substring(26, 66));
+                    to = ethers.utils.getAddress('0x' + event.data.substring(90, 130));
+                    tokensOrTokenId = ethers.BigNumber.from('0x' + event.data.substring(130, 193)).toString();
+                  }
+                  if ((from == account || to == account)) {
+                    // ERC-721 Transfer, including pre-ERC721s like CryptoPunks, MoonCatRescue, CryptoCats, CryptoVoxels & CryptoKitties
+                    if (event.topics.length == 4 || event.address in preERC721s) {
+                      if (event.address in preERC721s) {
+                        eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: null, tokens: tokensOrTokenId };
+                      } else {
+                        eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc721", tokenId: tokensOrTokenId, tokens: null };
+                      }
+                    } else {
+                      eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc20", tokenId: null, tokens:tokensOrTokenId };
+                    }
+                  }
+                  // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
+                } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {
+                  const log = interfaces.erc1155.parseLog(event);
+                  const [operator, from, to, tokenId, tokens] = log.args;
+                  eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc1155", tokenIds: [ethers.BigNumber.from(tokenId).toString()], tokens: [ethers.BigNumber.from(tokens).toString()] };
+                  // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
+                } else if (event.topics[0] == "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb") {
+                  const log = interfaces.erc1155.parseLog(event);
+                  const [operator, from, to, tokenIds, tokens] = log.args;
+                  const formattedTokenIds = tokenIds.map(e => ethers.BigNumber.from(e).toString());
+                  const formattedTokens = tokens.map(e => ethers.BigNumber.from(e).toString());
+                  eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc1155", tokenIds: formattedTokenIds, tokens: formattedTokens };
+                }
+                if (eventRecord) {
+                  context.commit('addAccountEvent', { account, eventRecord });
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async syncInternalTransactions(context, parameter) {
+      logInfo("dataModule", "actions.syncInternalTransactions: " + JSON.stringify(parameter));
+      let sleepUntil = null;
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncInternalTransactions: " + accountIndex + " " + account);
+        context.commit('setSyncSection', { section: 'Etherscan Internal Txs', total: parameter.accountsToSync.length });
+        context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const startBlock = accountData && accountData.updated && accountData.updated.blockNumber && (parseInt(accountData.updated.blockNumber) - parameter.OVERLAPBLOCKS) || 0;
+        for (let startBatch = startBlock; startBatch < parameter.confirmedBlockNumber; startBatch += parameter.etherscanBatchSize) {
+          const endBatch = (parseInt(startBatch) + parameter.etherscanBatchSize < parameter.confirmedBlockNumber) ? (parseInt(startBatch) + parameter.etherscanBatchSize) : parameter.confirmedBlockNumber;
+          console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
+          do {
+          } while (sleepUntil && sleepUntil > moment().unix());
+          let importUrl = "https://api.etherscan.io/api?module=account&action=txlistinternal&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + parameter.etherscanAPIKey;
+          console.log("importUrl: " + importUrl);
+          const importData = await fetch(importUrl)
+            .then(handleErrors)
+            .then(response => response.json())
+            .catch(function(error) {
+               console.log("ERROR - processIt: " + error);
+               // Want to work around API data unavailablity - state.sync.error = true;
+               return [];
+            });
+          if (importData.status == 1) {
+            context.commit('addAccountInternalTransactions', { account, results: importData.result });
+            if (importData.message && importData.message.includes("Missing")) {
+              sleepUntil = parseInt(moment().unix()) + 6;
+            }
+            if (context.state.sync.halt) {
+              break;
+            }
+          }
+        }
+      }
+    },
+    async syncTransactions(context, parameter) {
+      logInfo("dataModule", "actions.syncTransactions: " + JSON.stringify(parameter));
+      let sleepUntil = null;
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncTransactions: " + accountIndex + " " + account);
+        context.commit('setSyncSection', { section: 'Etherscan Transactions', total: parameter.accountsToSync.length });
+        context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const startBlock = accountData && accountData.updated && accountData.updated.blockNumber && (parseInt(accountData.updated.blockNumber) - parameter.OVERLAPBLOCKS) || 0;
+        for (let startBatch = startBlock; startBatch < parameter.confirmedBlockNumber; startBatch += parameter.etherscanBatchSize) {
+          const endBatch = (parseInt(startBatch) + parameter.etherscanBatchSize < parameter.confirmedBlockNumber) ? (parseInt(startBatch) + parameter.etherscanBatchSize) : parameter.confirmedBlockNumber;
+          console.log("batch: " + startBatch + " to " + endBatch + ", sleepUntil: " + (sleepUntil ? moment.unix(sleepUntil).toString() : 'null'));
+          do {
+          } while (sleepUntil && sleepUntil > moment().unix());
+          let importUrl = "https://api.etherscan.io/api?module=account&action=txlist&address=" + account + "&startblock=" + startBatch + "&endblock=" + endBatch + "&page=1&offset=10000&sort=asc&apikey=" + parameter.etherscanAPIKey;
+          console.log("importUrl: " + importUrl);
+          const importData = await fetch(importUrl)
+            .then(handleErrors)
+            .then(response => response.json())
+            .catch(function(error) {
+               console.log("ERROR - processIt: " + error);
+               // Want to work around API data unavailablity - state.sync.error = true;
+               return [];
+            });
+          if (importData.status == 1) {
+            context.commit('addAccountTransactions', { account, results: importData.result });
+            if (importData.message && importData.message.includes("Missing")) {
+              sleepUntil = parseInt(moment().unix()) + 6;
+            }
+            if (context.state.sync.halt) {
+              break;
+            }
+          }
+        }
+        // TODO Move elsewhere
+        context.commit('updateAccountTimestampAndBlock', { chainId: parameter.chainId, account, timestamp: parameter.confirmedTimestamp, blockNumber: parameter.confirmedBlockNumber });
+      }
+    },
+    async syncItPartFour(context, parameter) {
+      logInfo("dataModule", "actions.syncItPartFour: " + JSON.stringify(parameter));
+    },
+
     async syncIt(context, info) {
       const sections = info.sections;
       const parameters = info.parameters || [];
@@ -442,10 +657,10 @@ const dataModule = {
       const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
       const confirmedBlock = await provider.getBlock(confirmedBlockNumber);
       const confirmedTimestamp = confirmedBlock && confirmedBlock.timestamp || null;
-      const accountsData = context.state.accounts[chainId] || {};
+      const accountsByChain = context.state.accounts[chainId] || {};
       const OVERLAPBLOCKS = 10000;
       const accountsToSync = [];
-      for (const [account, accountData] of Object.entries(accountsData)) {
+      for (const [account, accountData] of Object.entries(accountsByChain)) {
         const accountsInfo = context.state.accountsInfo[chainId][account];
         if ((parameters.length == 0 && accountsInfo.sync) || parameters.includes(account)) {
             accountsToSync.push(account);
@@ -800,7 +1015,7 @@ const dataModule = {
           for (const [accountIndex, account] of accountsToSync.entries()) {
             const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
             const txs = context.state.txs[chainId] || {};
-            console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+            // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
             let blocksProcessed = 0;
             for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
               if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
@@ -994,8 +1209,8 @@ const dataModule = {
 
         } else if (section == 'buildERC20sx') {
           const accountsToSync = [];
-          const accountsData = context.state.accounts[chainId] || {};
-          for (const [account, data] of Object.entries(accountsData)) {
+          const accountsByChain = context.state.accounts[chainId] || {};
+          for (const [account, data] of Object.entries(accountsByChain)) {
             if ((parameters.length == 0 && data.sync) || parameters.includes(account)) {
                 accountsToSync.push(account);
             }
