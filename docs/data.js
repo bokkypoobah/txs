@@ -452,7 +452,7 @@ const dataModule = {
       }
       // sections = ['syncTransferEvents', 'syncImportInternalTransactions', 'syncImportTransactions', 'scrapeTxs', 'retrieveSelectors', 'buildAssets'];
       sections = ['all'];
-      // sections = ['syncBlocksAndBalances'];
+      // sections = ['syncEventSelectors'];
       for (const [sectionIndex, section] of sections.entries()) {
         console.log(sectionIndex + "." + section);
         const parameter = { chainId, accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, skipBlocks: devSettings.skipBlocks, maxBlocks: devSettings.maxBlocks };
@@ -704,7 +704,6 @@ const dataModule = {
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
               for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                // console.log(blockNumber + " " + index + " " + txHash);
                 if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
                   txHashesToProcess[txHash] = blockNumber;
                 }
@@ -731,37 +730,102 @@ const dataModule = {
             }
             processed++;
           }
-
-
-          // context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
-          // for (const [index, blockNumber] of blockNumbers.entries()) {
-          //   const existing = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] && context.state.blocks[parameter.chainId][blockNumber].balances[account] || null;
-          //   if (!existing) {
-          //     console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber);
-          //     const block = await provider.getBlock(parseInt(blockNumber));
-          //     const timestamp = block.timestamp;
-          //     const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
-          //     context.commit('addBlock', { blockNumber, timestamp, account, balance });
-          //     context.commit('setSyncCompleted', parseInt(index) + 1);
-          //     if ((index + 1) % 100 == 0) {
-          //       console.log("Saving blocks");
-          //       context.dispatch('saveData', ['blocks']);
-          //     }
-          //   }
-          //   if (context.state.sync.halt) {
-          //     break;
-          //   }
-          // }
-          // context.dispatch('saveData', ['blocks']);
-          // context.commit('setSyncSection', { section: null, total: null });
         }
       }
     },
     async syncFunctionSelectors(context, parameter) {
       logInfo("dataModule", "actions.syncFunctionSelectors: " + JSON.stringify(parameter));
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncFunctionSelectors: " + accountIndex + " " + account);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const txs = context.state.txs[parameter.chainId] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
+        if (!context.state.sync.halt) {
+          const missingSelectorsMap = {};
+          const functionSelectors = context.state.functionSelectors || {};
+          let blocksProcessed = 0;
+          for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
+              const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
+              for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                const txInfo = txs && txs[txHash] || {};
+                if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
+                  const selector = txInfo.tx.data.substring(0, 10);
+                  if (!(selector in functionSelectors) && !(selector in missingSelectorsMap)) {
+                    missingSelectorsMap[selector] = true;
+                  }
+                }
+              }
+            }
+            blocksProcessed++;
+          }
+          console.log("missingSelectorsMap: " + JSON.stringify(missingSelectorsMap));
+          const missingSelectors = Object.keys(missingSelectorsMap);
+          const BATCHSIZE = 50;
+          for (let i = 0; i < missingSelectors.length; i += BATCHSIZE) {
+            const batch = missingSelectors.slice(i, parseInt(i) + BATCHSIZE);
+            let url = "https://sig.eth.samczsun.com/api/v1/signatures?" + batch.map(e => ("function=" + e)).join("&");
+            console.log(url);
+            const data = await fetch(url)
+              .then(response => response.json())
+              .catch(function(e) {
+                console.log("error: " + e);
+              });
+            if (data.ok && Object.keys(data.result.function).length > 0) {
+              context.commit('addNewFunctionSelectors', data.result.function);
+            }
+          }
+          context.dispatch('saveData', ['functionSelectors']);
+        }
+      }
     },
     async syncEventSelectors(context, parameter) {
       logInfo("dataModule", "actions.syncEventSelectors: " + JSON.stringify(parameter));
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncEventSelectors: " + accountIndex + " " + account);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const txs = context.state.txs[parameter.chainId] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        if (!context.state.sync.halt) {
+          const missingSelectorsMap = {};
+          const eventSelectors = context.state.eventSelectors || {};
+          let blocksProcessed = 0;
+          for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
+              const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
+              for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                const txInfo = txs && txs[txHash] || {};
+                if ('txReceipt' in txInfo) {
+                  for (const event of txInfo.txReceipt.logs) {
+                    if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingSelectorsMap)) {
+                      missingSelectorsMap[event.topics[0]] = true;
+                    }
+                  }
+                }
+              }
+            }
+            blocksProcessed++;
+          }
+          console.log("missingSelectorsMap: " + JSON.stringify(missingSelectorsMap));
+          const missingSelectors = Object.keys(missingSelectorsMap);
+          const BATCHSIZE = 50;
+          for (let i = 0; i < missingSelectors.length; i += BATCHSIZE) {
+            const batch = missingSelectors.slice(i, parseInt(i) + BATCHSIZE);
+            let url = "https://sig.eth.samczsun.com/api/v1/signatures?" + batch.map(e => ("event=" + e)).join("&");
+            console.log(url);
+            const data = await fetch(url)
+              .then(response => response.json())
+              .catch(function(e) {
+                console.log("error: " + e);
+              });
+            if (data.ok && Object.keys(data.result.event).length > 0) {
+              context.commit('addNewEventSelectors', data.result.event);
+            }
+          }
+          context.dispatch('saveData', ['eventSelectors']);
+        }
+      }
     },
     async syncBuildTokenContracts(context, parameter) {
       logInfo("dataModule", "actions.syncBuildTokenContracts: " + JSON.stringify(parameter));
