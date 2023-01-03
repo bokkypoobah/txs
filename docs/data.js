@@ -829,6 +829,78 @@ const dataModule = {
     },
     async syncBuildTokenContracts(context, parameter) {
       logInfo("dataModule", "actions.syncBuildTokenContracts: " + JSON.stringify(parameter));
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncBuildTokenContracts: " + accountIndex + " " + account);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const txs = context.state.txs[parameter.chainId] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        if (!context.state.sync.halt) {
+          console.log("txHashesByBlocks: " + txHashesByBlocks)
+        }
+      }
+
+
+      // console.log("buildAssets - accountsToSync: " + JSON.stringify(accountsToSync));
+      // const accounts = context.state.accounts[chainId] || {};
+      // const missingAccountsMap = {};
+      // for (const [accountIndex, account] of accountsToSync.entries()) {
+      //   const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
+      //   const txs = context.state.txs[chainId] || {};
+      //   // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+      //   let blocksProcessed = 0;
+      //   for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+      //     if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
+      //       for (const [index, txHash] of Object.keys(txHashes).entries()) {
+      //         const txData = txs && txs[txHash] || null;
+      //         if (txData != null) {
+      //           if (!(txData.tx.from in accounts) && !(txData.tx.from in missingAccountsMap)) {
+      //             missingAccountsMap[txData.tx.from] = true;
+      //           }
+      //           if (txData.tx.to != null && (!(txData.tx.to in accounts) && !(txData.tx.to in missingAccountsMap))) {
+      //             missingAccountsMap[txData.tx.to] = true;
+      //           }
+      //           const events = getEvents(account, accounts, preERC721s, txData);
+      //           console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
+      //           // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
+      //           for (const [eventIndex, eventItem] of events.myEvents.entries()) {
+      //             for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
+      //               if (!(a in accounts) && !(a in missingAccountsMap)) {
+      //                 missingAccountsMap[a] = true;
+      //               }
+      //             }
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
+      // console.log("missingAccountsMap: " + JSON.stringify(missingAccountsMap));
+      // const missingAccounts = Object.keys(missingAccountsMap);
+      // context.commit('setSyncSection', { section: 'Accounts', total: missingAccounts.length });
+      // for (const [accountItemIndex, accountItem] of missingAccounts.entries()) {
+      //   context.commit('setSyncCompleted', parseInt(accountItemIndex) + 1);
+      //   console.log((parseInt(accountItemIndex) + 1) + "/" + missingAccounts.length + " Processing " + accountItem);
+      //   const accountInfo = await getAccountInfo(accountItem, provider)
+      //   console.log(JSON.stringify(accountInfo, null, 2));
+      //   if (accountInfo.account) {
+      //     context.commit('addNewAccountInfo', accountInfo);
+      //     context.commit('addNewAccount', accountInfo);
+      //     console.log("Added " + accountItem + " " + accountInfo.type + " " + accountInfo.name);
+      //   }
+      //   const names = await ensReverseRecordsContract.getNames([accountItem]);
+      //   const name = names.length == 1 ? names[0] : accountItem;
+      //   if (!(accountItem in context.state.ensMap)) {
+      //     // console.log("Added ENS " + accountItem + " " + name);
+      //     context.commit('addENSName', { account: accountItem, name });
+      //   }
+      //   if ((accountItemIndex + 1) % 25 == 0) {
+      //     console.log("Saving accounts");
+      //     context.dispatch('saveData', ['accountsInfo', 'accounts', 'ensMap']);
+      //   }
+      //   if (context.state.sync.halt) {
+      //     break;
+      //   }
+      // }
     },
     async syncBuildTokens(context, parameter) {
       logInfo("dataModule", "actions.syncBuildTokens: " + JSON.stringify(parameter));
