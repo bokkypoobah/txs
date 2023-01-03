@@ -455,41 +455,32 @@ const dataModule = {
         console.log(sectionIndex + "." + section);
         const parameter = { chainId, accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS };
         if (section == "syncTransferEvents" || section == "all") {
-          context.dispatch('syncTransferEvents', parameter);
+          await context.dispatch('syncTransferEvents', parameter);
         }
         if (section == "syncImportInternalTransactions" || section == "all") {
-          context.dispatch('syncImportInternalTransactions', parameter);
+          await context.dispatch('syncImportInternalTransactions', parameter);
         }
         if (section == "syncImportTransactions" || section == "all") {
-          context.dispatch('syncImportTransactions', parameter);
+          await context.dispatch('syncImportTransactions', parameter);
         }
         if (section == "syncBlocksAndBalances" || section == "all") {
-          context.dispatch('syncBlocksAndBalances', parameter);
+          await context.dispatch('syncBlocksAndBalances', parameter);
         }
         if (section == "syncTransactions" || section == "all") {
-          context.dispatch('syncTransactions', parameter);
+          await context.dispatch('syncTransactions', parameter);
         }
         if (section == "syncFunctionSelectors" || section == "all") {
-          context.dispatch('syncFunctionSelectors', parameter);
+          await context.dispatch('syncFunctionSelectors', parameter);
         }
         if (section == "syncEventSelectors" || section == "all") {
-          context.dispatch('syncEventSelectors', parameter);
+          await context.dispatch('syncEventSelectors', parameter);
         }
         if (section == "syncBuildTokenContracts" || section == "all") {
-          context.dispatch('syncBuildTokenContracts', parameter);
+          await context.dispatch('syncBuildTokenContracts', parameter);
         }
         if (section == "syncBuildTokens" || section == "all") {
-          context.dispatch('syncBuildTokens', parameter);
+          await context.dispatch('syncBuildTokens', parameter);
         }
-        // if (section == "syncTransferEvents") {
-        //   context.dispatch('syncTransferEvents', parameter);
-        // } else if (section == "syncImportInternalTransactions") {
-        //   context.dispatch('syncImportInternalTransactions', parameter);
-        // } else if (section == "syncImportTransactions") {
-        //   context.dispatch('syncImportTransactions', parameter);
-        // } else if (section == "getExchangeRates") {
-        //   // context.dispatch('syncItPartFour', parameter);
-        // }
       }
       context.commit('setSyncSection', { section: null, total: null });
     },
