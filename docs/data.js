@@ -440,6 +440,7 @@ const dataModule = {
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
       const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
       const OVERLAPBLOCKS = 10000;
+      const devSettings = store.getters['config/devSettings'];
       const accountsByChain = context.state.accounts[chainId] || {};
 
       const accountsToSync = [];
@@ -454,7 +455,7 @@ const dataModule = {
       // sections = ['syncBlocksAndBalances'];
       for (const [sectionIndex, section] of sections.entries()) {
         console.log(sectionIndex + "." + section);
-        const parameter = { chainId, accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS };
+        const parameter = { chainId, accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, skipBlocks: devSettings.skipBlocks, maxBlocks: devSettings.maxBlocks };
         if (section == "syncTransferEvents" || section == "all") {
           await context.dispatch('syncTransferEvents', parameter);
         }
@@ -647,6 +648,7 @@ const dataModule = {
     },
     async syncBlocksAndBalances(context, parameter) {
       logInfo("dataModule", "actions.syncBlocksAndBalances: " + JSON.stringify(parameter));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
@@ -654,6 +656,44 @@ const dataModule = {
         const txs = context.state.txs[parameter.chainId] || {};
         const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
         console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
+
+        if (!context.state.sync.halt) {
+          // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+          const blockNumbers = [];
+          let blocksProcessed = 0;
+          for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
+              const existing = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] && context.state.blocks[parameter.chainId][blockNumber].balances[account] || null;
+              if (!existing) {
+                blockNumbers.push(blockNumber);
+              }
+            }
+            blocksProcessed++;
+          }
+          context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
+          for (const [index, blockNumber] of blockNumbers.entries()) {
+            const existing = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] && context.state.blocks[parameter.chainId][blockNumber].balances[account] || null;
+            if (!existing) {
+              console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber);
+              const block = await provider.getBlock(parseInt(blockNumber));
+              const timestamp = block.timestamp;
+              const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
+              context.commit('addBlock', { blockNumber, timestamp, account, balance });
+              context.commit('setSyncCompleted', parseInt(index) + 1);
+              if ((index + 1) % 100 == 0) {
+                console.log("Saving blocks");
+                context.dispatch('saveData', ['blocks']);
+              }
+            }
+            // if (context.state.sync.halt) {
+            //   break;
+            // }
+          }
+          // context.dispatch('saveData', ['blocks']);
+          // context.commit('setSyncSection', { section: null, total: null });
+        }
+
+
       }
     },
     async syncTransactions(context, parameter) {
