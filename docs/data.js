@@ -652,8 +652,23 @@ const dataModule = {
         context.commit('updateAccountTimestampAndBlock', { chainId: parameter.chainId, account, timestamp: parameter.confirmedTimestamp, blockNumber: parameter.confirmedBlockNumber });
       }
     },
-    async syncItPartFour(context, parameter) {
-      logInfo("dataModule", "actions.syncItPartFour: " + JSON.stringify(parameter));
+    async syncBlocksAndBalances(context, parameter) {
+      logInfo("dataModule", "actions.syncBlocksAndBalances: " + JSON.stringify(parameter));
+    },
+    async syncTransactions(context, parameter) {
+      logInfo("dataModule", "actions.syncTransactions: " + JSON.stringify(parameter));
+    },
+    async syncFunctionSelectors(context, parameter) {
+      logInfo("dataModule", "actions.syncFunctionSelectors: " + JSON.stringify(parameter));
+    },
+    async syncEventSelectors(context, parameter) {
+      logInfo("dataModule", "actions.syncEventSelectors: " + JSON.stringify(parameter));
+    },
+    async syncBuildTokenContracts(context, parameter) {
+      logInfo("dataModule", "actions.syncBuildTokenContracts: " + JSON.stringify(parameter));
+    },
+    async syncBuildTokens(context, parameter) {
+      logInfo("dataModule", "actions.syncBuildTokens: " + JSON.stringify(parameter));
     },
 
     async syncIt(context, info) {
