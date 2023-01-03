@@ -32,7 +32,7 @@ const Accounts = {
           </div>
           -->
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['buildAssets'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'DEV BUTTON - Build Assets'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
+            <b-button size="sm" :disabled="block == null" @click="syncItNew({ sections: ['buildAssets'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'DEV BUTTON - Build Assets'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="exportAccounts" variant="link" v-b-popover.hover.top="'Export accounts'"><b-icon-file-earmark-spreadsheet shift-v="+1" font-scale="1.2"></b-icon-file-earmark-spreadsheet></b-button>
@@ -528,6 +528,9 @@ const Accounts = {
     },
     async syncIt(info) {
       store.dispatch('data/syncIt', info);
+    },
+    async syncItNew(info) {
+      store.dispatch('data/syncItNew', info);
     },
     async halt() {
       store.dispatch('data/setSyncHalt', true);
