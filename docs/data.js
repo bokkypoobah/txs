@@ -451,6 +451,7 @@ const dataModule = {
       }
       // sections = ['syncTransferEvents', 'syncImportInternalTransactions', 'syncImportTransactions', 'scrapeTxs', 'retrieveSelectors', 'buildAssets'];
       sections = ['all'];
+      // sections = ['syncBlocksAndBalances'];
       for (const [sectionIndex, section] of sections.entries()) {
         console.log(sectionIndex + "." + section);
         const parameter = { chainId, accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS };
@@ -482,6 +483,7 @@ const dataModule = {
           await context.dispatch('syncBuildTokens', parameter);
         }
       }
+      context.dispatch('saveData', ['accounts', 'accountsInfo', 'blocks', 'txs', 'ensMap']);
       context.commit('setSyncSection', { section: null, total: null });
     },
     async syncTransferEvents(context, parameter) {
@@ -645,6 +647,14 @@ const dataModule = {
     },
     async syncBlocksAndBalances(context, parameter) {
       logInfo("dataModule", "actions.syncBlocksAndBalances: " + JSON.stringify(parameter));
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        console.log("accountData: " + JSON.stringify(accountData));
+        const txs = context.state.txs[parameter.chainId] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
+      }
     },
     async syncTransactions(context, parameter) {
       logInfo("dataModule", "actions.syncTransactions: " + JSON.stringify(parameter));
