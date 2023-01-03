@@ -449,7 +449,7 @@ const dataModule = {
             accountsToSync.push(account);
         }
       }
-      // sections = ['syncTransferEvents', 'syncInternalTransactions', 'syncTransactions', 'scrapeTxs', 'retrieveSelectors', 'buildAssets'];
+      // sections = ['syncTransferEvents', 'syncImportInternalTransactions', 'syncImportTransactions', 'scrapeTxs', 'retrieveSelectors', 'buildAssets'];
       sections = ['all'];
       for (const [sectionIndex, section] of sections.entries()) {
         console.log(sectionIndex + "." + section);
@@ -457,18 +457,36 @@ const dataModule = {
         if (section == "syncTransferEvents" || section == "all") {
           context.dispatch('syncTransferEvents', parameter);
         }
-        if (section == "syncInternalTransactions" || section == "all") {
-          context.dispatch('syncInternalTransactions', parameter);
+        if (section == "syncImportInternalTransactions" || section == "all") {
+          context.dispatch('syncImportInternalTransactions', parameter);
+        }
+        if (section == "syncImportTransactions" || section == "all") {
+          context.dispatch('syncImportTransactions', parameter);
+        }
+        if (section == "syncBlocksAndBalances" || section == "all") {
+          context.dispatch('syncBlocksAndBalances', parameter);
         }
         if (section == "syncTransactions" || section == "all") {
           context.dispatch('syncTransactions', parameter);
         }
+        if (section == "syncFunctionSelectors" || section == "all") {
+          context.dispatch('syncFunctionSelectors', parameter);
+        }
+        if (section == "syncEventSelectors" || section == "all") {
+          context.dispatch('syncEventSelectors', parameter);
+        }
+        if (section == "syncBuildTokenContracts" || section == "all") {
+          context.dispatch('syncBuildTokenContracts', parameter);
+        }
+        if (section == "syncBuildTokens" || section == "all") {
+          context.dispatch('syncBuildTokens', parameter);
+        }
         // if (section == "syncTransferEvents") {
         //   context.dispatch('syncTransferEvents', parameter);
-        // } else if (section == "syncInternalTransactions") {
-        //   context.dispatch('syncInternalTransactions', parameter);
-        // } else if (section == "syncTransactions") {
-        //   context.dispatch('syncTransactions', parameter);
+        // } else if (section == "syncImportInternalTransactions") {
+        //   context.dispatch('syncImportInternalTransactions', parameter);
+        // } else if (section == "syncImportTransactions") {
+        //   context.dispatch('syncImportTransactions', parameter);
         // } else if (section == "getExchangeRates") {
         //   // context.dispatch('syncItPartFour', parameter);
         // }
@@ -560,11 +578,11 @@ const dataModule = {
         }
       }
     },
-    async syncInternalTransactions(context, parameter) {
-      logInfo("dataModule", "actions.syncInternalTransactions: " + JSON.stringify(parameter));
+    async syncImportInternalTransactions(context, parameter) {
+      logInfo("dataModule", "actions.syncImportInternalTransactions: " + JSON.stringify(parameter));
       let sleepUntil = null;
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
-        console.log("actions.syncInternalTransactions: " + accountIndex + " " + account);
+        console.log("actions.syncImportInternalTransactions: " + accountIndex + " " + account);
         context.commit('setSyncSection', { section: 'Etherscan Internal Txs', total: parameter.accountsToSync.length });
         context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
@@ -596,11 +614,11 @@ const dataModule = {
         }
       }
     },
-    async syncTransactions(context, parameter) {
-      logInfo("dataModule", "actions.syncTransactions: " + JSON.stringify(parameter));
+    async syncImportTransactions(context, parameter) {
+      logInfo("dataModule", "actions.syncImportTransactions: " + JSON.stringify(parameter));
       let sleepUntil = null;
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
-        console.log("actions.syncTransactions: " + accountIndex + " " + account);
+        console.log("actions.syncImportTransactions: " + accountIndex + " " + account);
         context.commit('setSyncSection', { section: 'Etherscan Transactions', total: parameter.accountsToSync.length });
         context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
