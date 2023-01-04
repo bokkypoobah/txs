@@ -480,7 +480,7 @@ const dataModule = {
         if (section == "syncBuildTokenContracts" || section == "all") {
           await context.dispatch('syncBuildTokenContracts', parameter);
         }
-        if (section == "syncBuildTokens" || section == "all") {
+        if (section == "syncBuildTokens" || section == "xall") {
           await context.dispatch('syncBuildTokens', parameter);
         }
         if (section == "syncImportExchangeRates" || section == "all") {
@@ -905,19 +905,24 @@ const dataModule = {
                 // console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
                 // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
-                  const contract = accounts[eventItem.contract] || '?';
-                  console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (contract ? contract.type : '') + " " + (contract ? contract.name : ''));
-                  // for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
-                  //   if (!(a in accounts) && !(a in missingTokensMap)) {
-                  //     missingTokensMap[a] = true;
-                  //   }
-                  // }
+                  if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
+                    const tokenContract = accounts[eventItem.contract] || {};
+                    console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
+                    console.log("  tokenContract.assets: " + JSON.stringify(tokenContract.assets));
+                    if (!(eventItem.tokenId in tokenContract.assets)) {
+                      if (missingTokensMap) {
+                        missingTokensMap[eventItem.contract] = {};
+                      }
+                      missingTokensMap[eventItem.contract][eventItem.tokenId] = true;
+                    }
+                  }
                 }
               }
             }
           }
           console.log("missingTokensMap: " + JSON.stringify(missingTokensMap));
           const missingAccounts = Object.keys(missingTokensMap);
+          breakHere();
           console.log("missingAccounts: " + JSON.stringify(missingAccounts));
           context.commit('setSyncSection', { section: 'Accounts', total: missingAccounts.length });
           for (const [accountItemIndex, accountItem] of missingAccounts.entries()) {
