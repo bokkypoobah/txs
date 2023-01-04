@@ -425,7 +425,7 @@ const dataModule = {
     },
 
     // "importFromEtherscan","downloadData","buildAssets","getExchangeRates"
-    async syncItNew(context, info) {
+    async syncIt(context, info) {
       // TODO - Replaced below, for dev
       let sections = info.sections;
       const parameters = info.parameters || [];
@@ -975,7 +975,7 @@ const dataModule = {
       context.dispatch('saveData', ['exchangeRates']);
     },
 
-    async syncIt(context, info) {
+    async syncItOld(context, info) {
       const sections = info.sections;
       const parameters = info.parameters || [];
       logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections) + ", parameters: " + JSON.stringify(parameters).substring(0, 1000));
