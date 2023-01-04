@@ -1266,81 +1266,77 @@ const reportModule = {
           if (accountsInfo.mine && accountsInfo.report) {
             console.log("--- Processing " + chainId + ":" + account + " ---");
             const txHashesByBlocks = getTxHashesByBlocks(account, chainId, allAccounts, allAccountsInfo, devSettings.skipBlocks, devSettings.maxBlocks);
-            let blocksProcessed = 0;
             let prevBalance = ethers.BigNumber.from(0);
             for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-              if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
-                const block = blocks[chainId] && blocks[chainId][blockNumber] || null;
-                const balance = ethers.BigNumber.from(block && block.balances[account] || 0);
-                const exchangeRate = getExchangeRate(moment.unix(block.timestamp), exchangeRates);
-                let totalEthReceived = ethers.BigNumber.from(0);
-                let totalEthPaid = ethers.BigNumber.from(0);
-                let totalTxFee = ethers.BigNumber.from(0);
-                const txsToProcess = [];
-                for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                  const tx = txs && txs[txHash] || null;
-                  if (tx) {
-                    txsToProcess.push(tx);
-                  }
+              const block = blocks[chainId] && blocks[chainId][blockNumber] || null;
+              const balance = ethers.BigNumber.from(block && block.balances[account] || 0);
+              const exchangeRate = getExchangeRate(moment.unix(block.timestamp), exchangeRates);
+              let totalEthReceived = ethers.BigNumber.from(0);
+              let totalEthPaid = ethers.BigNumber.from(0);
+              let totalTxFee = ethers.BigNumber.from(0);
+              const txsToProcess = [];
+              for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                const tx = txs && txs[txHash] || null;
+                if (tx) {
+                  txsToProcess.push(tx);
                 }
-                txsToProcess.sort((a, b) => a.txReceipt.transactionIndex - b.txReceipt.transactionIndex);
-                const balanceInReportingCurrency = ethers.utils.formatEther(balance) * exchangeRate.rate;
-                for (const [index, tx] of txsToProcess.entries()) {
-                  // console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
-                  const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
-                  totalEthPaid = totalEthPaid.add(results.ethPaid);
-                  totalEthReceived = totalEthReceived.add(results.ethReceived);
-                  const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
-                  const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
-                  totalTxFee = totalTxFee.add(txFee);
-                  const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
-                  const diff = balance.sub(expectedBalance);
-                  if (!(account in accountsMap)) {
-                    accountsMap[account] = 0;
-                  }
-                  accountsMap[account]++;
-                  const infoType = results.info && results.info.type || "(unknown)";
-                  if (!(infoType in typesMap)) {
-                    typesMap[infoType] = 0;
-                  }
-                  typesMap[infoType]++;
-                  const infoAction = results.info && results.info.action || "(unknown)";
-                  if (!(infoAction in actionsMap)) {
-                    actionsMap[infoAction] = 0;
-                  }
-                  actionsMap[infoAction]++;
-                  const tempFunctionCall = results.functionCall.length > 0 && results.functionCall || "(none)";
-                  if (!(tempFunctionCall in functionCallsMap)) {
-                    functionCallsMap[tempFunctionCall] = 0;
-                  }
-                  functionCallsMap[tempFunctionCall]++;
-                  const isLastTxInBlock = (index + 1 == txsToProcess.length);
-                  transactions.push({
-                    chainId,
-                    txHash: tx.tx.hash,
-                    blockNumber: blockNumber,
-                    transactionIndex: tx.txReceipt.transactionIndex,
-                    timestamp: block.timestamp,
-                    account,
-                    from: tx.tx.from,
-                    to: tx.tx.to,
-                    functionSelector: results.functionSelector,
-                    functionCall: results.functionCall,
-                    exchangeRate: exchangeRate.rate,
-                    info: results.info || "",
-                    txType: results.info && results.info.type || "unknown",
-                    txAction: results.info && results.info.action || "unknown",
-                    balance: isLastTxInBlock ? balance.toString() : null,
-                    balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
-                    expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
-                    diff: isLastTxInBlock ? diff.toString() : null,
-                    myEvents: results.myEvents,
-                  });
-                }
-                // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
-                prevBalance = balance;
               }
-              blocksProcessed++;
+              txsToProcess.sort((a, b) => a.txReceipt.transactionIndex - b.txReceipt.transactionIndex);
+              const balanceInReportingCurrency = ethers.utils.formatEther(balance) * exchangeRate.rate;
+              for (const [index, tx] of txsToProcess.entries()) {
+                // console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
+                const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
+                totalEthPaid = totalEthPaid.add(results.ethPaid);
+                totalEthReceived = totalEthReceived.add(results.ethReceived);
+                const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
+                const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
+                totalTxFee = totalTxFee.add(txFee);
+                const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
+                const diff = balance.sub(expectedBalance);
+                if (!(account in accountsMap)) {
+                  accountsMap[account] = 0;
+                }
+                accountsMap[account]++;
+                const infoType = results.info && results.info.type || "(unknown)";
+                if (!(infoType in typesMap)) {
+                  typesMap[infoType] = 0;
+                }
+                typesMap[infoType]++;
+                const infoAction = results.info && results.info.action || "(unknown)";
+                if (!(infoAction in actionsMap)) {
+                  actionsMap[infoAction] = 0;
+                }
+                actionsMap[infoAction]++;
+                const tempFunctionCall = results.functionCall.length > 0 && results.functionCall || "(none)";
+                if (!(tempFunctionCall in functionCallsMap)) {
+                  functionCallsMap[tempFunctionCall] = 0;
+                }
+                functionCallsMap[tempFunctionCall]++;
+                const isLastTxInBlock = (index + 1 == txsToProcess.length);
+                transactions.push({
+                  chainId,
+                  txHash: tx.tx.hash,
+                  blockNumber: blockNumber,
+                  transactionIndex: tx.txReceipt.transactionIndex,
+                  timestamp: block.timestamp,
+                  account,
+                  from: tx.tx.from,
+                  to: tx.tx.to,
+                  functionSelector: results.functionSelector,
+                  functionCall: results.functionCall,
+                  exchangeRate: exchangeRate.rate,
+                  info: results.info || "",
+                  txType: results.info && results.info.type || "unknown",
+                  txAction: results.info && results.info.action || "unknown",
+                  balance: isLastTxInBlock ? balance.toString() : null,
+                  balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
+                  expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
+                  diff: isLastTxInBlock ? diff.toString() : null,
+                  myEvents: results.myEvents,
+                });
+              }
+              // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
+              prevBalance = balance;
             }
           }
         }
