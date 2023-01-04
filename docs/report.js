@@ -978,7 +978,6 @@ const Report = {
       localStorage.reportSettings = JSON.stringify(this.settings);
     },
     generateReport(contractOrTxOrBlockRange) {
-      console.log("UI generateReport: " + contractOrTxOrBlockRange);
       store.dispatch('report/generateReport', contractOrTxOrBlockRange);
     },
     addNewAccounts() {
@@ -1169,7 +1168,7 @@ const Report = {
     logDebug("Report", "beforeDestroy()");
   },
   mounted() {
-    logInfo("Report", "mounted() $route: " + JSON.stringify(this.$route.params) + ", props['contractOrTxOrBlockRange']: " + this.contractOrTxOrBlockRange);
+    logInfo("Report", "mounted() $route: " + JSON.stringify(this.$route.params) + ", props['contractOrTxOrBlockRange']: " + (this.contractOrTxOrBlockRange || 'no parameters'));
     store.dispatch('data/restoreState');
     store.dispatch('report/restoreState');
     if ('reportSettings' in localStorage) {
@@ -1233,7 +1232,7 @@ const reportModule = {
       db0.close();
     },
     async generateReport(context, contractOrTxOrBlockRange) {
-      logInfo("reportModule", "generateReport(): " + contractOrTxOrBlockRange);
+      logInfo("reportModule", "generateReport(): " + (contractOrTxOrBlockRange || '(no parameters)'));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const allAccounts = store.getters['data/accounts'];
       const allAccountsInfo = store.getters['data/accountsInfo'];
