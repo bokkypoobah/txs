@@ -897,7 +897,8 @@ const dataModule = {
               if (txData != null) {
                 const events = getEvents(account, accounts, preERC721s, txData);
                 // console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
-                // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
+                const results = parseTx(parameter.chainId, account, accounts, context.state.functionSelectors, preERC721s, txData);
+                console.log(blockNumber + " " + txHash + ": " + JSON.stringify(results));
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
                     const tokenContract = accounts[eventItem.contract] || {};
