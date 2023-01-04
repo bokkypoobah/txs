@@ -43,6 +43,5 @@ function getTxHashesByBlocks(account, chainId, accounts, accountsInfo, skipBlock
     }
     blocksProcessed++;
   }
-  // console.log("getTxHashesByBlocks - results: " + JSON.stringify(results, null, 2));
   return results;
 }
