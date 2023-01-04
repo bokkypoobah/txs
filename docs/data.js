@@ -886,6 +886,66 @@ const dataModule = {
     },
     async syncBuildTokens(context, parameter) {
       logInfo("dataModule", "actions.syncBuildTokens: " + JSON.stringify(parameter));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
+      const preERC721s = store.getters['config/settings'].preERC721s;
+      const accounts = context.state.accounts[parameter.chainId] || {};
+      const txs = context.state.txs[parameter.chainId] || {};
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncBuildTokens: " + accountIndex + " " + account);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
+        if (!context.state.sync.halt) {
+          const missingTokensMap = {};
+          for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            for (const [index, txHash] of Object.keys(txHashes).entries()) {
+              const txData = txs && txs[txHash] || null;
+              if (txData != null) {
+                const events = getEvents(account, accounts, preERC721s, txData);
+                // console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
+                // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
+                for (const [eventIndex, eventItem] of events.myEvents.entries()) {
+                  const contract = accounts[eventItem.contract] || '?';
+                  console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (contract ? contract.type : '') + " " + (contract ? contract.name : ''));
+                  // for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
+                  //   if (!(a in accounts) && !(a in missingTokensMap)) {
+                  //     missingTokensMap[a] = true;
+                  //   }
+                  // }
+                }
+              }
+            }
+          }
+          console.log("missingTokensMap: " + JSON.stringify(missingTokensMap));
+          const missingAccounts = Object.keys(missingTokensMap);
+          console.log("missingAccounts: " + JSON.stringify(missingAccounts));
+          context.commit('setSyncSection', { section: 'Accounts', total: missingAccounts.length });
+          for (const [accountItemIndex, accountItem] of missingAccounts.entries()) {
+            context.commit('setSyncCompleted', parseInt(accountItemIndex) + 1);
+            console.log((parseInt(accountItemIndex) + 1) + "/" + missingAccounts.length + " Processing " + accountItem);
+            const accountInfo = await getAccountInfo(accountItem, provider);
+            console.log(JSON.stringify(accountInfo, null, 2));
+            if (accountInfo.account) {
+              context.commit('addNewAccountInfo', accountInfo);
+              context.commit('addNewAccount', accountInfo);
+              console.log("Added " + accountItem + " " + accountInfo.type + " " + accountInfo.name);
+            }
+            const names = await ensReverseRecordsContract.getNames([accountItem]);
+            const name = names.length == 1 ? names[0] : accountItem;
+            if (!(accountItem in context.state.ensMap)) {
+              // console.log("Added ENS " + accountItem + " " + name);
+              context.commit('addENSName', { account: accountItem, name });
+            }
+            if ((accountItemIndex + 1) % 25 == 0) {
+              console.log("Saving accounts");
+              context.dispatch('saveData', ['accountsInfo', 'accounts', 'ensMap']);
+            }
+            if (context.state.sync.halt) {
+              break;
+            }
+          }
+        }
+      }
     },
     async syncImportExchangeRates(context, parameter) {
       const reportingCurrency = store.getters['config/settings'].reportingCurrency;
