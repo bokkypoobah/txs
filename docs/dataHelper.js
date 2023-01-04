@@ -1,4 +1,4 @@
-function getTxHashesByBlocks(account, chainId, accounts, accountsInfo) {
+function getTxHashesByBlocks(account, chainId, accounts, accountsInfo, skipBlocks, maxBlocks) {
   const txHashesByBlocks = {};
   for (const [txHash, tx] of Object.entries(accounts[chainId][account].transactions)) {
     if (!(tx.blockNumber in txHashesByBlocks)) {
@@ -28,13 +28,21 @@ function getTxHashesByBlocks(account, chainId, accounts, accountsInfo) {
       }
     }
   }
-  // console.log("getTxHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
-  // let count = 0;
-  // for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-  //   for (const [index, txHash] of Object.keys(txHashes).entries()) {
-  //     count++;
-  //     console.log(count + " " + blockNumber + " " + txHash);
-  //   }
-  // }
-  return txHashesByBlocks;
+  const results = {};
+  let blocksProcessed = 0;
+  for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+    if (blocksProcessed >= skipBlocks && blocksProcessed < maxBlocks) {
+      if (!(blockNumber in results)) {
+        results[blockNumber] = {};
+      }
+      for (const [index, txHash] of Object.keys(txHashes).entries()) {
+        if (!(txHash in results[blockNumber])) {
+          results[blockNumber][txHash] = blockNumber;
+        }
+      }
+    }
+    blocksProcessed++;
+  }
+  // console.log("getTxHashesByBlocks - results: " + JSON.stringify(results, null, 2));
+  return results;
 }

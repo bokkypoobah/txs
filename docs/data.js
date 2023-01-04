@@ -451,7 +451,7 @@ const dataModule = {
         }
       }
       // sections = ['syncTransferEvents', 'syncImportInternalTransactions', 'syncImportTransactions', 'scrapeTxs', 'retrieveSelectors', 'buildAssets'];
-      sections = ['all'];
+      // sections = ['all'];
       // sections = ['syncBuildTokenContracts'];
       for (const [sectionIndex, section] of sections.entries()) {
         console.log(sectionIndex + "." + section);
@@ -653,7 +653,7 @@ const dataModule = {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
         const txs = context.state.txs[parameter.chainId] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
           const blockNumbers = [];
           let blocksProcessed = 0;
@@ -697,7 +697,7 @@ const dataModule = {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
         const txs = context.state.txs[parameter.chainId] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         const txHashesToProcess = {};
         if (!context.state.sync.halt) {
           let blocksProcessed = 0;
@@ -739,7 +739,7 @@ const dataModule = {
         console.log("actions.syncFunctionSelectors: " + accountIndex + " " + account);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
         const txs = context.state.txs[parameter.chainId] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
         if (!context.state.sync.halt) {
           const missingSelectorsMap = {};
@@ -786,7 +786,7 @@ const dataModule = {
         console.log("actions.syncEventSelectors: " + accountIndex + " " + account);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
         const txs = context.state.txs[parameter.chainId] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
           const missingSelectorsMap = {};
           const eventSelectors = context.state.eventSelectors || {};
@@ -837,7 +837,7 @@ const dataModule = {
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBuildTokenContracts: " + accountIndex + " " + account);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo);
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
         if (!context.state.sync.halt) {
           const missingAccountsMap = {};
@@ -1116,7 +1116,7 @@ const dataModule = {
             console.log("--- Downloading for " + account + " --- ");
             // console.log("accountData: " + JSON.stringify(accountData, null, 2).substring(0, 1000) + "...");
 
-            const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
+            const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo, devSettings.skipBlocks, devSettings.maxBlocks);
             if (!context.state.sync.halt) {
               // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
               const blockNumbers = [];
@@ -1280,7 +1280,7 @@ const dataModule = {
           const accounts = context.state.accounts[chainId] || {};
           const missingAccountsMap = {};
           for (const [accountIndex, account] of accountsToSync.entries()) {
-            const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo);
+            const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo, devSettings.skipBlocks, devSettings.maxBlocks);
             const txs = context.state.txs[chainId] || {};
             // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
             let blocksProcessed = 0;
