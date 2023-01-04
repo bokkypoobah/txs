@@ -735,9 +735,8 @@ const dataModule = {
         const accountData = context.state.accounts[parameter.chainId][account] || {};
         const txs = context.state.txs[parameter.chainId] || {};
         const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
-        console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
         if (!context.state.sync.halt) {
-          const missingSelectorsMap = {};
+          const missingFunctionSelectorsMap = {};
           const functionSelectors = context.state.functionSelectors || {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
@@ -745,17 +744,17 @@ const dataModule = {
               const txInfo = txs && txs[txHash] || {};
               if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
                 const selector = txInfo.tx.data.substring(0, 10);
-                if (!(selector in functionSelectors) && !(selector in missingSelectorsMap)) {
-                  missingSelectorsMap[selector] = true;
+                if (!(selector in functionSelectors) && !(selector in missingFunctionSelectorsMap)) {
+                  missingFunctionSelectorsMap[selector] = true;
                 }
               }
             }
           }
-          console.log("missingSelectorsMap: " + JSON.stringify(missingSelectorsMap));
-          const missingSelectors = Object.keys(missingSelectorsMap);
+          console.log("missingFunctionSelectorsMap: " + JSON.stringify(missingFunctionSelectorsMap));
+          const missingFunctionSelectors = Object.keys(missingFunctionSelectorsMap);
           const BATCHSIZE = 50;
-          for (let i = 0; i < missingSelectors.length; i += BATCHSIZE) {
-            const batch = missingSelectors.slice(i, parseInt(i) + BATCHSIZE);
+          for (let i = 0; i < missingFunctionSelectors.length; i += BATCHSIZE) {
+            const batch = missingFunctionSelectors.slice(i, parseInt(i) + BATCHSIZE);
             let url = "https://sig.eth.samczsun.com/api/v1/signatures?" + batch.map(e => ("function=" + e)).join("&");
             console.log(url);
             const data = await fetch(url)
@@ -779,7 +778,7 @@ const dataModule = {
         const txs = context.state.txs[parameter.chainId] || {};
         const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
-          const missingSelectorsMap = {};
+          const missingEventSelectorsMap = {};
           const eventSelectors = context.state.eventSelectors || {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
@@ -787,18 +786,18 @@ const dataModule = {
               const txInfo = txs && txs[txHash] || {};
               if ('txReceipt' in txInfo) {
                 for (const event of txInfo.txReceipt.logs) {
-                  if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingSelectorsMap)) {
-                    missingSelectorsMap[event.topics[0]] = true;
+                  if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingEventSelectorsMap)) {
+                    missingEventSelectorsMap[event.topics[0]] = true;
                   }
                 }
               }
             }
           }
-          console.log("missingSelectorsMap: " + JSON.stringify(missingSelectorsMap));
-          const missingSelectors = Object.keys(missingSelectorsMap);
+          console.log("missingEventSelectorsMap: " + JSON.stringify(missingEventSelectorsMap));
+          const missingEventSelectors = Object.keys(missingEventSelectorsMap);
           const BATCHSIZE = 50;
-          for (let i = 0; i < missingSelectors.length; i += BATCHSIZE) {
-            const batch = missingSelectors.slice(i, parseInt(i) + BATCHSIZE);
+          for (let i = 0; i < missingEventSelectors.length; i += BATCHSIZE) {
+            const batch = missingEventSelectors.slice(i, parseInt(i) + BATCHSIZE);
             let url = "https://sig.eth.samczsun.com/api/v1/signatures?" + batch.map(e => ("event=" + e)).join("&");
             console.log(url);
             const data = await fetch(url)
@@ -825,14 +824,12 @@ const dataModule = {
         console.log("actions.syncBuildTokenContracts: " + accountIndex + " " + account);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
         const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
-        console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
         if (!context.state.sync.halt) {
           const missingAccountsMap = {};
           const eventSelectors = context.state.eventSelectors || {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
               const txData = txs && txs[txHash] || null;
-              console.log(JSON.stringify(txData));
               if (txData != null) {
                 if (!(txData.tx.from in accounts) && !(txData.tx.from in missingAccountsMap)) {
                   missingAccountsMap[txData.tx.from] = true;
@@ -841,7 +838,7 @@ const dataModule = {
                   missingAccountsMap[txData.tx.to] = true;
                 }
                 const events = getEvents(account, accounts, preERC721s, txData);
-                console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
+                // console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
                 // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
@@ -853,10 +850,8 @@ const dataModule = {
               }
             }
           }
-          console.log("missingAccountsMap: " + JSON.stringify(missingAccountsMap));
           const missingAccounts = Object.keys(missingAccountsMap);
-          console.log("missingAccounts: " + JSON.stringify(missingAccounts));
-          context.commit('setSyncSection', { section: 'Accounts', total: missingAccounts.length });
+          context.commit('setSyncSection', { section: 'Token Contract & Accts', total: missingAccounts.length });
           for (const [accountItemIndex, accountItem] of missingAccounts.entries()) {
             context.commit('setSyncCompleted', parseInt(accountItemIndex) + 1);
             console.log((parseInt(accountItemIndex) + 1) + "/" + missingAccounts.length + " Processing " + accountItem);
@@ -870,7 +865,6 @@ const dataModule = {
             const names = await ensReverseRecordsContract.getNames([accountItem]);
             const name = names.length == 1 ? names[0] : accountItem;
             if (!(accountItem in context.state.ensMap)) {
-              // console.log("Added ENS " + accountItem + " " + name);
               context.commit('addENSName', { account: accountItem, name });
             }
             if ((accountItemIndex + 1) % 25 == 0) {
