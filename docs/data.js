@@ -656,15 +656,11 @@ const dataModule = {
         const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
           const blockNumbers = [];
-          let blocksProcessed = 0;
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
-              const existing = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] && context.state.blocks[parameter.chainId][blockNumber].balances[account] || null;
-              if (!existing) {
-                blockNumbers.push(blockNumber);
-              }
+            const existing = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] && context.state.blocks[parameter.chainId][blockNumber].balances[account] || null;
+            if (!existing) {
+              blockNumbers.push(blockNumber);
             }
-            blocksProcessed++;
           }
           context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
           for (const [index, blockNumber] of blockNumbers.entries()) {
@@ -700,16 +696,12 @@ const dataModule = {
         const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         const txHashesToProcess = {};
         if (!context.state.sync.halt) {
-          let blocksProcessed = 0;
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
-              for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
-                  txHashesToProcess[txHash] = blockNumber;
-                }
+            for (const [index, txHash] of Object.keys(txHashes).entries()) {
+              if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
+                txHashesToProcess[txHash] = blockNumber;
               }
             }
-            blocksProcessed++;
           }
           let txHashList = Object.keys(txHashesToProcess);
           // console.log("txHashList: " + JSON.stringify(txHashList));
@@ -744,21 +736,17 @@ const dataModule = {
         if (!context.state.sync.halt) {
           const missingSelectorsMap = {};
           const functionSelectors = context.state.functionSelectors || {};
-          let blocksProcessed = 0;
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
-              const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
-              for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                const txInfo = txs && txs[txHash] || {};
-                if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
-                  const selector = txInfo.tx.data.substring(0, 10);
-                  if (!(selector in functionSelectors) && !(selector in missingSelectorsMap)) {
-                    missingSelectorsMap[selector] = true;
-                  }
+            const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
+            for (const [index, txHash] of Object.keys(txHashes).entries()) {
+              const txInfo = txs && txs[txHash] || {};
+              if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
+                const selector = txInfo.tx.data.substring(0, 10);
+                if (!(selector in functionSelectors) && !(selector in missingSelectorsMap)) {
+                  missingSelectorsMap[selector] = true;
                 }
               }
             }
-            blocksProcessed++;
           }
           console.log("missingSelectorsMap: " + JSON.stringify(missingSelectorsMap));
           const missingSelectors = Object.keys(missingSelectorsMap);
@@ -790,22 +778,18 @@ const dataModule = {
         if (!context.state.sync.halt) {
           const missingSelectorsMap = {};
           const eventSelectors = context.state.eventSelectors || {};
-          let blocksProcessed = 0;
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
-              const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
-              for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                const txInfo = txs && txs[txHash] || {};
-                if ('txReceipt' in txInfo) {
-                  for (const event of txInfo.txReceipt.logs) {
-                    if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingSelectorsMap)) {
-                      missingSelectorsMap[event.topics[0]] = true;
-                    }
+            const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
+            for (const [index, txHash] of Object.keys(txHashes).entries()) {
+              const txInfo = txs && txs[txHash] || {};
+              if ('txReceipt' in txInfo) {
+                for (const event of txInfo.txReceipt.logs) {
+                  if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingSelectorsMap)) {
+                    missingSelectorsMap[event.topics[0]] = true;
                   }
                 }
               }
             }
-            blocksProcessed++;
           }
           console.log("missingSelectorsMap: " + JSON.stringify(missingSelectorsMap));
           const missingSelectors = Object.keys(missingSelectorsMap);
@@ -842,33 +826,29 @@ const dataModule = {
         if (!context.state.sync.halt) {
           const missingAccountsMap = {};
           const eventSelectors = context.state.eventSelectors || {};
-          let blocksProcessed = 0;
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            if (blocksProcessed >= parameter.skipBlocks && blocksProcessed < parameter.maxBlocks) {
-              for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                const txData = txs && txs[txHash] || null;
-                console.log(JSON.stringify(txData));
-                if (txData != null) {
-                  if (!(txData.tx.from in accounts) && !(txData.tx.from in missingAccountsMap)) {
-                    missingAccountsMap[txData.tx.from] = true;
-                  }
-                  if (txData.tx.to != null && (!(txData.tx.to in accounts) && !(txData.tx.to in missingAccountsMap))) {
-                    missingAccountsMap[txData.tx.to] = true;
-                  }
-                  const events = getEvents(account, accounts, preERC721s, txData);
-                  console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
-                  // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
-                  for (const [eventIndex, eventItem] of events.myEvents.entries()) {
-                    for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
-                      if (!(a in accounts) && !(a in missingAccountsMap)) {
-                        missingAccountsMap[a] = true;
-                      }
+            for (const [index, txHash] of Object.keys(txHashes).entries()) {
+              const txData = txs && txs[txHash] || null;
+              console.log(JSON.stringify(txData));
+              if (txData != null) {
+                if (!(txData.tx.from in accounts) && !(txData.tx.from in missingAccountsMap)) {
+                  missingAccountsMap[txData.tx.from] = true;
+                }
+                if (txData.tx.to != null && (!(txData.tx.to in accounts) && !(txData.tx.to in missingAccountsMap))) {
+                  missingAccountsMap[txData.tx.to] = true;
+                }
+                const events = getEvents(account, accounts, preERC721s, txData);
+                console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
+                // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
+                for (const [eventIndex, eventItem] of events.myEvents.entries()) {
+                  for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
+                    if (!(a in accounts) && !(a in missingAccountsMap)) {
+                      missingAccountsMap[a] = true;
                     }
                   }
                 }
               }
             }
-            blocksProcessed++;
           }
           console.log("missingAccountsMap: " + JSON.stringify(missingAccountsMap));
           const missingAccounts = Object.keys(missingAccountsMap);
@@ -1120,15 +1100,11 @@ const dataModule = {
             if (!context.state.sync.halt) {
               // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
               const blockNumbers = [];
-              let blocksProcessed = 0;
               for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-                if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
-                  const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
-                  if (!existing) {
-                    blockNumbers.push(blockNumber);
-                  }
+                const existing = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] && context.state.blocks[chainId][blockNumber].balances[account] || null;
+                if (!existing) {
+                  blockNumbers.push(blockNumber);
                 }
-                blocksProcessed++;
               }
               context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
               for (const [index, blockNumber] of blockNumbers.entries()) {
@@ -1156,16 +1132,12 @@ const dataModule = {
             if (!context.state.sync.halt) {
               console.log("HERE txHashesByBlocks: " + JSON.stringify(txHashesByBlocks));
               const txHashesToProcess = {};
-              let blocksProcessed = 0;
               for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-                if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
-                  for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                    if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
-                      txHashesToProcess[txHash] = blockNumber;
-                    }
+                for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                  if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
+                    txHashesToProcess[txHash] = blockNumber;
                   }
                 }
-                blocksProcessed++;
               }
               let txHashList = Object.keys(txHashesToProcess);
               console.log("txHashList: " + JSON.stringify(txHashList));
@@ -1194,21 +1166,17 @@ const dataModule = {
               // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
               const missingSelectorsMap = {};
               const functionSelectors = context.state.functionSelectors || {};
-              let blocksProcessed = 0;
               for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-                if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
-                  const block = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] || null;
-                  for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                    const txInfo = txs && txs[txHash] || {};
-                    if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
-                      const selector = txInfo.tx.data.substring(0, 10);
-                      if (!(selector in functionSelectors) && !(selector in missingSelectorsMap)) {
-                        missingSelectorsMap[selector] = true;
-                      }
+                const block = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] || null;
+                for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                  const txInfo = txs && txs[txHash] || {};
+                  if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
+                    const selector = txInfo.tx.data.substring(0, 10);
+                    if (!(selector in functionSelectors) && !(selector in missingSelectorsMap)) {
+                      missingSelectorsMap[selector] = true;
                     }
                   }
                 }
-                blocksProcessed++;
               }
               const missingSelectors = Object.keys(missingSelectorsMap);
               const BATCHSIZE = 50;
@@ -1232,22 +1200,18 @@ const dataModule = {
               // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
               const missingSelectorsMap = {};
               const eventSelectors = context.state.eventSelectors || {};
-              let blocksProcessed = 0;
               for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-                if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
-                  const block = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] || null;
-                  for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                    const txInfo = txs && txs[txHash] || {};
-                    if ('txReceipt' in txInfo) {
-                      for (const event of txInfo.txReceipt.logs) {
-                        if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingSelectorsMap)) {
-                          missingSelectorsMap[event.topics[0]] = true;
-                        }
+                const block = context.state.blocks[chainId] && context.state.blocks[chainId][blockNumber] || null;
+                for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                  const txInfo = txs && txs[txHash] || {};
+                  if ('txReceipt' in txInfo) {
+                    for (const event of txInfo.txReceipt.logs) {
+                      if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingSelectorsMap)) {
+                        missingSelectorsMap[event.topics[0]] = true;
                       }
                     }
                   }
                 }
-                blocksProcessed++;
               }
               const missingSelectors = Object.keys(missingSelectorsMap);
               // console.log(JSON.stringify(missingSelectors));
@@ -1283,26 +1247,23 @@ const dataModule = {
             const txHashesByBlocks = getTxHashesByBlocks(account, chainId, context.state.accounts, context.state.accountsInfo, devSettings.skipBlocks, devSettings.maxBlocks);
             const txs = context.state.txs[chainId] || {};
             // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
-            let blocksProcessed = 0;
             for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-              if (blocksProcessed >= devSettings.skipBlocks && blocksProcessed < devSettings.maxBlocks) {
-                for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                  const txData = txs && txs[txHash] || null;
-                  if (txData != null) {
-                    if (!(txData.tx.from in accounts) && !(txData.tx.from in missingAccountsMap)) {
-                      missingAccountsMap[txData.tx.from] = true;
-                    }
-                    if (txData.tx.to != null && (!(txData.tx.to in accounts) && !(txData.tx.to in missingAccountsMap))) {
-                      missingAccountsMap[txData.tx.to] = true;
-                    }
-                    const events = getEvents(account, accounts, preERC721s, txData);
-                    console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
-                    // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
-                    for (const [eventIndex, eventItem] of events.myEvents.entries()) {
-                      for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
-                        if (!(a in accounts) && !(a in missingAccountsMap)) {
-                          missingAccountsMap[a] = true;
-                        }
+              for (const [index, txHash] of Object.keys(txHashes).entries()) {
+                const txData = txs && txs[txHash] || null;
+                if (txData != null) {
+                  if (!(txData.tx.from in accounts) && !(txData.tx.from in missingAccountsMap)) {
+                    missingAccountsMap[txData.tx.from] = true;
+                  }
+                  if (txData.tx.to != null && (!(txData.tx.to in accounts) && !(txData.tx.to in missingAccountsMap))) {
+                    missingAccountsMap[txData.tx.to] = true;
+                  }
+                  const events = getEvents(account, accounts, preERC721s, txData);
+                  console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
+                  // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
+                  for (const [eventIndex, eventItem] of events.myEvents.entries()) {
+                    for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
+                      if (!(a in accounts) && !(a in missingAccountsMap)) {
+                        missingAccountsMap[a] = true;
                       }
                     }
                   }
