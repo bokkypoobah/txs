@@ -483,6 +483,9 @@ const dataModule = {
         if (section == "syncBuildTokens" || section == "all") {
           await context.dispatch('syncBuildTokens', parameter);
         }
+        if (section == "syncImportExchangeRates" || section == "all") {
+          await context.dispatch('syncImportExchangeRates', parameter);
+        }
       }
       context.dispatch('saveData', ['accounts', 'accountsInfo', 'blocks', 'txs', 'ensMap']);
       context.commit('setSyncSection', { section: null, total: null });
@@ -883,6 +886,33 @@ const dataModule = {
     },
     async syncBuildTokens(context, parameter) {
       logInfo("dataModule", "actions.syncBuildTokens: " + JSON.stringify(parameter));
+    },
+    async syncImportExchangeRates(context, parameter) {
+      const reportingCurrency = store.getters['config/settings'].reportingCurrency;
+      logInfo("dataModule", "actions.syncImportExchangeRates - reportingCurrency: " + reportingCurrency);
+      const MAXDAYS = 2000;
+      const MINDATE = moment("2015-07-30");
+      let toTs = moment();
+      const results = {};
+      while (toTs.year() >= 2015) {
+        let days = toTs.diff(MINDATE, 'days');
+        if (days > MAXDAYS) {
+          days = MAXDAYS;
+        }
+        const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + reportingCurrency + "&toTs=" + toTs.unix() + "&limit=" + days;
+        console.log(url);
+        const data = await fetch(url)
+          .then(response => response.json())
+          .catch(function(e) {
+            console.log("error: " + e);
+          });
+        for (day of data.Data.Data) {
+          results[moment.unix(day.time).format("YYYYMMDD")] = day.close;
+        }
+        toTs = moment(toTs).subtract(MAXDAYS, 'days');
+      }
+      context.commit('setExchangeRates', results);
+      context.dispatch('saveData', ['exchangeRates']);
     },
 
     async syncIt(context, info) {
