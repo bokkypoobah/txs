@@ -1312,6 +1312,13 @@ const reportModule = {
                 }
                 functionCallsMap[tempFunctionCall]++;
                 const isLastTxInBlock = (index + 1 == txsToProcess.length);
+                const myEvents = [];
+                // console.log(tx.tx.hash + " " + JSON.stringify(results.myEvents));
+                for (const [eventIndex, event] of results.myEvents.entries()) {
+                  // console.log("  " + eventIndex + " " + JSON.stringify(event));
+                  // TODO: Sort out NFT images
+                  myEvents.push(event);
+                }
                 transactions.push({
                   chainId,
                   txHash: tx.tx.hash,
@@ -1331,7 +1338,7 @@ const reportModule = {
                   balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
                   expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
                   diff: isLastTxInBlock ? diff.toString() : null,
-                  myEvents: results.myEvents,
+                  myEvents: myEvents,
                 });
               }
               // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
