@@ -524,19 +524,27 @@ const Report = {
                       </span>
                     </span>
                   </template>
-                  <template #cell(tokenIdOrTokens)="data">
-                    <span div="data.item.tokenId">
-                      {{ data.item.tokenId }}
+                  <template #cell(tokenIdOrTokens)="event">
+                    <span v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'">
+                      {{ event.item.tokenId }}
+                      <span v-if="report.tokens[data.item.chainId] && report.tokens[data.item.chainId][event.item.contract] && report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId] && report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId].image">
+                        <b-avatar rounded variant="light" size="3.0rem" :src="report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId].image" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
+                      </span>
                     </span>
-                    <span div="data.item.tokens">
-                      <span v-if="data.item.contract == 'eth'">
-                        {{ formatETH(data.item.tokens) }}
+                    <span v-else>
+                      <span div="event.item.tokenId">
+                        {{ event.item.tokenId }}
                       </span>
-                      <span v-else-if="data.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
-                        {{ formatETH(data.item.tokens) }}
-                      </span>
-                      <span v-else>
-                        {{ data.item.tokens }}
+                      <span div="event.item.tokens">
+                        <span v-if="event.item.contract == 'eth'">
+                          {{ formatETH(event.item.tokens) }}
+                        </span>
+                        <span v-else-if="event.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
+                          {{ formatETH(event.item.tokens) }}
+                        </span>
+                        <span v-else>
+                          {{ event.item.tokens }}
+                        </span>
                       </span>
                     </span>
                   </template>
@@ -1320,7 +1328,7 @@ const reportModule = {
                     }
                     if (!(event.contract in tokens[chainId])) {
                       const tokenContract = allAccounts[chainId][event.contract];
-                      console.log("tokenContract: " + JSON.stringify(tokenContract));
+                      // console.log("tokenContract: " + JSON.stringify(tokenContract));
                       tokens[chainId][event.contract] = {
                         type: tokenContract && tokenContract.type || "?",
                         name: tokenContract && tokenContract.collection && tokenContract.collection.name || tokenContract.name || "?",
@@ -1328,13 +1336,14 @@ const reportModule = {
                         slug: tokenContract && tokenContract.collection && tokenContract.collection.slug /*|| tokenContract.slug*/ || "?",
                         image: tokenContract && tokenContract.collection && tokenContract.collection.image /*|| tokenContract.image*/ || "?",
                         junk: false, // TODO: Check custom tags from accountsInfo
-                        tokenIds: {},
+                        ids: {},
                       };
                     }
-                    if (!(event.tokenId in tokens[chainId][event.contract].tokenIds)) {
+                    if (!(event.tokenId in tokens[chainId][event.contract].ids)) {
                       const tokenContract = allAccounts[chainId][event.contract] || {};
                       const token = tokenContract.assets && tokenContract.assets[event.tokenId] || {};
-                      tokens[chainId][event.contract].tokenIds[event.tokenId] = {
+                      // console.log("token: " + JSON.stringify(token));
+                      tokens[chainId][event.contract].ids[event.tokenId] = {
                         name: token.name || "?",
                         description: token.description || "?",
                         name: token.name || "?",
