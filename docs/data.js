@@ -492,6 +492,7 @@ const dataModule = {
       }
       context.dispatch('saveData', ['accounts', 'accountsInfo', 'blocks', 'txs', 'ensMap']);
       context.commit('setSyncSection', { section: null, total: null });
+      context.commit('setSyncHalt', false);
     },
     async syncTransferEvents(context, parameter) {
       logInfo("dataModule", "actions.syncTransferEvents: " + JSON.stringify(parameter));

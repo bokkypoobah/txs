@@ -503,34 +503,34 @@ const Report = {
               <font size="-2">
                 <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
                   <template #cell(from)="data">
-                    <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 16) }}</b-link>
+                    <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 64) }}</b-link>
                   </template>
                   <template #cell(to)="data">
-                    <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 16) }}</b-link>
+                    <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 64) }}</b-link>
                   </template>
-                  <template #cell(contract)="data">
-                    <span v-if="data.item.contract == 'eth'">
+                  <template #cell(contract)="event">
+                    <span v-if="event.item.contract == 'eth'">
                       eth
                     </span>
-                    <span v-else-if="data.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
-                      <b-link @click="showModalAddress(data.item.contract);">weth</b-link>
+                    <span v-else-if="event.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
+                      <b-link @click="showModalAddress(event.item.contract);">weth</b-link>
                     </span>
                     <span v-else>
-                      <span v-if="data.item.type == 'preerc721' || data.item.type == 'erc721' || data.item.type == 'erc1155'">
-                        <b-link @click="showModalNFTCollection(data.item.contract);">{{ ensOrAccount(data.item.contract, 16) }}</b-link>
+                      <span v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'">
+                        <b-link @click="showModalNFTCollection(event.item.contract);">{{ getNFTCollectionName(data.item.chainId, event.item.contract) }}</b-link>
                       </span>
                       <span v-else>
-                        <b-link @click="showModalAddress(data.item.contract);">{{ ensOrAccount(data.item.contract, 16) }}</b-link>
+                        <b-link @click="showModalAddress(event.item.contract);">{{ ensOrAccount(event.item.contract, 16) }}</b-link>
                       </span>
                     </span>
                   </template>
                   <template #cell(tokenIdOrTokens)="event">
-                    <span v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'">
-                      {{ event.item.tokenId }}
-                      <span v-if="report.tokens[data.item.chainId] && report.tokens[data.item.chainId][event.item.contract] && report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId] && report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId].image">
-                        <b-avatar rounded variant="light" size="3.0rem" :src="report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId].image" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
+                    <div v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'" class="align-top">
+                      {{ getNFTName(data.item.chainId, event.item.contract, event.item.tokenId) }}
+                      <span v-if="report && report.tokens && report.tokens[data.item.chainId] && report.tokens[data.item.chainId][event.item.contract] && report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId] && report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId].image">
+                        <b-avatar rounded variant="light" size="3.0rem" :src="getNFTImage(data.item.chainId, event.item.contract, event.item.tokenId)" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
                       </span>
-                    </span>
+                    </div>
                     <span v-else>
                       <span div="event.item.tokenId">
                         {{ event.item.tokenId }}
@@ -687,10 +687,10 @@ const Report = {
       myEventsFields: [
         { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
         { key: 'logIndex', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
-        { key: 'from', label: 'From', thStyle: 'width: 20%;' },
-        { key: 'to', label: 'To', thStyle: 'width: 20%;' },
-        { key: 'contract', label: 'Token', thStyle: 'width: 20%;' },
-        { key: 'tokenIdOrTokens', label: 'TokenId/Tokens', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'from', label: 'From', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'to', label: 'To', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'contract', label: 'Token', thStyle: 'width: 15%;' },
+        { key: 'tokenIdOrTokens', label: 'TokenId/Tokens', sortable: true, thStyle: 'width: 35%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
     }
   },
@@ -981,6 +981,15 @@ const Report = {
     },
     formatNumber(e) {
       return ethers.BigNumber.from(e).toString();
+    },
+    getNFTCollectionName(chainId, tokenContract) {
+      return this.report && this.report.tokens && this.report.tokens[chainId] && this.report.tokens[chainId][tokenContract] && this.report.tokens[chainId][tokenContract].name || null;
+    },
+    getNFTName(chainId, tokenContract, tokenId) {
+      return this.report && this.report.tokens && this.report.tokens[chainId] && this.report.tokens[chainId][tokenContract] && this.report.tokens[chainId][tokenContract].ids[tokenId]  && this.report.tokens[chainId][tokenContract].ids[tokenId].name || null;
+    },
+    getNFTImage(chainId, tokenContract, tokenId) {
+      return this.report && this.report.tokens && this.report.tokens[chainId] && this.report.tokens[chainId][tokenContract] && this.report.tokens[chainId][tokenContract].ids[tokenId]  && this.report.tokens[chainId][tokenContract].ids[tokenId].image || null;
     },
     saveSettings() {
       localStorage.reportSettings = JSON.stringify(this.settings);
