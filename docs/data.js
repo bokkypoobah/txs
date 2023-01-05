@@ -673,9 +673,9 @@ const dataModule = {
           for (const [index, blockNumber] of blockNumbers.entries()) {
             const existing = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] && context.state.blocks[parameter.chainId][blockNumber].balances[account] || null;
             if (!existing) {
-              console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber);
               const block = await provider.getBlock(parseInt(blockNumber));
               const timestamp = block.timestamp;
+              console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber + " " + moment.unix(timestamp).format("YYYY-MM-DD HH:mm:ss"));
               const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
               context.commit('addBlock', { blockNumber, timestamp, account, balance });
               context.commit('setSyncCompleted', parseInt(index) + 1);
@@ -700,6 +700,7 @@ const dataModule = {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
         const accountData = context.state.accounts[parameter.chainId][account] || {};
         const txs = context.state.txs[parameter.chainId] || {};
+        const blocks = context.state.blocks;
         const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         const txHashesToProcess = {};
         if (!context.state.sync.halt) {
@@ -714,20 +715,29 @@ const dataModule = {
           // console.log("txHashList: " + JSON.stringify(txHashList));
           context.commit('setSyncSection', { section: 'Tx & TxReceipts', total: txHashList.length });
           let processed = 1;
-          for (const [txHash, blockNumber] of Object.entries(txHashesToProcess)) {
-            context.commit('setSyncCompleted', processed);
-            console.log(processed + "/" + txHashList.length + " Retrieving " + txHash + " @ " + blockNumber);
-            const currentInfo = txs && txs[txHash] || {};
-            const info = await getTxInfo(txHash, currentInfo, account, provider);
-            context.commit('addTxs', { chainId: parameter.chainId, txInfo: info});
-            if (processed % 50 == 0) {
-              console.log("Saving txs");
-              context.dispatch('saveData', ['txs']);
+
+          for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            const block = blocks[parameter.chainId] && blocks[parameter.chainId][blockNumber] || null;
+            for (const [index, txHash] of Object.keys(txHashes).entries()) {
+              if (txHash in txHashesToProcess) {
+                context.commit('setSyncCompleted', processed);
+                console.log(processed + "/" + txHashList.length + " Retrieving " + txHash + " @ " + blockNumber + " " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss"));
+                const currentInfo = txs && txs[txHash] || {};
+                const info = await getTxInfo(txHash, currentInfo, account, provider);
+                context.commit('addTxs', { chainId: parameter.chainId, txInfo: info});
+                if (processed % 50 == 0) {
+                  console.log("Saving txs");
+                  context.dispatch('saveData', ['txs']);
+                }
+                if (context.state.sync.halt) {
+                  break;
+                }
+                processed++;
+              }
             }
             if (context.state.sync.halt) {
               break;
             }
-            processed++;
           }
         }
       }
