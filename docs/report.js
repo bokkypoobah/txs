@@ -1258,6 +1258,7 @@ const reportModule = {
       const functionCallsMap = {};
       const accumulatedData = {};
       const transactions = [];
+      const tokens = {};
       for (const [chainId, accounts] of Object.entries(allAccounts)) {
         const txs = allTxs[chainId] || {};
         for (const [account, accountData] of Object.entries(accounts)) {
@@ -1312,12 +1313,33 @@ const reportModule = {
                 }
                 functionCallsMap[tempFunctionCall]++;
                 const isLastTxInBlock = (index + 1 == txsToProcess.length);
-                const myEvents = [];
-                // console.log(tx.tx.hash + " " + JSON.stringify(results.myEvents));
                 for (const [eventIndex, event] of results.myEvents.entries()) {
-                  // console.log("  " + eventIndex + " " + JSON.stringify(event));
-                  // TODO: Sort out NFT images
-                  myEvents.push(event);
+                  if (event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
+                    if (!(chainId in tokens)) {
+                      tokens[chainId] = {};
+                    }
+                    if (!(event.contract in tokens[chainId])) {
+                      const tokenContract = allAccounts[chainId][event.contract];
+                      tokens[chainId][event.contract] = {
+                        type: tokenContract && tokenContract.type || "?",
+                        name: tokenContract && tokenContract.collection && tokenContract.collection.name || tokenContract.name || "?",
+                        symbol: tokenContract && tokenContract.collection && tokenContract.collection.symbol || tokenContract.symbol || "?",
+                        junk: false, // TODO: Check custom tags from accountsInfo
+                        tokenIds: {},
+                      };
+                    }
+                    if (!(event.tokenId in tokens[chainId][event.contract].tokenIds)) {
+                      const tokenContract = allAccounts[chainId][event.contract] || {};
+                      const token = tokenContract.assets && tokenContract.assets[event.tokenId] || {};
+                      // console.log("tokenInfo: " + JSON.stringify(token));
+                      tokens[chainId][event.contract].tokenIds[event.tokenId] = {
+                        name: token.name || "?",
+                        description: token.description || "?",
+                        name: token.name || "?",
+                        image: token.image || null,
+                      };
+                    }
+                  }
                 }
                 transactions.push({
                   chainId,
@@ -1338,7 +1360,7 @@ const reportModule = {
                   balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
                   expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
                   diff: isLastTxInBlock ? diff.toString() : null,
-                  myEvents: myEvents,
+                  myEvents: results.myEvents,
                 });
               }
               // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
@@ -1347,8 +1369,9 @@ const reportModule = {
           }
         }
       }
+      console.log("tokens: " + JSON.stringify(tokens, null, 2));
       // TODO: Delete accountsMap, typesMap, actionsMap, functionCallsMap
-      context.commit('setReport', { transactions, accountsMap, typesMap, actionsMap, functionCallsMap });
+      context.commit('setReport', { transactions, tokens, accountsMap, typesMap, actionsMap, functionCallsMap });
       context.dispatch('saveData', ['report']);
     },
   },
