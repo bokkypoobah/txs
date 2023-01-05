@@ -1320,10 +1320,13 @@ const reportModule = {
                     }
                     if (!(event.contract in tokens[chainId])) {
                       const tokenContract = allAccounts[chainId][event.contract];
+                      console.log("tokenContract: " + JSON.stringify(tokenContract));
                       tokens[chainId][event.contract] = {
                         type: tokenContract && tokenContract.type || "?",
                         name: tokenContract && tokenContract.collection && tokenContract.collection.name || tokenContract.name || "?",
                         symbol: tokenContract && tokenContract.collection && tokenContract.collection.symbol || tokenContract.symbol || "?",
+                        slug: tokenContract && tokenContract.collection && tokenContract.collection.slug /*|| tokenContract.slug*/ || "?",
+                        image: tokenContract && tokenContract.collection && tokenContract.collection.image /*|| tokenContract.image*/ || "?",
                         junk: false, // TODO: Check custom tags from accountsInfo
                         tokenIds: {},
                       };
@@ -1331,7 +1334,6 @@ const reportModule = {
                     if (!(event.tokenId in tokens[chainId][event.contract].tokenIds)) {
                       const tokenContract = allAccounts[chainId][event.contract] || {};
                       const token = tokenContract.assets && tokenContract.assets[event.tokenId] || {};
-                      // console.log("tokenInfo: " + JSON.stringify(token));
                       tokens[chainId][event.contract].tokenIds[event.tokenId] = {
                         name: token.name || "?",
                         description: token.description || "?",
