@@ -480,8 +480,11 @@ const dataModule = {
         if (section == "syncBuildTokenContractsAndAccounts" || section == "all") {
           await context.dispatch('syncBuildTokenContractsAndAccounts', parameter);
         }
-        if (section == "syncBuildTokens" || section == "xall") {
+        if (section == "syncBuildTokens" || section == "all") {
           await context.dispatch('syncBuildTokens', parameter);
+        }
+        if (section == "syncBuildTokenEvents" || section == "xall") {
+          await context.dispatch('syncBuildTokenEvents', parameter);
         }
         if (section == "syncImportExchangeRates" || section == "all") {
           await context.dispatch('syncImportExchangeRates', parameter);
@@ -880,6 +883,80 @@ const dataModule = {
     },
     async syncBuildTokens(context, parameter) {
       logInfo("dataModule", "actions.syncBuildTokens: " + JSON.stringify(parameter));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
+      const preERC721s = store.getters['config/settings'].preERC721s;
+      const accounts = context.state.accounts[parameter.chainId] || {};
+      const txs = context.state.txs[parameter.chainId] || {};
+      for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
+        console.log("actions.syncBuildTokens: " + accountIndex + " " + account);
+        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
+        if (!context.state.sync.halt) {
+          const missingTokensMap = {};
+          for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            for (const [index, txHash] of Object.keys(txHashes).entries()) {
+              const txData = txs && txs[txHash] || null;
+              if (txData != null) {
+                const events = getEvents(account, accounts, preERC721s, txData);
+                // console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
+                const results = parseTx(parameter.chainId, account, accounts, context.state.functionSelectors, preERC721s, txData);
+                console.log(blockNumber + " " + txHash + ": " + JSON.stringify(results));
+                for (const [eventIndex, eventItem] of events.myEvents.entries()) {
+                  if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
+                    const tokenContract = accounts[eventItem.contract] || {};
+                    console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
+                    console.log("  tokenContract.assets: " + JSON.stringify(tokenContract.assets));
+                    if (!(eventItem.tokenId in tokenContract.assets)) {
+                      if (!(eventItem.contract in missingTokensMap)) {
+                        missingTokensMap[eventItem.contract] = {};
+                      }
+                      if (!(eventItem.tokenId in missingTokensMap[eventItem.contract])) {
+                        missingTokensMap[eventItem.contract][eventItem.tokenId] = true;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          let totalItems = 0;
+          const missingTokensList = [];
+          for (const [tokenContract, tokenIds] of Object.entries(missingTokensMap)) {
+            totalItems += Object.keys(tokenIds).length;
+            for (let tokenId of Object.keys(tokenIds)) {
+              missingTokensList.push({ tokenContract, tokenId });
+            }
+          }
+          console.log("missingTokensList: " + JSON.stringify(missingTokensList));
+          context.commit('setSyncSection', { section: 'Build Tokens', total: missingTokensList.length });
+          const GETTOKENINFOBATCHSIZE = 50;
+          const info = {};
+          const DELAYINMILLIS = 2000;
+          for (let i = 0; i < missingTokensList.length && !context.state.sync.halt; i += GETTOKENINFOBATCHSIZE) {
+            const batch = missingTokensList.slice(i, parseInt(i) + GETTOKENINFOBATCHSIZE);
+            let continuation = null;
+            do {
+              let url = "https://api.reservoir.tools/tokens/v5?" + batch.map(e => 'tokens=' + e.tokenContract + ':' + e.tokenId).join("&");
+              url = url + (continuation != null ? "&continuation=" + continuation : '');
+              url = url + "&limit=50";
+              console.log(url);
+              const data = await fetch(url).then(response => response.json());
+              context.commit('setSyncCompleted', parseInt(i) + batch.length);
+              continuation = data.continuation;
+              if (data.tokens) {
+                for (let record of data.tokens) {
+                  context.commit('addAccountToken', record.token);
+                }
+              }
+              await delay(DELAYINMILLIS);
+            } while (continuation != null);
+          }
+        }
+      }
+    },
+    async syncBuildTokenEvents(context, parameter) {
+      logInfo("dataModule", "actions.syncBuildTokenEvents: " + JSON.stringify(parameter));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       const preERC721s = store.getters['config/settings'].preERC721s;
