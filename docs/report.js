@@ -122,7 +122,7 @@ const Report = {
             <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myTransactionsFilter == null ? 'All transactions' : (settings.myTransactionsFilter == 'mine' ? 'My transactions' : 'Other transactions')" no-caret>
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myTransactionsFilter == null ? 'All transactions' : (settings.myTransactionsFilter == 'mine' ? 'My transactions' : 'Other transactions')">
               <template #button-content>
                 <span v-if="settings.myTransactionsFilter == null">
                   <b-iconstack font-scale="1">
@@ -173,7 +173,7 @@ const Report = {
             </b-dropdown>
           </div>
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'" no-caret>
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'">
               <template #button-content>
                 <span v-if="settings.junkFilter == 'excludejunk'">
                   <b-iconstack font-scale="1">
@@ -386,6 +386,7 @@ const Report = {
           </template>
           <template #cell(info)="data">
             <font size="-1">
+              <b-badge v-if="data.item.junk" pill variant="warning" v-b-popover.hover="'Contract marked as junk'">junk</b-badge>
               <b-badge v-if="data.item.info.type" pill variant="info">{{ data.item.info.type }}</b-badge>
               <b-badge v-else pill variant="warning">???</b-badge>
               <b-badge v-if="data.item.info.action" pill variant="primary">{{ data.item.info.action }}</b-badge>
@@ -935,7 +936,13 @@ const Report = {
               include = false;
             }
           }
-
+          if (include && this.settings.junkFilter) {
+            if (this.settings.junkFilter == 'junk' && !transaction.junk) {
+              include = false;
+            } else if (this.settings.junkFilter == 'excludejunk' && transaction.junk) {
+              include = false;
+            }
+          }
           if (include) {
             results.push({
               chainId: transaction.chainId,
@@ -954,6 +961,7 @@ const Report = {
               expectedBalance: transaction.expectedBalance,
               diff: transaction.diff,
               myEvents: transaction.myEvents,
+              junk: transaction.junk,
             });
           }
         }
@@ -1369,6 +1377,19 @@ const reportModule = {
       const accumulatedData = {};
       const transactions = [];
       const tokens = {};
+      const junkAccountsMap = {};
+      for (const [chainId, accounts] of Object.entries(allAccounts)) {
+        for (const [account, accountData] of Object.entries(accounts)) {
+          const accountsInfo = store.getters['data/accountsInfo'][chainId][account];
+          if (accountsInfo.junk) {
+            if (!(account in junkAccountsMap)) {
+              junkAccountsMap[account] = true;
+            }
+          }
+        }
+      }
+      console.log("junkAccountsMap: " + JSON.stringify(junkAccountsMap));
+
       for (const [chainId, accounts] of Object.entries(allAccounts)) {
         const txs = allTxs[chainId] || {};
         for (const [account, accountData] of Object.entries(accounts)) {
@@ -1454,6 +1475,10 @@ const reportModule = {
                     }
                   }
                 }
+                let junk = false;
+                if (tx.tx.from in junkAccountsMap || (tx.tx.to != null && tx.tx.to in junkAccountsMap)) {
+                  junk = true;
+                }
                 transactions.push({
                   chainId,
                   txHash: tx.tx.hash,
@@ -1474,6 +1499,7 @@ const reportModule = {
                   expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
                   diff: isLastTxInBlock ? diff.toString() : null,
                   myEvents: results.myEvents,
+                  junk,
                 });
               }
               // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);

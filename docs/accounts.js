@@ -16,7 +16,7 @@ const Accounts = {
           </div>
           -->
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myAccountsFilter == null ? 'All accounts' : (settings.myAccountsFilter == 'mine' ? 'My accounts' : 'Other accounts')" no-caret>
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myAccountsFilter == null ? 'All accounts' : (settings.myAccountsFilter == 'mine' ? 'My accounts' : 'Other accounts')">
               <template #button-content>
                 <span v-if="settings.myAccountsFilter == null">
                   <b-iconstack font-scale="1">
@@ -72,7 +72,7 @@ const Accounts = {
           </div>
           -->
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.junkFilter == 'excludejunk' ? 'Junk excluded' : (settings.junkFilter == null ? 'Junk included' : 'Junk')" no-caret>
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.junkFilter == 'excludejunk' ? 'Junk excluded' : (settings.junkFilter == null ? 'Junk included' : 'Junk')">
               <template #button-content>
                 <span v-if="settings.junkFilter == 'excludejunk'">
                   <b-iconstack font-scale="1">
@@ -277,7 +277,7 @@ const Accounts = {
                     <b-form-checkbox size="sm" :checked="data.item.junk ? 1 : 0" value="1" @change="toggleAccountInfoField(data.item.chainId, data.item.account, 'junk')" v-b-popover.hover="'Junk?'">Junk</b-form-checkbox>
                   </span>
                   <span v-if="!settings.editAccounts">
-                    <b-badge v-if="data.item.junk" variant="primary" v-b-popover.hover="'Will be excluded as junk'">Junk</b-badge>
+                    <b-badge v-if="data.item.junk" pill variant="warning" v-b-popover.hover="'Account and transactions will be marked as junk for filtering'">junk</b-badge>
                   </span>
                 </div>
                 <div class="m-0 pt-1 pr-1">
