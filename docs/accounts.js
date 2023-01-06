@@ -13,8 +13,53 @@ const Accounts = {
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.myAccountFilter" @change="saveSettings" :options="myAccountFilterOptions" v-b-popover.hover.top="'My accounts filter'"></b-form-select>
           </div>
+          <!--
           <div class="mt-0 pr-0" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.junkFilter" @change="saveSettings" :options="junkFilters" v-b-popover.hover.top="'Junk accounts filter'"></b-form-select>
+          </div>
+          -->
+          <div class="mt-0 pr-1">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'">
+              <template #button-content>
+                <span v-if="settings.junkFilter == 'excludejunk'">
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                    <b-icon stacked icon="slash-circle" variant="danger"></b-icon>
+                  </b-iconstack>
+                </span>
+                <span v-else-if="settings.junkFilter != 'junk'">
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                    <b-icon stacked icon="plus" variant="dark" scale="1.25"></b-icon>
+                  </b-iconstack>
+                </span>
+                <span v-else>
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                  </b-iconstack>
+                </span>
+              </template>
+              <b-dropdown-item href="#" @click="settings.junkFilter = 'excludejunk'; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                  <b-icon stacked icon="slash-circle" variant="danger"></b-icon>
+                </b-iconstack>
+                Exclude Junk
+              </b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.junkFilter = null; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                  <b-icon stacked icon="plus" variant="dark" scale="1.25"></b-icon>
+                </b-iconstack>
+                Include Junk
+              </b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.junkFilter = 'junk'; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                </b-iconstack>
+                Junk
+              </b-dropdown-item>
+            </b-dropdown>
           </div>
           <!--
           <div class="mt-0 pr-1">
