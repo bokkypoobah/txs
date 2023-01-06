@@ -12,21 +12,13 @@ const Accounts = {
           </div>
           <!--
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
-            <b-form-select size="sm" v-model="settings.myAccountFilter" @change="saveSettings" :options="myAccountFilterOptions" v-b-popover.hover.top="'My accounts filter'"></b-form-select>
+            <b-form-select size="sm" v-model="settings.myAccountsFilter" @change="saveSettings" :options="myAccountsFilterOptions" v-b-popover.hover.top="'My accounts filter'"></b-form-select>
           </div>
           -->
-          <!--
-          myAccountFilterOptions: [
-            { value: null, text: 'All Accounts' },
-            { value: 'mine', text: 'My Accounts' },
-            { value: 'notmine', text: 'Not My Accounts' },
-          ],
-          -->
-
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myAccountFilter == null ? 'All accounts' : (settings.myAccountFilter == 'mine' ? 'My accounts' : 'Other accounts')">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myAccountsFilter == null ? 'All accounts' : (settings.myAccountsFilter == 'mine' ? 'My accounts' : 'Other accounts')" no-caret>
               <template #button-content>
-                <span v-if="settings.myAccountFilter == null">
+                <span v-if="settings.myAccountsFilter == null">
                   <b-iconstack font-scale="1">
                     <b-icon stacked icon="person-fill" variant="dark" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
                     <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
@@ -34,7 +26,7 @@ const Accounts = {
                     <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
                   </b-iconstack>
                 </span>
-                <span v-else-if="settings.myAccountFilter == 'mine'">
+                <span v-else-if="settings.myAccountsFilter == 'mine'">
                   <b-iconstack font-scale="1">
                     <b-icon stacked icon="person-fill" variant="dark" scale="0.75"></b-icon>
                   </b-iconstack>
@@ -48,7 +40,7 @@ const Accounts = {
                   </b-iconstack>
                 </span>
               </template>
-              <b-dropdown-item href="#" @click="settings.myAccountFilter = null; saveSettings()">
+              <b-dropdown-item href="#" @click="settings.myAccountsFilter = null; saveSettings()">
                 <b-iconstack font-scale="1">
                   <b-icon stacked icon="person-fill" variant="dark" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
@@ -57,13 +49,13 @@ const Accounts = {
                 </b-iconstack>
                 All Accounts
               </b-dropdown-item>
-              <b-dropdown-item href="#" @click="settings.myAccountFilter = 'mine'; saveSettings()">
+              <b-dropdown-item href="#" @click="settings.myAccountsFilter = 'mine'; saveSettings()">
                 <b-iconstack font-scale="1">
                   <b-icon stacked icon="person-fill" variant="dark" scale="0.75"></b-icon>
                 </b-iconstack>
                 My Accounts
               </b-dropdown-item>
-              <b-dropdown-item href="#" @click="settings.myAccountFilter = 'notmine'; saveSettings()">
+              <b-dropdown-item href="#" @click="settings.myAccountsFilter = 'notmine'; saveSettings()">
                 <b-iconstack font-scale="1">
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
@@ -74,14 +66,13 @@ const Accounts = {
               </b-dropdown-item>
             </b-dropdown>
           </div>
-
           <!--
           <div class="mt-0 pr-0" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.junkFilter" @change="saveSettings" :options="junkFilters" v-b-popover.hover.top="'Junk accounts filter'"></b-form-select>
           </div>
           -->
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.junkFilter == 'excludejunk' ? 'Junk excluded' : (settings.junkFilter == null ? 'Junk included' : 'Junk')">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.junkFilter == 'excludejunk' ? 'Junk excluded' : (settings.junkFilter == null ? 'Junk included' : 'Junk')" no-caret>
               <template #button-content>
                 <span v-if="settings.junkFilter == 'excludejunk'">
                   <b-iconstack font-scale="1">
@@ -385,7 +376,7 @@ const Accounts = {
       settings: {
         filter: null,
         accountTypeFilter: null,
-        myAccountFilter: null,
+        myAccountsFilter: null,
         junkFilter: 'excludejunk',
         showAdditionalFilters: false,
         editAccounts: false,
@@ -394,7 +385,7 @@ const Accounts = {
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
-        version: 4,
+        version: 5,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -419,7 +410,7 @@ const Accounts = {
         { value: 'nftexchange', text: 'NFT Exchange' },
         { value: 'unknown', text: '(unknown)' },
       ],
-      myAccountFilterOptions: [
+      myAccountsFilterOptions: [
         { value: null, text: 'All Accounts' },
         { value: 'mine', text: 'My Accounts' },
         { value: 'notmine', text: 'Not My Accounts' },
@@ -520,9 +511,9 @@ const Accounts = {
             (accountInfo.group && accountInfo.group.toLowerCase().includes(filterLower)) ||
             (accountInfo.notes && accountInfo.notes.toLowerCase().includes(filterLower)) ||
             (ensName != null && ensName.toLowerCase().includes(filterLower));
-          if (include && this.settings.myAccountFilter != null) {
-            if (this.settings.myAccountFilter == 'mine' && accountInfo.mine) {
-            } else if (this.settings.myAccountFilter == 'notmine' && !accountInfo.mine) {
+          if (include && this.settings.myAccountsFilter != null) {
+            if (this.settings.myAccountsFilter == 'mine' && accountInfo.mine) {
+            } else if (this.settings.myAccountsFilter == 'notmine' && !accountInfo.mine) {
             } else {
               include = false;
             }
@@ -780,7 +771,7 @@ const Accounts = {
     store.dispatch('data/restoreState');
     if ('accountsSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.accountsSettings);
-      if ('version' in tempSettings && tempSettings.version == 4) {
+      if ('version' in tempSettings && tempSettings.version == 5) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }

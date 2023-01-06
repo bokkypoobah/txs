@@ -146,7 +146,7 @@ const Report = {
           -->
 
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'" no-caret>
               <template #button-content>
                 <span v-if="settings.junkFilter == 'excludejunk'">
                   <b-iconstack font-scale="1">
