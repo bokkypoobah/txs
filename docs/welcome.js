@@ -17,7 +17,7 @@ const Welcome = {
                 <h6>Usage</h6>
                 <ul>
                   <li>
-                    Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></b-button> in the Accounts tab to enter your account(s)
+                    Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button> in the Accounts tab to enter your account(s)
                   </li>
                   <li>
                     Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button> to incrementally:
@@ -45,7 +45,7 @@ const Welcome = {
                   </li>
                   -->
                   <li>
-                    View your transactions in the Reports tab. Click on the Generate Report icon <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-newspaper shift-v="+1" font-scale="1.0"></b-icon-newspaper></b-button> for the results to be displayed.
+                    Click on the Generate Report icon <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-newspaper shift-v="+1" font-scale="1.0"></b-icon-newspaper></b-button> for the results to be displayed.
                   </li>
                   <li>
                     Enter your Etherscan API key in the Config tab to avoid your API data retrieval being throttled to 1 request per 6 seconds
