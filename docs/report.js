@@ -121,7 +121,7 @@ const Report = {
           <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts, or not'"></b-form-select>
           </div>
-          <div class="mt-0 pr-1">
+          <div class="mt-0 pr-1" style="max-width: 14.0rem;">
             <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
@@ -180,7 +180,7 @@ const Report = {
           -->
           <div class="mt-0 flex-grow-1">
           </div>
-          <div class="mt-0 pr-1">
+          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">

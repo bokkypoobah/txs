@@ -11,10 +11,10 @@ const Accounts = {
             <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
           </div>
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
-            <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts and/or not my accounts'"></b-form-select>
+            <b-form-select size="sm" v-model="settings.myAccountFilter" @change="saveSettings" :options="myAccountFilterOptions" v-b-popover.hover.top="'My accounts filter'"></b-form-select>
           </div>
           <div class="mt-0 pr-0" style="max-width: 8.0rem;">
-            <b-form-select size="sm" v-model="settings.junkFilter" @change="saveSettings" :options="junkFilters" v-b-popover.hover.top="'Filter for junk and/or not junk'"></b-form-select>
+            <b-form-select size="sm" v-model="settings.junkFilter" @change="saveSettings" :options="junkFilters" v-b-popover.hover.top="'Junk accounts filter'"></b-form-select>
           </div>
           <!--
           <div class="mt-0 pr-1">
@@ -24,7 +24,7 @@ const Accounts = {
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-1">
-            <b-button size="sm" :pressed.sync="settings.editAccounts" @click="saveSettings" :variant="settings.editAccounts ? 'danger' : 'link'" v-b-popover.hover.top="settings.editAccounts ? 'End editing account attributes' : 'Edit account attributes'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
+            <b-button size="sm" :pressed.sync="settings.editAccounts" @click="saveSettings" :variant="settings.editAccounts ? 'danger' : 'link'" v-b-popover.hover.top="settings.editAccounts ? 'End adding/editing accounts' : 'Add/Edit accounts'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
@@ -278,7 +278,7 @@ const Accounts = {
       settings: {
         filter: null,
         accountTypeFilter: null,
-        accountMineFilter: null,
+        myAccountFilter: null,
         junkFilter: 'excludejunk',
         showAdditionalFilters: false,
         editAccounts: false,
@@ -287,7 +287,7 @@ const Accounts = {
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
-        version: 3,
+        version: 4,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -312,7 +312,7 @@ const Accounts = {
         { value: 'nftexchange', text: 'NFT Exchange' },
         { value: 'unknown', text: '(unknown)' },
       ],
-      accountMineFilters: [
+      myAccountFilterOptions: [
         { value: null, text: 'All Accounts' },
         { value: 'mine', text: 'My Accounts' },
         { value: 'notmine', text: 'Not My Accounts' },
@@ -413,9 +413,9 @@ const Accounts = {
             (accountInfo.group && accountInfo.group.toLowerCase().includes(filterLower)) ||
             (accountInfo.notes && accountInfo.notes.toLowerCase().includes(filterLower)) ||
             (ensName != null && ensName.toLowerCase().includes(filterLower));
-          if (include && this.settings.accountMineFilter != null) {
-            if (this.settings.accountMineFilter == 'mine' && accountInfo.mine) {
-            } else if (this.settings.accountMineFilter == 'notmine' && !accountInfo.mine) {
+          if (include && this.settings.myAccountFilter != null) {
+            if (this.settings.myAccountFilter == 'mine' && accountInfo.mine) {
+            } else if (this.settings.myAccountFilter == 'notmine' && !accountInfo.mine) {
             } else {
               include = false;
             }
@@ -673,7 +673,7 @@ const Accounts = {
     store.dispatch('data/restoreState');
     if ('accountsSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.accountsSettings);
-      if ('version' in tempSettings && tempSettings.version == 3) {
+      if ('version' in tempSettings && tempSettings.version == 4) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
