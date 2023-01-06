@@ -23,9 +23,6 @@ const Accounts = {
           -->
           <div class="mt-0 flex-grow-1">
           </div>
-          <div class="mt-0 pr-0">
-            <b-button size="sm" :pressed.sync="settings.showNewAccounts" @click="saveSettings" variant="link" v-b-popover.hover.top="'Add new accounts'"><span v-if="settings.showNewAccounts"><b-icon-plus-square-fill shift-v="+1" font-scale="1.0"></b-icon-plus-square-fill></span><span v-else><b-icon-plus-square shift-v="+1" font-scale="1.0"></b-icon-plus-square></span></b-button>
-          </div>
           <div class="mt-0 pr-1">
             <b-button size="sm" :pressed.sync="settings.editAccounts" @click="saveSettings" :variant="settings.editAccounts ? 'danger' : 'link'" v-b-popover.hover.top="settings.editAccounts ? 'End editing account attributes' : 'Edit account attributes'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
           </div>
@@ -39,9 +36,11 @@ const Accounts = {
             <b-button size="sm" :disabled="block == null" @click="syncItNew({ sections: ['all'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'DEV BUTTON 1'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
           </div>
           -->
+          <!--
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['syncTransactions'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'DEV BUTTON 2'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
           </div>
+          -->
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="exportAccounts" variant="link" v-b-popover.hover.top="'Export accounts'"><b-icon-file-earmark-spreadsheet shift-v="+1" font-scale="1.2"></b-icon-file-earmark-spreadsheet></b-button>
           </div>
@@ -93,7 +92,7 @@ const Accounts = {
           </div>
         </b-card>
 
-        <b-card v-if="settings.showNewAccounts" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+        <b-card v-if="settings.editAccounts || totalAccounts == 0" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
           <b-card-body class="m-1 p-1">
             <b-form-group label-cols-lg="2" label="New Accounts" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
               <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and are used to request information via your web3 connection, or via Etherscan and Reservoir API calls" class="mx-0 my-1 p-0">
@@ -280,16 +279,15 @@ const Accounts = {
         filter: null,
         accountTypeFilter: null,
         accountMineFilter: null,
-        junkFilter: null,
+        junkFilter: 'excludejunk',
         showAdditionalFilters: false,
-        showNewAccounts: false,
         editAccounts: false,
         newAccounts: null,
         selectedAccounts: {},
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
-        version: 2,
+        version: 3,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -320,9 +318,9 @@ const Accounts = {
         { value: 'notmine', text: 'Not My Accounts' },
       ],
       junkFilters: [
+        { value: 'excludejunk', text: 'Exclude Junk' },
         { value: null, text: 'Include Junk' },
-        { value: 'junk', text: 'Junk Only' },
-        { value: 'notjunk', text: 'Not Junk' },
+        { value: 'junk', text: 'Junk' },
       ],
       sortOptions: [
         { value: 'accountasc', text: '▲ Account' },
@@ -432,7 +430,7 @@ const Accounts = {
           if (include && this.settings.junkFilter) {
             if (this.settings.junkFilter == 'junk' && !accountInfo.junk) {
               include = false;
-            } else if (this.settings.junkFilter == 'notjunk' && accountInfo.junk) {
+            } else if (this.settings.junkFilter == 'excludejunk' && accountInfo.junk) {
               include = false;
             }
           }
@@ -675,7 +673,7 @@ const Accounts = {
     store.dispatch('data/restoreState');
     if ('accountsSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.accountsSettings);
-      if ('version' in tempSettings && tempSettings.version == 2) {
+      if ('version' in tempSettings && tempSettings.version == 3) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
