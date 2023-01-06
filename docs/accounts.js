@@ -7,12 +7,20 @@ const Accounts = {
           <div class="mt-0 pr-1">
             <b-form-input type="text" size="sm" v-model.trim="settings.filter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by address or ENS name fragment'" placeholder="🔍 address / ens name"></b-form-input>
           </div>
-          <div class="mt-0 pr-1">
+          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
           </div>
-          <div class="mt-0 pr-1">
-            <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts, or not'"></b-form-select>
+          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
+            <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts and/or not my accounts'"></b-form-select>
           </div>
+          <div class="mt-0 pr-0" style="max-width: 8.0rem;">
+            <b-form-select size="sm" v-model="settings.junkFilter" @change="saveSettings" :options="junkFilters" v-b-popover.hover.top="'Filter for junk and/or not junk'"></b-form-select>
+          </div>
+          <!--
+          <div class="mt-0 pr-1">
+            <b-button size="sm" :pressed.sync="settings.showAdditionalFilters" @click="saveSettings" variant="link" v-b-popover.hover.top="'Additional filters'"><span v-if="settings.showAdditionalFilters"><b-icon-funnel-fill shift-v="+1" font-scale="1.0"></b-icon-funnel-fill></span><span v-else><b-icon-funnel shift-v="+1" font-scale="1.0"></b-icon-funnel></span></b-button>
+          </div>
+          -->
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-0">
@@ -49,7 +57,7 @@ const Accounts = {
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
-          <div class="mt-0 pr-1">
+          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
@@ -62,6 +70,28 @@ const Accounts = {
             <b-form-select size="sm" v-model="settings.pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
           </div>
         </div>
+
+        <b-card v-if="settings.showAdditionalFilters" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+          <div class="mt-0 pr-1" style="width: 15.0rem;">
+            <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
+              <b-card-body class="m-0 p-0">
+                BLAH
+                <!--
+                <font size="-2">
+                  <b-table small fixed striped sticky-header="200px" :fields="accountsFilterFields" :items="getAllAccounts" head-variant="light">
+                    <template #cell(select)="data">
+                      <b-form-checkbox size="sm" :checked="(settings.filters['accounts'] && settings.filters['accounts'][data.item.account]) ? 1 : 0" value="1" @change="filterChanged('accounts', data.item.account)"></b-form-checkbox>
+                    </template>
+                    <template #cell(account)="data">
+                      {{ ensOrAccount(data.item.account, 20) }}
+                    </template>
+                  </b-table>
+                </font>
+                -->
+              </b-card-body>
+            </b-card>
+          </div>
+        </b-card>
 
         <b-card v-if="settings.showNewAccounts" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
           <b-card-body class="m-1 p-1">
@@ -250,6 +280,8 @@ const Accounts = {
         filter: null,
         accountTypeFilter: null,
         accountMineFilter: null,
+        junkFilter: null,
+        showAdditionalFilters: false,
         showNewAccounts: false,
         editAccounts: false,
         newAccounts: null,
@@ -257,6 +289,7 @@ const Accounts = {
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
+        version: 2,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -282,9 +315,14 @@ const Accounts = {
         { value: 'unknown', text: '(unknown)' },
       ],
       accountMineFilters: [
-        { value: null, text: '(any)' },
-        { value: 'mine', text: 'Mine' },
-        { value: 'notmine', text: 'Not Mine' },
+        { value: null, text: 'All Accounts' },
+        { value: 'mine', text: 'My Accounts' },
+        { value: 'notmine', text: 'Not My Accounts' },
+      ],
+      junkFilters: [
+        { value: null, text: 'Include Junk' },
+        { value: 'junk', text: 'Junk Only' },
+        { value: 'notjunk', text: 'Not Junk' },
       ],
       sortOptions: [
         { value: 'accountasc', text: '▲ Account' },
@@ -388,6 +426,13 @@ const Accounts = {
             if (this.settings.accountTypeFilter == 'unknown' && accountInfo.type == null) {
             } else if (this.settings.accountTypeFilter == accountInfo.type) {
             } else {
+              include = false;
+            }
+          }
+          if (include && this.settings.junkFilter) {
+            if (this.settings.junkFilter == 'junk' && !accountInfo.junk) {
+              include = false;
+            } else if (this.settings.junkFilter == 'notjunk' && accountInfo.junk) {
               include = false;
             }
           }
@@ -629,8 +674,11 @@ const Accounts = {
     logDebug("Accounts", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('data/restoreState');
     if ('accountsSettings' in localStorage) {
-      this.settings = JSON.parse(localStorage.accountsSettings);
-      this.settings.currentPage = 1;
+      const tempSettings = JSON.parse(localStorage.accountsSettings);
+      if ('version' in tempSettings && tempSettings.version == 2) {
+        this.settings = tempSettings;
+        this.settings.currentPage = 1;
+      }
     }
     this.reschedule = true;
     logDebug("Accounts", "Calling timeoutCallback()");
