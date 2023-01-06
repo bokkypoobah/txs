@@ -154,7 +154,7 @@ const Report = {
                     <b-icon stacked icon="slash-circle" variant="danger"></b-icon>
                   </b-iconstack>
                 </span>
-                <span v-else-if="settings.junkFilter != 'junk'">
+                <span v-else-if="settings.junkFilter == null">
                   <b-iconstack font-scale="1">
                     <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
                     <b-icon stacked icon="plus" variant="dark" scale="1.25"></b-icon>
