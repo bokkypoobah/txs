@@ -10,9 +10,71 @@ const Accounts = {
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
           </div>
+          <!--
           <div class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.myAccountFilter" @change="saveSettings" :options="myAccountFilterOptions" v-b-popover.hover.top="'My accounts filter'"></b-form-select>
           </div>
+          -->
+          <!--
+          myAccountFilterOptions: [
+            { value: null, text: 'All Accounts' },
+            { value: 'mine', text: 'My Accounts' },
+            { value: 'notmine', text: 'Not My Accounts' },
+          ],
+          -->
+
+          <div class="mt-0 pr-1">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="'My accounts filter'">
+              <template #button-content>
+                <span v-if="settings.myAccountFilter == null">
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="person-fill" variant="dark" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
+                  </b-iconstack>
+                </span>
+                <span v-else-if="settings.myAccountFilter == 'mine'">
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="person-fill" variant="dark" scale="0.75"></b-icon>
+                  </b-iconstack>
+                </span>
+                <span v-else>
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
+                  </b-iconstack>
+                </span>
+              </template>
+              <b-dropdown-item href="#" @click="settings.myAccountFilter = null; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="person-fill" variant="dark" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
+                </b-iconstack>
+                All Accounts
+              </b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.myAccountFilter = 'mine'; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="person-fill" variant="dark" scale="0.75"></b-icon>
+                </b-iconstack>
+                Mine
+              </b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.myAccountFilter = 'notmine'; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
+                </b-iconstack>
+                Not Mine
+              </b-dropdown-item>
+            </b-dropdown>
+          </div>
+
           <!--
           <div class="mt-0 pr-0" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.junkFilter" @change="saveSettings" :options="junkFilters" v-b-popover.hover.top="'Junk accounts filter'"></b-form-select>

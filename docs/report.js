@@ -121,6 +121,69 @@ const Report = {
           <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts, or not'"></b-form-select>
           </div>
+
+          <div class="mt-0 pr-1">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="'My transactions'">
+              <template #button-content>
+                <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
+              </template>
+              <b-dropdown-item href="#" @click="toggleSelectedTransactions(pagedFilteredSortedTransactions)">Toggle selection for all transactions on this page</b-dropdown-item>
+              <b-dropdown-item href="#" @click="toggleSelectedTransactions(filteredSortedTransactions)">Toggle selection for all transactions on all pages</b-dropdown-item>
+              <b-dropdown-item href="#" @click="clearSelectedTransactions()">Clear selection</b-dropdown-item>
+            </b-dropdown>
+          </div>
+          <!--
+          myAccountFilterOptions: [
+            { value: null, text: 'All Accounts' },
+            { value: 'mine', text: 'My Accounts' },
+            { value: 'notmine', text: 'Not My Accounts' },
+          ],
+          -->
+
+          <div class="mt-0 pr-1">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'">
+              <template #button-content>
+                <span v-if="settings.junkFilter == 'excludejunk'">
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                    <b-icon stacked icon="slash-circle" variant="danger"></b-icon>
+                  </b-iconstack>
+                </span>
+                <span v-else-if="settings.junkFilter != 'junk'">
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                    <b-icon stacked icon="plus" variant="dark" scale="1.25"></b-icon>
+                  </b-iconstack>
+                </span>
+                <span v-else>
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                  </b-iconstack>
+                </span>
+              </template>
+              <b-dropdown-item href="#" @click="settings.junkFilter = 'excludejunk'; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                  <b-icon stacked icon="slash-circle" variant="danger"></b-icon>
+                </b-iconstack>
+                Exclude Junk
+              </b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.junkFilter = null; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                  <b-icon stacked icon="plus" variant="dark" scale="1.25"></b-icon>
+                </b-iconstack>
+                Include Junk
+              </b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.junkFilter = 'junk'; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                </b-iconstack>
+                Junk
+              </b-dropdown-item>
+            </b-dropdown>
+          </div>
+
           <div class="mt-0 pr-1" style="max-width: 14.0rem;">
             <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
           </div>
@@ -580,6 +643,7 @@ const Report = {
         accountFilter: null,
         accountTypeFilter: null,
         accountMineFilter: null,
+        junkFilter: null,
         period: null,
         selectedTransactions: {},
         currentPage: 1,
@@ -587,7 +651,7 @@ const Report = {
         sortOption: 'timestampdsc',
         showAdditionalFilters: false,
         filters: {},
-        version: 3,
+        version: 4,
       },
       modalAddress: null,
       modalTx: {
@@ -992,6 +1056,7 @@ const Report = {
       return this.report && this.report.tokens && this.report.tokens[chainId] && this.report.tokens[chainId][tokenContract] && this.report.tokens[chainId][tokenContract].ids[tokenId]  && this.report.tokens[chainId][tokenContract].ids[tokenId].image || null;
     },
     saveSettings() {
+      console.log("saveSettings: " + JSON.stringify(this.settings));
       localStorage.reportSettings = JSON.stringify(this.settings);
     },
     generateReport(contractOrTxOrBlockRange) {
@@ -1190,7 +1255,7 @@ const Report = {
     store.dispatch('report/restoreState');
     if ('reportSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.reportSettings);
-      if ('version' in tempSettings && tempSettings.version == 3) {
+      if ('version' in tempSettings && tempSettings.version == 4) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
