@@ -121,7 +121,11 @@ const Report = {
           <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts, or not'"></b-form-select>
           </div>
+          <div class="mt-0 pr-1" style="max-width: 14.0rem;">
+            <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
+          </div>
 
+          <!--
           <div class="mt-0 pr-1">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'My transactions'">
               <template #button-content>
@@ -132,6 +136,7 @@ const Report = {
               <b-dropdown-item href="#" @click="clearSelectedTransactions()">Clear selection</b-dropdown-item>
             </b-dropdown>
           </div>
+          -->
           <!--
           myAccountFilterOptions: [
             { value: null, text: 'All Accounts' },
@@ -184,9 +189,6 @@ const Report = {
             </b-dropdown>
           </div>
 
-          <div class="mt-0 pr-1" style="max-width: 14.0rem;">
-            <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
-          </div>
           <div class="mt-0 pr-1">
             <b-button size="sm" :pressed.sync="settings.showAdditionalFilters" @click="saveSettings" variant="link" v-b-popover.hover.top="'Additional filters'"><span v-if="settings.showAdditionalFilters"><b-icon-funnel-fill shift-v="+1" font-scale="1.0"></b-icon-funnel-fill></span><span v-else><b-icon-funnel shift-v="+1" font-scale="1.0"></b-icon-funnel></span></b-button>
           </div>

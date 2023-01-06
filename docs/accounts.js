@@ -24,7 +24,7 @@ const Accounts = {
           -->
 
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="'My accounts filter'">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myAccountFilter == null ? 'All accounts' : (settings.myAccountFilter == 'mine' ? 'My accounts' : 'Other accounts')">
               <template #button-content>
                 <span v-if="settings.myAccountFilter == null">
                   <b-iconstack font-scale="1">
@@ -61,7 +61,7 @@ const Accounts = {
                 <b-iconstack font-scale="1">
                   <b-icon stacked icon="person-fill" variant="dark" scale="0.75"></b-icon>
                 </b-iconstack>
-                Mine
+                My Accounts
               </b-dropdown-item>
               <b-dropdown-item href="#" @click="settings.myAccountFilter = 'notmine'; saveSettings()">
                 <b-iconstack font-scale="1">
@@ -70,7 +70,7 @@ const Accounts = {
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
                 </b-iconstack>
-                Not Mine
+                Other Accounts
               </b-dropdown-item>
             </b-dropdown>
           </div>
@@ -81,7 +81,7 @@ const Accounts = {
           </div>
           -->
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.junkFilter == 'excludejunk' ? 'Junk excluded' : (settings.junkFilter == null ? 'Junk included' : 'Junk')">
               <template #button-content>
                 <span v-if="settings.junkFilter == 'excludejunk'">
                   <b-iconstack font-scale="1">
