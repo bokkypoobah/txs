@@ -118,33 +118,60 @@ const Report = {
           <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
           </div>
-          <div v-if="false" class="mt-0 pr-1">
-            <b-form-select size="sm" v-model="settings.accountMineFilter" @change="saveSettings" :options="accountMineFilters" v-b-popover.hover.top="'Filter for my accounts, or not'"></b-form-select>
-          </div>
           <div class="mt-0 pr-1" style="max-width: 14.0rem;">
             <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
           </div>
-
-          <!--
           <div class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="'My transactions'">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myTransactionsFilter == null ? 'All transactions' : (settings.myTransactionsFilter == 'mine' ? 'My transactions' : 'Other transactions')" no-caret>
               <template #button-content>
-                <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
+                <span v-if="settings.myTransactionsFilter == null">
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="person-fill" variant="dark" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
+                  </b-iconstack>
+                </span>
+                <span v-else-if="settings.myTransactionsFilter == 'mine'">
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="person-fill" variant="dark" scale="0.75"></b-icon>
+                  </b-iconstack>
+                </span>
+                <span v-else>
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
+                    <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
+                  </b-iconstack>
+                </span>
               </template>
-              <b-dropdown-item href="#" @click="toggleSelectedTransactions(pagedFilteredSortedTransactions)">Toggle selection for all transactions on this page</b-dropdown-item>
-              <b-dropdown-item href="#" @click="toggleSelectedTransactions(filteredSortedTransactions)">Toggle selection for all transactions on all pages</b-dropdown-item>
-              <b-dropdown-item href="#" @click="clearSelectedTransactions()">Clear selection</b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.myTransactionsFilter = null; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="person-fill" variant="dark" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
+                </b-iconstack>
+                All Transactions
+              </b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.myTransactionsFilter = 'mine'; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="person-fill" variant="dark" scale="0.75"></b-icon>
+                </b-iconstack>
+                My Transactions
+              </b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.myTransactionsFilter = 'notmine'; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
+                  <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
+                </b-iconstack>
+                Other Transactions
+              </b-dropdown-item>
             </b-dropdown>
           </div>
-          -->
-          <!--
-          myAccountFilterOptions: [
-            { value: null, text: 'All Accounts' },
-            { value: 'mine', text: 'My Accounts' },
-            { value: 'notmine', text: 'Not My Accounts' },
-          ],
-          -->
-
           <div class="mt-0 pr-1">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'" no-caret>
               <template #button-content>
@@ -188,7 +215,6 @@ const Report = {
               </b-dropdown-item>
             </b-dropdown>
           </div>
-
           <div class="mt-0 pr-1">
             <b-button size="sm" :pressed.sync="settings.showAdditionalFilters" @click="saveSettings" variant="link" v-b-popover.hover.top="'Additional filters'"><span v-if="settings.showAdditionalFilters"><b-icon-funnel-fill shift-v="+1" font-scale="1.0"></b-icon-funnel-fill></span><span v-else><b-icon-funnel shift-v="+1" font-scale="1.0"></b-icon-funnel></span></b-button>
           </div>
@@ -644,7 +670,7 @@ const Report = {
         txhashFilter: null,
         accountFilter: null,
         accountTypeFilter: null,
-        accountMineFilter: null,
+        myTransactionsFilter: null,
         junkFilter: null,
         period: null,
         selectedTransactions: {},
@@ -692,7 +718,7 @@ const Report = {
         { value: 'erc20', text: 'ERC-20' },
         { value: 'unknown', text: '(unknown)' },
       ],
-      accountMineFilters: [
+      myTransactionsFilterOptions: [
         { value: null, text: '(any)' },
         { value: 'mine', text: 'Mine' },
         { value: 'notmine', text: 'Not Mine' },
