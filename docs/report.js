@@ -1019,6 +1019,16 @@ const Report = {
         return ('' + a.account).localeCompare(b.account);
       });
       return results;
+      // const results = [];
+      // if (this.report.accountsMap) {
+      //   for (const [k, v] of Object.entries(this.report.accountsMap)) {
+      //     results.push({ account: k, count: v });
+      //   }
+      //   results.sort((a, b) => {
+      //     return ('' + a.account).localeCompare(b.account);
+      //   });
+      // }
+      // return results;
     },
     getAllTypes() {
       const typesMap = {};
@@ -1034,6 +1044,16 @@ const Report = {
         return ('' + a.type).localeCompare(b.type);
       });
       return results;
+      // const results = [];
+      // if (this.report.typesMap) {
+      //   for (const [k, v] of Object.entries(this.report.typesMap)) {
+      //     results.push({ type: k, count: v });
+      //   }
+      //   results.sort((a, b) => {
+      //     return ('' + a.type).localeCompare(b.type);
+      //   });
+      // }
+      // return results;
     },
     getAllActions() {
       const actionsMap = {};
@@ -1049,6 +1069,16 @@ const Report = {
         return ('' + a.action).localeCompare(b.action);
       });
       return results;
+      // const results = [];
+      // if (this.report.actionsMap) {
+      //   for (const [k, v] of Object.entries(this.report.actionsMap)) {
+      //     results.push({ action: k, count: v });
+      //   }
+      //   results.sort((a, b) => {
+      //     return ('' + a.action).localeCompare(b.action);
+      //   });
+      // }
+      // return results;
     },
     getAllFunctionCalls() {
       const functionCallsMap = {};
@@ -1063,6 +1093,16 @@ const Report = {
         return ('' + a.functionCall).localeCompare(b.functionCall);
       });
       return results;
+      // const results = [];
+      // if (this.report.functionCallsMap) {
+      //   for (const [k, v] of Object.entries(this.report.functionCallsMap)) {
+      //     results.push({ functionCall: k, count: v });
+      //   }
+      //   results.sort((a, b) => {
+      //     return ('' + a.functionCall).localeCompare(b.functionCall);
+      //   });
+      // }
+      // return results;
     },
   },
   methods: {
