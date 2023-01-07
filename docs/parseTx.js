@@ -479,7 +479,7 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
   const gasUsed = ethers.BigNumber.from(txData.txReceipt.gasUsed);
   const txFee = gasUsed.mul(txData.txReceipt.effectiveGasPrice);
   results.gasUsed = gasUsed;
-  results.txFee = txData.tx.from == account ? txFee : 0;
+  results.txFee = txData.tx.from == account ? txFee.toString() : 0;
   results.ethReceived = 0;
   results.ethPaid = 0;
   const events = getEvents(account, accounts, preERC721s, txData);
@@ -876,13 +876,13 @@ function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txDa
 
   results.myEvents = [];
   if ((txData.tx.from == account || txData.tx.to == account) && msgValue > 0) {
-    const record = { type: "msgvalue", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
+    const record = { type: "sent", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
     results.myEvents.push(record);
   }
   results.myEvents = [...results.myEvents, ...events.myEvents];
   for (const [eventIndex, event] of events.receivedInternalEvents.entries()) {
     console.log(eventIndex + " => " + JSON.stringify(event));
-    const record = { type: "internal", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
+    const record = { type: "received", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
     results.myEvents.push(record);
   }
 
