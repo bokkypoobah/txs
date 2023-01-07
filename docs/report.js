@@ -943,6 +943,13 @@ const Report = {
               include = false;
             }
           }
+          if (include && this.settings.myTransactionsFilter) {
+            if (this.settings.myTransactionsFilter == 'mine' && transaction.account != transaction.from) {
+              include = false;
+            } else if (this.settings.myTransactionsFilter == 'notmine' && transaction.account == transaction.from) {
+              include = false;
+            }
+          }
           if (include) {
             results.push({
               chainId: transaction.chainId,

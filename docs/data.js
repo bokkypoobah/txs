@@ -245,11 +245,9 @@ const dataModule = {
           isFlagged: token.isFlagged,
           events: {},
         });
-        // console.log("Added token: " + contract + ":" + token.tokenId + " => " + JSON.stringify(state.accounts[chainId][contract].assets[token.tokenId]));
       }
     },
     addAccountERC20Transfers(state, transfer) {
-      // console.log("addAccountERC20Transfers: " + JSON.stringify(transfer));
       const chainId = store.getters['connection/chainId'];
       const contract = ethers.utils.getAddress(transfer.contract);
       const contractData = state.accounts[chainId][contract];
@@ -260,14 +258,11 @@ const dataModule = {
         const tempTransfer = { ...transfer, txHash: undefined, logIndex: undefined };
         Vue.set(state.accounts[chainId][contract].erc20transfers[transfer.txHash], transfer.logIndex, tempTransfer);
       }
-      // console.log("Added " + transfer.txHash + " " + JSON.stringify(state.accounts[chainId][contract].erc20transfers[transfer.txHash]));
     },
     addAccountTokenEvent(state, event) {
-      // console.log("addAccountTokenEvent: " + JSON.stringify(event));
       const chainId = store.getters['connection/chainId'];
       const contractData = state.accounts[chainId][event.contract];
       const asset = contractData.assets[event.tokenId];
-      // console.log("  asset: " + JSON.stringify(asset));
       if (!(event.txHash in asset.events)) {
         Vue.set(state.accounts[chainId][event.contract].assets[event.tokenId].events, event.txHash, {});
       }
@@ -279,7 +274,6 @@ const dataModule = {
           to: event.to,
           value: event.value && event.value || null,
         });
-        // console.log("Added event: " + JSON.stringify(state.accounts[chainId][event.contract].assets[event.tokenId], null, 2));
       }
     },
     addBlock(state, info) {
@@ -712,7 +706,6 @@ const dataModule = {
             }
           }
           let txHashList = Object.keys(txHashesToProcess);
-          // console.log("txHashList: " + JSON.stringify(txHashList));
           context.commit('setSyncSection', { section: 'Tx & TxReceipts', total: txHashList.length });
           let processed = 1;
 
@@ -870,11 +863,9 @@ const dataModule = {
             context.commit('setSyncCompleted', parseInt(accountItemIndex) + 1);
             console.log((parseInt(accountItemIndex) + 1) + "/" + missingAccounts.length + " Processing " + accountItem);
             const accountInfo = await getAccountInfo(accountItem, provider);
-            console.log(JSON.stringify(accountInfo, null, 2));
             if (accountInfo.account) {
               context.commit('addNewAccountInfo', accountInfo);
               context.commit('addNewAccount', accountInfo);
-              console.log("Added " + accountItem + " " + accountInfo.type + " " + accountInfo.name);
             }
             const names = await ensReverseRecordsContract.getNames([accountItem]);
             const name = names.length == 1 ? names[0] : accountItem;
@@ -910,14 +901,11 @@ const dataModule = {
               const txData = txs && txs[txHash] || null;
               if (txData != null) {
                 const events = getEvents(account, accounts, preERC721s, txData);
-                // console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
                 const results = parseTx(parameter.chainId, account, accounts, context.state.functionSelectors, preERC721s, txData);
-                console.log(blockNumber + " " + txHash + ": " + JSON.stringify(results));
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
                     const tokenContract = accounts[eventItem.contract] || {};
                     console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
-                    console.log("  tokenContract.assets: " + JSON.stringify(tokenContract.assets));
                     if (!(eventItem.tokenId in tokenContract.assets)) {
                       if (!(eventItem.contract in missingTokensMap)) {
                         missingTokensMap[eventItem.contract] = {};
@@ -939,7 +927,6 @@ const dataModule = {
               missingTokensList.push({ tokenContract, tokenId });
             }
           }
-          console.log("missingTokensList: " + JSON.stringify(missingTokensList));
           context.commit('setSyncSection', { section: 'Build Tokens', total: missingTokensList.length });
           const GETTOKENINFOBATCHSIZE = 50;
           const info = {};
@@ -984,14 +971,11 @@ const dataModule = {
               const txData = txs && txs[txHash] || null;
               if (txData != null) {
                 const events = getEvents(account, accounts, preERC721s, txData);
-                // console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
                 const results = parseTx(parameter.chainId, account, accounts, context.state.functionSelectors, preERC721s, txData);
-                console.log(blockNumber + " " + txHash + ": " + JSON.stringify(results));
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
                     const tokenContract = accounts[eventItem.contract] || {};
                     console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
-                    console.log("  tokenContract.assets: " + JSON.stringify(tokenContract.assets));
                     if (!(eventItem.tokenId in tokenContract.assets)) {
                       if (!(eventItem.contract in missingTokensMap)) {
                         missingTokensMap[eventItem.contract] = {};
@@ -1013,7 +997,6 @@ const dataModule = {
               missingTokensList.push({ tokenContract, tokenId });
             }
           }
-          console.log("missingTokensList: " + JSON.stringify(missingTokensList));
           context.commit('setSyncSection', { section: 'Build Tokens', total: missingTokensList.length });
           const GETTOKENINFOBATCHSIZE = 50;
           const info = {};
