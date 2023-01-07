@@ -609,7 +609,7 @@ const Report = {
                     </span>
                     <span v-else>
                       <span v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'">
-                        <b-link @click="showModalNFTCollection(event.item.contract);">{{ getNFTCollectionName(data.item.chainId, event.item.contract) }}</b-link>
+                        <b-link @click="showModalNFTCollection(event.item.contract);">{{ getTokenContractName(data.item.chainId, event.item.contract) }}</b-link>
                       </span>
                       <span v-else>
                         <b-link @click="showModalAddress(event.item.contract);">{{ ensOrAccount(event.item.contract, 16) }}</b-link>
@@ -1089,7 +1089,7 @@ const Report = {
     formatNumber(e) {
       return ethers.BigNumber.from(e).toString();
     },
-    getNFTCollectionName(chainId, tokenContract) {
+    getTokenContractName(chainId, tokenContract) {
       return this.report && this.report.tokens && this.report.tokens[chainId] && this.report.tokens[chainId][tokenContract] && this.report.tokens[chainId][tokenContract].name || null;
     },
     getNFTName(chainId, tokenContract, tokenId) {
