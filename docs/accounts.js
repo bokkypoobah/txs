@@ -219,7 +219,7 @@ const Accounts = {
             </b-form-checkbox>
           </template>
           <template #cell(image)="data">
-            <div v-if="data.item.type == 'erc721' || data.item.type == 'erc1155'">
+            <div v-if="data.item.type == 'preerc721' || data.item.type == 'erc721' || data.item.type == 'erc1155'">
               <b-avatar rounded variant="light" size="3.0rem" :src="data.item.collection.image" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
             </div>
             <div v-else-if="data.item.type == 'eoa' && data.item.account != ensOrAccount(data.item.account)">
@@ -347,6 +347,10 @@ const Accounts = {
                 <br />
               </span>
             </b-popover>
+            <span v-if="settings.editAccounts">
+              <br />
+              <b-button size="sm" @click="deleteAccountAndAccountInfo(data.item.account);" variant="link" v-b-popover.hover.top="'Delete account?'"><b-icon-trash shift-v="+1" font-scale="1.2"></b-icon-trash></b-button>
+            </span>
           </template>
           <template #cell(name)="data">
             <span v-if="settings.editAccounts">
@@ -655,6 +659,9 @@ const Accounts = {
     },
     async setAccountInfoField(account, field, value) {
       store.dispatch('data/setAccountInfoField', { account, field, value });
+    },
+    async deleteAccountAndAccountInfo(account) {
+      store.dispatch('data/deleteAccountAndAccountInfo', account);
     },
     async syncIt(info) {
       store.dispatch('data/syncIt', info);

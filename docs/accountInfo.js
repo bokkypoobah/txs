@@ -41,7 +41,19 @@ async function getAccountInfo(address, provider) {
           console.log("getAccountInfo ERROR - decimals - account: " + account + ", message: " + e.message);
         }
       }
-      if ((results.mask & MASK_ISERC721) == MASK_ISERC721 || (results.mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
+    }
+    if ((results.mask & MASK_ISERC721) == MASK_ISERC721 || (results.mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
+      if (account == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D") {
+        results.collection = {
+          name: "CryptoPunksV1",
+          slug: "cryptopunksv1",
+          image: "https://i.seadn.io/gae/_-UU9HXutEr8rZy9X9KlJT2YFwMa___lXYgIeUPKkjRv3KDbBKtbo3E3isAc2QIEEJmEfSf0Ni8U8tudLkJy6dwqIqNO3E5zG3T4EQ?auto=format&w=1000",
+          tokenCount: 0,
+          onSaleCount: 0,
+          volume: 0,
+          openseaVerificationStatus: false,
+        };
+      } else {
         let url = "https://api.reservoir.tools/collections/v5?contract=" + account;
         // console.log("url: " + url);
         const data = await fetch(url)
@@ -53,7 +65,8 @@ async function getAccountInfo(address, provider) {
              return [];
           });
         if (data && data.collections && data.collections.length == 1) {
-          // console.log("data: " + JSON.stringify(data, null, 2));
+        // console.log("data: " + JSON.stringify(data, null, 2));
+        // CryptoPunks V1
           const collectionInfo = data.collections[0];
           results.collection = {
             name: collectionInfo.name,
@@ -74,10 +87,15 @@ async function getAccountInfo(address, provider) {
     } else if ((results.mask & MASK_ISERC20) == MASK_ISERC20) {
       results.type = "erc20";
     } else if ((results.mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
-      if (results.collection) {
-        results.type = "erc1155";
+      // CryptoPunks V1 & CryptoPunks - Exclude Transfer and replace with Assign, PunkTransfer & PunkBought
+      if (account == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || account == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
+        results.type = "preerc721";
       } else {
-        results.type = "contract";
+        if (results.collection) {
+          results.type = "erc1155";
+        } else {
+          results.type = "contract";
+        }
       }
     } else {
       results.type = null;

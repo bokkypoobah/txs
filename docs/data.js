@@ -178,6 +178,10 @@ const dataModule = {
         });
       }
     },
+    deleteAccountAndAccountInfo(state, account) {
+      Vue.delete(state.accounts, account);
+      Vue.delete(state.accountsInfo, account);
+    },
     addAccountEvent(state, info) {
       const [account, eventRecord] = [info.account, info.eventRecord];
       const accountData = state.accounts[account];
@@ -374,6 +378,11 @@ const dataModule = {
       context.commit('setAccountInfoField', info);
       context.dispatch('saveData', ['accounts', 'accountsInfo']);
     },
+    async deleteAccountAndAccountInfo(context, account) {
+      console.log("deleteAccountAndAccountInfo: " + account);
+      context.commit('deleteAccountAndAccountInfo', account);
+      context.dispatch('saveData', ['accounts', 'accountsInfo']);
+    },
     async setSyncHalt(context, halt) {
       context.commit('setSyncHalt', halt);
     },
@@ -559,34 +568,24 @@ const dataModule = {
                 // CryptoPunks V1 & V2 - Assign (index_topic_1 address to, uint256 punkIndex)
                 } else if (event.topics[0] == "0x8a0e37b73a0d9c82e205d4d1a3ff3d0b57ce5f4d7bccf6bac03336dc101cb7ba") {
                   const log = interfaces.cryptoPunks.parseLog(event);
-                  console.log("CryptoPunks.Assign: " + JSON.stringify(log));
                   const [to, tokenId] = log.args;
                   eventRecord = { txHash, blockNumber, logIndex, contract, from: ADDRESS0, to, type: "preerc721", tokenId: tokenId.toString() };
-                  // TODO: Check event is displayed
                 // CryptoPunks V1 & V2 - PunkTransfer (index_topic_1 address from, index_topic_2 address to, uint256 punkIndex)
                 } else if (event.topics[0] == "0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8") {
                   const log = interfaces.cryptoPunks.parseLog(event);
-                  console.log("CryptoPunks.PunkTransfer: " + JSON.stringify(log));
                   const [from, to, tokenId] = log.args;
                   eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
-                  // TODO: Check event is displayed
                 // CryptoPunks V1 & V2 - PunkTransfer (index_topic_1 address from, index_topic_2 address to, uint256 punkIndex)
                 } else if (event.topics[0] == "0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8") {
                   const log = interfaces.cryptoPunks.parseLog(event);
-                  console.log("CryptoPunks.PunkTransfer: " + JSON.stringify(log));
                   const [from, to, tokenId] = log.args;
                   eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
-                  // TODO: Check event is displayed
                 // CryptoPunks V1 & V2 - PunkBought (index_topic_1 uint256 punkIndex, uint256 value, index_topic_2 address fromAddress, index_topic_3 address toAddress)
                 } else if (event.topics[0] == "0x58e5d5a525e3b40bc15abaa38b5882678db1ee68befd2f60bafe3a7fd06db9e3") {
                   const log = interfaces.cryptoPunks.parseLog(event);
                   const [tokenId, value, from, to] = log.args;
                   if (from == account || to == account) {
-                    console.log("CryptoPunks.PunkBought: " + JSON.stringify(log));
                     eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
-                    // TODO: Check event is displayed
-                  } else {
-                    // console.log("Ignoring CryptoPunks.PunkBought: " + JSON.stringify(log));
                   }
                 }
                 if (eventRecord) {
