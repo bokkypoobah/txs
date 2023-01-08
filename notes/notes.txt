@@ -1,0 +1,64 @@
+CryptoPunksV1 0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D
+
+event Assign(address indexed to, uint256 punkIndex);
+event Transfer(address indexed from, address indexed to, uint256 value);
+event PunkTransfer(address indexed from, address indexed to, uint256 punkIndex);
+event PunkOffered(uint indexed punkIndex, uint minValue, address indexed toAddress);
+event PunkBought(uint indexed punkIndex, uint value, address indexed fromAddress, address indexed toAddress);
+event PunkNoLongerForSale(uint indexed punkIndex);
+
+getPunk()
+  Assign
+transferPunk()
+  Transfer
+  PunkTransfer
+punkNoLongerForSale()
+  PunkNoLongerForSale
+offerPunkForSale()
+  PunkOffered
+offerPunkForSaleToAddress()
+  PunkOffered
+buyPunk()
+  Transfer
+  PunkBought
+withdraw()
+  Internal transfer
+
+
+CryptoPunks 0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB
+
+> event Assign(address indexed to, uint256 punkIndex);
+- event Transfer(address indexed from, address indexed to, uint256 value);
+> event PunkTransfer(address indexed from, address indexed to, uint256 punkIndex);
+event PunkOffered(uint indexed punkIndex, uint minValue, address indexed toAddress);
++ event PunkBidEntered(uint indexed punkIndex, uint value, address indexed fromAddress);
++ event PunkBidWithdrawn(uint indexed punkIndex, uint value, address indexed fromAddress);
+> event PunkBought(uint indexed punkIndex, uint value, address indexed fromAddress, address indexed toAddress);
+event PunkNoLongerForSale(uint indexed punkIndex);
+
+
+setInitialOwner()
+  Assign
+setInitialOwners
+  ^
+
+enterBidForPunk()
+  PunkBidEntered
+acceptBidForPunk()
+  Transfer
+  PunkBought
+withdrawBidForPunk()
+  PunkBidWithdrawn
+
+
+CryptoCats 0x088C6Ad962812b5Aa905BA6F3c5c145f9D4C079f
+
+event CatTransfer(address indexed from, address indexed to, uint catIndex);
+event CatOffered(uint indexed catIndex, uint minPrice, address indexed toAddress);
+event CatBought(uint indexed catIndex, uint price, address indexed fromAddress, address indexed toAddress);
+event CatNoLongerForSale(uint indexed catIndex);
+event Assign(address indexed to, uint256 catIndex);
+event Transfer(address indexed from, address indexed to, uint256 value);
+event ReleaseUpdate(uint256 indexed newCatsAdded, uint256 totalSupply, uint256 catPrice, string newImageHash);
+event UpdateReleasePrice(uint32 releaseId, uint256 catPrice);
+event UpdateAttribute(uint indexed attributeNumber, address indexed ownerAddress, bytes32 oldValue, bytes32 newValue);
