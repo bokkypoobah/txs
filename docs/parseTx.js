@@ -68,7 +68,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
     // console.log(event.topics[0] + " => " + topic);
 
     let excludeStandardTransfer = false;
-    // CryptoPunks V1 & CryptoPunks - Exclude Transfer and replace with PunkTransfer
+    // CryptoPunks V1 & CryptoPunks - Exclude Transfer and replace with Assign, PunkTransfer & PunkBought
     if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
       excludeStandardTransfer = true;
     }
