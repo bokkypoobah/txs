@@ -471,7 +471,7 @@ async function accumulateTxResults(provider, account, accumulatedData, txData, b
 }
 
 
-function parseTx(chainId, account, accounts, functionSelectors, preERC721s, txData) {
+function parseTx(account, accounts, functionSelectors, preERC721s, txData) {
   // console.log("parseTx - account: " + JSON.stringify(account));
   // console.log("parseTx - txData: " + JSON.stringify(txData));
   const results = {};

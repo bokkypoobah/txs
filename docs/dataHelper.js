@@ -1,6 +1,6 @@
-function getTxHashesByBlocks(account, chainId, accounts, accountsInfo, skipBlocks, maxBlocks) {
+function getTxHashesByBlocks(account, accounts, accountsInfo, skipBlocks, maxBlocks) {
   const txHashesByBlocks = {};
-  for (const [txHash, tx] of Object.entries(accounts[chainId][account].transactions)) {
+  for (const [txHash, tx] of Object.entries(accounts[account].transactions)) {
     if (!(tx.blockNumber in txHashesByBlocks)) {
       txHashesByBlocks[tx.blockNumber] = {};
     }
@@ -8,7 +8,7 @@ function getTxHashesByBlocks(account, chainId, accounts, accountsInfo, skipBlock
       txHashesByBlocks[tx.blockNumber][txHash] = tx.blockNumber;
     }
   }
-  for (const [txHash, traceIds] of Object.entries(accounts[chainId][account].internalTransactions)) {
+  for (const [txHash, traceIds] of Object.entries(accounts[account].internalTransactions)) {
     for (const [traceId, tx] of Object.entries(traceIds)) {
       if (!(tx.blockNumber in txHashesByBlocks)) {
         txHashesByBlocks[tx.blockNumber] = {};
@@ -18,7 +18,7 @@ function getTxHashesByBlocks(account, chainId, accounts, accountsInfo, skipBlock
       }
     }
   }
-  for (const [txHash, logIndexes] of Object.entries(accounts[chainId][account].events)) {
+  for (const [txHash, logIndexes] of Object.entries(accounts[account].events)) {
     for (const [logIndex, event] of Object.entries(logIndexes)) {
       if (!(event.blockNumber in txHashesByBlocks)) {
         txHashesByBlocks[event.blockNumber] = {};

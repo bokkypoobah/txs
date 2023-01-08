@@ -86,13 +86,13 @@ const Data = {
 const dataModule = {
   namespaced: true,
   state: {
-    accounts: {}, // [chainId][account] => Account(type, name, symbol, decimals, transactions, internalTransactions, events, ...)
-    accountsInfo: {}, // [chainId][account] => Account Info(type, name, symbol, decimals)
-    txs: {}, // [chainId][account] => Txs(timestamp, tx, txReceipt)
-    txsInfo: {}, // [chainId][account] => Txs Info
-    blocks: {}, // [chainId][blockNumber] => timestamp and account balances
-    functionSelectors: {}, // [selector] => [functions]
-    eventSelectors: {}, // [selector] => [events]
+    accounts: {}, // account => Account(type, name, symbol, decimals, transactions, internalTransactions, events, ...)
+    accountsInfo: {}, // account => Account Info(type, name, symbol, decimals)
+    txs: {}, // account => Txs(timestamp, tx, txReceipt)
+    txsInfo: {}, // account => Txs Info
+    blocks: {}, // blockNumber => timestamp and account balances
+    functionSelectors: {}, // selector => [functions]
+    eventSelectors: {}, // selector => [events]
     assets: {},
     ensMap: {},
     exchangeRates: {},
@@ -130,19 +130,15 @@ const dataModule = {
       Vue.set(state, info.name, info.data);
     },
     toggleAccountInfoField(state, info) {
-      Vue.set(state.accountsInfo[info.chainId][info.account], info.field, !state.accountsInfo[info.chainId][info.account][info.field]);
+      Vue.set(state.accountsInfo[info.account], info.field, !state.accountsInfo[info.account][info.field]);
     },
     setAccountInfoField(state, info) {
-      Vue.set(state.accountsInfo[info.chainId][info.account], info.field, info.value);
+      Vue.set(state.accountsInfo[info.account], info.field, info.value);
     },
     addNewAccountInfo(state, info) {
       logInfo("dataModule", "mutations.addNewAccountInfo(" + JSON.stringify(info) + ")");
-      const [block, chainId] = [store.getters['connection/block'], store.getters['connection/chainId']];
-      if (!(chainId in state.accountsInfo)) {
-        Vue.set(state.accountsInfo, chainId, {});
-      }
-      if (!(info.accountsInfo in state.accountsInfo[chainId])) {
-        Vue.set(state.accountsInfo[chainId], info.account, {
+      if (!(info.account in state.accountsInfo)) {
+        Vue.set(state.accountsInfo, info.account, {
           type: info && info.type || null,
           group: null,
           name: null,
@@ -157,12 +153,9 @@ const dataModule = {
     },
     addNewAccount(state, info) {
       logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(info) + ")");
-      const [block, chainId] = [store.getters['connection/block'], store.getters['connection/chainId']];
-      if (!(chainId in state.accounts)) {
-        Vue.set(state.accounts, chainId, {});
-      }
-      if (!(info.account in state.accounts[chainId])) {
-        Vue.set(state.accounts[chainId], info.account, {
+      const block = store.getters['connection/block'];
+      if (!(info.account in state.accounts)) {
+        Vue.set(state.accounts, info.account, {
           type: info && info.type || null,
           name: info && info.name || null,
           symbol: info && info.symbol || null,
@@ -186,8 +179,8 @@ const dataModule = {
       }
     },
     addAccountEvent(state, info) {
-      const [account, eventRecord, chainId] = [info.account, info.eventRecord, store.getters['connection/chainId']];
-      const accountData = state.accounts[chainId][account];
+      const [account, eventRecord] = [info.account, info.eventRecord];
+      const accountData = state.accounts[account];
       if (!(eventRecord.txHash in accountData.events)) {
         accountData.events[eventRecord.txHash] = {};
       }
@@ -195,8 +188,8 @@ const dataModule = {
       accountData.events[eventRecord.txHash][eventRecord.logIndex] = tempEvent;
     },
     addAccountInternalTransactions(state, info) {
-      const [account, results, chainId] = [info.account, info.results, store.getters['connection/chainId']];
-      const accountData = state.accounts[chainId][account];
+      const [account, results] = [info.account, info.results];
+      const accountData = state.accounts[account];
       const groupByHashes = {};
       for (const result of results) {
         if (!(result.hash in accountData.internalTransactions)) {
@@ -217,8 +210,8 @@ const dataModule = {
       }
     },
     addAccountTransactions(state, info) {
-      const [account, results, chainId] = [info.account, info.results, store.getters['connection/chainId']];
-      const accountData = state.accounts[chainId][account];
+      const [account, results] = [info.account, info.results];
+      const accountData = state.accounts[account];
       for (const result of results) {
         if (!(result.hash in accountData.transactions)) {
           accountData.transactions[result.hash] = {...result, hash: undefined };
@@ -226,18 +219,17 @@ const dataModule = {
       }
     },
     updateAccountTimestampAndBlock(state, info) {
-      const [account, events, chainId] = [info.account, info.events, store.getters['connection/chainId']];
-      Vue.set(state.accounts[chainId][account], 'updated', {
+      const [account, events] = [info.account, info.events];
+      Vue.set(state.accounts[account], 'updated', {
         timestamp: info.timestamp,
         blockNumber: info.blockNumber,
       });
     },
     addAccountToken(state, token) {
-      const chainId = store.getters['connection/chainId'];
       const contract = ethers.utils.getAddress(token.contract);
-      const contractData = state.accounts[chainId][contract];
+      const contractData = state.accounts[contract];
       if (!(token.tokenId in contractData.assets)) {
-        Vue.set(state.accounts[chainId][contract].assets, token.tokenId, {
+        Vue.set(state.accounts[contract].assets, token.tokenId, {
           name: token.name,
           description: token.description,
           image: token.image,
@@ -248,26 +240,24 @@ const dataModule = {
       }
     },
     addAccountERC20Transfers(state, transfer) {
-      const chainId = store.getters['connection/chainId'];
       const contract = ethers.utils.getAddress(transfer.contract);
-      const contractData = state.accounts[chainId][contract];
+      const contractData = state.accounts[contract];
       if (!(transfer.txHash in contractData.erc20transfers)) {
-        Vue.set(state.accounts[chainId][contract].erc20transfers, transfer.txHash, {});
+        Vue.set(state.accounts[contract].erc20transfers, transfer.txHash, {});
       }
-      if (!(transfer.logIndex in state.accounts[chainId][contract].erc20transfers[transfer.txHash])) {
+      if (!(transfer.logIndex in state.accounts[contract].erc20transfers[transfer.txHash])) {
         const tempTransfer = { ...transfer, txHash: undefined, logIndex: undefined };
-        Vue.set(state.accounts[chainId][contract].erc20transfers[transfer.txHash], transfer.logIndex, tempTransfer);
+        Vue.set(state.accounts[contract].erc20transfers[transfer.txHash], transfer.logIndex, tempTransfer);
       }
     },
     addAccountTokenEvent(state, event) {
-      const chainId = store.getters['connection/chainId'];
-      const contractData = state.accounts[chainId][event.contract];
+      const contractData = state.accounts[event.contract];
       const asset = contractData.assets[event.tokenId];
       if (!(event.txHash in asset.events)) {
-        Vue.set(state.accounts[chainId][event.contract].assets[event.tokenId].events, event.txHash, {});
+        Vue.set(state.accounts[event.contract].assets[event.tokenId].events, event.txHash, {});
       }
       if (!(event.logIndex in asset.events[event.txHash])) {
-        Vue.set(state.accounts[chainId][event.contract].assets[event.tokenId].events[event.txHash], event.logIndex, {
+        Vue.set(state.accounts[event.contract].assets[event.tokenId].events[event.txHash], event.logIndex, {
           blockNumber: event.blockNumber,
           timestamp: event.timestamp,
           from: event.from,
@@ -277,18 +267,15 @@ const dataModule = {
       }
     },
     addBlock(state, info) {
-      const [chainId, blockNumber, timestamp, account, balance] = [store.getters['connection/chainId'], info.blockNumber, info.timestamp, info.account, info.balance];
-      if (!(chainId in state.blocks)) {
-        Vue.set(state.blocks, chainId, {});
-      }
-      if (!(blockNumber in state.blocks[chainId])) {
-        Vue.set(state.blocks[chainId], blockNumber, {
+      const [blockNumber, timestamp, account, balance] = [info.blockNumber, info.timestamp, info.account, info.balance];
+      if (!(blockNumber in state.blocks)) {
+        Vue.set(state.blocks, blockNumber, {
           timestamp,
           balances: {},
         });
       }
-      if (!(account in state.blocks[chainId][blockNumber].balances)) {
-        Vue.set(state.blocks[chainId][blockNumber].balances, account, balance);
+      if (!(account in state.blocks[blockNumber].balances)) {
+        Vue.set(state.blocks[blockNumber].balances, account, balance);
       }
     },
     addNewFunctionSelectors(state, functionSelectors) {
@@ -309,34 +296,31 @@ const dataModule = {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
     },
     addTxs(state, info) {
-      const [chainId, txInfo] = [info.chainId, info.txInfo];
-      if (!(chainId in state.txs)) {
-        Vue.set(state.txs, chainId, {});
-      }
-      Vue.set(state.txs[chainId], txInfo.tx.hash, txInfo);
+      const txInfo = info.txInfo;
+      Vue.set(state.txs, txInfo.tx.hash, txInfo);
     },
-    updateTxData(state, info) {
-      Vue.set(state.txs[info.txHash].dataImported, 'tx', {
-        hash: info.tx.hash,
-        type: info.tx.type,
-        blockHash: info.tx.blockHash,
-        blockNumber: info.tx.blockNumber,
-        transactionIndex: info.tx.transactionIndex,
-        from: info.tx.from,
-        gasPrice: info.tx.gasPrice,
-        gasLimit: info.tx.gasLimit,
-        to: info.tx.to,
-        value: info.tx.value,
-        nonce: info.tx.nonce,
-        data: info.tx.data,
-        r: info.tx.r,
-        s: info.tx.s,
-        v: info.tx.v,
-        chainId: info.tx.chainId,
-      });
-      Vue.set(state.txs[info.txHash].dataImported, 'txReceipt', info.txReceipt);
-      Vue.set(state.txs[info.txHash].computed.info, 'summary', info.summary);
-    },
+    // updateTxData(state, info) {
+    //   Vue.set(state.txs[info.txHash].dataImported, 'tx', {
+    //     hash: info.tx.hash,
+    //     type: info.tx.type,
+    //     blockHash: info.tx.blockHash,
+    //     blockNumber: info.tx.blockNumber,
+    //     transactionIndex: info.tx.transactionIndex,
+    //     from: info.tx.from,
+    //     gasPrice: info.tx.gasPrice,
+    //     gasLimit: info.tx.gasLimit,
+    //     to: info.tx.to,
+    //     value: info.tx.value,
+    //     nonce: info.tx.nonce,
+    //     data: info.tx.data,
+    //     r: info.tx.r,
+    //     s: info.tx.s,
+    //     v: info.tx.v,
+    //     chainId: info.tx.chainId,
+    //   });
+    //   Vue.set(state.txs[info.txHash].dataImported, 'txReceipt', info.txReceipt);
+    //   Vue.set(state.txs[info.txHash].computed.info, 'summary', info.summary);
+    // },
     setExchangeRates(state, exchangeRates) {
       // const dates = Object.keys(exchangeRates);
       // dates.sort();
@@ -358,11 +342,12 @@ const dataModule = {
   },
   actions: {
     async restoreState(context) {
+      const CHAIN_ID = 1;
       if (Object.keys(context.state.txs) == 0) {
         const db0 = new Dexie(context.state.db.name);
         db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
         for (let type of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'ensMap', 'assets', 'exchangeRates']) {
-          const data = await db0.cache.where("objectName").equals(type).toArray();
+          const data = await db0.cache.where("objectName").equals(CHAIN_ID + '.' + type).toArray();
           if (data.length == 1) {
             context.commit('setState', { name: type, data: data[0].object });
           }
@@ -370,10 +355,11 @@ const dataModule = {
       }
     },
     async saveData(context, types) {
+      const CHAIN_ID = 1;
       const db0 = new Dexie(context.state.db.name);
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
       for (let type of types) {
-        await db0.cache.put({ objectName: type, object: context.state[type] }).then (function() {
+        await db0.cache.put({ objectName: CHAIN_ID + '.' + type, object: context.state[type] }).then (function() {
         }).catch(function(error) {
           console.log("error: " + error);
         });
@@ -425,7 +411,6 @@ const dataModule = {
       const parameters = info.parameters || [];
       logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections) + ", parameters: " + JSON.stringify(parameters).substring(0, 1000));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const chainId = store.getters['connection/chainId'];
       const block = await provider.getBlock();
       const confirmations = store.getters['config/settings'].confirmations && parseInt(store.getters['config/settings'].confirmations) || 10;
       const confirmedBlockNumber = block && block.number && (block.number - confirmations) || null;
@@ -435,11 +420,10 @@ const dataModule = {
       const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
       const OVERLAPBLOCKS = 10000;
       const devSettings = store.getters['config/devSettings'];
-      const accountsByChain = context.state.accounts[chainId] || {};
 
       const accountsToSync = [];
-      for (const [account, accountData] of Object.entries(accountsByChain)) {
-        const accountsInfo = context.state.accountsInfo[chainId][account];
+      for (const [account, accountData] of Object.entries(context.state.accounts)) {
+        const accountsInfo = context.state.accountsInfo[account];
         if ((parameters.length == 0 && accountsInfo.sync) || parameters.includes(account)) {
             accountsToSync.push(account);
         }
@@ -449,7 +433,7 @@ const dataModule = {
       // sections = ['syncBuildTokenContractsAndAccounts'];
       for (const [sectionIndex, section] of sections.entries()) {
         console.log(sectionIndex + "." + section);
-        const parameter = { chainId, accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, skipBlocks: devSettings.skipBlocks, maxBlocks: devSettings.maxBlocks };
+        const parameter = { accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, skipBlocks: devSettings.skipBlocks, maxBlocks: devSettings.maxBlocks };
         if (section == "syncTransferEvents" || section == "all") {
           await context.dispatch('syncTransferEvents', parameter);
         }
@@ -497,7 +481,7 @@ const dataModule = {
         console.log("actions.syncTransferEvents: " + accountIndex + " " + account);
         context.commit('setSyncSection', { section: 'Import', total: parameter.accountsToSync.length });
         context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const accountData = context.state.accounts[account] || {};
         const startBlock = accountData && accountData.updated && accountData.updated.blockNumber && (parseInt(accountData.updated.blockNumber) - parameter.OVERLAPBLOCKS) || 0;
 
         context.commit('setSyncSection', { section: 'Transfer Events', total: parameter.accountsToSync.length });
@@ -580,7 +564,7 @@ const dataModule = {
         console.log("actions.syncImportInternalTransactions: " + accountIndex + " " + account);
         context.commit('setSyncSection', { section: 'Etherscan Internal Txs', total: parameter.accountsToSync.length });
         context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const accountData = context.state.accounts[account] || {};
         const startBlock = accountData && accountData.updated && accountData.updated.blockNumber && (parseInt(accountData.updated.blockNumber) - parameter.OVERLAPBLOCKS) || 0;
         for (let startBatch = startBlock; startBatch < parameter.confirmedBlockNumber; startBatch += parameter.etherscanBatchSize) {
           const endBatch = (parseInt(startBatch) + parameter.etherscanBatchSize < parameter.confirmedBlockNumber) ? (parseInt(startBatch) + parameter.etherscanBatchSize) : parameter.confirmedBlockNumber;
@@ -616,7 +600,7 @@ const dataModule = {
         console.log("actions.syncImportTransactions: " + accountIndex + " " + account);
         context.commit('setSyncSection', { section: 'Etherscan Transactions', total: parameter.accountsToSync.length });
         context.commit('setSyncCompleted', parseInt(accountIndex) + 1);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
+        const accountData = context.state.accounts[account] || {};
         const startBlock = accountData && accountData.updated && accountData.updated.blockNumber && (parseInt(accountData.updated.blockNumber) - parameter.OVERLAPBLOCKS) || 0;
         for (let startBatch = startBlock; startBatch < parameter.confirmedBlockNumber; startBatch += parameter.etherscanBatchSize) {
           const endBatch = (parseInt(startBatch) + parameter.etherscanBatchSize < parameter.confirmedBlockNumber) ? (parseInt(startBatch) + parameter.etherscanBatchSize) : parameter.confirmedBlockNumber;
@@ -644,7 +628,7 @@ const dataModule = {
           }
         }
         // TODO Move elsewhere
-        context.commit('updateAccountTimestampAndBlock', { chainId: parameter.chainId, account, timestamp: parameter.confirmedTimestamp, blockNumber: parameter.confirmedBlockNumber });
+        context.commit('updateAccountTimestampAndBlock', { account, timestamp: parameter.confirmedTimestamp, blockNumber: parameter.confirmedBlockNumber });
       }
     },
     async syncBlocksAndBalances(context, parameter) {
@@ -652,20 +636,19 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
-        const txs = context.state.txs[parameter.chainId] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
+        const accountData = context.state.accounts[account] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
           const blockNumbers = [];
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            const existing = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] && context.state.blocks[parameter.chainId][blockNumber].balances[account] || null;
+            const existing = context.state.blocks[blockNumber] && context.state.blocks[blockNumber].balances[account] || null;
             if (!existing) {
               blockNumbers.push(blockNumber);
             }
           }
           context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
           for (const [index, blockNumber] of blockNumbers.entries()) {
-            const existing = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] && context.state.blocks[parameter.chainId][blockNumber].balances[account] || null;
+            const existing = context.state.blocks[blockNumber] && context.state.blocks[blockNumber].balances[account] || null;
             if (!existing) {
               const block = await provider.getBlock(parseInt(blockNumber));
               const timestamp = block.timestamp;
@@ -692,15 +675,14 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
-        const txs = context.state.txs[parameter.chainId] || {};
+        const accountData = context.state.accounts[account] || {};
         const blocks = context.state.blocks;
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         const txHashesToProcess = {};
         if (!context.state.sync.halt) {
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
-              if (!(txHash in txs) && !(txHash in txHashesToProcess)) {
+              if (!(txHash in context.state.txs) && !(txHash in txHashesToProcess)) {
                 txHashesToProcess[txHash] = blockNumber;
               }
             }
@@ -710,14 +692,14 @@ const dataModule = {
           let processed = 1;
 
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            const block = blocks[parameter.chainId] && blocks[parameter.chainId][blockNumber] || null;
+            const block = blocks[blockNumber] || null;
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
               if (txHash in txHashesToProcess) {
                 context.commit('setSyncCompleted', processed);
                 console.log(processed + "/" + txHashList.length + " Retrieving " + txHash + " @ " + blockNumber + " " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss"));
-                const currentInfo = txs && txs[txHash] || {};
+                const currentInfo = context.state.txs[txHash] || {};
                 const info = await getTxInfo(txHash, currentInfo, account, provider);
-                context.commit('addTxs', { chainId: parameter.chainId, txInfo: info});
+                context.commit('addTxs', { txInfo: info});
                 if (processed % 50 == 0) {
                   console.log("Saving txs");
                   context.dispatch('saveData', ['txs']);
@@ -739,16 +721,15 @@ const dataModule = {
       logInfo("dataModule", "actions.syncFunctionSelectors: " + JSON.stringify(parameter));
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncFunctionSelectors: " + accountIndex + " " + account);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
-        const txs = context.state.txs[parameter.chainId] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
+        const accountData = context.state.accounts[account] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
           const missingFunctionSelectorsMap = {};
           const functionSelectors = context.state.functionSelectors || {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
+            const block = context.state.blocks[blockNumber] || null;
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
-              const txInfo = txs && txs[txHash] || {};
+              const txInfo = context.state.txs[txHash] || {};
               if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
                 const selector = txInfo.tx.data.substring(0, 10);
                 if (!(selector in functionSelectors) && !(selector in missingFunctionSelectorsMap)) {
@@ -781,16 +762,15 @@ const dataModule = {
       logInfo("dataModule", "actions.syncEventSelectors: " + JSON.stringify(parameter));
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncEventSelectors: " + accountIndex + " " + account);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
-        const txs = context.state.txs[parameter.chainId] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
+        const accountData = context.state.accounts[account] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
           const missingEventSelectorsMap = {};
           const eventSelectors = context.state.eventSelectors || {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            const block = context.state.blocks[parameter.chainId] && context.state.blocks[parameter.chainId][blockNumber] || null;
+            const block = context.state.blocks[blockNumber] || null;
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
-              const txInfo = txs && txs[txHash] || {};
+              const txInfo = context.state.txs[txHash] || {};
               if ('txReceipt' in txInfo) {
                 for (const event of txInfo.txReceipt.logs) {
                   if (!(event.topics[0] in eventSelectors) && !(event.topics[0] in missingEventSelectorsMap)) {
@@ -825,31 +805,29 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       const preERC721s = store.getters['config/settings'].preERC721s;
-      const accounts = context.state.accounts[parameter.chainId] || {};
-      const txs = context.state.txs[parameter.chainId] || {};
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBuildTokenContractsAndAccounts: " + accountIndex + " " + account);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
+        const accountData = context.state.accounts[account] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
           const missingAccountsMap = {};
           const eventSelectors = context.state.eventSelectors || {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
-              const txData = txs && txs[txHash] || null;
+              const txData = context.state.txs[txHash] || null;
               if (txData != null) {
-                if (!(txData.tx.from in accounts) && !(txData.tx.from in missingAccountsMap)) {
+                if (!(txData.tx.from in context.state.accounts) && !(txData.tx.from in missingAccountsMap)) {
                   missingAccountsMap[txData.tx.from] = true;
                 }
-                if (txData.tx.to != null && (!(txData.tx.to in accounts) && !(txData.tx.to in missingAccountsMap))) {
+                if (txData.tx.to != null && (!(txData.tx.to in context.state.accounts) && !(txData.tx.to in missingAccountsMap))) {
                   missingAccountsMap[txData.tx.to] = true;
                 }
-                const events = getEvents(account, accounts, preERC721s, txData);
+                const events = getEvents(account, context.state.accounts, preERC721s, txData);
                 // console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
                 // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   for (let a of [eventItem.contract, eventItem.from, eventItem.to]) {
-                    if (!(a in accounts) && !(a in missingAccountsMap)) {
+                    if (!(a in context.state.accounts) && !(a in missingAccountsMap)) {
                       missingAccountsMap[a] = true;
                     }
                   }
@@ -888,23 +866,21 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       const preERC721s = store.getters['config/settings'].preERC721s;
-      const accounts = context.state.accounts[parameter.chainId] || {};
-      const txs = context.state.txs[parameter.chainId] || {};
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBuildTokens: " + accountIndex + " " + account);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
+        const accountData = context.state.accounts[account] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
           const missingTokensMap = {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
-              const txData = txs && txs[txHash] || null;
+              const txData = context.state.txs[txHash] || null;
               if (txData != null) {
-                const events = getEvents(account, accounts, preERC721s, txData);
-                const results = parseTx(parameter.chainId, account, accounts, context.state.functionSelectors, preERC721s, txData);
+                const events = getEvents(account, context.state.accounts, preERC721s, txData);
+                const results = parseTx(account, context.state.accounts, context.state.functionSelectors, preERC721s, txData);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
-                    const tokenContract = accounts[eventItem.contract] || {};
+                    const tokenContract = context.state.accounts[eventItem.contract] || {};
                     console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
                     if (!(eventItem.tokenId in tokenContract.assets)) {
                       if (!(eventItem.contract in missingTokensMap)) {
@@ -958,20 +934,18 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       const preERC721s = store.getters['config/settings'].preERC721s;
-      const accounts = context.state.accounts[parameter.chainId] || {};
-      const txs = context.state.txs[parameter.chainId] || {};
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBuildTokens: " + accountIndex + " " + account);
-        const accountData = context.state.accounts[parameter.chainId][account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, parameter.chainId, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
+        const accountData = context.state.accounts[account] || {};
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.skipBlocks, parameter.maxBlocks);
         if (!context.state.sync.halt) {
           const missingTokensMap = {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
-              const txData = txs && txs[txHash] || null;
+              const txData = context.state.txs[txHash] || null;
               if (txData != null) {
                 const events = getEvents(account, accounts, preERC721s, txData);
-                const results = parseTx(parameter.chainId, account, accounts, context.state.functionSelectors, preERC721s, txData);
+                const results = parseTx(account, accounts, context.state.functionSelectors, preERC721s, txData);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
                     const tokenContract = accounts[eventItem.contract] || {};
