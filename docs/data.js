@@ -879,6 +879,7 @@ const dataModule = {
                 const events = getEvents(account, context.state.accounts, preERC721s, txData);
                 const results = parseTx(account, context.state.accounts, context.state.functionSelectors, preERC721s, txData);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
+                  // TODO: CryptoPunks Transfer tokens -> tokenId
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
                     const tokenContract = context.state.accounts[eventItem.contract] || {};
                     console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
@@ -903,6 +904,7 @@ const dataModule = {
               missingTokensList.push({ tokenContract, tokenId });
             }
           }
+          console.log("missingTokensList: " + JSON.stringify(missingTokensList));
           context.commit('setSyncSection', { section: 'Build Tokens', total: missingTokensList.length });
           const GETTOKENINFOBATCHSIZE = 50;
           const info = {};

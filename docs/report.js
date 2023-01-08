@@ -904,11 +904,12 @@ const Report = {
           }
           if (include && accountFilterLower != null) {
             const fromENS = this.ensMap[transaction.from] || null;
+            const toENS = transaction.to && this.ensMap[transaction.to] || null;
             if (
               !(transaction.from.toLowerCase().includes(accountFilterLower)) &&
-              // !(transaction.to.toLowerCase().includes(accountFilterLower)) &&
-              !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower))
-            ) {
+              !(transaction.to && transaction.to.toLowerCase().includes(accountFilterLower)) &&
+              !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower)) &&
+              !(toENS != null && toENS.toLowerCase().includes(accountFilterLower))) {
               include = false;
             }
           }
