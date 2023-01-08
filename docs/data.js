@@ -103,7 +103,7 @@ const dataModule = {
       halt: false,
     },
     db: {
-      name: "txs091a",
+      name: "txs092a",
       version: 1,
       schemaDefinition: {
         cache: '&objectName',
