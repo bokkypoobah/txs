@@ -39,7 +39,7 @@ function getInterfaces() {
 }
 
 
-function getEvents(account, accounts, preERC721s, txData) {
+function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
   const interfaces = getInterfaces();
 
   const myEvents = [];
@@ -62,6 +62,15 @@ function getEvents(account, accounts, preERC721s, txData) {
   const erc20FromMap = {};
   const erc20ToMap = {};
   for (const event of txData.txReceipt.logs) {
+
+    const topic = eventSelectors[event.topics[0]] || null;
+    // console.log(event.topics[0] + " => " + topic);
+
+    let excludeStandardTransfer = false;
+    // CryptoPunks V1 & CryptoPunks - Exclude Transfer and replace with PunkTransfer
+    if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
+      // TODO excludeStandardTransfer = true;
+    }
     // if (event.address in preERC721s) {
     //   console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);
     // }
@@ -70,22 +79,20 @@ function getEvents(account, accounts, preERC721s, txData) {
     // ERC-721 event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
     // CryptoVoxels ERC-721 @ 0x79986aF15539de2db9A5086382daEdA917A9CF0C uses ERC-20 style
     // CryptoKitties ERC-721 @ 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d has unindexed parameters
-    if (event.topics[0] == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
-      let from;
-      let to;
-      let tokensOrTokenId;
+    if (topic == "Transfer(address,address,uint256)") {
+      let [from, to, tokensOrTokenId] = [null, null, null];
       if (event.topics.length == 4) {
-        from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
-        to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+        from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+        to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
         tokensOrTokenId = ethers.BigNumber.from(event.topics[3]).toString();
       } else if (event.topics.length == 3) {
-        from = ethers.utils.getAddress('0x' + event.topics[1].substring(26));
-        to = ethers.utils.getAddress('0x' + event.topics[2].substring(26));
+        from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
+        to = ethers.utils.getAddress("0x" + event.topics[2].substring(26));
         tokensOrTokenId = ethers.BigNumber.from(event.data).toString();
       } else if (event.topics.length == 1) {
-        from = ethers.utils.getAddress('0x' + event.data.substring(26, 66));
-        to = ethers.utils.getAddress('0x' + event.data.substring(90, 130));
-        tokensOrTokenId = ethers.BigNumber.from('0x' + event.data.substring(130, 193)).toString();
+        from = ethers.utils.getAddress("0x" + event.data.substring(26, 66));
+        to = ethers.utils.getAddress("0x" + event.data.substring(90, 130));
+        tokensOrTokenId = ethers.BigNumber.from("0x" + event.data.substring(130, 193)).toString();
       }
       // console.log("from: " + from + ", to: " + to + ", tokensOrTokenId: " + tokensOrTokenId);
       // ERC-721 Transfer, including pre-ERC721s like CryptoPunks, MoonCatRescue, CryptoCats, CryptoVoxels & CryptoKitties
@@ -98,11 +105,19 @@ function getEvents(account, accounts, preERC721s, txData) {
         if (to == account) {
           const record = { type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId };
           receivedNFTEvents.push(record);
-          myEvents.push(record);
+          if (excludeStandardTransfer) {
+            console.log("EXCLUDING to==account: " + JSON.stringify(record));
+          } else {
+            myEvents.push(record);
+          }
         } else if (from == account) {
           const record = { type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId };
           sentNFTEvents.push(record);
-          myEvents.push(record);
+          if (excludeStandardTransfer) {
+            console.log("EXCLUDING from==account: " + JSON.stringify(record));
+          } else {
+            myEvents.push(record);
+          }
         }
         // TODO: Remove below
         erc721Events.push({ logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId });
@@ -168,6 +183,10 @@ function getEvents(account, accounts, preERC721s, txData) {
 
       // TODO: Remove below
       erc1155BatchEvents.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
+
+      // CryptoPunks V1 & CryptoPunks - Exclude Transfer and replace with PunkTransfer
+    } else if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
+      console.log("PunkTransfer & *")
 
       // ENS ETHRegistrarController
     } else if (event.address == "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {
@@ -433,45 +452,45 @@ function getEvents(account, accounts, preERC721s, txData) {
 }
 
 
-async function accumulateTxResults(provider, account, accumulatedData, txData, block, results) {
-  if (!('ethBalance' in accumulatedData)) {
-    accumulatedData.ethBalance = ethers.BigNumber.from(0);
-  }
-  accumulatedData.ethBalancePrev = accumulatedData.ethBalance;
-  accumulatedData.ethBalance = accumulatedData.ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
+// async function accumulateTxResults(provider, account, accumulatedData, txData, block, results) {
+//   if (!('ethBalance' in accumulatedData)) {
+//     accumulatedData.ethBalance = ethers.BigNumber.from(0);
+//   }
+//   accumulatedData.ethBalancePrev = accumulatedData.ethBalance;
+//   accumulatedData.ethBalance = accumulatedData.ethBalance.add(results.ethReceived).sub(results.ethPaid).sub(results.txFee);
+//
+//   const DEBUG = false;
+//   if (results.info) {
+//     if (!DEBUG) {
+//       console.log(moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
+//     }
+//   } else {
+//     console.log(moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " TODO " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to) || ''));
+//   }
+//   if (!DEBUG || !results.info) {
+//     console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
+//       " " + ethers.utils.formatEther(accumulatedData.ethBalance) +
+//       "Ξ = " + ethers.utils.formatEther(accumulatedData.ethBalancePrev) +
+//       "Ξ+" + ethers.utils.formatEther(results.ethReceived) +
+//       "Ξ-" + ethers.utils.formatEther(results.ethPaid) +
+//       "Ξ-" + ethers.utils.formatEther(results.txFee) +
+//       "Ξ");
+//   }
+//
+//   // if (txData.txReceipt.blockNumber > 15345896) { // } && txData.txReceipt.blockNumber < 14379871) {
+//     // const balance = ethers.BigNumber.from(txData.ethBalance);
+//     const balance = ethers.BigNumber.from(block.balances[account] || 0);
+//     // console.log("balance: " + balance);
+//     // const balance = await provider.getBalance(account, txData.txReceipt.blockNumber);
+//     const diff = balance.sub(accumulatedData.ethBalance);
+//     if (diff != 0) {
+//       console.log("balance - actual: " + ethers.utils.formatEther(balance) + " vs computed: " + ethers.utils.formatEther(accumulatedData.ethBalance) + " diff: " + ethers.utils.formatEther(diff));
+//     }
+//   // }
+// }
 
-  const DEBUG = false;
-  if (results.info) {
-    if (!DEBUG) {
-      console.log(moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + results.info);
-    }
-  } else {
-    console.log(moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " TODO " + txData.tx.from.substring(0, 12) + (txData.tx.to && (" -> " + txData.tx.to) || ''));
-  }
-  if (!DEBUG || !results.info) {
-    console.log("  " + txData.tx.blockNumber + " " + txData.tx.transactionIndex + " " + txData.tx.hash +
-      " " + ethers.utils.formatEther(accumulatedData.ethBalance) +
-      "Ξ = " + ethers.utils.formatEther(accumulatedData.ethBalancePrev) +
-      "Ξ+" + ethers.utils.formatEther(results.ethReceived) +
-      "Ξ-" + ethers.utils.formatEther(results.ethPaid) +
-      "Ξ-" + ethers.utils.formatEther(results.txFee) +
-      "Ξ");
-  }
 
-  // if (txData.txReceipt.blockNumber > 15345896) { // } && txData.txReceipt.blockNumber < 14379871) {
-    // const balance = ethers.BigNumber.from(txData.ethBalance);
-    const balance = ethers.BigNumber.from(block.balances[account] || 0);
-    // console.log("balance: " + balance);
-    // const balance = await provider.getBalance(account, txData.txReceipt.blockNumber);
-    const diff = balance.sub(accumulatedData.ethBalance);
-    if (diff != 0) {
-      console.log("balance - actual: " + ethers.utils.formatEther(balance) + " vs computed: " + ethers.utils.formatEther(accumulatedData.ethBalance) + " diff: " + ethers.utils.formatEther(diff));
-    }
-  // }
-}
-
-
-function parseTx(account, accounts, functionSelectors, preERC721s, txData) {
+function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721s, txData) {
   // console.log("parseTx - account: " + JSON.stringify(account));
   // console.log("parseTx - txData: " + JSON.stringify(txData));
   const results = {};
@@ -482,7 +501,7 @@ function parseTx(account, accounts, functionSelectors, preERC721s, txData) {
   results.txFee = txData.tx.from == account ? txFee.toString() : 0;
   results.ethReceived = 0;
   results.ethPaid = 0;
-  const events = getEvents(account, accounts, preERC721s, txData);
+  const events = getEvents(account, accounts, eventSelectors, preERC721s, txData);
 
   // if (events.receivedNFTEvents.length > 0) {
   //   console.log("receivedNFTEvents: " + JSON.stringify(events.receivedNFTEvents, null, 2));

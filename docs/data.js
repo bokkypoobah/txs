@@ -822,7 +822,7 @@ const dataModule = {
                 if (txData.tx.to != null && (!(txData.tx.to in context.state.accounts) && !(txData.tx.to in missingAccountsMap))) {
                   missingAccountsMap[txData.tx.to] = true;
                 }
-                const events = getEvents(account, context.state.accounts, preERC721s, txData);
+                const events = getEvents(account, context.state.accounts, context.state.eventSelectors, preERC721s, txData);
                 // console.log(blockNumber + " " + txHash + ": " + JSON.stringify(events.myEvents));
                 // const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
@@ -876,8 +876,8 @@ const dataModule = {
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
               const txData = context.state.txs[txHash] || null;
               if (txData != null) {
-                const events = getEvents(account, context.state.accounts, preERC721s, txData);
-                const results = parseTx(account, context.state.accounts, context.state.functionSelectors, preERC721s, txData);
+                const events = getEvents(account, context.state.accounts, context.state.eventSelectors, preERC721s, txData);
+                const results = parseTx(account, context.state.accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   // TODO: CryptoPunks Transfer tokens -> tokenId
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
@@ -946,8 +946,8 @@ const dataModule = {
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
               const txData = context.state.txs[txHash] || null;
               if (txData != null) {
-                const events = getEvents(account, accounts, preERC721s, txData);
-                const results = parseTx(account, accounts, context.state.functionSelectors, preERC721s, txData);
+                const events = getEvents(account, accounts, context.state.eventSelectors, preERC721s, txData);
+                const results = parseTx(account, accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
                     const tokenContract = accounts[eventItem.contract] || {};

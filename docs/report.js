@@ -1402,6 +1402,7 @@ const reportModule = {
       const allAccounts = store.getters['data/accounts'];
       const allAccountsInfo = store.getters['data/accountsInfo'];
       const functionSelectors = store.getters['data/functionSelectors'];
+      const eventSelectors = store.getters['data/eventSelectors'];
       const allTxs = store.getters['data/txs'];
       const exchangeRates = store.getters['data/exchangeRates'];
       const blocks = store.getters['data/blocks'];
@@ -1459,7 +1460,7 @@ const reportModule = {
             const balanceInReportingCurrency = ethers.utils.formatEther(balance) * exchangeRate.rate;
             for (const [index, tx] of txsToProcess.entries()) {
               // console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
-              const results = parseTx(account, allAccounts, functionSelectors, preERC721s, tx);
+              const results = parseTx(account, allAccounts, functionSelectors, eventSelectors, preERC721s, tx);
               totalEthPaid = totalEthPaid.add(results.ethPaid);
               totalEthReceived = totalEthReceived.add(results.ethReceived);
               const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
