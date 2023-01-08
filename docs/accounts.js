@@ -503,6 +503,7 @@ const Accounts = {
         let include = filterLower == null ||
           (account.toLowerCase().includes(filterLower)) ||
           (accountInfo.name && accountInfo.name.toLowerCase().includes(filterLower)) ||
+          (data.name && data.name.toLowerCase().includes(filterLower)) ||
           (accountInfo.group && accountInfo.group.toLowerCase().includes(filterLower)) ||
           (accountInfo.notes && accountInfo.notes.toLowerCase().includes(filterLower)) ||
           (ensName != null && ensName.toLowerCase().includes(filterLower));
@@ -547,13 +548,6 @@ const Accounts = {
           });
         }
       }
-
-
-      // for (const [key, data] of Object.entries(this.accounts)) {
-      //   const [chainId, account] = key.split(':');
-      //   const ensName = this.ensMap[account] || null;
-      // }
-      // console.log("filteredAccounts: " + JSON.stringify(results, null, 2));
       return results;
     },
     filteredSortedAccounts() {
