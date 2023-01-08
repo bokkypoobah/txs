@@ -91,7 +91,14 @@ const _CUSTOMACCOUNTS = {
           const log = interface.parseLog(event);
           if (log.name == "Assign") {
             const [to, punkIndex] = log.args;
-              results.info = "CryptoPunksV1.Assign " + punkIndex + " to " + to;
+            // results.info = "CryptoPunksV1.Assign " + punkIndex + " to " + to;
+            results.info = {
+              type: "nft",
+              action: "minted",
+              from: ADDRESS0,
+              to,
+              events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from: ADDRESS0, to } ],
+            };
             // if (to == account) {
             //   results.info = "Purchased/Received MoonCatRescue " + catId + " from " + from + " for " + ethers.utils.formatEther(price) + "Ξ";
             //   results.ethPaid = price;
@@ -137,7 +144,15 @@ const _CUSTOMACCOUNTS = {
           // console.log(JSON.stringify(log));
           if (log.name == "Assign") {
             const [to, punkIndex] = log.args;
-              results.info = "CryptoPunks.Assign " + punkIndex + " to " + to;
+            // results.info = "CryptoPunks.Assign " + punkIndex + " to " + to;
+            results.info = {
+              type: "nft",
+              action: "minted",
+              from: ADDRESS0,
+              to,
+              events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from: ADDRESS0, to } ],
+            };
+
             // if (to == account) {
             //   results.info = "Purchased/Received MoonCatRescue " + catId + " from " + from + " for " + ethers.utils.formatEther(price) + "Ξ";
             //   results.ethPaid = price;
