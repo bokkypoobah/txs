@@ -33,6 +33,7 @@ function getInterfaces() {
       x2y2: new ethers.utils.Interface(_CUSTOMACCOUNTS["0x74312363e45DCaBA76c59ec49a7Aa8A65a67EeD3"].abi),
       nftx: new ethers.utils.Interface(_CUSTOMACCOUNTS["0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d"].abi),
       ensRegistrarController: new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi),
+      cryptoPunks: new ethers.utils.Interface(_CUSTOMACCOUNTS["0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB"].abi),
     };
   }
   return _interfaces;
@@ -69,7 +70,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
     let excludeStandardTransfer = false;
     // CryptoPunks V1 & CryptoPunks - Exclude Transfer and replace with PunkTransfer
     if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
-      // TODO excludeStandardTransfer = true;
+      excludeStandardTransfer = true;
     }
     // if (event.address in preERC721s) {
     //   console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);
@@ -79,6 +80,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
     // ERC-721 event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
     // CryptoVoxels ERC-721 @ 0x79986aF15539de2db9A5086382daEdA917A9CF0C uses ERC-20 style
     // CryptoKitties ERC-721 @ 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d has unindexed parameters
+
     if (topic == "Transfer(address,address,uint256)") {
       let [from, to, tokensOrTokenId] = [null, null, null];
       if (event.topics.length == 4) {
@@ -105,17 +107,13 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
         if (to == account) {
           const record = { type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId };
           receivedNFTEvents.push(record);
-          if (excludeStandardTransfer) {
-            console.log("EXCLUDING to==account: " + JSON.stringify(record));
-          } else {
+          if (!excludeStandardTransfer) {
             myEvents.push(record);
           }
         } else if (from == account) {
           const record = { type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId };
           sentNFTEvents.push(record);
-          if (excludeStandardTransfer) {
-            console.log("EXCLUDING from==account: " + JSON.stringify(record));
-          } else {
+          if (!excludeStandardTransfer) {
             myEvents.push(record);
           }
         }
@@ -143,6 +141,30 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
         } else {
           erc20ToMap[to] = parseInt(erc20ToMap[to]) + 1;
         }
+      }
+
+    } else if (topic == "Assign(address,uint256)") {
+      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[event.address].abi);
+      const log = interface.parseLog(event);
+      const [to, tokenId] = log.args;
+      if (to == account) {
+        myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from: ADDRESS0, to, tokenId: tokenId.toString() });
+      }
+
+    } else if (topic == "PunkTransfer(address,address,uint256)") {
+      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[event.address].abi);
+      const log = interface.parseLog(event);
+      const [from, to, tokenId] = log.args;
+      if (from == account || to == account) {
+        myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokenId.toString() });
+      }
+
+    } else if (topic == "PunkBought(uint256,uint256,address,address)") {
+      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[event.address].abi);
+      const log = interface.parseLog(event);
+      const [tokenId, value, from, to] = log.args;
+      if (from == account || to == account) {
+        myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokenId.toString() });
       }
 
       // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
@@ -184,9 +206,9 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
       // TODO: Remove below
       erc1155BatchEvents.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
 
-      // CryptoPunks V1 & CryptoPunks - Exclude Transfer and replace with PunkTransfer
-    } else if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
-      console.log("PunkTransfer & *")
+    //   // CryptoPunks V1 & CryptoPunks - Exclude Transfer and replace with PunkTransfer
+    // } else if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
+    //   console.log("PunkTransfer & *")
 
       // ENS ETHRegistrarController
     } else if (event.address == "0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5") {

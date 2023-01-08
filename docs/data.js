@@ -477,6 +477,8 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const interfaces = getInterfaces();
       const preERC721s = store.getters['config/settings'].preERC721s;
+      // const BATCHSIZE = parameter.etherscanBatchSize;
+      const BATCHSIZE = 1000000;
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncTransferEvents: " + accountIndex + " " + account);
         context.commit('setSyncSection', { section: 'Import', total: parameter.accountsToSync.length });
@@ -486,8 +488,8 @@ const dataModule = {
 
         context.commit('setSyncSection', { section: 'Transfer Events', total: parameter.accountsToSync.length });
         const accountAs32Bytes = '0x000000000000000000000000' + account.substring(2, 42).toLowerCase();
-        for (let startBatch = startBlock; startBatch < parameter.confirmedBlockNumber; startBatch += parameter.etherscanBatchSize) {
-          const endBatch = (parseInt(startBatch) + parameter.etherscanBatchSize < parameter.confirmedBlockNumber) ? (parseInt(startBatch) + parameter.etherscanBatchSize) : parameter.confirmedBlockNumber;
+        for (let startBatch = startBlock; startBatch < parameter.confirmedBlockNumber; startBatch += BATCHSIZE) {
+          const endBatch = (parseInt(startBatch) + BATCHSIZE < parameter.confirmedBlockNumber) ? (parseInt(startBatch) + BATCHSIZE) : parameter.confirmedBlockNumber;
           const topicsList = [
             // Transfer (index_topic_1 address from, index_topic_2 address to, index_topic_3 uint256 id)
             [ '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', accountAs32Bytes, null ],
@@ -498,6 +500,13 @@ const dataModule = {
             // ERC-1155 TransferBatch (index_topic_1 address operator, index_topic_2 address from, index_topic_3 address to, uint256[] ids, uint256[] values)
             [ '0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb', null, accountAs32Bytes, null ],
             [ '0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb', null, null, accountAs32Bytes ],
+            // CryptoPunks V1 & V2 - Assign (index_topic_1 address to, uint256 punkIndex)
+            [ '0x8a0e37b73a0d9c82e205d4d1a3ff3d0b57ce5f4d7bccf6bac03336dc101cb7ba', accountAs32Bytes ],
+            // // CryptoPunks V1 & V2 - PunkTransfer (index_topic_1 address from, index_topic_2 address to, uint256 punkIndex)
+            [ '0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8', accountAs32Bytes, null ],
+            [ '0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8', null, accountAs32Bytes ],
+            // CryptoPunks V1 & V2 - Too many topics to filter by my accounts PunkBought (index_topic_1 uint256 punkIndex, uint256 value, index_topic_2 address fromAddress, index_topic_3 address toAddress)
+            [ '0x58e5d5a525e3b40bc15abaa38b5882678db1ee68befd2f60bafe3a7fd06db9e3', null, null, null ],
           ];
           for (let topics of topicsList) {
             console.log("Web3 event filter #" + startBatch + "-#" + endBatch + ": " + JSON.stringify(topics));
@@ -547,6 +556,38 @@ const dataModule = {
                   const formattedTokenIds = tokenIds.map(e => ethers.BigNumber.from(e).toString());
                   const formattedTokens = tokens.map(e => ethers.BigNumber.from(e).toString());
                   eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "erc1155", tokenIds: formattedTokenIds, tokens: formattedTokens };
+                // CryptoPunks V1 & V2 - Assign (index_topic_1 address to, uint256 punkIndex)
+                } else if (event.topics[0] == "0x8a0e37b73a0d9c82e205d4d1a3ff3d0b57ce5f4d7bccf6bac03336dc101cb7ba") {
+                  const log = interfaces.cryptoPunks.parseLog(event);
+                  console.log("CryptoPunks.Assign: " + JSON.stringify(log));
+                  const [to, tokenId] = log.args;
+                  eventRecord = { txHash, blockNumber, logIndex, contract, from: ADDRESS0, to, type: "preerc721", tokenId: tokenId.toString() };
+                  // TODO: Check event is displayed
+                // CryptoPunks V1 & V2 - PunkTransfer (index_topic_1 address from, index_topic_2 address to, uint256 punkIndex)
+                } else if (event.topics[0] == "0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8") {
+                  const log = interfaces.cryptoPunks.parseLog(event);
+                  console.log("CryptoPunks.PunkTransfer: " + JSON.stringify(log));
+                  const [from, to, tokenId] = log.args;
+                  eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
+                  // TODO: Check event is displayed
+                // CryptoPunks V1 & V2 - PunkTransfer (index_topic_1 address from, index_topic_2 address to, uint256 punkIndex)
+                } else if (event.topics[0] == "0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8") {
+                  const log = interfaces.cryptoPunks.parseLog(event);
+                  console.log("CryptoPunks.PunkTransfer: " + JSON.stringify(log));
+                  const [from, to, tokenId] = log.args;
+                  eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
+                  // TODO: Check event is displayed
+                // CryptoPunks V1 & V2 - PunkBought (index_topic_1 uint256 punkIndex, uint256 value, index_topic_2 address fromAddress, index_topic_3 address toAddress)
+                } else if (event.topics[0] == "0x58e5d5a525e3b40bc15abaa38b5882678db1ee68befd2f60bafe3a7fd06db9e3") {
+                  const log = interfaces.cryptoPunks.parseLog(event);
+                  const [tokenId, value, from, to] = log.args;
+                  if (from == account || to == account) {
+                    console.log("CryptoPunks.PunkBought: " + JSON.stringify(log));
+                    eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
+                    // TODO: Check event is displayed
+                  } else {
+                    // console.log("Ignoring CryptoPunks.PunkBought: " + JSON.stringify(log));
+                  }
                 }
                 if (eventRecord) {
                   context.commit('addAccountEvent', { account, eventRecord });
@@ -877,7 +918,7 @@ const dataModule = {
               const txData = context.state.txs[txHash] || null;
               if (txData != null) {
                 const events = getEvents(account, context.state.accounts, context.state.eventSelectors, preERC721s, txData);
-                const results = parseTx(account, context.state.accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
+                // const results = parseTx(account, context.state.accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
                 for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                   // TODO: CryptoPunks Transfer tokens -> tokenId
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
