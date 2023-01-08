@@ -277,10 +277,10 @@ const Accounts = {
                   </span>
                 </div>
                 <div class="m-0 pt-1 pr-1">
-                  <span v-if="data.item.type != 'erc721' && data.item.type != 'erc1155'">
+                  <span v-if="data.item.type != 'preerc721' && data.item.type != 'erc721' && data.item.type != 'erc1155'">
                     <b-badge v-if="hasENS(data.item.account)" variant="secondary" v-b-popover.hover="'ENS name if set'">{{ ensOrNull(data.item.account) }}</b-badge>
                   </span>
-                  <span v-if="data.item.type == 'erc721' || data.item.type == 'erc1155'">
+                  <span v-if="data.item.type == 'preerc721' || data.item.type == 'erc721' || data.item.type == 'erc1155'">
                     <b-badge variant="secondary" v-b-popover.hover="'ERC-721 collection name'">{{ data.item.collection.name }}</b-badge>
                   </span>
                   <span v-if="data.item.type == 'erc20'">
@@ -402,6 +402,7 @@ const Accounts = {
         { value: null, text: '(all)' },
         { value: 'eoa', text: 'EOA' },
         { value: 'contract', text: 'Contract' },
+        { value: 'preerc721', text: 'pre ERC-721' },
         { value: 'erc721', text: 'ERC-721' },
         { value: 'erc1155', text: 'ERC-1155' },
         { value: 'erc20', text: 'ERC-20' },
