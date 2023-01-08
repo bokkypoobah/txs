@@ -937,12 +937,33 @@ const dataModule = {
             }
           }
           let totalItems = 0;
+          const missingCryptoPunksV1TokensList = [];
           const missingTokensList = [];
           for (const [tokenContract, tokenIds] of Object.entries(missingTokensMap)) {
             totalItems += Object.keys(tokenIds).length;
             for (let tokenId of Object.keys(tokenIds)) {
-              missingTokensList.push({ tokenContract, tokenId });
+              // CryptoPunksV1
+              if (tokenContract == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D") {
+                missingCryptoPunksV1TokensList.push({ tokenContract, tokenId });
+              } else {
+                missingTokensList.push({ tokenContract, tokenId });
+              }
             }
+          }
+          console.log("missingCryptoPunksV1TokensList: " + JSON.stringify(missingCryptoPunksV1TokensList));
+          for (const [tokenIndex, token] of missingCryptoPunksV1TokensList.entries()) {
+            console.log("Processing " + tokenIndex + " " + token.tokenContract + "/" + token.tokenId);
+            const tokenData = {
+              contract: token.tokenContract,
+              tokenId: token.tokenId,
+              name: "CryptoPunkV1 #" + token.tokenId,
+              description: "CryptoPunkV1 #" + token.tokenId,
+              image: "https://cryptopunks.app/public/images/cryptopunks/punk" + token.tokenId + ".png",
+              type: "preerc721",
+              isFlagged: null,
+              events: {},
+            }
+            context.commit('addAccountToken', tokenData);
           }
           console.log("missingTokensList: " + JSON.stringify(missingTokensList));
           context.commit('setSyncSection', { section: 'Build Tokens', total: missingTokensList.length });
