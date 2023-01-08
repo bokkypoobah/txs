@@ -609,7 +609,7 @@ const Report = {
                     </span>
                     <span v-else>
                       <span v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'">
-                        <b-link @click="showModalNFTCollection(event.item.contract);">{{ getTokenContractName(data.item.chainId, event.item.contract) }}</b-link>
+                        <b-link @click="showModalNFTCollection(event.item.contract);">{{ getTokenContractName(event.item.contract) }}</b-link>
                       </span>
                       <span v-else>
                         <b-link @click="showModalAddress(event.item.contract);">{{ ensOrAccount(event.item.contract, 16) }}</b-link>
@@ -618,9 +618,9 @@ const Report = {
                   </template>
                   <template #cell(tokenIdOrTokens)="event">
                     <div v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'" class="align-top">
-                      {{ getNFTName(data.item.chainId, event.item.contract, event.item.tokenId) }}
-                      <span v-if="report && report.tokens && report.tokens[data.item.chainId] && report.tokens[data.item.chainId][event.item.contract] && report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId] && report.tokens[data.item.chainId][event.item.contract].ids[event.item.tokenId].image">
-                        <b-avatar rounded variant="light" size="3.0rem" :src="getNFTImage(data.item.chainId, event.item.contract, event.item.tokenId)" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
+                      {{ getNFTName(event.item.contract, event.item.tokenId) }}
+                      <span v-if="report && report.tokens && report.tokens[event.item.contract] && report.tokens[event.item.contract].ids[event.item.tokenId] && report.tokens[event.item.contract].ids[event.item.tokenId].image">
+                        <b-avatar rounded variant="light" size="3.0rem" :src="getNFTImage(event.item.contract, event.item.tokenId)" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
                       </span>
                     </div>
                     <span v-else>
@@ -848,8 +848,7 @@ const Report = {
       return store.getters['data/sync'];
     },
     coinbaseIncluded() {
-      const key = this.network.chainId + ':' + this.coinbase;
-      return (key in this.accounts);
+      return (this.coinbase in this.accounts);
     },
     totalTransactions() {
       return this.report.transactions && this.report.transactions.length || 0;
@@ -952,7 +951,7 @@ const Report = {
           }
           if (include) {
             results.push({
-              chainId: transaction.chainId,
+              // chainId: transaction.chainId,
               txHash: transaction.txHash,
               blockNumber: transaction.blockNumber,
               transactionIndex: transaction.transactionIndex,
@@ -1129,14 +1128,14 @@ const Report = {
     formatNumber(e) {
       return ethers.BigNumber.from(e).toString();
     },
-    getTokenContractName(chainId, tokenContract) {
-      return this.report && this.report.tokens && this.report.tokens[chainId] && this.report.tokens[chainId][tokenContract] && this.report.tokens[chainId][tokenContract].name || null;
+    getTokenContractName(tokenContract) {
+      return this.report && this.report.tokens && this.report.tokens[tokenContract] && this.report.tokens[tokenContract].name || null;
     },
-    getNFTName(chainId, tokenContract, tokenId) {
-      return this.report && this.report.tokens && this.report.tokens[chainId] && this.report.tokens[chainId][tokenContract] && this.report.tokens[chainId][tokenContract].ids[tokenId]  && this.report.tokens[chainId][tokenContract].ids[tokenId].name || null;
+    getNFTName(tokenContract, tokenId) {
+      return this.report && this.report.tokens && this.report.tokens[tokenContract] && this.report.tokens[tokenContract].ids[tokenId]  && this.report.tokens[tokenContract].ids[tokenId].name || null;
     },
-    getNFTImage(chainId, tokenContract, tokenId) {
-      return this.report && this.report.tokens && this.report.tokens[chainId] && this.report.tokens[chainId][tokenContract] && this.report.tokens[chainId][tokenContract].ids[tokenId]  && this.report.tokens[chainId][tokenContract].ids[tokenId].image || null;
+    getNFTImage(tokenContract, tokenId) {
+      return this.report && this.report.tokens && this.report.tokens[tokenContract] && this.report.tokens[tokenContract].ids[tokenId]  && this.report.tokens[tokenContract].ids[tokenId].image || null;
     },
     saveSettings() {
       console.log("saveSettings: " + JSON.stringify(this.settings));
@@ -1233,8 +1232,8 @@ const Report = {
     },
     showModalTx(modalTxHash) {
       this.modalTx.hash = modalTxHash;
-      const txData = this.txs[this.network.chainId] && this.txs[this.network.chainId][modalTxHash] || null;
-      const block = txData && txData.txReceipt && this.blocks[this.network.chainId] && this.blocks[this.network.chainId][txData.txReceipt.blockNumber] || null;
+      const txData = this.txs && this.txs[modalTxHash] || null;
+      const block = txData && txData.txReceipt && this.blocks[txData.txReceipt.blockNumber] || null;
       this.modalTx.timestamp = block && block.timestamp || null;
       this.modalTx.tx = txData && txData.tx || null;
       this.modalTx.txReceipt = txData && txData.txReceipt || null;
@@ -1425,133 +1424,125 @@ const reportModule = {
       const transactions = [];
       const tokens = {};
       const junkAccountsMap = {};
-      for (const [chainId, accounts] of Object.entries(allAccounts)) {
-        for (const [account, accountData] of Object.entries(accounts)) {
-          const accountsInfo = store.getters['data/accountsInfo'][chainId][account];
-          if (accountsInfo.junk) {
-            if (!(account in junkAccountsMap)) {
-              junkAccountsMap[account] = true;
-            }
+        for (const [account, accountData] of Object.entries(allAccounts)) {
+        const accountsInfo = store.getters['data/accountsInfo'][account];
+        if (accountsInfo.junk) {
+          if (!(account in junkAccountsMap)) {
+            junkAccountsMap[account] = true;
           }
         }
       }
       console.log("junkAccountsMap: " + JSON.stringify(junkAccountsMap));
 
-      for (const [chainId, accounts] of Object.entries(allAccounts)) {
-        const txs = allTxs[chainId] || {};
-        for (const [account, accountData] of Object.entries(accounts)) {
-          const accountsInfo = store.getters['data/accountsInfo'][chainId][account];
-          if (accountsInfo.mine && accountsInfo.report) {
-            console.log("--- Processing " + chainId + ":" + account + " ---");
-            const txHashesByBlocks = getTxHashesByBlocks(account, chainId, allAccounts, allAccountsInfo, devSettings.skipBlocks, devSettings.maxBlocks);
-            let prevBalance = ethers.BigNumber.from(0);
-            for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-              const block = blocks[chainId] && blocks[chainId][blockNumber] || null;
-              const balance = ethers.BigNumber.from(block && block.balances[account] || 0);
-              const exchangeRate = getExchangeRate(moment.unix(block.timestamp), exchangeRates);
-              let totalEthReceived = ethers.BigNumber.from(0);
-              let totalEthPaid = ethers.BigNumber.from(0);
-              let totalTxFee = ethers.BigNumber.from(0);
-              const txsToProcess = [];
-              for (const [index, txHash] of Object.keys(txHashes).entries()) {
-                const tx = txs && txs[txHash] || null;
-                if (tx) {
-                  txsToProcess.push(tx);
-                }
+      for (const [account, accountData] of Object.entries(allAccounts)) {
+        const accountsInfo = store.getters['data/accountsInfo'][account];
+        if (accountsInfo.mine && accountsInfo.report) {
+          console.log("--- Processing " + account + " ---");
+          const txHashesByBlocks = getTxHashesByBlocks(account, allAccounts, allAccountsInfo, devSettings.skipBlocks, devSettings.maxBlocks);
+          let prevBalance = ethers.BigNumber.from(0);
+          for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            const block = blocks && blocks[blockNumber] || null;
+            const balance = ethers.BigNumber.from(block && block.balances[account] || 0);
+            const exchangeRate = getExchangeRate(moment.unix(block.timestamp), exchangeRates);
+            let totalEthReceived = ethers.BigNumber.from(0);
+            let totalEthPaid = ethers.BigNumber.from(0);
+            let totalTxFee = ethers.BigNumber.from(0);
+            const txsToProcess = [];
+            for (const [index, txHash] of Object.keys(txHashes).entries()) {
+              const tx = allTxs && allTxs[txHash] || null;
+              if (tx) {
+                txsToProcess.push(tx);
               }
-              txsToProcess.sort((a, b) => a.txReceipt.transactionIndex - b.txReceipt.transactionIndex);
-              const balanceInReportingCurrency = ethers.utils.formatEther(balance) * exchangeRate.rate;
-              for (const [index, tx] of txsToProcess.entries()) {
-                // console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
-                const results = parseTx(chainId, account, accounts, functionSelectors, preERC721s, tx);
-                totalEthPaid = totalEthPaid.add(results.ethPaid);
-                totalEthReceived = totalEthReceived.add(results.ethReceived);
-                const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
-                const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
-                totalTxFee = totalTxFee.add(txFee);
-                const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
-                const diff = balance.sub(expectedBalance);
-                if (!(account in accountsMap)) {
-                  accountsMap[account] = 0;
-                }
-                accountsMap[account]++;
-                const infoType = results.info && results.info.type || "(unknown)";
-                if (!(infoType in typesMap)) {
-                  typesMap[infoType] = 0;
-                }
-                typesMap[infoType]++;
-                const infoAction = results.info && results.info.action || "(unknown)";
-                if (!(infoAction in actionsMap)) {
-                  actionsMap[infoAction] = 0;
-                }
-                actionsMap[infoAction]++;
-                const tempFunctionCall = results.functionCall.length > 0 && results.functionCall || "(none)";
-                if (!(tempFunctionCall in functionCallsMap)) {
-                  functionCallsMap[tempFunctionCall] = 0;
-                }
-                functionCallsMap[tempFunctionCall]++;
-                const isLastTxInBlock = (index + 1 == txsToProcess.length);
-                for (const [eventIndex, event] of results.myEvents.entries()) {
-                  if (event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
-                    if (!(chainId in tokens)) {
-                      tokens[chainId] = {};
-                    }
-                    if (!(event.contract in tokens[chainId])) {
-                      const tokenContract = allAccounts[chainId][event.contract];
-                      // console.log("tokenContract: " + JSON.stringify(tokenContract));
-                      tokens[chainId][event.contract] = {
-                        type: tokenContract && tokenContract.type || "?",
-                        name: tokenContract && tokenContract.collection && tokenContract.collection.name || tokenContract.name || "?",
-                        symbol: tokenContract && tokenContract.collection && tokenContract.collection.symbol || tokenContract.symbol || "?",
-                        slug: tokenContract && tokenContract.collection && tokenContract.collection.slug /*|| tokenContract.slug*/ || "?",
-                        image: tokenContract && tokenContract.collection && tokenContract.collection.image /*|| tokenContract.image*/ || "?",
-                        junk: false, // TODO: Check custom tags from accountsInfo
-                        ids: {},
-                      };
-                    }
-                    if (!(event.tokenId in tokens[chainId][event.contract].ids)) {
-                      const tokenContract = allAccounts[chainId][event.contract] || {};
-                      const token = tokenContract.assets && tokenContract.assets[event.tokenId] || {};
-                      // console.log("token: " + JSON.stringify(token));
-                      tokens[chainId][event.contract].ids[event.tokenId] = {
-                        name: token.name || "?",
-                        description: token.description || "?",
-                        name: token.name || "?",
-                        image: token.image || null,
-                      };
-                    }
+            }
+            txsToProcess.sort((a, b) => a.txReceipt.transactionIndex - b.txReceipt.transactionIndex);
+            const balanceInReportingCurrency = ethers.utils.formatEther(balance) * exchangeRate.rate;
+            for (const [index, tx] of txsToProcess.entries()) {
+              // console.log("  + " + tx.txReceipt.transactionIndex + " " + tx.tx.hash); //  + " " + functionCall);
+              const results = parseTx(account, allAccounts, functionSelectors, preERC721s, tx);
+              totalEthPaid = totalEthPaid.add(results.ethPaid);
+              totalEthReceived = totalEthReceived.add(results.ethReceived);
+              const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
+              const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
+              totalTxFee = totalTxFee.add(txFee);
+              const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
+              const diff = balance.sub(expectedBalance);
+              if (!(account in accountsMap)) {
+                accountsMap[account] = 0;
+              }
+              accountsMap[account]++;
+              const infoType = results.info && results.info.type || "(unknown)";
+              if (!(infoType in typesMap)) {
+                typesMap[infoType] = 0;
+              }
+              typesMap[infoType]++;
+              const infoAction = results.info && results.info.action || "(unknown)";
+              if (!(infoAction in actionsMap)) {
+                actionsMap[infoAction] = 0;
+              }
+              actionsMap[infoAction]++;
+              const tempFunctionCall = results.functionCall.length > 0 && results.functionCall || "(none)";
+              if (!(tempFunctionCall in functionCallsMap)) {
+                functionCallsMap[tempFunctionCall] = 0;
+              }
+              functionCallsMap[tempFunctionCall]++;
+              const isLastTxInBlock = (index + 1 == txsToProcess.length);
+              for (const [eventIndex, event] of results.myEvents.entries()) {
+                if (event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
+                  if (!(event.contract in tokens)) {
+                    const tokenContract = allAccounts[event.contract];
+                    // console.log("tokenContract: " + JSON.stringify(tokenContract));
+                    tokens[event.contract] = {
+                      type: tokenContract && tokenContract.type || "?",
+                      name: tokenContract && tokenContract.collection && tokenContract.collection.name || tokenContract.name || "?",
+                      symbol: tokenContract && tokenContract.collection && tokenContract.collection.symbol || tokenContract.symbol || "?",
+                      slug: tokenContract && tokenContract.collection && tokenContract.collection.slug /*|| tokenContract.slug*/ || "?",
+                      image: tokenContract && tokenContract.collection && tokenContract.collection.image /*|| tokenContract.image*/ || "?",
+                      junk: false, // TODO: Check custom tags from accountsInfo
+                      ids: {},
+                    };
+                  }
+                  if (!(event.tokenId in tokens[event.contract].ids)) {
+                    const tokenContract = allAccounts[event.contract] || {};
+                    const token = tokenContract.assets && tokenContract.assets[event.tokenId] || {};
+                    // console.log("token: " + JSON.stringify(token));
+                    tokens[event.contract].ids[event.tokenId] = {
+                      name: token.name || "?",
+                      description: token.description || "?",
+                      name: token.name || "?",
+                      image: token.image || null,
+                    };
                   }
                 }
-                let junk = false;
-                if (tx.tx.from in junkAccountsMap || (tx.tx.to != null && tx.tx.to in junkAccountsMap)) {
-                  junk = true;
-                }
-                transactions.push({
-                  chainId,
-                  txHash: tx.tx.hash,
-                  blockNumber: blockNumber,
-                  transactionIndex: tx.txReceipt.transactionIndex,
-                  timestamp: block.timestamp,
-                  account,
-                  from: tx.tx.from,
-                  to: tx.tx.to,
-                  functionSelector: results.functionSelector,
-                  functionCall: results.functionCall,
-                  exchangeRate: exchangeRate.rate,
-                  info: results.info || "",
-                  txType: results.info && results.info.type || "unknown",
-                  txAction: results.info && results.info.action || "unknown",
-                  balance: isLastTxInBlock ? balance.toString() : null,
-                  balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
-                  expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
-                  diff: isLastTxInBlock ? diff.toString() : null,
-                  myEvents: results.myEvents,
-                  junk,
-                });
               }
-              // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
-              prevBalance = balance;
+              let junk = false;
+              if (tx.tx.from in junkAccountsMap || (tx.tx.to != null && tx.tx.to in junkAccountsMap)) {
+                junk = true;
+              }
+              transactions.push({
+                // chainId,
+                txHash: tx.tx.hash,
+                blockNumber: blockNumber,
+                transactionIndex: tx.txReceipt.transactionIndex,
+                timestamp: block.timestamp,
+                account,
+                from: tx.tx.from,
+                to: tx.tx.to,
+                functionSelector: results.functionSelector,
+                functionCall: results.functionCall,
+                exchangeRate: exchangeRate.rate,
+                info: results.info || "",
+                txType: results.info && results.info.type || "unknown",
+                txAction: results.info && results.info.action || "unknown",
+                balance: isLastTxInBlock ? balance.toString() : null,
+                balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
+                expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
+                diff: isLastTxInBlock ? diff.toString() : null,
+                myEvents: results.myEvents,
+                junk,
+              });
             }
+            // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
+            prevBalance = balance;
           }
         }
       }
