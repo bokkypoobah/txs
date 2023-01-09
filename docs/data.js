@@ -430,11 +430,12 @@ const dataModule = {
       const OVERLAPBLOCKS = 10000;
       const devSettings = store.getters['config/devSettings'];
 
-      const moonCatRescueCatIdsToRescueIndices = {};
-      for (const [rescueIndex, catId] of MOONCATRESCUECATIDS.entries()) {
-        moonCatRescueCatIdsToRescueIndices[catId] = rescueIndex;
-      }
-      // console.log(JSON.stringify(moonCatRescueCatIdsToRescueIndices));
+      // const moonCatRescueCatIdsToRescueIndices = {};
+      // for (const [rescueIndex, catId] of MOONCATRESCUECATIDS.entries()) {
+      //   moonCatRescueCatIdsToRescueIndices[catId] = rescueIndex;
+      // }
+      const moonCatRescueLookup = getMoonCatRescueLookup();
+      console.log(JSON.stringify(moonCatRescueLookup));
 
       const accountsToSync = [];
       for (const [account, accountData] of Object.entries(context.state.accounts)) {
@@ -448,7 +449,7 @@ const dataModule = {
       // sections = ['syncBuildTokenContractsAndAccounts'];
       for (const [sectionIndex, section] of sections.entries()) {
         console.log(sectionIndex + "." + section);
-        const parameter = { accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, skipBlocks: devSettings.skipBlocks, maxBlocks: devSettings.maxBlocks, moonCatRescueCatIdsToRescueIndices };
+        const parameter = { accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, skipBlocks: devSettings.skipBlocks, maxBlocks: devSettings.maxBlocks };
         if (section == "syncTransferEvents" || section == "all") {
           await context.dispatch('syncTransferEvents', parameter);
         }

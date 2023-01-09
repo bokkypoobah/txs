@@ -34,6 +34,7 @@ function getInterfaces() {
       nftx: new ethers.utils.Interface(_CUSTOMACCOUNTS["0x0fc584529a2AEfA997697FAfAcbA5831faC0c22d"].abi),
       ensRegistrarController: new ethers.utils.Interface(_CUSTOMACCOUNTS["0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5"].abi),
       cryptoPunks: new ethers.utils.Interface(_CUSTOMACCOUNTS["0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB"].abi),
+      moonCatRescue: new ethers.utils.Interface(_CUSTOMACCOUNTS["0x60cd862c9C687A9dE49aecdC3A99b74A4fc54aB6"].abi),
     };
   }
   return _interfaces;
@@ -65,7 +66,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
   for (const [eventIndex, event] of txData.txReceipt.logs.entries()) {
 
     const topic = eventSelectors[event.topics[0]] || null;
-    // console.log(event.topics[0] + " => " + topic);
+    console.log(event.topics[0] + " => " + topic);
 
     // if (event.address in preERC721s) {
     //   console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);
@@ -106,6 +107,15 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
               tokensOrTokenId = punkIndex.toString();
               break;
             }
+          }
+        }
+      } else if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D") {
+        console.log("MoonCatRescue.Transfer");
+        for (const [nextEventIndex, nextEvent] of txData.txReceipt.logs.slice(eventIndex).entries()) {
+          if (nextEvent.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D") {
+            const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[nextEvent.address].abi);
+            const log = interface.parseLog(nextEvent);
+            console.log("log: " + JSON.stringify(log));
           }
         }
       }
@@ -154,11 +164,16 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
       }
 
     } else if (topic == "Assign(address,uint256)") {
-      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[event.address].abi);
-      const log = interface.parseLog(event);
-      const [to, tokenId] = log.args;
-      if (to == account) {
-        myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from: ADDRESS0, to, tokenId: tokenId.toString() });
+      if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
+        const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[event.address].abi);
+        const log = interface.parseLog(event);
+        const [to, tokenId] = log.args;
+        if (to == account) {
+          myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from: ADDRESS0, to, tokenId: tokenId.toString() });
+        }
+      } else {
+        console.log(txData.tx.hash + " Unhandled " + topic + " for " + event.address + " - " + JSON.stringify(event));
+        // stop.here();
       }
 
     // } else if (topic == "PunkTransfer(address,address,uint256)") {
@@ -176,6 +191,18 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
     //   if (from == account || to == account) {
     //     myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokenId.toString() });
     //   }
+
+    } else if (topic == "CatRescued(address,bytes5)") {
+      const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[event.address].abi);
+      const log = interface.parseLog(event);
+      console.log("CatRescued: " + JSON.stringify(log));
+      const [to, catId] = log.args;
+      const rescueIndex = getMoonCatRescueLookup()[catId] || "?";
+      console.log(catId + " => " + rescueIndex);
+      if (to == account) {
+        myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from: ADDRESS0, to, tokenId: rescueIndex, catId: catId.toString() });
+      }
+      // console.log("CatRescued: " + JSON.stringify(myEvents));
 
       // ERC-1155 TransferSingle (index_topic_1 address _operator, index_topic_2 address _from, index_topic_3 address _to, uint256 _id, uint256 _value)
     } else if (event.topics[0] == "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62") {

@@ -25441,3 +25441,14 @@ const MOONCATRESCUECATIDS = [
   "0x005d6ef988",
   "0x0076fe2589",
 ];
+
+let _moonCatRescueCatIdsToRescueIndices = null;
+function getMoonCatRescueLookup() {
+  if (_moonCatRescueCatIdsToRescueIndices == null) {
+    _moonCatRescueCatIdsToRescueIndices = {};
+    for (const [rescueIndex, catId] of MOONCATRESCUECATIDS.entries()) {
+      _moonCatRescueCatIdsToRescueIndices[catId] = rescueIndex;
+    }
+  }
+  return _moonCatRescueCatIdsToRescueIndices;
+}
