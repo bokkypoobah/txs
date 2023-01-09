@@ -91,7 +91,6 @@ const _CUSTOMACCOUNTS = {
           const log = interface.parseLog(event);
           if (log.name == "Assign") {
             const [to, punkIndex] = log.args;
-            // results.info = "CryptoPunksV1.Assign " + punkIndex + " to " + to;
             results.info = {
               type: "nft",
               action: "minted",
@@ -99,25 +98,47 @@ const _CUSTOMACCOUNTS = {
               to,
               events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from: ADDRESS0, to } ],
             };
-            // if (to == account) {
-            //   results.info = "Purchased/Received MoonCatRescue " + catId + " from " + from + " for " + ethers.utils.formatEther(price) + "Ξ";
-            //   results.ethPaid = price;
-            // } else if (from == account) {
-            //   results.info = "Sold/Sent MoonCatRescue " + catId + " to " + to + " for " + ethers.utils.formatEther(price) + "Ξ";
-            //   results.ethReceived = price;
-            // }
           } else if (log.name == "Transfer") {
             const [from, to, value] = log.args;
-            results.info = "CryptoPunksV1.Transfer " + value + " from " + from + " to " + to;
+            // Ignoring as tokenId not available
           } else if (log.name == "PunkTransfer") {
             const [from, to, punkIndex] = log.args;
-            results.info = "CryptoPunksV1.PunkTransfer " + punkIndex + " from " + from + " to " + to;
+            if (to == account) {
+              results.info = {
+                type: "nft",
+                action: "received",
+                from,
+                events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
+              };
+            } else if (from == account) {
+              results.info = {
+                type: "nft",
+                action: "sent",
+                to,
+                events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
+              };
+            }
           } else if (log.name == "PunkOffered") {
             const [punkIndex, minValue, toAddress] = log.args;
             results.info = "CryptoPunksV1.PunkOffered " + punkIndex + " " + minValue + " " + toAddress;
           } else if (log.name == "PunkBought") {
             const [punkIndex, value, fromAddress, toAddress] = log.args;
-            results.info = "CryptoPunksV1.PunkBought " + punkIndex + " " + value + " from " + fromAddress + " to " + toAddress;
+            // TODO: value for price bought
+            if (to == account) {
+              results.info = {
+                type: "nft",
+                action: "received",
+                from,
+                events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
+              };
+            } else if (from == account) {
+              results.info = {
+                type: "nft",
+                action: "sent",
+                to,
+                events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
+              };
+            }
           } else if (log.name == "PunkNoLongerForSale") {
             const [punkIndex] = log.args;
             results.info = "CryptoPunksV1.PunkNoLongerForSale " + punkIndex;
@@ -141,10 +162,8 @@ const _CUSTOMACCOUNTS = {
       for (const event of txData.txReceipt.logs) {
         if (event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
           const log = interface.parseLog(event);
-          // console.log(JSON.stringify(log));
           if (log.name == "Assign") {
             const [to, punkIndex] = log.args;
-            // results.info = "CryptoPunks.Assign " + punkIndex + " to " + to;
             results.info = {
               type: "nft",
               action: "minted",
@@ -152,32 +171,9 @@ const _CUSTOMACCOUNTS = {
               to,
               events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from: ADDRESS0, to } ],
             };
-
-            // if (to == account) {
-            //   results.info = "Purchased/Received MoonCatRescue " + catId + " from " + from + " for " + ethers.utils.formatEther(price) + "Ξ";
-            //   results.ethPaid = price;
-            // } else if (from == account) {
-            //   results.info = "Sold/Sent MoonCatRescue " + catId + " to " + to + " for " + ethers.utils.formatEther(price) + "Ξ";
-            //   results.ethReceived = price;
-            // }
           } else if (log.name == "Transfer") {
             const [from, to, value] = log.args;
-            // results.info = "CryptoPunks.Transfer " + value + " from " + from + " to " + to;
-            // if (to == account) {
-            //   results.info = {
-            //     type: "nft",
-            //     action: "received",
-            //     from,
-            //     events: events.receivedNFTEvents,
-            //   };
-            // } else if (from == account) {
-            //   results.info = {
-            //     type: "nft",
-            //     action: "sent",
-            //     to,
-            //     events: events.receivedNFTEvents,
-            //   };
-            // }
+            // Ignoring as tokenId not available
           } else if (log.name == "PunkTransfer") {
             const [from, to, punkIndex] = log.args;
             if (to == account) {
@@ -197,7 +193,6 @@ const _CUSTOMACCOUNTS = {
             }
           } else if (log.name == "PunkOffered") {
             const [punkIndex, minValue, toAddress] = log.args;
-            // results.info = "CryptoPunks.PunkOffered " + punkIndex + " " + minValue + " " + toAddress;
             results.info = {
               type: "nft",
               action: "offered",
@@ -215,7 +210,23 @@ const _CUSTOMACCOUNTS = {
             results.info = "CryptoPunks.PunkBidWithdrawn " + punkIndex + " " + value + " from " + fromAddress;
           } else if (log.name == "PunkBought") {
             const [punkIndex, value, fromAddress, toAddress] = log.args;
-            results.info = "CryptoPunks.PunkBought " + punkIndex + " " + value + " from " + fromAddress + " to " + toAddress;
+            // TODO: value for price bought
+            if (to == account) {
+              results.info = {
+                type: "nft",
+                action: "received",
+                from,
+                events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
+              };
+            } else if (from == account) {
+              results.info = {
+                type: "nft",
+                action: "sent",
+                to,
+                events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
+              };
+            }
+            // results.info = "CryptoPunks.PunkBought " + punkIndex + " " + value + " from " + fromAddress + " to " + toAddress;
           } else if (log.name == "PunkNoLongerForSale") {
             const [punkIndex] = log.args;
             // results.info = "CryptoPunks.PunkNoLongerForSale " + punkIndex;
