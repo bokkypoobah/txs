@@ -372,8 +372,10 @@ const Report = {
           </template>
           <template #cell(timestamp)="data">
             <b-link @click="showModalTx(data.item.txHash);">{{ formatTimestamp(data.item.timestamp) }}</b-link>
-            <br />
             <font size="-2">
+              <br />
+              {{ data.item.blockNumber }}
+              <br />
               {{ data.item.txHash }}
             </font>
           </template>

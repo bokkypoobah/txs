@@ -71,7 +71,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
     // if (event.address in preERC721s) {
     //   console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);
     // }
-    // console.log(JSON.stringify(event));
+    // console.log(topic + " " + JSON.stringify(event));
     // ERC-20 event Transfer(address indexed _from, address indexed _to, uint256 _value)
     // ERC-721 event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
     // CryptoVoxels ERC-721 @ 0x79986aF15539de2db9A5086382daEdA917A9CF0C uses ERC-20 style
@@ -109,13 +109,21 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
             }
           }
         }
-      } else if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D") {
-        console.log("MoonCatRescue.Transfer");
+      } else if (event.address == "0x60cd862c9C687A9dE49aecdC3A99b74A4fc54aB6") {
+        // console.log("MoonCatRescue.Transfer");
         for (const [nextEventIndex, nextEvent] of txData.txReceipt.logs.slice(eventIndex).entries()) {
-          if (nextEvent.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D") {
+          if (nextEvent.address == "0x60cd862c9C687A9dE49aecdC3A99b74A4fc54aB6") {
             const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[nextEvent.address].abi);
             const log = interface.parseLog(nextEvent);
-            console.log("log: " + JSON.stringify(log));
+            // console.log("log: " + JSON.stringify(log));
+            //   event CatAdopted(bytes5 indexed catId, uint price, address indexed from, address indexed to);
+            if (log.name == "CatAdopted") {
+              const [catId, price, from, to] = log.args;
+              const rescueIndex = getMoonCatRescueLookup()[catId] || "?";
+              console.log("MoonCatRescue.Transfer: " + catId + " => " + rescueIndex);
+              tokensOrTokenId = rescueIndex.toString();
+              break;
+            }
           }
         }
       }

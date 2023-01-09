@@ -946,6 +946,7 @@ const dataModule = {
           }
           let totalItems = 0;
           const missingCryptoPunksV1TokensList = [];
+          const missingMoonCatRescueTokensList = [];
           const missingTokensList = [];
           for (const [tokenContract, tokenIds] of Object.entries(missingTokensMap)) {
             totalItems += Object.keys(tokenIds).length;
@@ -953,6 +954,9 @@ const dataModule = {
               // CryptoPunksV1
               if (tokenContract == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D") {
                 missingCryptoPunksV1TokensList.push({ tokenContract, tokenId });
+                // MoonCatRescue
+              } else if (tokenContract == "0x60cd862c9C687A9dE49aecdC3A99b74A4fc54aB6") {
+                missingMoonCatRescueTokensList.push({ tokenContract, tokenId });
               } else {
                 missingTokensList.push({ tokenContract, tokenId });
               }
@@ -967,6 +971,21 @@ const dataModule = {
               name: "CryptoPunkV1 #" + token.tokenId,
               description: "CryptoPunkV1 #" + token.tokenId,
               image: "https://cryptopunks.app/public/images/cryptopunks/punk" + token.tokenId + ".png",
+              type: "preerc721",
+              isFlagged: null,
+              events: {},
+            }
+            context.commit('addAccountToken', tokenData);
+          }
+          console.log("missingMoonCatRescueTokensList: " + JSON.stringify(missingMoonCatRescueTokensList));
+          for (const [tokenIndex, token] of missingMoonCatRescueTokensList.entries()) {
+            console.log("Processing " + tokenIndex + " " + token.tokenContract + "/" + token.tokenId);
+            const tokenData = {
+              contract: token.tokenContract,
+              tokenId: token.tokenId,
+              name: "MoonCat #" + token.tokenId,
+              description: "MoonCat #" + token.tokenId,
+              image: "https://api.mooncat.community/image/" + token.tokenId,
               type: "preerc721",
               isFlagged: null,
               events: {},
