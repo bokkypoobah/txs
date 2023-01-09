@@ -576,18 +576,18 @@ const dataModule = {
                   const log = interfaces.cryptoPunks.parseLog(event);
                   const [from, to, tokenId] = log.args;
                   eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
-                // CryptoPunks V1 & V2 - PunkTransfer (index_topic_1 address from, index_topic_2 address to, uint256 punkIndex)
-                } else if (event.topics[0] == "0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8") {
-                  const log = interfaces.cryptoPunks.parseLog(event);
-                  const [from, to, tokenId] = log.args;
-                  eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
-                // CryptoPunks V1 & V2 - PunkBought (index_topic_1 uint256 punkIndex, uint256 value, index_topic_2 address fromAddress, index_topic_3 address toAddress)
-                } else if (event.topics[0] == "0x58e5d5a525e3b40bc15abaa38b5882678db1ee68befd2f60bafe3a7fd06db9e3") {
-                  const log = interfaces.cryptoPunks.parseLog(event);
-                  const [tokenId, value, from, to] = log.args;
-                  if (from == account || to == account) {
-                    eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
-                  }
+                // // CryptoPunks V1 & V2 - PunkTransfer (index_topic_1 address from, index_topic_2 address to, uint256 punkIndex)
+                // } else if (event.topics[0] == "0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8") {
+                //   const log = interfaces.cryptoPunks.parseLog(event);
+                //   const [from, to, tokenId] = log.args;
+                //   eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
+                // // CryptoPunks V1 & V2 - PunkBought (index_topic_1 uint256 punkIndex, uint256 value, index_topic_2 address fromAddress, index_topic_3 address toAddress)
+                // } else if (event.topics[0] == "0x58e5d5a525e3b40bc15abaa38b5882678db1ee68befd2f60bafe3a7fd06db9e3") {
+                //   const log = interfaces.cryptoPunks.parseLog(event);
+                //   const [tokenId, value, from, to] = log.args;
+                //   if (from == account || to == account) {
+                //     eventRecord = { txHash, blockNumber, logIndex, contract, from, to, type: "preerc721", tokenId: tokenId.toString() };
+                //   }
                 }
                 if (eventRecord) {
                   context.commit('addAccountEvent', { account, eventRecord });
