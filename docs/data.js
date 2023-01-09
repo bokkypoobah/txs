@@ -947,6 +947,7 @@ const dataModule = {
           let totalItems = 0;
           const missingCryptoPunksV1TokensList = [];
           const missingMoonCatRescueTokensList = [];
+          const missingCryptoCatsTokensList = [];
           const missingTokensList = [];
           for (const [tokenContract, tokenIds] of Object.entries(missingTokensMap)) {
             totalItems += Object.keys(tokenIds).length;
@@ -957,6 +958,9 @@ const dataModule = {
                 // MoonCatRescue
               } else if (tokenContract == "0x60cd862c9C687A9dE49aecdC3A99b74A4fc54aB6") {
                 missingMoonCatRescueTokensList.push({ tokenContract, tokenId });
+                // CryptoCats
+              } else if (tokenContract == "0x088C6Ad962812b5Aa905BA6F3c5c145f9D4C079f") {
+                missingCryptoCatsTokensList.push({ tokenContract, tokenId });
               } else {
                 missingTokensList.push({ tokenContract, tokenId });
               }
@@ -986,6 +990,21 @@ const dataModule = {
               name: "MoonCat #" + token.tokenId,
               description: "MoonCat #" + token.tokenId,
               image: "https://api.mooncat.community/image/" + token.tokenId,
+              type: "preerc721",
+              isFlagged: null,
+              events: {},
+            }
+            context.commit('addAccountToken', tokenData);
+          }
+          console.log("missingCryptoCatsTokensList: " + JSON.stringify(missingCryptoCatsTokensList));
+          for (const [tokenIndex, token] of missingCryptoCatsTokensList.entries()) {
+            console.log("Processing " + tokenIndex + " " + token.tokenContract + "/" + token.tokenId);
+            const tokenData = {
+              contract: token.tokenContract,
+              tokenId: token.tokenId,
+              name: "CryptoCat #" + token.tokenId,
+              description: "CryptoCat #" + token.tokenId,
+              image: "https://cryptocats.thetwentysix.io/contents/images/cats/" + token.tokenId + ".png",
               type: "preerc721",
               isFlagged: null,
               events: {},
