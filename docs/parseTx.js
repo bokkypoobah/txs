@@ -66,7 +66,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
   for (const [eventIndex, event] of txData.txReceipt.logs.entries()) {
 
     const topic = eventSelectors[event.topics[0]] || null;
-    console.log(event.topics[0] + " => " + topic);
+    // console.log(event.topics[0] + " => " + topic);
 
     // if (event.address in preERC721s) {
     //   console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);

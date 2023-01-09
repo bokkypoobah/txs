@@ -1,4 +1,4 @@
-function getTxHashesByBlocks(account, accounts, accountsInfo, skipBlocks, maxBlocks) {
+function getTxHashesByBlocks(account, accounts, accountsInfo, firstBlock, lastBlock) {
   const txHashesByBlocks = {};
   for (const [txHash, tx] of Object.entries(accounts[account].transactions)) {
     if (!(tx.blockNumber in txHashesByBlocks)) {
@@ -30,8 +30,19 @@ function getTxHashesByBlocks(account, accounts, accountsInfo, skipBlocks, maxBlo
   }
   const results = {};
   let blocksProcessed = 0;
+  const fb = firstBlock && firstBlock.length > 0 && parseInt(firstBlock) || null;
+  const lb = lastBlock && lastBlock.length > 0 && parseInt(lastBlock) || null;
+  // console.log("fb: " + fb + ", lb: " + lb);
   for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-    if (blocksProcessed >= skipBlocks && blocksProcessed < maxBlocks) {
+    let include = true;
+    if (fb && parseInt(blockNumber) < fb) {
+      include = false;
+    }
+    if (lb && parseInt(blockNumber) > lb) {
+      include = false;
+    }
+    // console.log("blockNumber: " + blockNumber + ": " + include);
+    if (include) {
       if (!(blockNumber in results)) {
         results[blockNumber] = {};
       }

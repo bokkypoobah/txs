@@ -34,19 +34,17 @@ const Config = {
             -->
             <b-form-group label-cols-lg="2" label="Pre ERC-721 NFTs" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0" description="Pre ERC-721 NFTs with ERC-20 Transfer events">
               <!-- TODO: Edit table -->
-              <!-- <b-form-group label="Pre ERC-721 NFTs:" label-for="preerc721-list" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Pre ERC-721 NFTs with ERC-20 transfers'" class="mx-0 my-1 p-0"> -->
-                <!-- <b-form-input type="text" size="sm" id="preerc721-list" :value="settings.skipBlocks" @change="setSkipBlocks($event)" placeholder="0" class="w-75"></b-form-input> -->
                 <!-- <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1"> -->
                 <b-table small fixed striped responsive hover id="preerc721-list" :items="preERC721TableData" show-empty empty-html="Add [Accounts] then sync" head-variant="light" class="m-0 mt-1">
                 </b-table>
               <!-- </b-form-group> -->
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Development Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
-              <b-form-group label="Skip Blocks:" label-for="skip-blocks" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Number of transactions to skip. Set to 0 to include all'" class="mx-0 my-1 p-0">
-                <b-form-input type="text" size="sm" id="skip-blocks" :value="settings.skipBlocks" @change="setSkipBlocks($event)" placeholder="0" class="w-75"></b-form-input>
+              <b-form-group label="First Block Number:" label-for="first-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'First block number to process'" class="mx-0 my-1 p-0">
+                <b-form-input type="text" size="sm" id="first-block" :value="settings.firstBlock" @change="setFirstBlock($event)" placeholder="Leave blank for all" class="w-75"></b-form-input>
               </b-form-group>
-              <b-form-group label="Max Blocks:" label-for="max-blocks" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Maximum number of transactions to process. Set to 99999 to include all'" class="mx-0 my-1 p-0">
-                <b-form-input type="text" size="sm" id="max-blocks" :value="settings.maxBlocks" @change="setMaxBlocks($event)" placeholder="99999" class="w-75"></b-form-input>
+              <b-form-group label="Last Block Number:" label-for="last-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Last block number to process'" class="mx-0 my-1 p-0">
+                <b-form-input type="text" size="sm" id="last-block" :value="settings.lastBlock" @change="setLastBlock($event)" placeholder="Leave blank for all" class="w-75"></b-form-input>
               </b-form-group>
               <b-form-group label="Check Balance:" label-for="check-balance" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Retrieve balance to check intermediate calculations'" class="mx-0 my-1 p-0">
                 <b-form-checkbox size="sm" id="check-balance" :checked="settings.checkBalance ? 1 : 0" value="1" @change="toggleCheckBalance" />
@@ -162,11 +160,11 @@ const Config = {
     setReportingCurrency(reportingCurrency) {
       store.dispatch('config/setReportingCurrency', reportingCurrency);
     },
-    setSkipBlocks(skipBlocks) {
-      store.dispatch('config/setSkipBlocks', skipBlocks);
+    setFirstBlock(firstBlock) {
+      store.dispatch('config/setFirstBlock', firstBlock);
     },
-    setMaxBlocks(maxBlocks) {
-      store.dispatch('config/setMaxBlocks', maxBlocks);
+    setLastBlock(lastBlock) {
+      store.dispatch('config/setLastBlock', lastBlock);
     },
     toggleCheckBalance(checkBalance) {
       store.dispatch('config/toggleCheckBalance', checkBalance);
@@ -227,8 +225,8 @@ const configModule = {
       confirmations: 10,
       periodStart: 'jul',
       reportingCurrency: 'USD',
-      skipBlocks: 0,
-      maxBlocks: 99999,
+      firstBlock: null,
+      lastBlock: null,
       checkBalance: false,
       preERC721s: {
         "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D": "CryptoPunksV1",
@@ -241,7 +239,7 @@ const configModule = {
         "0x79986aF15539de2db9A5086382daEdA917A9CF0C": "CryptoVoxels",
         "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d": "CryptoKitties", // Note that the transfer parameters are not indexed - Transfer (address from, address to, uint256 tokenId)
       },
-      version: 5,
+      version: 6,
     },
   },
   getters: {
@@ -273,7 +271,7 @@ const configModule = {
       return results;
     },
     devSettings(state) {
-      return { skipBlocks: state.settings.skipBlocks, maxBlocks: state.settings.maxBlocks, checkBalance: state.settings.checkBalance };
+      return { firstBlock: state.settings.firstBlock, lastBlock: state.settings.lastBlock, checkBalance: state.settings.checkBalance };
     },
   },
   mutations: {
@@ -292,11 +290,11 @@ const configModule = {
     setReportingCurrency(state, reportingCurrency) {
       state.settings.reportingCurrency = reportingCurrency;
     },
-    setSkipBlocks(state, skipBlocks) {
-      state.settings.skipBlocks = skipBlocks;
+    setFirstBlock(state, firstBlock) {
+      state.settings.firstBlock = firstBlock;
     },
-    setMaxBlocks(state, maxBlocks) {
-      state.settings.maxBlocks = maxBlocks;
+    setLastBlock(state, lastBlock) {
+      state.settings.lastBlock = lastBlock;
     },
     toggleCheckBalance(state) {
       state.settings.checkBalance = !state.settings.checkBalance;
@@ -306,7 +304,7 @@ const configModule = {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 5) {
+        if ('version' in tempSettings && tempSettings.version == 6) {
           context.state.settings = tempSettings;
         }
       }
@@ -331,12 +329,12 @@ const configModule = {
       context.commit('setReportingCurrency', reportingCurrency);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
-    setSkipBlocks(context, skipBlocks) {
-      context.commit('setSkipBlocks', skipBlocks);
+    setFirstBlock(context, firstBlock) {
+      context.commit('setFirstBlock', firstBlock);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
-    setMaxBlocks(context, maxBlocks) {
-      context.commit('setMaxBlocks', maxBlocks);
+    setLastBlock(context, lastBlock) {
+      context.commit('setLastBlock', lastBlock);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
     toggleCheckBalance(context) {

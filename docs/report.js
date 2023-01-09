@@ -1440,7 +1440,7 @@ const reportModule = {
         const accountsInfo = store.getters['data/accountsInfo'][account];
         if (accountsInfo.mine && accountsInfo.report) {
           console.log("--- Processing " + account + " ---");
-          const txHashesByBlocks = getTxHashesByBlocks(account, allAccounts, allAccountsInfo, devSettings.skipBlocks, devSettings.maxBlocks);
+          const txHashesByBlocks = getTxHashesByBlocks(account, allAccounts, allAccountsInfo, devSettings.firstBlock, devSettings.lastBlock);
           let prevBalance = ethers.BigNumber.from(0);
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             const block = blocks && blocks[blockNumber] || null;
