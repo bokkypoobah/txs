@@ -487,7 +487,7 @@ const dataModule = {
       const interfaces = getInterfaces();
       const preERC721s = store.getters['config/settings'].preERC721s;
       // const BATCHSIZE = parameter.etherscanBatchSize;
-      const BATCHSIZE = 1000000;
+      const BATCHSIZE = 5000000;
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncTransferEvents: " + accountIndex + " " + account);
         context.commit('setSyncSection', { section: 'Import', total: parameter.accountsToSync.length });
@@ -511,11 +511,12 @@ const dataModule = {
             [ '0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb', null, null, accountAs32Bytes ],
             // CryptoPunks V1 & V2 - Assign (index_topic_1 address to, uint256 punkIndex)
             [ '0x8a0e37b73a0d9c82e205d4d1a3ff3d0b57ce5f4d7bccf6bac03336dc101cb7ba', accountAs32Bytes ],
+            // TODO: Delete as Transfer events will be picked up
             // // CryptoPunks V1 & V2 - PunkTransfer (index_topic_1 address from, index_topic_2 address to, uint256 punkIndex)
-            [ '0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8', accountAs32Bytes, null ],
-            [ '0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8', null, accountAs32Bytes ],
-            // CryptoPunks V1 & V2 - Too many topics to filter by my accounts PunkBought (index_topic_1 uint256 punkIndex, uint256 value, index_topic_2 address fromAddress, index_topic_3 address toAddress)
-            [ '0x58e5d5a525e3b40bc15abaa38b5882678db1ee68befd2f60bafe3a7fd06db9e3', null, null, null ],
+            // [ '0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8', accountAs32Bytes, null ],
+            // [ '0x05af636b70da6819000c49f85b21fa82081c632069bb626f30932034099107d8', null, accountAs32Bytes ],
+            // // CryptoPunks V1 & V2 - Too many topics to filter by my accounts PunkBought (index_topic_1 uint256 punkIndex, uint256 value, index_topic_2 address fromAddress, index_topic_3 address toAddress)
+            // [ '0x58e5d5a525e3b40bc15abaa38b5882678db1ee68befd2f60bafe3a7fd06db9e3', null, null, null ],
           ];
           for (let topics of topicsList) {
             console.log("Web3 event filter #" + startBatch + "-#" + endBatch + ": " + JSON.stringify(topics));
