@@ -240,7 +240,7 @@ const configModule = {
         "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d": "CryptoKitties", // Note that the transfer parameters are not indexed - Transfer (address from, address to, uint256 tokenId)
         "0x43fb95c7afA1Ac1E721F33C695b2A0A94C7ddAb2": "LunarMoonPlots",
       },
-      version: 6,
+      version: 7,
     },
   },
   getters: {
@@ -305,7 +305,7 @@ const configModule = {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 6) {
+        if ('version' in tempSettings && tempSettings.version == 7) {
           context.state.settings = tempSettings;
         }
       }
