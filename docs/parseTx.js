@@ -130,11 +130,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
 
       // console.log("from: " + from + ", to: " + to + ", tokensOrTokenId: " + tokensOrTokenId);
       // ERC-721 Transfer, including pre-ERC721s like CryptoPunks, MoonCatRescue, CryptoCats, CryptoVoxels & CryptoKitties
-      if (event.topics.length == 4 || event.address in preERC721s) {
-        // if (event.address in preERC721s) {
-        //   console.log("preERC721s[" + event.address + "] => " + preERC721s[event.address]);
-        // } else {
-        // }
+      if (event.topics.length == 4 || (event.address in preERC721s)) {
         const nftType = (event.address in preERC721s) ? "preerc721" : "erc721";
         if (to == account) {
           const record = { type: nftType, logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokensOrTokenId };
@@ -237,19 +233,21 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
     } else if (event.topics[0] == "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb") {
       const log = interfaces.erc1155.parseLog(event);
       const [operator, from, to, tokenIds, tokens] = log.args;
+      const tokenIdsToString = tokenIds.map(e => ethers.BigNumber.from(e).toString());
+      const tokensToString = tokens.map(e => ethers.BigNumber.from(e).toString());
 
       if (to == account) {
-        const record = { type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens };
+        const record = { type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds: tokenIdsToString, tokens: tokensToString };
         receivedNFTEvents.push(record);
         myEvents.push(record);
       } else if (from == account) {
-        const record = { type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens };
+        const record = { type: "erc1155batch", logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds: tokenIdsToString, tokens: tokensToString };
         sentNFTEvents.push(record);
         myEvents.push(record);
       }
 
       // TODO: Remove below
-      erc1155BatchEvents.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds, tokens });
+      erc1155BatchEvents.push({ logIndex: event.logIndex, contract: event.address, operator, from, to, tokenIds: tokenIdsToString, tokens: tokensToString });
 
     //   // CryptoPunks V1 & CryptoPunks - Exclude Transfer and replace with PunkTransfer
     // } else if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
@@ -596,12 +594,12 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   // if (events.erc721Events.length > 0) {
   //   console.log("erc721Events: " + JSON.stringify(events.erc721Events, null, 2));
   // }
-  if (events.sentInternalEvents.length > 0) {
-    console.log("sentInternalEvents: " + JSON.stringify(events.sentInternalEvents, null, 2));
-  }
-  if (events.receivedInternalEvents.length > 0) {
-    console.log("receivedInternalEvents: " + txData.tx.hash + " " + JSON.stringify(events.receivedInternalEvents, null, 2));
-  }
+  // if (events.sentInternalEvents.length > 0) {
+  //   console.log("sentInternalEvents: " + JSON.stringify(events.sentInternalEvents, null, 2));
+  // }
+  // if (events.receivedInternalEvents.length > 0) {
+  //   console.log("receivedInternalEvents: " + txData.tx.hash + " " + JSON.stringify(events.receivedInternalEvents, null, 2));
+  // }
 
   if (txData.tx.to != null && txData.tx.data.length > 9) {
     results.functionSelector = txData.tx.data.substring(0, 10);
@@ -654,7 +652,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   if (!results.info && results.functionSelector.length > 9) {
     for (const [index, handler] of _FUNCTIONSELECTORHANDLER.entries()) {
       if (results.functionSelector in handler.functionSelectors) {
-        handler.process(txData, account, accounts, events, results);
+        handler.process(txData, account, accounts, preERC721s, events, results);
       }
     }
   }
@@ -962,15 +960,78 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   results.myEvents = [];
   if ((txData.tx.from == account || txData.tx.to == account) && msgValue > 0) {
-    const record = { type: "sent", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
+    const record = { type: "eth", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
     results.myEvents.push(record);
   }
   results.myEvents = [...results.myEvents, ...events.myEvents];
   for (const [eventIndex, event] of events.receivedInternalEvents.entries()) {
-    console.log(eventIndex + " => " + JSON.stringify(event));
-    const record = { type: "received", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
+    // console.log(eventIndex + " => " + JSON.stringify(event));
+    const record = { type: "eth", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
     results.myEvents.push(record);
   }
+
+  // console.log("myEvents: " + JSON.stringify(results.myEvents));
+
+  const collator = {};
+  for (const [eventIndex, event] of results.myEvents.entries()) {
+    const sentOrReceived = (event.from == account) ? "sent" : "received";
+    const ftOrNFT = (event.type == 'eth' || event.type == 'erc20') ? 'ft' : 'nft';
+    if (!(sentOrReceived in collator)) {
+      collator[sentOrReceived] = {};
+    }
+    if (!(ftOrNFT in collator[sentOrReceived])) {
+      collator[sentOrReceived][ftOrNFT] = {};
+    }
+    if (!(event.contract in collator[sentOrReceived][ftOrNFT])) {
+      collator[sentOrReceived][ftOrNFT][event.contract] = 0;
+    }
+    if (ftOrNFT == 'ft') {
+      collator[sentOrReceived][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][ftOrNFT][event.contract]).add(event.tokens).toString();
+    } else {
+      if (event.type == 'erc1155batch') {
+        for (const tokens of event.tokens) {
+          collator[sentOrReceived][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][ftOrNFT][event.contract]).add(tokens).toString();
+        }
+      } else {
+        collator[sentOrReceived][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][ftOrNFT][event.contract]).add(1).toString();
+      }
+    }
+  }
+  const summary = {};
+  for (const sentOrReceived of ['sent', 'received']) {
+    if (collator[sentOrReceived]) {
+      for (const ftOrNFT of ['ft', 'nft']) {
+        if (collator[sentOrReceived][ftOrNFT]) {
+          for (const [tokenContract, tokens] of Object.entries(collator[sentOrReceived][ftOrNFT])) {
+            let name = undefined;
+            let symbol = undefined;
+            let decimals = undefined;
+            const tc = accounts[tokenContract];
+            if (ftOrNFT == 'ft') {
+              if (tokenContract == 'eth') {
+                name = 'ETH';
+                symbol = 'Ξ';
+                decimals = 18;
+              } else {
+                name = tc.name;
+                symbol = tc.symbol;
+                decimals = tc.decimals;
+              }
+            } else {
+              name = tc.collection.name;
+              symbol = tc.collection.symbol;
+            }
+            if (!(sentOrReceived in summary)) {
+              summary[sentOrReceived] = [];
+            }
+            summary[sentOrReceived].push({ ftOrNFT, tokenContract, tokens, name, symbol, decimals });
+          }
+        }
+      }
+    }
+  }
+  results.summary = summary;
+  results.collator = collator;
 
   return results;
 }

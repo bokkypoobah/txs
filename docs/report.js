@@ -395,7 +395,59 @@ const Report = {
               <b-badge v-else pill variant="warning">?????</b-badge>
               <b-badge v-if="!data.item.info.action" pill variant="primary" v-b-popover.hover="data.item.functionCall">{{ data.item.functionCall.substring(0, 30) + (data.item.functionCall.length > 30 ? '...' : '') }}</b-badge>
             </font>
-            <span v-if="data.item.info">
+            <!--
+            <span v-for="sentOrReceived in ['sent', 'received']">
+              <span v-if="data.item.summary[sentOrReceived]">
+                <b-badge pill variant="success">{{ sentOrReceived }}</b-badge>
+                FT: {{ data.item.summary[sentOrReceived]['ft'] }}
+                <span v-if="data.item.summary[sentOrReceived]['ft']" v-for="[tokenContract, tokens] in data.item.summary[sentOrReceived]['ft']" >
+                  tokens: {{ tokens }} tokenContract: {{ tokenContract }}
+                </span>
+                NFT: {{ data.item.summary[sentOrReceived]['nft'] }}
+              </span>
+            </span>
+            <br />
+            {{ data.item.collator }}
+            {{ data.item.summary }}
+            -->
+            <span v-for="sentOrReceived in ['sent', 'received']">
+              <span v-if="data.item.summary[sentOrReceived]">
+                <font size="-1"><b-badge pill variant="success" class="ml-2">{{ sentOrReceived }}</b-badge></font>
+                <span v-for="row of data.item.summary[sentOrReceived]">
+                  <span v-if="row.ftOrNFT == 'ft'">
+                    <span v-if="row.tokenContract == 'eth'">
+                      {{ formatETH(row.tokens) }}<font size="-1">{{ row.symbol }}</font>
+                    </span>
+                    <span v-else>
+                      {{ formatERC20(row.tokens, row.decimals) }}<font size="-1">{{ row.symbol }}</font>
+                    </span>
+                  </span>
+                  <span v-else>
+                    <b-link @click="showModalNFTCollection(row.tokenContract);">{{ row.tokens }} x {{ row.name }}</b-link>
+                  </span>
+                </span>
+
+                <!--
+                <br />
+                data.item.summary[sentOrReceived]['ftOrNFT']: {{ data.item.summary[sentOrReceived]['ftOrNFT'] }}
+                <br />
+                <span v-if="data.item.summary[sentOrReceived].ftOrNFT == 'ft'">
+                  FT: {{ data.item.summary[sentOrReceived] }}
+                  <span v-if="data.item.summary[sentOrReceived].tokenContract == 'eth'">
+                    FTeth: {{ data.item.summary[sentOrReceived] }}
+                  </span>
+                  <span v-else>
+                    FTerc20: {{ data.item.summary[sentOrReceived] }}
+                  </span>
+                </span>
+                <span v-else>
+                  NFT: {{ data.item.summary[sentOrReceived] }}
+                </span>
+                -->
+              </span>
+            </span>
+            <br />
+            <span v-if="data.item.info && false">
               <span v-if="data.item.info.type == 'eth'">
                 <span v-if="data.item.info.action == 'cancelled'">
                   {{ formatETH(data.item.info.amount, 0) }}<font size="-2">Ξ</font>
@@ -445,44 +497,48 @@ const Report = {
                 </span>
               </span>
               <span v-else-if="data.item.info.type == 'nft'">
+                <!--
+                info.events: {{ data.item.info.events }}
+                myEvents: {{ data.item.myEvents }}
+                -->
                 <span v-if="data.item.info.action == 'sent'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                    <b-link @click="showModalNFT(event);">{{ (event.contract && event.contract.substring(0, 12) || 'ERROR') + ':' + (event.tokenId && event.tokenId.substring(0, 12) || 'ERROR') }}</b-link>
                   </span>
                   <b-link @click="showModalAddress(data.item.info.events[0].to);">{{ ensOrAccount(data.item.info.events[0].to) }}</b-link>
                 </span>
                 <span v-else-if="data.item.info.action == 'received'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                    <b-link @click="showModalNFT(event);">{{ (event.contract && event.contract.substring(0, 12) || 'ERROR') + ':' + (event.tokenId && event.tokenId.substring(0, 12) || 'ERROR') }}</b-link>
                   </span>
                   <b-link @click="showModalAddress(data.item.info.from);">{{ ensOrAccount(data.item.info.from) }}</b-link>
                 </span>
                 <span v-else-if="data.item.info.action == 'minted'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                    <b-link @click="showModalNFT(event);">{{ (event.contract && event.contract.substring(0, 12) || 'ERROR') + ':' + (event.tokenId && event.tokenId.substring(0, 12) || 'ERROR') }}</b-link>
                   </span>
                   {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
                 </span>
                 <span v-else-if="data.item.info.action == 'airdropped'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                    <b-link @click="showModalNFT(event);">{{ (event.contract && event.contract.substring(0, 12) || 'ERROR') + ':' + (event.tokenId && event.tokenId.substring(0, 12) || 'ERROR') }}</b-link>
                   </span>
                 </span>
                 <span v-else-if="data.item.info.action == 'purchased'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                    <b-link @click="showModalNFT(event);">{{ (event.contract && event.contract.substring(0, 12) || 'ERROR') + ':' + (event.tokenId && event.tokenId.substring(0, 12) || 'ERROR') }}</b-link>
                   </span>
                   {{ formatETH(data.item.info.value, 0) }}<font size="-2">Ξ</font>
                 </span>
                 <span v-else-if="data.item.info.action == 'sold'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                    <b-link @click="showModalNFT(event);">{{ (event.contract && event.contract.substring(0, 12) || 'ERROR') + ':' + (event.tokenId && event.tokenId.substring(0, 12) || 'ERROR') }}</b-link>
                   </span>
                   {{ formatETH(data.item.info.value, 0) }}
                   <span v-if="data.item.info.valueToken == 'eth'"><font size="-2">Ξ</font></span>
@@ -497,7 +553,7 @@ const Report = {
                 <span v-else-if="data.item.info.action == 'offered'">
                   <span v-if="data.item.info.events" v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                    <b-link @click="showModalNFT(event);">{{ (event.contract && event.contract.substring(0, 12) || 'ERROR') + ':' + (event.tokenId && event.tokenId.substring(0, 12) || 'ERROR') }}</b-link>
                   </span>
                   <span v-if="data.item.info.minValue">{{ formatETH(data.item.info.minValue, 0) }}<font size="-2">Ξ</font></span>
                   <span v-if="data.item.info.to"><b-link @click="showModalAddress(data.item.info.to);">{{ ensOrAccount(data.item.info.to) }}</b-link></span>
@@ -506,7 +562,7 @@ const Report = {
                 <span v-else-if="data.item.info.action == 'offerremoved'">
                   <span v-for="(event, eventIndex) in data.item.info.events" :key="eventIndex">
                     <span v-if="eventIndex != 0">,</span>
-                    <b-link @click="showModalNFT(event);">{{ event.contract.substring(0, 12) + ':' + event.tokenId.substring(0, 12) }}</b-link>
+                    <b-link @click="showModalNFT(event);">{{ (event.contract && event.contract.substring(0, 12) || 'ERROR') + ':' + (event.tokenId && event.tokenId.substring(0, 12) || 'ERROR') }}</b-link>
                   </span>
                 </span>
                 <span v-else>
@@ -969,6 +1025,8 @@ const Report = {
               balanceInReportingCurrency: transaction.balanceInReportingCurrency,
               expectedBalance: transaction.expectedBalance,
               diff: transaction.diff,
+              collator: transaction.collator,
+              summary: transaction.summary,
               myEvents: transaction.myEvents,
               junk: transaction.junk,
             });
@@ -1124,6 +1182,13 @@ const Report = {
       } catch (err) {
       }
       return e.toFixed(precision);
+    },
+    formatERC20(e, decimals = 18) {
+      try {
+        return e ? ethers.utils.formatUnits(e, decimals) : null;
+      } catch (err) {
+      }
+      return e.toString();
     },
     formatGwei(e) {
       return ethers.utils.formatUnits(e, 'gwei');
@@ -1541,6 +1606,8 @@ const reportModule = {
                 balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
                 expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
                 diff: isLastTxInBlock ? diff.toString() : null,
+                collator: results.collator,
+                summary: results.summary,
                 myEvents: results.myEvents,
                 junk,
               });
@@ -1550,7 +1617,7 @@ const reportModule = {
           }
         }
       }
-      console.log("tokens: " + JSON.stringify(tokens, null, 2));
+      // console.log("tokens: " + JSON.stringify(tokens, null, 2));
       // TODO: Delete accountsMap, typesMap, actionsMap, functionCallsMap
       context.commit('setReport', { transactions, tokens, accountsMap, typesMap, actionsMap, functionCallsMap });
       context.dispatch('saveData', ['report']);

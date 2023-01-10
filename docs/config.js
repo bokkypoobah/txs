@@ -238,6 +238,7 @@ const configModule = {
         "0x011C77fa577c500dEeDaD364b8af9e8540b808C0": "ImmortalPlayerCharacter",
         "0x79986aF15539de2db9A5086382daEdA917A9CF0C": "CryptoVoxels",
         "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d": "CryptoKitties", // Note that the transfer parameters are not indexed - Transfer (address from, address to, uint256 tokenId)
+        "0x43fb95c7afA1Ac1E721F33C695b2A0A94C7ddAb2": "LunarMoonPlots",
       },
       version: 6,
     },
