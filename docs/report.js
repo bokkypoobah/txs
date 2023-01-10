@@ -649,6 +649,13 @@ const Report = {
                 TODO: {{ data.item.functionCall }}
               </font>
             </span>
+
+            <div v-if="data.item.contract">
+              <font size="-1">
+                <b-badge button variant="light" @click="showModalAddress(data.item.contract);" v-b-popover.hover="'Click to view'">{{ data.item.contract + ':' + data.item.functionCall }}</b-badge>
+              </font>
+            </div>
+
             <div v-if="data.item.myEvents && data.item.myEvents.length > 0">
               <font size="-2">
                 <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
@@ -787,6 +794,7 @@ const Report = {
         { value: 'timestampdsc', text: '▼ Timestamp' },
         { value: 'blocknumberasc', text: '▲ Block Number' },
         { value: 'blocknumberdsc', text: '▼ Block Number' },
+        { value: 'functioncallcontractblocknumberasc', text: '▲ FunctionCall, ▲ Contract, ▲ BlockNumber' },
         // { value: 'groupasc', text: '▲ Group, ▲ Name' },
         // { value: 'groupdsc', text: '▼ Group, ▲ Name' },
         // { value: 'nameasc', text: '▲ Name, ▲ Group' },
@@ -817,22 +825,22 @@ const Report = {
       ],
       accountsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
-        { key: 'account', label: 'Account' },
+        { key: 'account', label: 'Account', sortable: true },
         { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       typesFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
-        { key: 'type', label: 'Type' },
+        { key: 'type', label: 'Type', sortable: true },
         { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       actionsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
-        { key: 'action', label: 'Action' },
+        { key: 'action', label: 'Action', sortable: true },
         { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       functionCallsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 5%;' },
-        { key: 'functionCall', label: 'Function Call' },
+        { key: 'functionCall', label: 'Function Call', sortable: true },
         { key: 'count', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       myEventsFields: [
@@ -1018,6 +1026,7 @@ const Report = {
               account: transaction.account,
               from: transaction.from,
               to: transaction.to,
+              contract: transaction.contract,
               functionCall: transaction.functionCall,
               exchangeRate: transaction.exchangeRate,
               info: transaction.info,
@@ -1057,6 +1066,22 @@ const Report = {
             return b.blockNumber - a.blockNumber
           }
         });
+      } else if (this.settings.sortOption == 'functioncallcontractblocknumberasc') {
+        results.sort((a, b) => {
+          if (('' + a.functionCall).localeCompare(b.functionCall) == 0) {
+            if (('' + a.contract).localeCompare(b.contract) == 0) {
+              if (a.blockNumber == b.blockNumber) {
+                return a.transactionIndex - b.transactionIndex;
+              } else {
+                return a.blockNumber - b.blockNumber;
+              }
+            } else {
+              return ('' + a.contract).localeCompare(b.contract);
+            }
+          } else {
+            return ('' + a.functionCall).localeCompare(b.functionCall);
+          }
+        });
       }
       return results;
     },
@@ -1076,7 +1101,11 @@ const Report = {
         results.push({ account: k, count: v });
       }
       results.sort((a, b) => {
-        return ('' + a.account).localeCompare(b.account);
+        if (a.count == b.count) {
+          return ('' + a.account).localeCompare(b.account);
+        } else {
+          return b.count - a.count;
+        }
       });
       return results;
       // const results = [];
@@ -1101,7 +1130,11 @@ const Report = {
         results.push({ type: k, count: v });
       }
       results.sort((a, b) => {
-        return ('' + a.type).localeCompare(b.type);
+        if (a.count == b.count) {
+          return ('' + a.type).localeCompare(b.type);
+        } else {
+          return b.count - a.count;
+        }
       });
       return results;
       // const results = [];
@@ -1126,7 +1159,11 @@ const Report = {
         results.push({ action: k, count: v });
       }
       results.sort((a, b) => {
-        return ('' + a.action).localeCompare(b.action);
+        if (a.count == b.count) {
+          return ('' + a.action).localeCompare(b.action);
+        } else {
+          return b.count - a.count;
+        }
       });
       return results;
       // const results = [];
@@ -1150,7 +1187,11 @@ const Report = {
         results.push({ functionCall: k, count: v });
       }
       results.sort((a, b) => {
-        return ('' + a.functionCall).localeCompare(b.functionCall);
+        if (a.count == b.count) {
+          return ('' + a.functionCall).localeCompare(b.functionCall);
+        } else {
+          return b.count - a.count;
+        }
       });
       return results;
       // const results = [];
@@ -1596,6 +1637,7 @@ const reportModule = {
                 account,
                 from: tx.tx.from,
                 to: tx.tx.to,
+                contract: results.contract,
                 functionSelector: results.functionSelector,
                 functionCall: results.functionCall,
                 exchangeRate: exchangeRate.rate,

@@ -602,13 +602,35 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   //   console.log("receivedInternalEvents: " + txData.tx.hash + " " + JSON.stringify(events.receivedInternalEvents, null, 2));
   // }
 
-  if (txData.tx.to != null && txData.tx.data.length > 9) {
+  if (txData.tx.to == null) {
+    results.functionSelector = "(contract creation)";
+    results.functionCall = "(contract creation)";
+  } else if (txData.tx.data.length > 9) {
     results.functionSelector = txData.tx.data.substring(0, 10);
     results.functionCall = functionSelectors[results.functionSelector] && functionSelectors[results.functionSelector].length > 0 && functionSelectors[results.functionSelector][0] || results.functionSelector;
+  } else if (txData.tx.data.length > 2) {
+    results.functionSelector = txData.tx.data;
+    results.functionCall = "(unknown '" + txData.tx.data + "')";
   } else {
     results.functionSelector = "(none)";
     results.functionCall = "(none)";
   }
+
+  results.contract = null;
+  if (txData.tx.to != null) {
+    const toAccount = accounts[txData.tx.to] || null;
+    console.log(txData.tx.hash + " - to: " + txData.tx.to + ", type: " + toAccount.type);
+    if (toAccount.type != 'eoa') {
+      results.contract = txData.tx.to;
+    }
+  }
+  // if (txData.tx.to != null && txData.tx.data.length > 9) {
+  //   results.functionSelector = txData.tx.data.substring(0, 10);
+  //   results.functionCall = functionSelectors[results.functionSelector] && functionSelectors[results.functionSelector].length > 0 && functionSelectors[results.functionSelector][0] || results.functionSelector;
+  // } else {
+  //   results.functionSelector = "(none)";
+  //   results.functionCall = "(none)";
+  // }
 
   // if (results.functionCall != "") {
   //   console.log("functionSelector: " + results.functionSelector + " => " + results.functionCall);
