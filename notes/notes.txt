@@ -62,3 +62,14 @@ event Transfer(address indexed from, address indexed to, uint256 value);
 event ReleaseUpdate(uint256 indexed newCatsAdded, uint256 totalSupply, uint256 catPrice, string newImageHash);
 event UpdateReleasePrice(uint32 releaseId, uint256 catPrice);
 event UpdateAttribute(uint indexed attributeNumber, address indexed ownerAddress, bytes32 oldValue, bytes32 newValue);
+
+
+
+Blocks
+
+01/07/2017 - 30/06/2018 3,955,159 Jul-01-2017 12:00:11 AM +UTC 5,880,581
+01/07/2018 - 30/06/2019 5,883,490 Jul-01-2018 12:00:05 AM +UTC 8,059,133
+01/07/2019 - 30/06/2020 8,062,293 10,366,994
+01/07/2020 - 30/06/2021 10,370,274 12,735,199
+01/07/2021 - 30/06/2022 12,738,509 15,050,239
+01/07/2022 - 30/06/2023 15,053,226 

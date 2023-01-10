@@ -961,6 +961,19 @@ const dataModule = {
                 // CryptoCats
               } else if (tokenContract == "0x088C6Ad962812b5Aa905BA6F3c5c145f9D4C079f") {
                 missingCryptoCatsTokensList.push({ tokenContract, tokenId });
+                // Lunar
+              } else if (tokenContract == "0x43fb95c7afA1Ac1E721F33C695b2A0A94C7ddAb2") {
+                const tokenData = {
+                  contract: tokenContract,
+                  tokenId: tokenId,
+                  name: "LunarToken #" + tokenId,
+                  description: "LunarToken #" + tokenId,
+                  image: "https://wrapped-lunars.netlify.app/previews/" + tokenId + ".png",
+                  type: "preerc721",
+                  isFlagged: null,
+                  events: {},
+                }
+                context.commit('addAccountToken', tokenData);
               } else {
                 missingTokensList.push({ tokenContract, tokenId });
               }

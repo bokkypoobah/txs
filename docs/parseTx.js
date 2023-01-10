@@ -970,7 +970,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     results.myEvents.push(record);
   }
 
-  // console.log("myEvents: " + JSON.stringify(results.myEvents));
+  console.log("myEvents: " + JSON.stringify(results.myEvents));
 
   const collator = {};
   for (const [eventIndex, event] of results.myEvents.entries()) {

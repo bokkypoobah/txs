@@ -40,10 +40,13 @@ const Config = {
               <!-- </b-form-group> -->
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Development Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
-              <b-form-group label="First Block Number:" label-for="first-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'First block number to process'" class="mx-0 my-1 p-0">
+              <b-form-group label="Process Period:" label-for="process-period" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Select a period for processing'" class="mx-0 my-1 p-0">
+                <b-form-select size="sm" id="process-period" :value="settings.processPeriod" @change="setProcessPeriod($event)" :options="processPeriods" class="w-50"></b-form-select>
+              </b-form-group>
+              <b-form-group v-if="settings.processPeriod == 'custom'" label="First Block Number:" label-for="first-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'First block number to process'" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="first-block" :value="settings.firstBlock" @change="setFirstBlock($event)" placeholder="Leave blank for all" class="w-75"></b-form-input>
               </b-form-group>
-              <b-form-group label="Last Block Number:" label-for="last-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Last block number to process'" class="mx-0 my-1 p-0">
+              <b-form-group v-if="settings.processPeriod == 'custom'" label="Last Block Number:" label-for="last-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Last block number to process'" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="last-block" :value="settings.lastBlock" @change="setLastBlock($event)" placeholder="Leave blank for all" class="w-75"></b-form-input>
               </b-form-group>
               <b-form-group label="Check Balance:" label-for="check-balance" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Retrieve balance to check intermediate calculations'" class="mx-0 my-1 p-0">
@@ -130,8 +133,14 @@ const Config = {
     settings() {
       return store.getters['config/settings'];
     },
+    devSettings() {
+      return store.getters['config/devSettings'];
+    },
     periodOptions() {
       return store.getters['config/periodOptions'];
+    },
+    processPeriods() {
+      return store.getters['config/processPeriods'];
     },
     preERC721TableData() {
       const results = [];
@@ -159,6 +168,9 @@ const Config = {
     },
     setReportingCurrency(reportingCurrency) {
       store.dispatch('config/setReportingCurrency', reportingCurrency);
+    },
+    setProcessPeriod(processPeriod) {
+      store.dispatch('config/setProcessPeriod', processPeriod);
     },
     setFirstBlock(firstBlock) {
       store.dispatch('config/setFirstBlock', firstBlock);
@@ -225,6 +237,7 @@ const configModule = {
       confirmations: 10,
       periodStart: 'jul',
       reportingCurrency: 'USD',
+      processPeriod: null,
       firstBlock: null,
       lastBlock: null,
       checkBalance: false,
@@ -240,11 +253,29 @@ const configModule = {
         "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d": "CryptoKitties", // Note that the transfer parameters are not indexed - Transfer (address from, address to, uint256 tokenId)
         "0x43fb95c7afA1Ac1E721F33C695b2A0A94C7ddAb2": "LunarMoonPlots",
       },
-      version: 7,
+      version: 8,
     },
+    processPeriods: [
+      { value: null, text: '(all)', data: { from: null, to: null } },
+      { value: "custom", text: '(custom)', data: { from: null, to: null } },
+      { value: '20172018', text: 'Jul 1 2017 - Jun 30 2018', data: { from: 3_955_159, to: 5_880_581 } },
+      { value: '20182019', text: 'Jul 1 2018 - Jun 30 2019', data: { from: 5_883_490, to: 8_059_133 } },
+      { value: '20192020', text: 'Jul 1 2019 - Jun 30 2020', data: { from: 8_062_293, to: 10_366_994 } },
+      { value: '20202021', text: 'Jul 1 2020 - Jun 30 2021', data: { from: 10_370_274, to: 12_735_199 } },
+      { value: '20212022', text: 'Jul 1 2021 - Jun 30 2022', data: { from: 12_738_509, to: 15_050_239 } },
+      { value: '20222023', text: 'Jul 1 2022 - ', data: { from: 15_053_226, to: null } },
+    ],
+    // Note: UTC, and approximate block numbers
+    // 01/07/2017 - 30/06/2018 3,955,159 Jul-01-2017 12:00:11 AM +UTC 5,880,581
+    // 01/07/2018 - 30/06/2019 5,883,490 Jul-01-2018 12:00:05 AM +UTC 8,059,133
+    // 01/07/2019 - 30/06/2020 8,062,293 10,366,994
+    // 01/07/2020 - 30/06/2021 10,370,274 12,735,199
+    // 01/07/2021 - 30/06/2022 12,738,509 15,050,239
+    // 01/07/2022 - 30/06/2023 15,053,226
   },
   getters: {
     settings: state => state.settings,
+    processPeriods: state => state.processPeriods,
     periodOptions(state) {
       const results = [];
       const startMonth = state.settings.periodStart && state.settings.periodStart.length > 0 && state.settings.periodStart || "jul";
@@ -272,7 +303,21 @@ const configModule = {
       return results;
     },
     devSettings(state) {
-      return { firstBlock: state.settings.firstBlock, lastBlock: state.settings.lastBlock, checkBalance: state.settings.checkBalance };
+      let firstBlock = null;
+      let lastBlock = null;
+      console.log(JSON.stringify(state.processPeriods));
+      if (state.settings.processPeriod == "custom") {
+        firstBlock = state.settings.firstBlock;
+        lastBlock = state.settings.lastBlock;
+      } else if (state.settings.processPeriod != null) {
+        const setting = state.processPeriods.filter(e => e.value == state.settings.processPeriod);
+        if (setting.length == 1) {
+          firstBlock = setting[0].data.from;
+          lastBlock = setting[0].data.to;
+        }
+        console.log(JSON.stringify(setting));
+      }
+      return { firstBlock, lastBlock, checkBalance: state.settings.checkBalance };
     },
   },
   mutations: {
@@ -291,6 +336,9 @@ const configModule = {
     setReportingCurrency(state, reportingCurrency) {
       state.settings.reportingCurrency = reportingCurrency;
     },
+    setProcessPeriod(state, processPeriod) {
+      state.settings.processPeriod = processPeriod;
+    },
     setFirstBlock(state, firstBlock) {
       state.settings.firstBlock = firstBlock;
     },
@@ -305,7 +353,7 @@ const configModule = {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 7) {
+        if ('version' in tempSettings && tempSettings.version == 8) {
           context.state.settings = tempSettings;
         }
       }
@@ -328,6 +376,10 @@ const configModule = {
     },
     setReportingCurrency(context, reportingCurrency) {
       context.commit('setReportingCurrency', reportingCurrency);
+      localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    setProcessPeriod(context, processPeriod) {
+      context.commit('setProcessPeriod', processPeriod);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
     setFirstBlock(context, firstBlock) {

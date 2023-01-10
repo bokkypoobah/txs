@@ -30,8 +30,8 @@ function getTxHashesByBlocks(account, accounts, accountsInfo, firstBlock, lastBl
   }
   const results = {};
   let blocksProcessed = 0;
-  const fb = firstBlock && firstBlock.length > 0 && parseInt(firstBlock) || null;
-  const lb = lastBlock && lastBlock.length > 0 && parseInt(lastBlock) || null;
+  const fb = firstBlock && firstBlock.toString().length > 0 && parseInt(firstBlock) || null;
+  const lb = lastBlock && lastBlock.toString().length > 0 && parseInt(lastBlock) || null;
   for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
     if ((!fb || parseInt(blockNumber) >= fb) && (!lb || parseInt(blockNumber) <= lb)) {
       if (!(blockNumber in results)) {

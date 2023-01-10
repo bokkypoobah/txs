@@ -69,6 +69,7 @@ const _FUNCTIONSELECTORHANDLER = [
       "0xd9eccc2e": true, // sendToMany(address from, address[] to, uint256 id, uint256 amount, bytes data) @ 0xD9c8e3d79B44679A4837E2D53c5da43Ca582DADf
       "0x54ffbd23": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
       "0xe96c3edb": true, // Bulksender.app @ 0xd1917932A7Db6Af687B523D5Db5d7f5c2734763F
+      "0xe4745970": "transfer(uint256 _amount, address _to, string _reason)", // 0x43fb95c7afA1Ac1E721F33C695b2A0A94C7ddAb2
     },
     process: function(txData, account, accounts, preERC721s, events, results) {
       if (results.functionSelector == "0xa22cb465") {
