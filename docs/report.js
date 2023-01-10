@@ -387,13 +387,21 @@ const Report = {
             </font>
           </template>
           <template #cell(info)="data">
+            <!--
+            <div v-if="data.item.contract">
+              <font size="-1">
+                <b-badge button variant="light" @click="showModalAddress(data.item.contract);" v-b-popover.hover="'Click to view'">{{ data.item.contract + ':' + data.item.functionCall }}</b-badge>
+              </font>
+            </div>
+            -->
             <font size="-1">
               <b-badge v-if="data.item.junk" pill variant="warning" v-b-popover.hover="'Contract marked as junk'">junk</b-badge>
               <b-badge v-if="data.item.info.type" pill variant="info">{{ data.item.info.type }}</b-badge>
               <b-badge v-else pill variant="warning">???</b-badge>
               <b-badge v-if="data.item.info.action" pill variant="primary">{{ data.item.info.action }}</b-badge>
               <b-badge v-else pill variant="warning">?????</b-badge>
-              <b-badge v-if="!data.item.info.action" pill variant="primary" v-b-popover.hover="data.item.functionCall">{{ data.item.functionCall.substring(0, 30) + (data.item.functionCall.length > 30 ? '...' : '') }}</b-badge>
+              <b-badge v-if="data.item.contract" button variant="light" @click="showModalAddress(data.item.contract);" v-b-popover.hover="'Click to view'">{{ data.item.contract + ':' + data.item.functionCall.substring(0, 30) + (data.item.functionCall.length > 30 ? '...' : '') }}</b-badge>
+              <!-- <b-badge v-if="!data.item.info.action" pill variant="primary" v-b-popover.hover="data.item.functionCall">{{ data.item.functionCall.substring(0, 30) + (data.item.functionCall.length > 30 ? '...' : '') }}</b-badge> -->
             </font>
             <!--
             <span v-for="sentOrReceived in ['sent', 'received']">
@@ -644,17 +652,13 @@ const Report = {
                 </font>
               </span>
             </span>
+            <!--
             <span v-else>
               <font size="-2">
                 TODO: {{ data.item.functionCall }}
               </font>
             </span>
-
-            <div v-if="data.item.contract">
-              <font size="-1">
-                <b-badge button variant="light" @click="showModalAddress(data.item.contract);" v-b-popover.hover="'Click to view'">{{ data.item.contract + ':' + data.item.functionCall }}</b-badge>
-              </font>
-            </div>
+            -->
 
             <div v-if="data.item.myEvents && data.item.myEvents.length > 0">
               <font size="-2">
