@@ -1206,7 +1206,7 @@ const Report = {
       return this.report && this.report.tokens && this.report.tokens[tokenContract] && this.report.tokens[tokenContract].ids[tokenId]  && this.report.tokens[tokenContract].ids[tokenId].image || null;
     },
     saveSettings() {
-      console.log("saveSettings: " + JSON.stringify(this.settings));
+      // console.log("saveSettings: " + JSON.stringify(this.settings));
       localStorage.reportSettings = JSON.stringify(this.settings);
     },
     generateReport(contractOrTxOrBlockRange) {
@@ -1315,7 +1315,7 @@ const Report = {
         this.modalTx.functionCall = "";
       }
       this.modalTx.info = "info";
-      console.log("modalTx: " + JSON.stringify(this.modalTx, null, 2));
+      // console.log("modalTx: " + JSON.stringify(this.modalTx, null, 2));
       this.$bvModal.show('modal-tx');
     },
     showModalNFTCollection(nftCollection) {
@@ -1358,7 +1358,7 @@ const Report = {
       // console.log("HERE 5");
     },
     exportTransactions() {
-      console.log("exportTransactions");
+      // console.log("exportTransactions");
       const rows = [
           ["No", "TxHash", "From", "FromENS", "To", "ToENS", "FunctionName", "InputFragment"],
       ];
@@ -1501,7 +1501,7 @@ const reportModule = {
           }
         }
       }
-      console.log("junkAccountsMap: " + JSON.stringify(junkAccountsMap));
+      // console.log("junkAccountsMap: " + JSON.stringify(junkAccountsMap));
 
       for (const [account, accountData] of Object.entries(allAccounts)) {
         const accountsInfo = store.getters['data/accountsInfo'][account];

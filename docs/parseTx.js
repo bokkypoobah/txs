@@ -120,7 +120,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
             if (log.name == "CatAdopted") {
               const [catId, price, from, to] = log.args;
               const rescueIndex = getMoonCatRescueLookup()[catId] || "?";
-              console.log("MoonCatRescue.Transfer: " + catId + " => " + rescueIndex);
+              // console.log("MoonCatRescue.Transfer: " + catId + " => " + rescueIndex);
               tokensOrTokenId = rescueIndex.toString();
               break;
             }
@@ -176,7 +176,8 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
           myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from: ADDRESS0, to, tokenId: tokenId.toString() });
         }
       } else {
-        console.log(txData.tx.hash + " Unhandled " + topic + " for " + event.address + " - " + JSON.stringify(event));
+        // TODO - CryptoCats
+        // console.log(txData.tx.hash + " Unhandled " + topic + " for " + event.address + " - " + JSON.stringify(event));
         // stop.here();
       }
 
@@ -199,10 +200,10 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
     } else if (topic == "CatRescued(address,bytes5)") {
       const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[event.address].abi);
       const log = interface.parseLog(event);
-      console.log("CatRescued: " + JSON.stringify(log));
+      // console.log("CatRescued: " + JSON.stringify(log));
       const [to, catId] = log.args;
       const rescueIndex = getMoonCatRescueLookup()[catId] || "?";
-      console.log(catId + " => " + rescueIndex);
+      // console.log(catId + " => " + rescueIndex);
       if (to == account) {
         myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from: ADDRESS0, to, tokenId: rescueIndex, catId: catId.toString() });
       }
@@ -753,11 +754,11 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     };
   }
 
-  // TODO Check remaining
-  if (!results.info && results.functionCall != "") {
-    console.log("functionSelector: " + results.functionSelector + " => " + results.functionCall);
-    // console.log("txData.tx.data: " + txData.tx.data);
-  }
+  // // TODO Check remaining
+  // if (!results.info && results.functionCall != "") {
+  //   console.log("functionSelector: " + results.functionSelector + " => " + results.functionCall);
+  //   // console.log("txData.tx.data: " + txData.tx.data);
+  // }
 
   if (!results.info) {
     if (msgValue == 0 && (Object.keys(events.erc20FromMap).length < 3) && (Object.keys(events.erc20ToMap).length > 3) && (account in events.erc20ToMap)) {
@@ -771,7 +772,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
         };
       } else {
         // TODO: Other cases?
-        console.log("  Received Airdrop: " + JSON.stringify(receivedERC20Events));
+        // console.log("  Received Airdrop: " + JSON.stringify(receivedERC20Events));
       }
     }
   }
@@ -949,14 +950,14 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     // console.log("  " + JSON.stringify(accountInfo.name));
     if (accountInfo.process) {
       accountInfo.process(txData, account, accounts, events, results);
-      if (!results.info) {
-        console.log("  TOODO: " + txData.tx.hash + " " + JSON.stringify(accountInfo.name));
-      }
+      // if (!results.info) {
+        // console.log("  TOODO: " + txData.tx.hash + " " + JSON.stringify(accountInfo.name));
+      // }
     }
   }
-  if (!results.info) {
-    console.log("  TODO: " + txData.tx.hash);
-  }
+  // if (!results.info) {
+    // console.log("  TODO: " + txData.tx.hash);
+  // }
 
   results.myEvents = [];
   if ((txData.tx.from == account || txData.tx.to == account) && msgValue > 0) {
@@ -970,7 +971,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     results.myEvents.push(record);
   }
 
-  console.log("myEvents: " + JSON.stringify(results.myEvents));
+  // console.log("myEvents: " + JSON.stringify(results.myEvents));
 
   const collator = {};
   for (const [eventIndex, event] of results.myEvents.entries()) {

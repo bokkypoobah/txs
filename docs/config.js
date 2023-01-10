@@ -305,7 +305,6 @@ const configModule = {
     devSettings(state) {
       let firstBlock = null;
       let lastBlock = null;
-      console.log(JSON.stringify(state.processPeriods));
       if (state.settings.processPeriod == "custom") {
         firstBlock = state.settings.firstBlock;
         lastBlock = state.settings.lastBlock;
@@ -315,7 +314,6 @@ const configModule = {
           firstBlock = setting[0].data.from;
           lastBlock = setting[0].data.to;
         }
-        console.log(JSON.stringify(setting));
       }
       return { firstBlock, lastBlock, checkBalance: state.settings.checkBalance };
     },
