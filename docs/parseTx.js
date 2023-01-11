@@ -623,6 +623,8 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     if (toAccount.type != 'eoa') {
       results.contract = txData.tx.to;
     }
+  } else {
+    results.contract = txData.txReceipt.contractAddress;
   }
   // if (txData.tx.to != null && txData.tx.data.length > 9) {
   //   results.functionSelector = txData.tx.data.substring(0, 10);
@@ -986,6 +988,10 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     const record = { type: "eth", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
     results.myEvents.push(record);
   }
+  // console.log("events.myEvents.entries(): " + JSON.stringify(events.myEvents.entries()));
+  // for (const event of events.myEvents) {
+  //   console.log(JSON.stringify(event));
+  // }
   results.myEvents = [...results.myEvents, ...events.myEvents];
   for (const [eventIndex, event] of events.receivedInternalEvents.entries()) {
     // console.log(eventIndex + " => " + JSON.stringify(event));
