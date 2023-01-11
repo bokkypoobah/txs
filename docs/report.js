@@ -374,9 +374,11 @@ const Report = {
             <b-link @click="showModalTx(data.item.txHash);">{{ formatTimestamp(data.item.timestamp) }}</b-link>
             <font size="-2">
               <br />
-              {{ data.item.blockNumber }}
+              {{ data.item.blockNumber + ':' + data.item.nonce + ':' + data.item.txHash }}
+              <!--
               <br />
               {{ data.item.txHash }}
+              -->
             </font>
           </template>
           <template #cell(account)="data">
@@ -1028,6 +1030,7 @@ const Report = {
               transactionIndex: transaction.transactionIndex,
               timestamp: transaction.timestamp,
               account: transaction.account,
+              nonce: transaction.nonce,
               from: transaction.from,
               to: transaction.to,
               contract: transaction.contract,
@@ -1666,6 +1669,7 @@ const reportModule = {
                 transactionIndex: tx.txReceipt.transactionIndex,
                 timestamp: block.timestamp,
                 account,
+                nonce: tx.tx.nonce,
                 from: tx.tx.from,
                 to: tx.tx.to,
                 contract: results.contract,

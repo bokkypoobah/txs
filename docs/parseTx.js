@@ -1004,6 +1004,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   const collator = {};
   for (const [eventIndex, event] of results.myEvents.entries()) {
     const sentOrReceived = (event.from == account) ? "sent" : "received";
+    const counterparty = (event.from == account) ? event.to : event.from;
     const ftOrNFT = (event.type == 'eth' || event.type == 'erc20') ? 'ft' : 'nft';
     if (!(sentOrReceived in collator)) {
       collator[sentOrReceived] = {};
