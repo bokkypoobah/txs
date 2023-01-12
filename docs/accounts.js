@@ -66,24 +66,19 @@ const Accounts = {
               </b-dropdown-item>
             </b-dropdown>
           </div>
-          <!--
-          <div class="mt-0 pr-0" style="max-width: 8.0rem;">
-            <b-form-select size="sm" v-model="settings.junkFilter" @change="saveSettings" :options="junkFilters" v-b-popover.hover.top="'Junk accounts filter'"></b-form-select>
-          </div>
-          -->
           <div class="mt-0 pr-1">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.junkFilter == 'excludejunk' ? 'Junk excluded' : (settings.junkFilter == null ? 'Junk included' : 'Junk')">
               <template #button-content>
-                <span v-if="settings.junkFilter == 'excludejunk'">
-                  <b-iconstack font-scale="1">
-                    <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
-                    <b-icon stacked icon="slash-circle" variant="danger"></b-icon>
-                  </b-iconstack>
-                </span>
-                <span v-else-if="settings.junkFilter == null">
+                <span v-if="settings.junkFilter == null">
                   <b-iconstack font-scale="1">
                     <b-icon stacked icon="circle-fill" variant="warning"></b-icon>
                     <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                  </b-iconstack>
+                </span>
+                <span v-else-if="settings.junkFilter == 'excludejunk'">
+                  <b-iconstack font-scale="1">
+                    <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                    <b-icon stacked icon="slash-circle" variant="danger"></b-icon>
                   </b-iconstack>
                 </span>
                 <span v-else>
@@ -92,19 +87,19 @@ const Accounts = {
                   </b-iconstack>
                 </span>
               </template>
-              <b-dropdown-item href="#" @click="settings.junkFilter = 'excludejunk'; saveSettings()">
-                <b-iconstack font-scale="1">
-                  <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
-                  <b-icon stacked icon="slash-circle" variant="danger"></b-icon>
-                </b-iconstack>
-                Exclude Junk
-              </b-dropdown-item>
               <b-dropdown-item href="#" @click="settings.junkFilter = null; saveSettings()">
                 <b-iconstack font-scale="1">
                   <b-icon stacked icon="circle-fill" variant="warning"></b-icon>
                   <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
                 </b-iconstack>
                 Include Junk
+              </b-dropdown-item>
+              <b-dropdown-item href="#" @click="settings.junkFilter = 'excludejunk'; saveSettings()">
+                <b-iconstack font-scale="1">
+                  <b-icon stacked icon="trash" variant="info" scale="0.75"></b-icon>
+                  <b-icon stacked icon="slash-circle" variant="danger"></b-icon>
+                </b-iconstack>
+                Exclude Junk
               </b-dropdown-item>
               <b-dropdown-item href="#" @click="settings.junkFilter = 'junk'; saveSettings()">
                 <b-iconstack font-scale="1">
@@ -377,7 +372,7 @@ const Accounts = {
         filter: null,
         accountTypeFilter: null,
         myAccountsFilter: null,
-        junkFilter: 'excludejunk',
+        junkFilter: null,
         showAdditionalFilters: false,
         editAccounts: false,
         newAccounts: null,
@@ -415,11 +410,6 @@ const Accounts = {
         { value: null, text: 'All Accounts' },
         { value: 'mine', text: 'My Accounts' },
         { value: 'notmine', text: 'Not My Accounts' },
-      ],
-      junkFilters: [
-        { value: 'excludejunk', text: 'Exclude Junk' },
-        { value: null, text: 'Include Junk' },
-        { value: 'junk', text: 'Junk' },
       ],
       sortOptions: [
         { value: 'accountasc', text: '▲ Account' },
@@ -534,7 +524,7 @@ const Accounts = {
           results.push({
             account,
             group: accountInfo.group,
-            name: accountInfo.name || accountData.name,
+            name: accountName,
             type: accountInfo.type || accountData.type,
             slug: accountInfo.slug || accountData.slug,
             image: accountInfo.image || accountData.image,

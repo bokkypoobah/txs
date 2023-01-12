@@ -87,6 +87,7 @@ const Config = {
       count: 0,
       reschedule: true,
       restoreFile: null,
+      restoreAccountsData: [],
       unlock: null,
       etherscanBatchSizeOptions: [
         { value: 250_000, text: '250,000 blocks' },
@@ -228,24 +229,36 @@ const Config = {
       link.click(); // This will download the data with the specified file name
     },
     async restoreFromBackup() {
-      console.log("restoreFile - name: " + this.restoreFile.name + ", lastModified: " + moment(this.restoreFile.lastModified).format("YYYY-MM-DD-HH-mm-ss"));
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        const data = event.target.result;
-        // console.log(data);
-        // CHECK DATA
-        // DELETE OLD DATA
+      console.log("restoreFromBackup: " + JSON.stringify(this.restoreAccountsData));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      if (this.restoreAccountsData.length > 0) {
         for (const section of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'assets', 'ensMap', 'exchangeRates', 'report']) {
-          console.log("- data/resetData: " + section);
           store.dispatch('data/resetData', section);
         }
-        // CREATE NEW DATA
-
-      };
-      await reader.readAsText(this.restoreFile);
+      }
+      for (const newAccount of this.restoreAccountsData) {
+        store.dispatch('data/restoreAccount', newAccount);
+      }
     },
     async filesChange(fileName, fileList) {
-      logInfo("Config", "filesChange('" + fileName + "', " + JSON.stringify(fileList) + ")");
+      // logInfo("Config", "filesChange('" + fileName + "', " + JSON.stringify(fileList) + ")");
+      const reader = new FileReader();
+      this.restoreAccountsData = [];
+      const t = this;
+      reader.onload = function (event) {
+        const data = event.target.result;
+        const lines = data.split("\n");
+        for (const line of lines) {
+          // console.log("line: " + line);
+          const fields = line.split("\t");
+          // console.log("fields: " + JSON.stringify(fields));
+          if (fields[0] == "Account") {
+            const [dataType, accountIndex, account, accountType, ensName, mine, sync, report, junk, group, name, tags, notes]  = fields;
+            t.restoreAccountsData.push({ dataType, account, accountType: accountType || null, mine: mine == "y", sync: sync == "y", report: report == "y", junk: junk == "y", group: group || null, name: name || null, tags: tags || [], notes: notes || null });
+          }
+        }
+      };
+      await reader.readAsText(fileList[0]);
     },
     reset(sections) {
       console.log("reset() - sections: " + JSON.stringify(sections));

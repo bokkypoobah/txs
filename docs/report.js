@@ -1643,7 +1643,7 @@ const reportModule = {
                 } else {
                   newEvent = event;
                 }
-                console.log(JSON.stringify(newEvent));
+                // console.log(JSON.stringify(newEvent));
                 mySupplementedEvents.push(newEvent);
                 if (event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
                   if (!(event.tokenId in tokens[event.contract].ids)) {

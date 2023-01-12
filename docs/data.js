@@ -398,7 +398,6 @@ const dataModule = {
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
       const status = await db0.cache.where("objectName").equals(CHAIN_ID + '.' + section).delete();
       console.log("status: " + JSON.stringify(status));
-      // TODO: Handle "report"
       db0.close();
     },
     async addNewAccounts(context, newAccounts) {
@@ -406,7 +405,7 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       for (let account of accounts) {
-        const accountData = await getAccountInfo(account, provider)
+        const accountData = await getAccountInfo(account, provider);
         if (accountData.account) {
           context.commit('addNewAccount', accountData);
           const isMyAccount = account == store.getters['connection/coinbase'];
@@ -426,8 +425,21 @@ const dataModule = {
       }
       context.dispatch('saveData', ['accountsInfo', 'accounts', 'ensMap']);
     },
-
-    // "importFromEtherscan","downloadData","buildAssets","getExchangeRates"
+    async restoreAccount(context, accountData) {
+      logInfo("dataModule", "actions.restoreAccount - accountData: " + JSON.stringify(accountData));
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
+      const accountInfo = await getAccountInfo(accountData.account, provider)
+      if (accountInfo.account) {
+        context.commit('addNewAccount', accountInfo);
+        context.commit('addNewAccountInfo', accountData);
+      }
+      const names = await ensReverseRecordsContract.getNames([accountData.account]);
+      const name = names.length == 1 ? names[0] : accountData.account;
+      if (!(accountData.account in context.state.ensMap)) {
+        context.commit('addENSName', { account: accountData.account, name });
+      }
+    },
     async syncIt(context, info) {
       // TODO - Replaced below, for dev
       let sections = info.sections;
