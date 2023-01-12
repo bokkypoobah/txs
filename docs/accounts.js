@@ -498,13 +498,13 @@ const Accounts = {
     filteredAccounts() {
       const results = [];
       const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
-      for (const [account, data] of Object.entries(this.accounts)) {
+      for (const [account, accountData] of Object.entries(this.accounts)) {
         const accountInfo = this.accountsInfo[account] || {};
         const ensName = this.ensMap[account] || null;
         let include = filterLower == null ||
           (account.toLowerCase().includes(filterLower)) ||
           (accountInfo.name && accountInfo.name.toLowerCase().includes(filterLower)) ||
-          (data.name && data.name.toLowerCase().includes(filterLower)) ||
+          (accountData.name && accountData.name.toLowerCase().includes(filterLower)) ||
           (accountInfo.group && accountInfo.group.toLowerCase().includes(filterLower)) ||
           (accountInfo.notes && accountInfo.notes.toLowerCase().includes(filterLower)) ||
           (ensName != null && ensName.toLowerCase().includes(filterLower));
@@ -533,19 +533,19 @@ const Accounts = {
           results.push({
             account,
             group: accountInfo.group,
-            name: accountInfo.name || data.name,
-            type: accountInfo.type || data.type,
+            name: accountInfo.name || accountData.name,
+            type: accountInfo.type || accountData.type,
             mine: accountInfo.mine,
             sync: accountInfo.sync,
             report: accountInfo.report,
             junk: accountInfo.junk,
             tags: accountInfo.tags,
             notes: accountInfo.notes,
-            // contract: data.contract,
-            collection: data.collection,
-            // balances: data.balances,
-            created: data.created,
-            updated: data.updated,
+            // contract: accountData.contract,
+            collection: accountData.collection,
+            // balances: accountData.balances,
+            created: accountData.created,
+            updated: accountData.updated,
           });
         }
       }
