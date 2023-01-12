@@ -54,8 +54,15 @@ const Config = {
               </b-form-group>
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
-              <b-form-group label="Download Backup:" label-for="download-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Download a backup of user entered information'" class="mx-0 my-1 p-0">
+              <b-form-group label="Backup:" label-for="download-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Download a backup of user entered information'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="download-backup" @click="downloadBackup()" variant="primary">Download</b-button>
+              </b-form-group>
+              <b-form-group label="Restore:" label-for="restore-from-backup-browse" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Select backup file to restore'" class="mx-0 my-1 p-0">
+                <!-- <b-form-file size="sm" id="restore-from-backup-browse" v-model="restoreFile" name="file" form="upload" @change="filesChange($event.target.name, $event.target.files)" accept=".tsv" class="w-50"></b-form-file> -->
+                <b-form-file size="sm" id="restore-from-backup-browse" v-model="restoreFile" @change="filesChange($event.target.name, $event.target.files)" accept=".tsv" class="w-50"></b-form-file>
+              </b-form-group>
+              <b-form-group label="" label-for="restore-from-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restore from backup file. Data has to be re-synced'" class="mx-0 my-1 p-0">
+                <b-button size="sm" id="restore-from-backup" :disabled="!restoreFile" @click="restoreFromBackup()" variant="primary">Restore</b-button>
               </b-form-group>
               <b-form-group label="Temporary Data:" label-for="reset-localstorage" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset view preferences stored in your browser LocalStorage'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="reset-localstorage" @click="reset(['localStorage'])" variant="primary">Reset</b-button>
@@ -79,6 +86,7 @@ const Config = {
     return {
       count: 0,
       reschedule: true,
+      restoreFile: null,
       unlock: null,
       etherscanBatchSizeOptions: [
         { value: 250_000, text: '250,000 blocks' },
@@ -188,12 +196,10 @@ const Config = {
     //   store.dispatch('config/downloadFunctionSignatures');
     // },
     downloadBackup() {
-      console.log("downloadBackup");
       const rows = [
           ["DataType", "No", "Account", "Type", "ENSName", "Mine", "Sync", "Report", "Junk", "Group", "Name", "Tags", "Notes"],
       ];
       const ensMap = store.getters['data/ensMap'];
-      const accountsInfo = store.getters['data/accountsInfo'];
       let row = 1;
       for (const [account, accountInfo] of Object.entries(store.getters['data/accountsInfo'])) {
         rows.push([
@@ -220,6 +226,18 @@ const Config = {
       link.setAttribute("download", "txs_backup-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".tsv");
       document.body.appendChild(link); // Required for FF
       link.click(); // This will download the data with the specified file name
+    },
+    async restoreFromBackup() {
+      console.log("restoreFile - name: " + this.restoreFile.name + ", lastModified: " + moment(this.restoreFile.lastModified).format("YYYY-MM-DD-HH-mm-ss"));
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        var data = event.target.result;
+        console.log(data);
+      };
+      await reader.readAsText(this.restoreFile);
+    },
+    async filesChange(fileName, fileList) {
+      logInfo("Config", "filesChange('" + fileName + "', " + JSON.stringify(fileList) + ")");
     },
     reset(sections) {
       console.log("reset() - sections: " + JSON.stringify(sections));
