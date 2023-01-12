@@ -62,7 +62,7 @@ const Config = {
                 <b-form-file size="sm" id="restore-from-backup-browse" v-model="restoreFile" @change="filesChange($event.target.name, $event.target.files)" accept=".tsv" class="w-50"></b-form-file>
               </b-form-group>
               <b-form-group label="" label-for="restore-from-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restore from backup file. Data has to be re-synced'" class="mx-0 my-1 p-0">
-                <b-button size="sm" id="restore-from-backup" :disabled="!restoreFile" @click="restoreFromBackup()" variant="primary">Restore</b-button>
+                <b-button size="sm" id="restore-from-backup" :disabled="restoreAccountsData.length == 0" @click="restoreFromBackup()" variant="primary">Restore</b-button>
               </b-form-group>
               <b-form-group label="Temporary Data:" label-for="reset-localstorage" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset view preferences stored in your browser LocalStorage'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="reset-localstorage" @click="reset(['localStorage'])" variant="primary">Reset</b-button>
@@ -233,15 +233,19 @@ const Config = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       if (this.restoreAccountsData.length > 0) {
         for (const section of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'assets', 'ensMap', 'exchangeRates', 'report']) {
-          store.dispatch('data/resetData', section);
+          await store.dispatch('data/resetData', section);
         }
       }
       for (const newAccount of this.restoreAccountsData) {
-        store.dispatch('data/restoreAccount', newAccount);
+        await store.dispatch('data/restoreAccount', newAccount);
       }
+      await store.dispatch('data/saveData', ['accounts', 'accountsInfo']);
+      alert('Reloading this page in 5 seconds.')
+      setTimeout(function() {
+        window.location.reload();
+      }, 5000);
     },
     async filesChange(fileName, fileList) {
-      // logInfo("Config", "filesChange('" + fileName + "', " + JSON.stringify(fileList) + ")");
       const reader = new FileReader();
       this.restoreAccountsData = [];
       const t = this;
@@ -249,9 +253,7 @@ const Config = {
         const data = event.target.result;
         const lines = data.split("\n");
         for (const line of lines) {
-          // console.log("line: " + line);
           const fields = line.split("\t");
-          // console.log("fields: " + JSON.stringify(fields));
           if (fields[0] == "Account") {
             const [dataType, accountIndex, account, accountType, ensName, mine, sync, report, junk, group, name, tags, notes]  = fields;
             t.restoreAccountsData.push({ dataType, account, accountType: accountType || null, mine: mine == "y", sync: sync == "y", report: report == "y", junk: junk == "y", group: group || null, name: name || null, tags: tags || [], notes: notes || null });
