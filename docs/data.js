@@ -392,6 +392,8 @@ const dataModule = {
     async resetData(context, section) {
       const CHAIN_ID = 1;
       console.log("data.actions.resetData - section: " + section);
+      // TODO: Handle "report"
+      context.commit('setState', { name: section, data: {} });
       const db0 = new Dexie(context.state.db.name);
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
       const status = await db0.cache.where("objectName").equals(CHAIN_ID + '.' + section).delete();
