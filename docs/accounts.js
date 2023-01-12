@@ -516,8 +516,9 @@ const Accounts = {
           }
         }
         if (include && this.settings.accountTypeFilter != null) {
+          const accountType = accountInfo.type || accountData.type || null;
           if (this.settings.accountTypeFilter == 'unknown' && accountInfo.type == null) {
-          } else if (this.settings.accountTypeFilter == accountInfo.type) {
+          } else if (this.settings.accountTypeFilter == accountType) {
           } else {
             include = false;
           }
