@@ -103,7 +103,7 @@ const dataModule = {
       halt: false,
     },
     db: {
-      name: "txs092a",
+      name: "txs093a",
       version: 1,
       schemaDefinition: {
         cache: '&objectName',
@@ -139,15 +139,19 @@ const dataModule = {
       logInfo("dataModule", "mutations.addNewAccountInfo(" + JSON.stringify(info) + ")");
       if (!(info.account in state.accountsInfo)) {
         Vue.set(state.accountsInfo, info.account, {
-          type: info && info.type || null,
-          group: null,
-          name: null,
-          mine: info.account == store.getters['connection/coinbase'],
-          sync: info.account == store.getters['connection/coinbase'],
-          report: info.account == store.getters['connection/coinbase'],
-          junk: false,
-          tags: [],
-          notes: null,
+          type: info.type || null,
+          group: info.group || null,
+          name: info.name || null,
+          symbol: info.symbol || null,
+          decimals: info.decimals || null,
+          slug: info.slug || null,
+          image: info.image || null,
+          mine: info.mine || null,
+          sync: info.sync || null,
+          report: info.report || null,
+          junk: info.junk || null,
+          tags: info.tags || [],
+          notes: info.notes || null,
         });
       }
     },
@@ -156,25 +160,24 @@ const dataModule = {
       const block = store.getters['connection/block'];
       if (!(info.account in state.accounts)) {
         Vue.set(state.accounts, info.account, {
-          type: info && info.type || null,
-          name: info && info.name || null,
-          symbol: info && info.symbol || null,
-          decimals: info && info.decimals || null,
-          collection: info && info.collection || {},
-          balances: info && info.balances || {},
+          type: info.type || null,
+          name: info.name || null, // ERC-20, ERC-721 & ERC-1155
+          symbol: info.symbol || null, // ERC-20, ERC-721 & ERC-1155
+          decimals: info.decimals || null, // ERC-20
+          slug: info.slug || null, // ERC-721 & ERC-1155
+          image: info.image || null, // ?ERC-20, ERC-721 & ERC-1155
           created: {
             timestamp: block && block.timestamp || null,
             blockNumber: block && block.number || null,
+          },
+          updated: {
+            timestamp: null,
+            blockNumber: null,
           },
           transactions: {},
           internalTransactions: {},
           events: {},
           assets: {},
-          erc20transfers: {},
-          updated: {
-            timestamp: null,
-            blockNumber: null,
-          },
         });
       }
     },
@@ -401,10 +404,17 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       for (let account of accounts) {
-        const accountInfo = await getAccountInfo(account, provider)
-        if (accountInfo.account) {
+        const accountData = await getAccountInfo(account, provider)
+        if (accountData.account) {
+          context.commit('addNewAccount', accountData);
+          const isMyAccount = account == store.getters['connection/coinbase'];
+          const accountInfo = {
+            account,
+            mine: isMyAccount,
+            sync: isMyAccount,
+            report: isMyAccount,
+          };
           context.commit('addNewAccountInfo', accountInfo);
-          context.commit('addNewAccount', accountInfo);
         }
         const names = await ensReverseRecordsContract.getNames([account]);
         const name = names.length == 1 ? names[0] : account;
@@ -441,7 +451,7 @@ const dataModule = {
 
       const accountsToSync = [];
       for (const [account, accountData] of Object.entries(context.state.accounts)) {
-        const accountsInfo = context.state.accountsInfo[account];
+        const accountsInfo = context.state.accountsInfo[account] || {};
         if ((parameters.length == 0 && accountsInfo.sync) || parameters.includes(account)) {
             accountsToSync.push(account);
         }
@@ -886,14 +896,15 @@ const dataModule = {
             }
           }
           const missingAccounts = Object.keys(missingAccountsMap);
+          console.log("missingAccounts: " + JSON.stringify(missingAccounts));
           context.commit('setSyncSection', { section: 'Token Contract & Accts', total: missingAccounts.length });
           for (const [accountItemIndex, accountItem] of missingAccounts.entries()) {
             context.commit('setSyncCompleted', parseInt(accountItemIndex) + 1);
             console.log((parseInt(accountItemIndex) + 1) + "/" + missingAccounts.length + " Processing " + accountItem);
-            const accountInfo = await getAccountInfo(accountItem, provider);
-            if (accountInfo.account) {
-              context.commit('addNewAccountInfo', accountInfo);
-              context.commit('addNewAccount', accountInfo);
+            const accountDataInfo = await getAccountInfo(accountItem, provider);
+            if (accountDataInfo.account) {
+              context.commit('addNewAccount', accountDataInfo);
+              context.commit('addNewAccountInfo', { account: accountDataInfo.account });
             }
             const names = await ensReverseRecordsContract.getNames([accountItem]);
             const name = names.length == 1 ? names[0] : accountItem;

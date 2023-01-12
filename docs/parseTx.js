@@ -1048,8 +1048,8 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
                 decimals = tc.decimals;
               }
             } else {
-              name = tc.collection.name;
-              symbol = tc.collection.symbol;
+              name = tc.name;
+              symbol = tc.symbol;
             }
             if (!(sentOrReceived in summary)) {
               summary[sentOrReceived] = [];

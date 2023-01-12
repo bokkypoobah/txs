@@ -1548,18 +1548,17 @@ const reportModule = {
       const transactions = [];
       const tokens = {};
       const junkAccountsMap = {};
-        for (const [account, accountData] of Object.entries(allAccounts)) {
-        const accountsInfo = store.getters['data/accountsInfo'][account];
-        if (accountsInfo.junk) {
+      for (const [account, accountData] of Object.entries(allAccounts)) {
+        const accountInfo = store.getters['data/accountsInfo'][account] || {};
+        if (accountInfo.junk) {
           if (!(account in junkAccountsMap)) {
             junkAccountsMap[account] = true;
           }
         }
       }
-      // console.log("junkAccountsMap: " + JSON.stringify(junkAccountsMap));
 
       for (const [account, accountData] of Object.entries(allAccounts)) {
-        const accountsInfo = store.getters['data/accountsInfo'][account];
+        const accountsInfo = store.getters['data/accountsInfo'][account] || {};
         if (accountsInfo.mine && accountsInfo.report) {
           console.log("--- Processing " + account + " ---");
           const txHashesByBlocks = getTxHashesByBlocks(account, allAccounts, allAccountsInfo, devSettings.firstBlock, devSettings.lastBlock);

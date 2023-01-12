@@ -130,7 +130,7 @@ const Accounts = {
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['all'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'Import Etherscan transactions and web3 transfer events for accounts configured to be synced, or all selected accounts'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
-            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['syncBuildTokens'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'DEV BUTTON 1'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
+            <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['syncBuildTokenContractsAndAccounts'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'DEV BUTTON 1'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['syncTransferEvents'], parameters: Object.keys(settings.selectedAccounts) })" variant="link" v-b-popover.hover.top="'DEV BUTTON 2'"><b-icon-lightning shift-v="+1" font-scale="1.2"></b-icon-lightning></b-button>
@@ -220,7 +220,7 @@ const Accounts = {
           </template>
           <template #cell(image)="data">
             <div v-if="data.item.type == 'preerc721' || data.item.type == 'erc721' || data.item.type == 'erc1155'">
-              <b-avatar rounded variant="light" size="3.0rem" :src="data.item.collection.image" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
+              <b-avatar rounded variant="light" size="3.0rem" :src="data.item.image" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
             </div>
             <div v-else-if="data.item.type == 'eoa' && data.item.account != ensOrAccount(data.item.account)">
               <b-avatar rounded variant="light" size="3.0rem" :src="'https://metadata.ens.domains/mainnet/avatar/' + ensOrAccount(data.item.account)" v-b-popover.hover="'ENS avatar if set'"></b-avatar>
@@ -281,7 +281,7 @@ const Accounts = {
                     <b-badge v-if="hasENS(data.item.account)" variant="secondary" v-b-popover.hover="'ENS name if set'">{{ ensOrNull(data.item.account) }}</b-badge>
                   </span>
                   <span v-if="data.item.type == 'preerc721' || data.item.type == 'erc721' || data.item.type == 'erc1155'">
-                    <b-badge variant="secondary" v-b-popover.hover="'ERC-721 collection name'">{{ data.item.collection.name }}</b-badge>
+                    <b-badge variant="secondary" v-b-popover.hover="'ERC-721 collection name'">{{ data.item.name }}</b-badge>
                   </span>
                   <span v-if="data.item.type == 'erc20'">
                     <b-badge variant="secondary" v-b-popover.hover="'ERC-20 collection name'">{{ data.item.contract && (data.item.contract.symbol + ' - ' + data.item.contract.name) || '???' }}</b-badge>
@@ -303,7 +303,7 @@ const Accounts = {
                   {{ ensOrAccount(data.item.account) }}
                 </span>
                 <span v-if="data.item.type == 'erc721' || data.item.type == 'erc1155'">
-                  {{ data.item.collection.name }}
+                  {{ data.item.name }}
                 </span>
               </template>
               <span v-if="data.item.type != 'erc721' && data.item.type != 'erc1155'">
@@ -335,15 +335,15 @@ const Accounts = {
                 <br />
                 <b-link :href="'https://etherscan.io/token/' + data.item.account + '#balances'" target="_blank">View ERC-721 NFT collection in etherscan.io</b-link>
                 <br />
-                <b-link :href="'https://opensea.io/collection/' + data.item.collection.slug" target="_blank">View ERC-721 NFT collection in opensea.io</b-link>
+                <b-link :href="'https://opensea.io/collection/' + data.item.slug" target="_blank">View ERC-721 NFT collection in opensea.io</b-link>
                 <br />
                 <b-link :href="'https://looksrare.org/collections/' + data.item.account" target="_blank">View ERC-721 NFT collection in looksrare.org</b-link>
                 <br />
-                <b-link :href="'https://x2y2.io/collection/' + data.item.collection.slug + '/items'" target="_blank">View ERC-721 NFT collection in x2y2.io</b-link>
+                <b-link :href="'https://x2y2.io/collection/' + data.item.slug + '/items'" target="_blank">View ERC-721 NFT collection in x2y2.io</b-link>
                 <br />
-                <b-link :href="'https://www.gem.xyz/collection/' + data.item.collection.slug" target="_blank">View ERC-721 NFT collection in gem.xyz</b-link>
+                <b-link :href="'https://www.gem.xyz/collection/' + data.item.slug" target="_blank">View ERC-721 NFT collection in gem.xyz</b-link>
                 <br />
-                <b-link :href="'https://blur.io/collection/' + data.item.collection.slug" target="_blank">View ERC-721 NFT collection in blur.io</b-link>
+                <b-link :href="'https://blur.io/collection/' + data.item.slug" target="_blank">View ERC-721 NFT collection in blur.io</b-link>
                 <br />
               </span>
             </b-popover>
@@ -535,15 +535,14 @@ const Accounts = {
             group: accountInfo.group,
             name: accountInfo.name || accountData.name,
             type: accountInfo.type || accountData.type,
+            slug: accountInfo.slug || accountData.slug,
+            image: accountInfo.image || accountData.image,
             mine: accountInfo.mine,
             sync: accountInfo.sync,
             report: accountInfo.report,
             junk: accountInfo.junk,
             tags: accountInfo.tags,
             notes: accountInfo.notes,
-            // contract: accountData.contract,
-            collection: accountData.collection,
-            // balances: accountData.balances,
             created: accountData.created,
             updated: accountData.updated,
           });

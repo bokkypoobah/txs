@@ -44,15 +44,9 @@ async function getAccountInfo(address, provider) {
     }
     if ((results.mask & MASK_ISERC721) == MASK_ISERC721 || (results.mask & MASK_ISCONTRACT) == MASK_ISCONTRACT) {
       if (account == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D") {
-        results.collection = {
-          name: "CryptoPunksV1",
-          slug: "cryptopunksv1",
-          image: "https://i.seadn.io/gae/_-UU9HXutEr8rZy9X9KlJT2YFwMa___lXYgIeUPKkjRv3KDbBKtbo3E3isAc2QIEEJmEfSf0Ni8U8tudLkJy6dwqIqNO3E5zG3T4EQ?auto=format&w=1000",
-          tokenCount: 0,
-          onSaleCount: 0,
-          volume: 0,
-          openseaVerificationStatus: false,
-        };
+        results.name = "CryptoPunksV1";
+        results.slug = "cryptopunksv1";
+        results.image = "https://i.seadn.io/gae/_-UU9HXutEr8rZy9X9KlJT2YFwMa___lXYgIeUPKkjRv3KDbBKtbo3E3isAc2QIEEJmEfSf0Ni8U8tudLkJy6dwqIqNO3E5zG3T4EQ?auto=format&w=1000";
       } else {
         let url = "https://api.reservoir.tools/collections/v5?contract=" + account;
         // console.log("url: " + url);
@@ -65,18 +59,10 @@ async function getAccountInfo(address, provider) {
              return [];
           });
         if (data && data.collections && data.collections.length == 1) {
-        // console.log("data: " + JSON.stringify(data, null, 2));
-        // CryptoPunks V1
           const collectionInfo = data.collections[0];
-          results.collection = {
-            name: collectionInfo.name,
-            slug: collectionInfo.slug,
-            image: collectionInfo.image,
-            tokenCount: parseInt(collectionInfo.tokenCount),
-            onSaleCount: parseInt(collectionInfo.onSaleCount),
-            volume: collectionInfo.volume,
-            openseaVerificationStatus: collectionInfo.openseaVerificationStatus,
-          };
+          results.name = collectionInfo.name;
+          results.slug = collectionInfo.slug;
+          results.image = collectionInfo.image;
         }
       }
     }
@@ -100,13 +86,13 @@ async function getAccountInfo(address, provider) {
     } else {
       results.type = null;
     }
-    const ethBalance = await provider.getBalance(account);
-    const weth = new ethers.Contract(WETHADDRESS, WETHABI, provider); // network.wethAddress
-    const wethBalance = await weth.balanceOf(account);
-    results.balances = {
-      "eth": ethers.BigNumber.from(ethBalance).toString(),
-      "weth": ethers.BigNumber.from(wethBalance).toString(),
-    };
+    // const ethBalance = await provider.getBalance(account);
+    // const weth = new ethers.Contract(WETHADDRESS, WETHABI, provider); // network.wethAddress
+    // const wethBalance = await weth.balanceOf(account);
+    // results.balances = {
+    //   "eth": ethers.BigNumber.from(ethBalance).toString(),
+    //   "weth": ethers.BigNumber.from(wethBalance).toString(),
+    // };
   }
   // console.log("results: " + JSON.stringify(results, null, 2));
   return results;
