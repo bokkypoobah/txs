@@ -501,10 +501,10 @@ const Accounts = {
       for (const [account, accountData] of Object.entries(this.accounts)) {
         const accountInfo = this.accountsInfo[account] || {};
         const ensName = this.ensMap[account] || null;
+        const accountName = accountInfo.name || accountData.name || null;
         let include = filterLower == null ||
           (account.toLowerCase().includes(filterLower)) ||
-          (accountInfo.name && accountInfo.name.toLowerCase().includes(filterLower)) ||
-          (accountData.name && accountData.name.toLowerCase().includes(filterLower)) ||
+          (accountName.toLowerCase().includes(filterLower)) ||
           (accountInfo.group && accountInfo.group.toLowerCase().includes(filterLower)) ||
           (accountInfo.notes && accountInfo.notes.toLowerCase().includes(filterLower)) ||
           (ensName != null && ensName.toLowerCase().includes(filterLower));
