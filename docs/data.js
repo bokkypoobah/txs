@@ -387,11 +387,13 @@ const dataModule = {
       context.commit('setSyncHalt', halt);
     },
     async resetData(context, section) {
+      const CHAIN_ID = 1;
       console.log("data.actions.resetData - section: " + section);
       const db0 = new Dexie(context.state.db.name);
       db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-      const status = await db0.cache.where("objectName").equals(section).delete();
+      const status = await db0.cache.where("objectName").equals(CHAIN_ID + '.' + section).delete();
       console.log("status: " + JSON.stringify(status));
+      // TODO: Handle "report"
       db0.close();
     },
     async addNewAccounts(context, newAccounts) {
