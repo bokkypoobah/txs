@@ -54,6 +54,9 @@ const Config = {
               </b-form-group>
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Download Backup:" label-for="download-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Download a backup of user entered information'" class="mx-0 my-1 p-0">
+                <b-button size="sm" id="download-backup" @click="downloadBackup()" variant="primary">Download</b-button>
+              </b-form-group>
               <b-form-group label="Temporary Data:" label-for="reset-localstorage" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset view preferences stored in your browser LocalStorage'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="reset-localstorage" @click="reset(['localStorage'])" variant="primary">Reset</b-button>
               </b-form-group>
@@ -181,8 +184,42 @@ const Config = {
     toggleCheckBalance(checkBalance) {
       store.dispatch('config/toggleCheckBalance', checkBalance);
     },
-    downloadFunctionSignatures() {
-      store.dispatch('config/downloadFunctionSignatures');
+    // downloadFunctionSignatures() {
+    //   store.dispatch('config/downloadFunctionSignatures');
+    // },
+    downloadBackup() {
+      console.log("downloadBackup");
+      const rows = [
+          ["DataType", "No", "Account", "Type", "ENSName", "Mine", "Sync", "Report", "Junk", "Group", "Name", "Tags", "Notes"],
+      ];
+      const ensMap = store.getters['data/ensMap'];
+      const accountsInfo = store.getters['data/accountsInfo'];
+      let row = 1;
+      for (const [account, accountInfo] of Object.entries(store.getters['data/accountsInfo'])) {
+        rows.push([
+          "Account",
+          row,
+          account,
+          accountInfo.type,
+          ensMap[account] || null,
+          accountInfo.mine ? "y" : "n",
+          accountInfo.sync ? "y" : "n",
+          accountInfo.report ? "y" : "n",
+          accountInfo.junk ? "y" : "n",
+          accountInfo.group,
+          accountInfo.name,
+          accountInfo.tags,
+          accountInfo.notes,
+        ]);
+        row++;
+      }
+      let tsvContent = "data:text/tsv;charset=utf-8," + rows.map(e => e.join("\t")).join("\n");
+      var encodedUri = encodeURI(tsvContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "txs_backup-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".tsv");
+      document.body.appendChild(link); // Required for FF
+      link.click(); // This will download the data with the specified file name
     },
     reset(sections) {
       console.log("reset() - sections: " + JSON.stringify(sections));
@@ -219,6 +256,7 @@ const Config = {
   mounted() {
     logDebug("Config", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('config/restoreState');
+    store.dispatch('data/restoreState');
     this.reschedule = true;
     logDebug("Config", "Calling timeoutCallback()");
     this.timeoutCallback();
@@ -394,40 +432,20 @@ const configModule = {
       context.commit('toggleCheckBalance');
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
-    async downloadFunctionSignatures(context) {
-      console.log("action.downloadFunctionSignatures()");
-      let url = "https://www.4byte.directory/api/v1/signatures/";
-      do {
-        console.log(url);
-        const data = await fetch(url)
-          .then(response => response.json())
-          .catch(function(e) {
-            console.log("error: " + e);
-          });
-        console.log(JSON.stringify(data, null, 2));
-        url = data.next;
-        delay(5000);
-      } while (url);
-
-      // while (toTs.year() >= 2015) {
-      //   let days = toTs.diff(MINDATE, 'days');
-      //   if (days > MAXDAYS) {
-      //     days = MAXDAYS;
-      //   }
-      //   const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + reportingCurrency + "&toTs=" + toTs.unix() + "&limit=" + days;
-      //   console.log(url);
-      //   const data = await fetch(url)
-      //     .then(response => response.json())
-      //     .catch(function(e) {
-      //       console.log("error: " + e);
-      //     });
-      //   for (day of data.Data.Data) {
-      //     results[moment.unix(day.time).format("YYYYMMDD")] = day.close;
-      //   }
-      //   toTs = moment(toTs).subtract(MAXDAYS, 'days');
-      // }
-
-      // context.commit('setReportingCurrency', reportingCurrency);
-    },
+    // async downloadFunctionSignatures(context) {
+    //   console.log("action.downloadFunctionSignatures()");
+    //   let url = "https://www.4byte.directory/api/v1/signatures/";
+    //   do {
+    //     console.log(url);
+    //     const data = await fetch(url)
+    //       .then(response => response.json())
+    //       .catch(function(e) {
+    //         console.log("error: " + e);
+    //       });
+    //     console.log(JSON.stringify(data, null, 2));
+    //     url = data.next;
+    //     delay(5000);
+    //   } while (url);
+    // },
   },
 };
