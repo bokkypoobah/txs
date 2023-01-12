@@ -1490,13 +1490,14 @@ const reportModule = {
   },
   actions: {
     async restoreState(context) {
+      const CHAIN_ID = 1;
       logInfo("reportModule", "restoreState()");
       if (Object.keys(context.state.report) == 0) {
         const db = store.getters['data/db'];
         const db0 = new Dexie(db.name);
         db0.version(db.version).stores(db.schemaDefinition);
         for (let type of ['report']) {
-          const data = await db0.cache.where("objectName").equals(type).toArray();
+          const data = await db0.cache.where("objectName").equals(CHAIN_ID + '.' + type).toArray();
           if (data.length == 1) {
             context.commit('setState', { name: type, data: data[0].object });
           }
@@ -1504,12 +1505,13 @@ const reportModule = {
       }
     },
     async saveData(context, types) {
+      const CHAIN_ID = 1;
       logInfo("reportModule", "actions.saveData - types: " + JSON.stringify(types));
       const db = store.getters['data/db'];
       const db0 = new Dexie(db.name);
       db0.version(db.version).stores(db.schemaDefinition);
       for (let type of types) {
-        await db0.cache.put({ objectName: type, object: context.state[type] }).then (function() {
+        await db0.cache.put({ objectName: CHAIN_ID + '.' + type, object: context.state[type] }).then (function() {
         }).catch(function(error) {
           console.log("error: " + error);
         });
