@@ -209,7 +209,7 @@ const _CUSTOMACCOUNTS = {
             const [punkIndex, value, fromAddress] = log.args;
             results.info = "CryptoPunks.PunkBidWithdrawn " + punkIndex + " " + value + " from " + fromAddress;
           } else if (log.name == "PunkBought") {
-            const [punkIndex, value, fromAddress, toAddress] = log.args;
+            const [punkIndex, value, from, to] = log.args;
             // TODO: value for price bought
             if (to == account) {
               results.info = {

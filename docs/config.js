@@ -226,7 +226,7 @@ const Config = {
       link.click(); // This will download the data with the specified file name
     },
     async restoreFromBackup() {
-      console.log("restoreFromBackup: " + JSON.stringify(this.restoreAccountsData));
+      // console.log("restoreFromBackup: " + JSON.stringify(this.restoreAccountsData));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       if (this.restoreAccountsData.length > 0) {
         for (const section of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'assets', 'ensMap', 'exchangeRates', 'report']) {
@@ -422,9 +422,7 @@ const configModule = {
       state.settings.lastBlock = lastBlock;
     },
     setProcessContracts(state, processContracts) {
-      console.log("state.settings: " + JSON.stringify(state.settings));
       state.settings.processContracts = processContracts;
-      console.log("state.settings.processContracts: " + JSON.stringify(state.settings.processContracts));
     },
   },
   actions: {
