@@ -182,13 +182,16 @@ const Mappings = {
         </b-card>
 
         <b-card v-if="settings.editMappings || totalMappings == 0" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
-
-          {{ allFunctionSelectors }}
-
           <b-card-body class="m-1 p-1">
             <b-form-group label-cols-lg="2" label="Add New Mappings" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
-              <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and are used to request information via your web3 connection, or via Etherscan and Reservoir API calls" class="mx-0 my-1 p-0">
-                <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="settings.newAccounts" @change="saveSettings" rows="1" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
+              <b-form-group label="Select Function Selector:" label-for="select-function-selector" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of function selectors" class="mx-0 my-1 p-0">
+                <font size="-1">
+                  <b-table small sticky-header fixed striped responsive hover selectable select-mode="single" :fields="functionSelectorFields" :items="allFunctionSelectors" show-empty head-variant="light" class="m-0 mt-1">
+                    <template #cell(number)="data">
+                      {{ data.index }}
+                    </template>
+                  </b-table>
+                </font>
               </b-form-group>
               <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added. Click the 'cloud download' button above to retrieve the transactions" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="newaccounts-submit" :disabled="settings.newAccounts == null || settings.newAccounts.length == 0 || block == null" @click="addNewAccounts" variant="primary">Add</b-button>
@@ -399,6 +402,7 @@ const Mappings = {
         editMappings: false,
         newAccounts: null,
         selectedAccounts: {},
+        selectedFunctionSelector: null,
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
@@ -452,6 +456,12 @@ const Mappings = {
         { value: 1000, text: '1k' },
         { value: 2500, text: '2.5k' },
         { value: 10000, text: '10k' },
+      ],
+      functionSelectorFields: [
+        { key: 'number', label: '#', sortable: false, thStyle: 'width: 7%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'functionSelector', label: 'Function Selector', sortable: true, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+        { key: 'functionCall', label: 'Function Call', sortable: true, thStyle: 'width: 63%;' },
+        { key: 'txCount', label: '#txs', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       accountsFields: [
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
@@ -519,13 +529,13 @@ const Mappings = {
     totalMappings() {
       return Object.keys(this.mappings).length;
     },
-    allFunctionSelectors() {
+    collatedFunctionSelectors() {
       const results = [];
       const collator = {};
       for (const [account, accountData] of Object.entries(this.accounts)) {
         const accountsInfo = this.accountsInfo[account] || {};
         if (accountsInfo.mine && accountsInfo.report) {
-          results.push(account);
+          // results.push(account);
           console.log("--- Processing " + account + " ---");
           const txHashesByBlocks = getTxHashesByBlocks(account, this.accounts, this.accountsInfo, this.processFilters);
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
@@ -551,7 +561,7 @@ const Mappings = {
                 if (!(functionSelector in collator)) {
                   collator[functionSelector] = {
                     functionCall,
-                    count: 0,
+                    txCount: 0,
                     accounts: {},
                   };
                 }
@@ -560,20 +570,21 @@ const Mappings = {
                   collator[functionSelector].accounts[a] = [];
                 }
                 collator[functionSelector].accounts[a].push(txHash);
-                collator[functionSelector].count++;
+                collator[functionSelector].txCount++;
               }
             }
           }
         }
       }
-      console.log("collator: " + JSON.stringify(collator, null, 2));
-
-      if (this.report.transactions) {
-        results.push("Yah");
-        for (const [index, transaction] of this.report.transactions.entries()) {
-          // console.log(index + " " + JSON.stringify(transaction));
-        }
-
+      for (const [functionSelector, someData] of Object.entries(collator)) {
+        results.push({ functionSelector, functionCall: someData.functionCall, txCount: someData.txCount });
+      }
+      return results;
+    },
+    allFunctionSelectors() {
+      const results = [];
+      for (const item of this.collatedFunctionSelectors) {
+        results.push({ functionSelector: item.functionSelector, functionCall: item.functionCall, txCount: item.txCount });
       }
       return results;
     },
