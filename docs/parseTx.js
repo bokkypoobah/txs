@@ -640,7 +640,10 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   // }
 
   if (txData.txReceipt.status == 0) {
-    results.info = "Error tx with status 0";
+    results.info = {
+      type: "eth",
+      action: "errored",
+    };
   }
 
   // TODO: Identify internal transfers?
