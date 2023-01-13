@@ -1,11 +1,19 @@
 function getTxHashesByBlocks(account, accounts, accountsInfo, processFilters) {
   const txHashesByBlocks = {};
-  const accountList = processFilters.processContracts && processFilters.processContracts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x')) || null;
+  const accountList = processFilters.processContracts && processFilters.processContracts.split(/[, \t\n]+/).filter(a => (a.length == 42 && a.substring(0, 2) == '0x')) || null;
+  const txsList = processFilters.processTransactions && processFilters.processTransactions.split(/[, \t\n]+/).filter(t => (t.length == 66 && t.substring(0, 2) == '0x')) || null;
   let accountLookup = null;
   if (accountList) {
     accountLookup = {};
-    for (const acc of accountList) {
-      accountLookup[acc.toLowerCase()] = true;
+    for (const a of accountList) {
+      accountLookup[a.toLowerCase()] = true;
+    }
+  }
+  let txsLookup = null;
+  if (txsList) {
+    txsLookup = {};
+    for (const t of txsList) {
+      txsLookup[t] = true;
     }
   }
   for (const [txHash, tx] of Object.entries(accounts[account].transactions)) {
@@ -18,6 +26,11 @@ function getTxHashesByBlocks(account, accounts, accountsInfo, processFilters) {
         if (!(contract in accountLookup)) {
           include = false;
         }
+      }
+    }
+    if (txsLookup) {
+      if (!(txHash in txsLookup)) {
+        include = false;
       }
     }
     if (include) {
@@ -42,6 +55,11 @@ function getTxHashesByBlocks(account, accounts, accountsInfo, processFilters) {
           }
         }
       }
+      if (txsLookup) {
+        if (!(txHash in txsLookup)) {
+          include = false;
+        }
+      }
       if (include) {
         if (!(tx.blockNumber in txHashesByBlocks)) {
           txHashesByBlocks[tx.blockNumber] = {};
@@ -63,6 +81,11 @@ function getTxHashesByBlocks(account, accounts, accountsInfo, processFilters) {
           if (!(contract in accountLookup)) {
             include = false;
           }
+        }
+      }
+      if (txsLookup) {
+        if (!(txHash in txsLookup)) {
+          include = false;
         }
       }
       if (include) {

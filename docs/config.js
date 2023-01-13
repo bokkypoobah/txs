@@ -49,10 +49,10 @@ const Config = {
               <b-form-group v-if="settings.processPeriod == 'custom'" label="Last Block Number:" label-for="last-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Only process transactions before this block number, inclusive'" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="last-block" :value="settings.lastBlock" @change="setLastBlock($event)" placeholder="Leave blank for all" class="w-75"></b-form-input>
               </b-form-group>
-              <b-form-group label="Contracts:" label-for="process-contracts" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restrict processing to a list of contracts. Leave blank for all. Case insensitive'" class="mx-0 my-1 p-0">
+              <b-form-group label="Contracts:" label-for="process-contracts" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restrict processing to a list of contracts. Case insensitive. Leave blank for all'" class="mx-0 my-1 p-0">
                 <b-form-textarea size="sm" id="process-contracts" :value="settings.processContracts" @change="setProcessContracts($event)" rows="3" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
               </b-form-group>
-              <b-form-group label="Transactions:" label-for="process-transactions" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restrict processing to a list of transaction hashes. These transactions must be associated to a synced account. Lower case only'" class="mx-0 my-1 p-0">
+              <b-form-group label="Transactions:" label-for="process-transactions" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restrict processing to a list of transaction hashes. These transactions must be associated to a synced account. Lower case only. Leave blank for all'" class="mx-0 my-1 p-0">
                 <b-form-textarea size="sm" id="process-transactions" :value="settings.processTransactions" @change="setProcessTransactions($event)" rows="3" max-rows="5" placeholder="0x1234... 0x2345..., 0xabcd..."></b-form-textarea>
               </b-form-group>
             </b-form-group>
