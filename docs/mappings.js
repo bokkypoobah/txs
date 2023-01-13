@@ -197,7 +197,10 @@ const Mappings = {
           </b-card-body>
         </b-card>
 
-        <b-table small fixed striped responsive hover :fields="accountsFields" :items="pagedFilteredSortedMappings" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped responsive hover :items="pagedFilteredSortedMappings" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
+        </b-table>
+
+        <b-table v-if="false" small fixed striped responsive hover :fields="accountsFields" :items="pagedFilteredSortedMappings" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
           <template #head(number)="data">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
               <template #button-content>
@@ -490,58 +493,59 @@ const Mappings = {
     },
     filteredMappings() {
       const results = [];
-      const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
-      for (const [account, accountData] of Object.entries(this.accounts)) {
-        const accountInfo = this.accountsInfo[account] || {};
-        const ensName = this.ensMap[account] || null;
-        const accountName = accountInfo.name || accountData.name || null;
-        let include = filterLower == null ||
-          (account.toLowerCase().includes(filterLower)) ||
-          (accountName.toLowerCase().includes(filterLower)) ||
-          (accountInfo.group && accountInfo.group.toLowerCase().includes(filterLower)) ||
-          (accountInfo.notes && accountInfo.notes.toLowerCase().includes(filterLower)) ||
-          (ensName != null && ensName.toLowerCase().includes(filterLower));
-        if (include && this.settings.myAccountsFilter != null) {
-          if (this.settings.myAccountsFilter == 'mine' && accountInfo.mine) {
-          } else if (this.settings.myAccountsFilter == 'notmine' && !accountInfo.mine) {
-          } else {
-            include = false;
-          }
-        }
-        if (include && this.settings.accountTypeFilter != null) {
-          const accountType = accountInfo.type || accountData.type || null;
-          if (this.settings.accountTypeFilter == 'unknown' && accountInfo.type == null) {
-          } else if (this.settings.accountTypeFilter == accountType) {
-          } else {
-            include = false;
-          }
-        }
-        if (include && this.settings.junkFilter) {
-          if (this.settings.junkFilter == 'junk' && !accountInfo.junk) {
-            include = false;
-          } else if (this.settings.junkFilter == 'excludejunk' && accountInfo.junk) {
-            include = false;
-          }
-        }
-        if (include) {
-          results.push({
-            account,
-            group: accountInfo.group,
-            name: accountName,
-            type: accountInfo.type || accountData.type,
-            slug: accountInfo.slug || accountData.slug,
-            image: accountInfo.image || accountData.image,
-            mine: accountInfo.mine,
-            sync: accountInfo.sync,
-            report: accountInfo.report,
-            junk: accountInfo.junk,
-            tags: accountInfo.tags,
-            notes: accountInfo.notes,
-            created: accountData.created,
-            updated: accountData.updated,
-          });
-        }
-      }
+      // const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
+      results.push({ functionSelector: 'BLah', accounts: [ { name: "a", includeOrExclude: "i" }, { name: "b", includeOrExclude: "j" } ], type: "nft", action: "sold", require: { weth: ">0", eth: "0", "nfts": ">0" }, defaultTxTag: "nft-sales" })
+      // for (const [account, accountData] of Object.entries(this.accounts)) {
+      //   const accountInfo = this.accountsInfo[account] || {};
+      //   const ensName = this.ensMap[account] || null;
+      //   const accountName = accountInfo.name || accountData.name || null;
+      //   let include = filterLower == null ||
+      //     (account.toLowerCase().includes(filterLower)) ||
+      //     (accountName.toLowerCase().includes(filterLower)) ||
+      //     (accountInfo.group && accountInfo.group.toLowerCase().includes(filterLower)) ||
+      //     (accountInfo.notes && accountInfo.notes.toLowerCase().includes(filterLower)) ||
+      //     (ensName != null && ensName.toLowerCase().includes(filterLower));
+      //   if (include && this.settings.myAccountsFilter != null) {
+      //     if (this.settings.myAccountsFilter == 'mine' && accountInfo.mine) {
+      //     } else if (this.settings.myAccountsFilter == 'notmine' && !accountInfo.mine) {
+      //     } else {
+      //       include = false;
+      //     }
+      //   }
+      //   if (include && this.settings.accountTypeFilter != null) {
+      //     const accountType = accountInfo.type || accountData.type || null;
+      //     if (this.settings.accountTypeFilter == 'unknown' && accountInfo.type == null) {
+      //     } else if (this.settings.accountTypeFilter == accountType) {
+      //     } else {
+      //       include = false;
+      //     }
+      //   }
+      //   if (include && this.settings.junkFilter) {
+      //     if (this.settings.junkFilter == 'junk' && !accountInfo.junk) {
+      //       include = false;
+      //     } else if (this.settings.junkFilter == 'excludejunk' && accountInfo.junk) {
+      //       include = false;
+      //     }
+      //   }
+      //   if (include) {
+      //     results.push({
+      //       account,
+      //       group: accountInfo.group,
+      //       name: accountName,
+      //       type: accountInfo.type || accountData.type,
+      //       slug: accountInfo.slug || accountData.slug,
+      //       image: accountInfo.image || accountData.image,
+      //       mine: accountInfo.mine,
+      //       sync: accountInfo.sync,
+      //       report: accountInfo.report,
+      //       junk: accountInfo.junk,
+      //       tags: accountInfo.tags,
+      //       notes: accountInfo.notes,
+      //       created: accountData.created,
+      //       updated: accountData.updated,
+      //     });
+      //   }
+      // }
       return results;
     },
     filteredSortedMappings() {
