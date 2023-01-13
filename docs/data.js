@@ -46,6 +46,9 @@ const Data = {
     accounts() {
       return store.getters['data/accounts'];
     },
+    mappings() {
+      return store.getters['data/mappings'];
+    },
     txs() {
       return store.getters['data/txs'];
     },
@@ -88,6 +91,7 @@ const dataModule = {
   state: {
     accounts: {}, // account => Account(type, name, symbol, decimals, transactions, internalTransactions, events, ...)
     accountsInfo: {}, // account => Account Info(type, name, symbol, decimals)
+    mappings: {}, // Various mappings
     txs: {}, // account => Txs(timestamp, tx, txReceipt)
     txsInfo: {}, // account => Txs Info
     blocks: {}, // blockNumber => timestamp and account balances
@@ -114,6 +118,7 @@ const dataModule = {
   getters: {
     accounts: state => state.accounts,
     accountsInfo: state => state.accountsInfo,
+    mappings: state => state.mappings,
     txs: state => state.txs,
     txsInfo: state => state.txsInfo,
     blocks: state => state.blocks,
@@ -353,7 +358,7 @@ const dataModule = {
       if (Object.keys(context.state.txs) == 0) {
         const db0 = new Dexie(context.state.db.name);
         db0.version(context.state.db.version).stores(context.state.db.schemaDefinition);
-        for (let type of ['accountsInfo', 'accounts', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'ensMap', 'assets', 'exchangeRates']) {
+        for (let type of ['accountsInfo', 'accounts', 'mappings', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'ensMap', 'assets', 'exchangeRates']) {
           const data = await db0.cache.where("objectName").equals(CHAIN_ID + '.' + type).toArray();
           if (data.length == 1) {
             context.commit('setState', { name: type, data: data[0].object });
