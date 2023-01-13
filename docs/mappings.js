@@ -149,10 +149,10 @@ const Mappings = {
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedAccounts.length + '/' + totalAccounts }}</font>
+            <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedMappings.length + '/' + totalAccounts }}</font>
           </div>
           <div class="mt-0 pr-1">
-            <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedAccounts.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
+            <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedMappings.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
           </div>
           <div class="mt-0 pl-1">
             <b-form-select size="sm" v-model="settings.pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
@@ -197,14 +197,14 @@ const Mappings = {
           </b-card-body>
         </b-card>
 
-        <b-table small fixed striped responsive hover :fields="accountsFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped responsive hover :fields="accountsFields" :items="pagedFilteredSortedMappings" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
           <template #head(number)="data">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
               <template #button-content>
                 <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
               </template>
-              <b-dropdown-item href="#" @click="toggleSelectedAccounts(pagedFilteredSortedAccounts)">Toggle selection for all accounts on this page</b-dropdown-item>
-              <b-dropdown-item href="#" @click="toggleSelectedAccounts(filteredSortedAccounts)">Toggle selection for all accounts on all pages</b-dropdown-item>
+              <b-dropdown-item href="#" @click="toggleSelectedAccounts(pagedFilteredSortedMappings)">Toggle selection for all accounts on this page</b-dropdown-item>
+              <b-dropdown-item href="#" @click="toggleSelectedAccounts(filteredSortedMappings)">Toggle selection for all accounts on all pages</b-dropdown-item>
               <b-dropdown-item href="#" @click="clearSelectedAccounts()">Clear selection</b-dropdown-item>
             </b-dropdown>
           </template>
@@ -380,7 +380,7 @@ const Mappings = {
         currentPage: 1,
         pageSize: 10,
         sortOption: 'accountasc',
-        version: 5,
+        version: 1,
       },
       accountTypes: [
         { value: null, text: '(unknown)' },
@@ -467,6 +467,9 @@ const Mappings = {
     accountsInfo() {
       return store.getters['data/accountsInfo'];
     },
+    mappings() {
+      return store.getters['data/mappings'];
+    },
     txs() {
       return store.getters['data/txs'];
     },
@@ -485,7 +488,7 @@ const Mappings = {
     totalAccounts() {
       return Object.keys(this.accounts).length;
     },
-    filteredAccounts() {
+    filteredMappings() {
       const results = [];
       const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
       for (const [account, accountData] of Object.entries(this.accounts)) {
@@ -541,8 +544,8 @@ const Mappings = {
       }
       return results;
     },
-    filteredSortedAccounts() {
-      const results = this.filteredAccounts;
+    filteredSortedMappings() {
+      const results = this.filteredMappings;
       if (this.settings.sortOption == 'accountasc') {
         results.sort((a, b) => {
           return ('' + a.account).localeCompare(b.account);
@@ -602,13 +605,13 @@ const Mappings = {
       }
       return results;
     },
-    pagedFilteredSortedAccounts() {
-      return this.filteredSortedAccounts.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
+    pagedFilteredSortedMappings() {
+      return this.filteredSortedMappings.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
     },
   },
   methods: {
     saveSettings() {
-      localStorage.accountsSettings = JSON.stringify(this.settings);
+      localStorage.mappingsSettings = JSON.stringify(this.settings);
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
@@ -712,7 +715,7 @@ const Mappings = {
           ["No", "Account", "Type", "Mine", "ENSName", "Group", "Name", "Notes"],
       ];
       let i = 1;
-      for (const result of this.filteredSortedAccounts) {
+      for (const result of this.filteredSortedMappings) {
         rows.push([
           i,
           result.account,
@@ -750,9 +753,9 @@ const Mappings = {
   mounted() {
     logDebug("Mappings", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('data/restoreState');
-    if ('accountsSettings' in localStorage) {
-      const tempSettings = JSON.parse(localStorage.accountsSettings);
-      if ('version' in tempSettings && tempSettings.version == 5) {
+    if ('mappingsSettings' in localStorage) {
+      const tempSettings = JSON.parse(localStorage.mappingsSettings);
+      if ('version' in tempSettings && tempSettings.version == 1) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
