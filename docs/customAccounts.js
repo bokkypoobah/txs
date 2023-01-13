@@ -278,6 +278,11 @@ const _CUSTOMACCOUNTS = {
           // if (cryptoRareEvents.length == 1 && acclimatedMoonCatsEvents.length == 1 && rareMoonCatEvents.length == 1) {
           //   results.info = "mintRareMoonCat CryptoRare:" + cryptoRareEvents[0].tokenId + " + Acclimated​MoonCats:" + acclimatedMoonCatsEvents[0].tokenId + " => RareMoonCats:" + rareMoonCatEvents[0].tokenId;
           // }
+        } else if (decodedData.functionFragment.name == "makeAdoptionOfferToAddress") {
+          results.info = {
+            type: "nft",
+            action: "offered",
+          };
         } else {
           // results.info = "addRareToRareMoonCat";
         }

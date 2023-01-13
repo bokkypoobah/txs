@@ -997,7 +997,8 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   }
   // console.log("events.myEvents.entries(): " + JSON.stringify(events.myEvents.entries()));
   for (const event of events.myEvents) {
-    console.log(JSON.stringify(event));
+    // TODO: Add token contract lookup details
+    // console.log(JSON.stringify(event));
   }
   results.myEvents = [...results.myEvents, ...events.myEvents];
   for (const [eventIndex, event] of events.receivedInternalEvents.entries()) {
