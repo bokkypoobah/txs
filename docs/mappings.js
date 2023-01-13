@@ -117,7 +117,7 @@ const Mappings = {
           <div class="mt-0 flex-grow-1">
           </div>
           <div class="mt-0 pr-1">
-            <b-button size="sm" :pressed.sync="settings.editAccounts" @click="saveSettings" :variant="settings.editAccounts ? 'danger' : 'link'" v-b-popover.hover.top="settings.editAccounts ? 'End adding/editing accounts' : 'Add/Edit accounts'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
+            <b-button size="sm" :pressed.sync="settings.editMappings" @click="saveSettings" :variant="settings.editMappings ? 'danger' : 'link'" v-b-popover.hover.top="settings.editMappings ? 'End adding/editing accounts' : 'Add/Edit accounts'"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button>
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
@@ -149,7 +149,7 @@ const Mappings = {
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedMappings.length + '/' + totalAccounts }}</font>
+            <font size="-2" v-b-popover.hover.top="'# accounts'">{{ filteredSortedMappings.length + '/' + totalMappings }}</font>
           </div>
           <div class="mt-0 pr-1">
             <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedMappings.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
@@ -181,7 +181,7 @@ const Mappings = {
           </div>
         </b-card>
 
-        <b-card v-if="settings.editAccounts || totalAccounts == 0" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+        <b-card v-if="settings.editMappings || totalMappings == 0" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
           <b-card-body class="m-1 p-1">
             <b-form-group label-cols-lg="2" label="New Accounts" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
               <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and are used to request information via your web3 connection, or via Etherscan and Reservoir API calls" class="mx-0 my-1 p-0">
@@ -197,7 +197,23 @@ const Mappings = {
           </b-card-body>
         </b-card>
 
-        <b-table small fixed striped responsive hover :items="pagedFilteredSortedMappings" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped responsive hover :items="pagedFilteredSortedMappings" show-empty head-variant="light" class="m-0 mt-1">
+          <template #empty="scope">
+            <h6>{{ scope.emptyText }}</h6>
+            <div v-if="totalMappings == 0">
+              <ul>
+                <li>
+                  Enter your account(s) in the Accounts tab
+                </li>
+                <li>
+                  Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button> in the Accounts or Report tab to sync your account data
+                </li>
+                <li>
+                  Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-newspaper shift-v="+1" font-scale="1.0"></b-icon-newspaper></b-button> in the Report tab, to generate a report from your account data
+                </li>
+              </ul>
+            </div>
+          </template>
         </b-table>
 
         <b-table v-if="false" small fixed striped responsive hover :fields="accountsFields" :items="pagedFilteredSortedMappings" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
@@ -235,42 +251,42 @@ const Mappings = {
             <font size="-1">
               <div class="d-flex flex-row">
                 <div class="m-0 pt-1 pr-1">
-                  <span v-if="settings.editAccounts">
+                  <span v-if="settings.editMappings">
                     <b-form-select size="sm" v-model="data.item.type" @change="setAccountInfoField(data.item.account, 'type', $event)" :options="accountTypes" v-b-popover.hover.top="'Select type'"></b-form-select>
                   </span>
-                  <span v-if="!settings.editAccounts">
+                  <span v-if="!settings.editMappings">
                     <b-badge variant="info" v-b-popover.hover="'Account type'">{{ data.item.type }}</b-badge>
                   </span>
                 </div>
-                <div v-if="data.item.mine || settings.editAccounts" class="m-0 pt-1 pr-1">
-                  <span v-if="settings.editAccounts">
+                <div v-if="data.item.mine || settings.editMappings" class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editMappings">
                     <b-form-checkbox size="sm" :checked="data.item.mine ? 1 : 0" value="1" @change="toggleAccountInfoField(data.item.account, 'mine')" v-b-popover.hover="'My account?'">Mine</b-form-checkbox>
                   </span>
-                  <span v-if="!settings.editAccounts">
+                  <span v-if="!settings.editMappings">
                     <b-badge v-if="data.item.mine" variant="primary" v-b-popover.hover="'My account'">Mine</b-badge>
                   </span>
                 </div>
-                <div v-if="data.item.sync || settings.editAccounts" class="m-0 pt-1 pr-1">
-                  <span v-if="settings.editAccounts">
+                <div v-if="data.item.sync || settings.editMappings" class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editMappings">
                     <b-form-checkbox size="sm" :checked="data.item.sync ? 1 : 0" value="1" @change="toggleAccountInfoField(data.item.account, 'sync')" v-b-popover.hover="'Include in sync process?'">Sync</b-form-checkbox>
                   </span>
-                  <span v-if="!settings.editAccounts">
+                  <span v-if="!settings.editMappings">
                     <b-badge v-if="data.item.sync" variant="primary" v-b-popover.hover="'Will be included in the sync process'">Sync</b-badge>
                   </span>
                 </div>
-                <div v-if="data.item.report || settings.editAccounts" class="m-0 pt-1 pr-1">
-                  <span v-if="settings.editAccounts">
+                <div v-if="data.item.report || settings.editMappings" class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editMappings">
                     <b-form-checkbox size="sm" :checked="data.item.report ? 1 : 0" value="1" @change="toggleAccountInfoField(data.item.account, 'report')" v-b-popover.hover="'Include in report?'">Report</b-form-checkbox>
                   </span>
-                  <span v-if="!settings.editAccounts">
+                  <span v-if="!settings.editMappings">
                     <b-badge v-if="data.item.report" variant="primary" v-b-popover.hover="'Will be included in the report'">Report</b-badge>
                   </span>
                 </div>
-                <div v-if="data.item.junk || settings.editAccounts" class="m-0 pt-1 pr-1">
-                  <span v-if="settings.editAccounts">
+                <div v-if="data.item.junk || settings.editMappings" class="m-0 pt-1 pr-1">
+                  <span v-if="settings.editMappings">
                     <b-form-checkbox size="sm" :checked="data.item.junk ? 1 : 0" value="1" @change="toggleAccountInfoField(data.item.account, 'junk')" v-b-popover.hover="'Junk?'">Junk</b-form-checkbox>
                   </span>
-                  <span v-if="!settings.editAccounts">
+                  <span v-if="!settings.editMappings">
                     <b-badge v-if="data.item.junk" pill variant="warning" v-b-popover.hover="'Account and transactions will be marked as junk for filtering'">junk</b-badge>
                   </span>
                 </div>
@@ -286,10 +302,10 @@ const Mappings = {
                   </span>
                 </div>
                 <div class="m-0 pt-1 pr-1">
-                  <span v-if="settings.editAccounts">
+                  <span v-if="settings.editMappings">
                     <b-form-input type="text" size="sm" v-model.trim="data.item.group" @change="setAccountInfoField(data.item.account, 'group', data.item.group)" debounce="600" placeholder="group"></b-form-input>
                   </span>
-                  <span v-if="!settings.editAccounts">
+                  <span v-if="!settings.editMappings">
                     <b-badge v-if="data.item.group && data.item.group.length > 0" variant="dark" v-b-popover.hover="'Group'">{{ data.item.group }}</b-badge>
                   </span>
                 </div>
@@ -345,17 +361,17 @@ const Mappings = {
                 <br />
               </span>
             </b-popover>
-            <span v-if="settings.editAccounts">
+            <span v-if="settings.editMappings">
               <br />
               <b-button size="sm" @click="deleteAccountAndAccountInfo(data.item.account);" variant="link" v-b-popover.hover.top="'Delete account?'"><b-icon-trash shift-v="+1" font-scale="1.2"></b-icon-trash></b-button>
             </span>
           </template>
           <template #cell(name)="data">
-            <span v-if="settings.editAccounts">
+            <span v-if="settings.editMappings">
               <b-form-input type="text" size="sm" v-model.trim="data.item.name" @change="setAccountInfoField(data.item.account, 'name', data.item.name)" debounce="600" placeholder="name"></b-form-input>
               <b-form-textarea size="sm" v-model.trim="data.item.notes" @change="setAccountInfoField(data.item.account, 'notes', data.item.notes)" placeholder="notes" rows="2" max-rows="20" class="mt-1"></b-form-textarea>
             </span>
-            <span v-if="!settings.editAccounts">
+            <span v-if="!settings.editMappings">
               {{ data.item.name }}
               <br />
               <font size="-1">
@@ -377,7 +393,7 @@ const Mappings = {
         myAccountsFilter: null,
         junkFilter: null,
         showAdditionalFilters: false,
-        editAccounts: false,
+        editMappings: false,
         newAccounts: null,
         selectedAccounts: {},
         currentPage: 1,
@@ -488,13 +504,13 @@ const Mappings = {
     coinbaseIncluded() {
       return this.accounts[this.coinbase] && true || false;
     },
-    totalAccounts() {
-      return Object.keys(this.accounts).length;
+    totalMappings() {
+      return Object.keys(this.mappings).length;
     },
     filteredMappings() {
       const results = [];
       // const filterLower = this.settings.filter && this.settings.filter.toLowerCase() || null;
-      results.push({ functionSelector: 'BLah', accounts: [ { name: "a", includeOrExclude: "i" }, { name: "b", includeOrExclude: "j" } ], type: "nft", action: "sold", require: { weth: ">0", eth: "0", "nfts": ">0" }, defaultTxTag: "nft-sales" })
+      // results.push({ functionSelector: 'BLah', type: "nft", action: "sold", defaultTxTag: "nft-sales", accountsFilter: [ { name: "a", includeOrExclude: "i" }, { name: "b", includeOrExclude: "j" } ], require: { ft: ">0", "nfts": ">0" } });
       // for (const [account, accountData] of Object.entries(this.accounts)) {
       //   const accountInfo = this.accountsInfo[account] || {};
       //   const ensName = this.ensMap[account] || null;

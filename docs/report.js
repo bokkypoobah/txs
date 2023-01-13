@@ -344,7 +344,23 @@ const Report = {
           </div>
         </div>
 
-        <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty empty-html="Add accounts, sync, then generate report" head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty head-variant="light" class="m-0 mt-1">
+          <template #empty="scope">
+            <h6>{{ scope.emptyText }}</h6>
+            <div v-if="totalTransactions == 0">
+              <ul>
+                <li>
+                  Enter your account(s) in the Accounts tab
+                </li>
+                <li>
+                  Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button> above, or in the Accounts tab, to sync your account data
+                </li>
+                <li>
+                  Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-newspaper shift-v="+1" font-scale="1.0"></b-icon-newspaper></b-button> above to generate a report from your account data
+                </li>
+              </ul>
+            </div>
+          </template>
           <!--
           <template #thead-top="data">
             <b-tr>

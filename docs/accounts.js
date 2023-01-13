@@ -183,14 +183,14 @@ const Accounts = {
 
         <b-card v-if="settings.editAccounts || totalAccounts == 0" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
           <b-card-body class="m-1 p-1">
-            <b-form-group label-cols-lg="2" label="New Accounts" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
-              <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and are used to request information via your web3 connection, or via Etherscan and Reservoir API calls" class="mx-0 my-1 p-0">
+            <b-form-group label-cols-lg="2" label="Add New Accounts" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
+              <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="3" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and are used to request information via your web3 connection, or via Etherscan and Reservoir API calls" class="mx-0 my-1 p-0">
                 <b-form-textarea size="sm" id="newaccounts-accounts" v-model.trim="settings.newAccounts" @change="saveSettings" rows="1" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
               </b-form-group>
-              <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" description="Only valid accounts will be added. Click the 'cloud download' button above to retrieve the transactions" class="mx-0 my-1 p-0">
+              <b-form-group label="" label-for="newaccounts-submit" label-size="sm" label-cols-sm="3" label-align-sm="right" description="Only valid accounts will be added" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="newaccounts-submit" :disabled="settings.newAccounts == null || settings.newAccounts.length == 0 || block == null" @click="addNewAccounts" variant="primary">Add</b-button>
               </b-form-group>
-              <b-form-group label="Coinbase:" label-for="newaccounts-coinbase-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="coinbase == null ? '' : (coinbaseIncluded ? (coinbase + ' already added') : ('Add ' + coinbase + '?'))" class="mx-0 my-1 p-0">
+              <b-form-group label="Connected Account:" label-for="newaccounts-coinbase-submit" label-size="sm" label-cols-sm="3" label-align-sm="right" :description="coinbase == null ? '' : (coinbaseIncluded ? (coinbase + ' already added') : ('Add ' + coinbase + '?'))" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="newaccounts-coinbase-submit" :disabled="block == null || coinbaseIncluded" @click="addCoinbase" variant="primary">Add</b-button>
               </b-form-group>
             </b-form-group>
@@ -198,6 +198,25 @@ const Accounts = {
         </b-card>
 
         <b-table small fixed striped responsive hover :fields="accountsFields" :items="pagedFilteredSortedAccounts" show-empty empty-html="Click [+] above to add accounts" head-variant="light" class="m-0 mt-1">
+          <template #empty="scope">
+            <h6>{{ scope.emptyText }}</h6>
+            <div v-if="totalAccounts == 0">
+              <ul>
+                <li>
+                  Enter your account(s) above. Use <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-pencil shift-v="+1" font-scale="1.0"></b-icon-pencil></b-button> to edit your accounts
+                </li>
+                <li>
+                  Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button> above to sync your account data
+                </li>
+                <li>
+                  Click <b-button size="sm" variant="link" class="m-0 p-0"><b-icon-newspaper shift-v="+1" font-scale="1.0"></b-icon-newspaper></b-button> in the Report tab to generate a report from your account data
+                </li>
+              </ul>
+              This could your first use of this dapp, or this dapp's database structure has been updated during this WIP dapp development phase.
+              <br />
+              You will be able to backup and restore in the Config tab.
+            </div>
+          </template>
           <template #head(number)="data">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
               <template #button-content>
