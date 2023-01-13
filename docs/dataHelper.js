@@ -1,6 +1,6 @@
-function getTxHashesByBlocks(account, accounts, accountsInfo, devSettings) {
+function getTxHashesByBlocks(account, accounts, accountsInfo, processFilters) {
   const txHashesByBlocks = {};
-  const accountList = devSettings.processContracts && devSettings.processContracts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x')) || null;
+  const accountList = processFilters.processContracts && processFilters.processContracts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x')) || null;
   let accountLookup = null;
   if (accountList) {
     accountLookup = {};
@@ -77,8 +77,8 @@ function getTxHashesByBlocks(account, accounts, accountsInfo, devSettings) {
   }
   const results = {};
   let blocksProcessed = 0;
-  const fb = devSettings.firstBlock && devSettings.firstBlock.toString().length > 0 && parseInt(devSettings.firstBlock) || null;
-  const lb = devSettings.lastBlock && devSettings.lastBlock.toString().length > 0 && parseInt(devSettings.lastBlock) || null;
+  const fb = processFilters.firstBlock && processFilters.firstBlock.toString().length > 0 && parseInt(processFilters.firstBlock) || null;
+  const lb = processFilters.lastBlock && processFilters.lastBlock.toString().length > 0 && parseInt(processFilters.lastBlock) || null;
   for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
     if ((!fb || parseInt(blockNumber) >= fb) && (!lb || parseInt(blockNumber) <= lb)) {
       if (!(blockNumber in results)) {

@@ -1516,7 +1516,7 @@ const reportModule = {
       const allTxs = store.getters['data/txs'];
       const exchangeRates = store.getters['data/exchangeRates'];
       const blocks = store.getters['data/blocks'];
-      const devSettings = store.getters['config/devSettings'];
+      const processFilters = store.getters['config/processFilters'];
       const preERC721s = store.getters['config/settings'].preERC721s;
       const blockRange = contractOrTxOrBlockRange ? contractOrTxOrBlockRange.match(/(\d+)-(\d+)/) : null;
       let startBlock = 0;
@@ -1549,7 +1549,7 @@ const reportModule = {
         const accountsInfo = store.getters['data/accountsInfo'][account] || {};
         if (accountsInfo.mine && accountsInfo.report) {
           console.log("--- Processing " + account + " ---");
-          const txHashesByBlocks = getTxHashesByBlocks(account, allAccounts, allAccountsInfo, devSettings);
+          const txHashesByBlocks = getTxHashesByBlocks(account, allAccounts, allAccountsInfo, processFilters);
           let prevBalance = ethers.BigNumber.from(0);
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             const block = blocks && blocks[blockNumber] || null;

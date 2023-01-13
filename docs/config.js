@@ -39,31 +39,36 @@ const Config = {
                 </b-table>
               <!-- </b-form-group> -->
             </b-form-group>
-            <b-form-group label-cols-lg="2" label="Development Settings" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
-              <b-form-group label="Process Period:" label-for="process-period" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Select a period for processing'" class="mx-0 my-1 p-0">
+            <b-form-group label-cols-lg="2" label="Processing Filters" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Period:" label-for="process-period" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Only process transactions within this selected period (approximate atm)'" class="mx-0 my-1 p-0">
                 <b-form-select size="sm" id="process-period" :value="settings.processPeriod" @change="setProcessPeriod($event)" :options="processPeriods" class="w-50"></b-form-select>
               </b-form-group>
-              <b-form-group v-if="settings.processPeriod == 'custom'" label="First Block Number:" label-for="first-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'First block number to process'" class="mx-0 my-1 p-0">
+              <b-form-group v-if="settings.processPeriod == 'custom'" label="First Block Number:" label-for="first-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Only process transactions after this block number, inclusive'" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="first-block" :value="settings.firstBlock" @change="setFirstBlock($event)" placeholder="Leave blank for all" class="w-75"></b-form-input>
               </b-form-group>
-              <b-form-group v-if="settings.processPeriod == 'custom'" label="Last Block Number:" label-for="last-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Last block number to process'" class="mx-0 my-1 p-0">
+              <b-form-group v-if="settings.processPeriod == 'custom'" label="Last Block Number:" label-for="last-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Only process transactions before this block number, inclusive'" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="last-block" :value="settings.lastBlock" @change="setLastBlock($event)" placeholder="Leave blank for all" class="w-75"></b-form-input>
               </b-form-group>
-              <b-form-group label="Process Contracts:" label-for="process-contracts" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restrict processing to a list of contracts'" class="mx-0 my-1 p-0">
+              <b-form-group label="Contracts:" label-for="process-contracts" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restrict processing to a list of contracts. Leave blank for all. Case insensitive'" class="mx-0 my-1 p-0">
                 <b-form-textarea size="sm" id="process-contracts" :value="settings.processContracts" @change="setProcessContracts($event)" rows="3" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
               </b-form-group>
+              <b-form-group label="Transactions:" label-for="process-transactions" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restrict processing to a list of transaction hashes. These transactions must be associated to a synced account. Lower case only'" class="mx-0 my-1 p-0">
+                <b-form-textarea size="sm" id="process-transactions" :value="settings.processTransactions" @change="setProcessTransactions($event)" rows="3" max-rows="5" placeholder="0x1234... 0x2345..., 0xabcd..."></b-form-textarea>
+              </b-form-group>
             </b-form-group>
-            <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+            <b-form-group label-cols-lg="2" label="Backup & Restore" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Backup:" label-for="download-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Download a backup of user entered information'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="download-backup" @click="downloadBackup()" variant="primary">Download</b-button>
               </b-form-group>
-              <b-form-group label="Restore:" label-for="restore-from-backup-browse" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Select backup file to restore'" class="mx-0 my-1 p-0">
+              <b-form-group label="Restore:" label-for="restore-from-backup-browse" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Select backup file from your local computer to restore'" class="mx-0 my-1 p-0">
                 <!-- <b-form-file size="sm" id="restore-from-backup-browse" v-model="restoreFile" name="file" form="upload" @change="filesChange($event.target.name, $event.target.files)" accept=".tsv" class="w-50"></b-form-file> -->
                 <b-form-file size="sm" id="restore-from-backup-browse" v-model="restoreFile" @change="filesChange($event.target.name, $event.target.files)" accept=".tsv" class="w-50"></b-form-file>
               </b-form-group>
               <b-form-group label="" label-for="restore-from-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restore from backup file. Data has to be re-synced'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="restore-from-backup" :disabled="restoreAccountsData.length == 0" @click="restoreFromBackup()" variant="primary">Restore</b-button>
               </b-form-group>
+            </b-form-group>
+            <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
               <b-form-group label="Temporary Data:" label-for="reset-localstorage" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset view preferences stored in your browser LocalStorage'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="reset-localstorage" @click="reset(['localStorage'])" variant="primary">Reset</b-button>
               </b-form-group>
@@ -190,6 +195,9 @@ const Config = {
     setProcessContracts(processContracts) {
       store.dispatch('config/setProcessContracts', processContracts);
     },
+    setProcessTransactions(processTransactions) {
+      store.dispatch('config/setProcessTransactions', processTransactions);
+    },
     // downloadFunctionSignatures() {
     //   store.dispatch('config/downloadFunctionSignatures');
     // },
@@ -315,6 +323,7 @@ const configModule = {
       reportingCurrency: 'USD',
       processPeriod: null,
       processContracts: null,
+      processTransactions: null,
       firstBlock: null,
       lastBlock: null,
       preERC721s: {
@@ -329,7 +338,7 @@ const configModule = {
         "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d": "CryptoKitties", // Note that the transfer parameters are not indexed - Transfer (address from, address to, uint256 tokenId)
         "0x43fb95c7afA1Ac1E721F33C695b2A0A94C7ddAb2": "LunarMoonPlots",
       },
-      version: 9,
+      version: 10,
     },
     processPeriods: [
       { value: null, text: '(all)', data: { from: null, to: null } },
@@ -380,7 +389,7 @@ const configModule = {
       }
       return results;
     },
-    devSettings(state) {
+    processFilters(state) {
       let firstBlock = null;
       let lastBlock = null;
       if (state.settings.processPeriod == "custom") {
@@ -393,7 +402,7 @@ const configModule = {
           lastBlock = setting[0].data.to;
         }
       }
-      return { firstBlock, lastBlock, processContracts: state.settings.processContracts };
+      return { firstBlock, lastBlock, processContracts: state.settings.processContracts, processTransactions: state.settings.processTransactions };
     },
   },
   mutations: {
@@ -424,14 +433,16 @@ const configModule = {
     setProcessContracts(state, processContracts) {
       state.settings.processContracts = processContracts;
     },
+    setProcessTransactions(state, processTransactions) {
+      state.settings.processTransactions = processTransactions;
+    },
   },
   actions: {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 9) {
+        if ('version' in tempSettings && tempSettings.version == 10) {
           context.state.settings = tempSettings;
-          console.log("context.state.settings: " + JSON.stringify(context.state.settings, null, 2));
         }
       }
     },
@@ -469,6 +480,10 @@ const configModule = {
     },
     setProcessContracts(context, processContracts) {
       context.commit('setProcessContracts', processContracts);
+      localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    setProcessTransactions(context, processTransactions) {
+      context.commit('setProcessTransactions', processTransactions);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
     // async downloadFunctionSignatures(context) {
