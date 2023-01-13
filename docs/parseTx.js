@@ -999,7 +999,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     results.myEvents.push(record);
   }
 
-  // console.log("myEvents: " + JSON.stringify(results.myEvents));
+  console.log("myEvents: " + JSON.stringify(results.myEvents));
 
   const collator = {};
   for (const [eventIndex, event] of results.myEvents.entries()) {
@@ -1009,57 +1009,65 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     if (!(sentOrReceived in collator)) {
       collator[sentOrReceived] = {};
     }
-    if (!(ftOrNFT in collator[sentOrReceived])) {
-      collator[sentOrReceived][ftOrNFT] = {};
+    if (!(counterparty in collator[sentOrReceived])) {
+      collator[sentOrReceived][counterparty] = {};
     }
-    if (!(event.contract in collator[sentOrReceived][ftOrNFT])) {
-      collator[sentOrReceived][ftOrNFT][event.contract] = 0;
+    if (!(ftOrNFT in collator[sentOrReceived][counterparty])) {
+      collator[sentOrReceived][counterparty][ftOrNFT] = {};
+    }
+    if (!(event.contract in collator[sentOrReceived][counterparty][ftOrNFT])) {
+      collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = 0;
     }
     if (ftOrNFT == 'ft') {
-      collator[sentOrReceived][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][ftOrNFT][event.contract]).add(event.tokens).toString();
+      collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(event.tokens).toString();
     } else {
       if (event.type == 'erc1155batch') {
         for (const tokens of event.tokens) {
-          collator[sentOrReceived][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][ftOrNFT][event.contract]).add(tokens).toString();
+          collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(tokens).toString();
         }
       } else {
-        collator[sentOrReceived][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][ftOrNFT][event.contract]).add(1).toString();
+        collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(1).toString();
       }
     }
   }
+  // console.log("collator: " + JSON.stringify(collator, null, 2));
   const summary = {};
   for (const sentOrReceived of ['sent', 'received']) {
     if (collator[sentOrReceived]) {
-      for (const ftOrNFT of ['ft', 'nft']) {
-        if (collator[sentOrReceived][ftOrNFT]) {
-          for (const [tokenContract, tokens] of Object.entries(collator[sentOrReceived][ftOrNFT])) {
-            let name = undefined;
-            let symbol = undefined;
-            let decimals = undefined;
-            const tc = accounts[tokenContract];
-            if (ftOrNFT == 'ft') {
-              if (tokenContract == 'eth') {
-                name = 'ETH';
-                symbol = 'Ξ';
-                decimals = 18;
+      for (const [account, accountData] of Object.entries(collator[sentOrReceived])) {
+        for (const ftOrNFT of ['ft', 'nft']) {
+          if (accountData[ftOrNFT]) {
+            for (const [tokenContract, tokens] of Object.entries(accountData[ftOrNFT])) {
+              let name = undefined;
+              let symbol = undefined;
+              let decimals = undefined;
+              const tc = accounts[tokenContract];
+              // const tcInfo = accounts[tokenContract];
+              if (ftOrNFT == 'ft') {
+                if (tokenContract == 'eth') {
+                  name = 'ETH';
+                  symbol = 'Ξ';
+                  decimals = 18;
+                } else {
+                  name = tc.name;
+                  symbol = tc.symbol;
+                  decimals = tc.decimals;
+                }
               } else {
                 name = tc.name;
                 symbol = tc.symbol;
-                decimals = tc.decimals;
               }
-            } else {
-              name = tc.name;
-              symbol = tc.symbol;
+              if (!(sentOrReceived in summary)) {
+                summary[sentOrReceived] = [];
+              }
+              summary[sentOrReceived].push({ account, ftOrNFT, tokenContract, tokens, name, symbol, decimals });
             }
-            if (!(sentOrReceived in summary)) {
-              summary[sentOrReceived] = [];
-            }
-            summary[sentOrReceived].push({ ftOrNFT, tokenContract, tokens, name, symbol, decimals });
           }
         }
       }
     }
   }
+  console.log("summary: " + JSON.stringify(summary, null, 2));
   results.summary = summary;
   results.collator = collator;
 

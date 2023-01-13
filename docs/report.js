@@ -390,6 +390,7 @@ const Report = {
           </template>
           <template #cell(info)="data">
             <!--
+            {{ data.item.summary }}
             <div v-if="data.item.contract">
               <font size="-1">
                 <b-badge button variant="light" @click="showModalAddress(data.item.contract);" v-b-popover.hover="'Click to view'">{{ data.item.contract + ':' + data.item.functionCall }}</b-badge>
@@ -405,25 +406,14 @@ const Report = {
               <b-badge v-if="data.item.contract" button variant="light" @click="showModalAddress(data.item.contract);" v-b-popover.hover="'Click to view'">{{ (data.item.contract ? data.item.contract + ':' : '') + data.item.functionCall.substring(0, 30) + (data.item.functionCall.length > 30 ? '...' : '') }}</b-badge>
               <!-- <b-badge v-if="!data.item.info.action" pill variant="primary" v-b-popover.hover="data.item.functionCall">{{ data.item.functionCall.substring(0, 30) + (data.item.functionCall.length > 30 ? '...' : '') }}</b-badge> -->
             </font>
-            <!--
-            <span v-for="sentOrReceived in ['sent', 'received']">
-              <span v-if="data.item.summary[sentOrReceived]">
-                <b-badge pill variant="success">{{ sentOrReceived }}</b-badge>
-                FT: {{ data.item.summary[sentOrReceived]['ft'] }}
-                <span v-if="data.item.summary[sentOrReceived]['ft']" v-for="[tokenContract, tokens] in data.item.summary[sentOrReceived]['ft']" >
-                  tokens: {{ tokens }} tokenContract: {{ tokenContract }}
-                </span>
-                NFT: {{ data.item.summary[sentOrReceived]['nft'] }}
-              </span>
-            </span>
-            {{ data.item.collator }}
-            {{ data.item.summary }}
-            -->
             <br />
             <span v-for="sentOrReceived in ['sent', 'received']">
               <span v-if="data.item.summary[sentOrReceived]">
                 <font size="-1"><b-badge pill variant="success" class="ml-2">{{ sentOrReceived }}</b-badge></font>
                 <span v-for="row of data.item.summary[sentOrReceived]">
+                  <font size="-1">
+                    <b-link @click="showModalAddress(row.account);">{{ ensOrAccount(row.account) }}</b-link>
+                  </font>
                   <span v-if="row.ftOrNFT == 'ft'">
                     <span v-if="row.tokenContract == 'eth'">
                       {{ formatETH(row.tokens) }}<font size="-1">{{ row.symbol }}</font>
@@ -436,24 +426,6 @@ const Report = {
                     <b-link @click="showModalNFTCollection(row.tokenContract);">{{ row.tokens }} x {{ row.name }}</b-link>
                   </span>
                 </span>
-
-                <!--
-                <br />
-                data.item.summary[sentOrReceived]['ftOrNFT']: {{ data.item.summary[sentOrReceived]['ftOrNFT'] }}
-                <br />
-                <span v-if="data.item.summary[sentOrReceived].ftOrNFT == 'ft'">
-                  FT: {{ data.item.summary[sentOrReceived] }}
-                  <span v-if="data.item.summary[sentOrReceived].tokenContract == 'eth'">
-                    FTeth: {{ data.item.summary[sentOrReceived] }}
-                  </span>
-                  <span v-else>
-                    FTerc20: {{ data.item.summary[sentOrReceived] }}
-                  </span>
-                </span>
-                <span v-else>
-                  NFT: {{ data.item.summary[sentOrReceived] }}
-                </span>
-                -->
               </span>
             </span>
             <br />
