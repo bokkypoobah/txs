@@ -475,7 +475,7 @@ const dataModule = {
       // sections = ['syncBuildTokenContractsAndAccounts'];
       for (const [sectionIndex, section] of sections.entries()) {
         console.log(sectionIndex + "." + section);
-        const parameter = { accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, firstBlock: devSettings.firstBlock, lastBlock: devSettings.lastBlock };
+        const parameter = { accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, devSettings };
         if (section == "syncTransferEvents" || section == "all") {
           await context.dispatch('syncTransferEvents', parameter);
         }
@@ -711,7 +711,7 @@ const dataModule = {
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
         const accountData = context.state.accounts[account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.firstBlock, parameter.lastBlock);
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.devSettings);
         if (!context.state.sync.halt) {
           const blockNumbers = [];
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
@@ -751,7 +751,7 @@ const dataModule = {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
         const accountData = context.state.accounts[account] || {};
         const blocks = context.state.blocks;
-        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.firstBlock, parameter.lastBlock);
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.devSettings);
         const txHashesToProcess = {};
         if (!context.state.sync.halt) {
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
@@ -796,7 +796,7 @@ const dataModule = {
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncFunctionSelectors: " + accountIndex + " " + account);
         const accountData = context.state.accounts[account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.firstBlock, parameter.lastBlock);
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.devSettings);
         if (!context.state.sync.halt) {
           const missingFunctionSelectorsMap = {};
           const functionSelectors = context.state.functionSelectors || {};
@@ -837,7 +837,7 @@ const dataModule = {
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncEventSelectors: " + accountIndex + " " + account);
         const accountData = context.state.accounts[account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.firstBlock, parameter.lastBlock);
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.devSettings);
         if (!context.state.sync.halt) {
           const missingEventSelectorsMap = {};
           const eventSelectors = context.state.eventSelectors || {};
@@ -882,7 +882,7 @@ const dataModule = {
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBuildTokenContractsAndAccounts: " + accountIndex + " " + account);
         const accountData = context.state.accounts[account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.firstBlock, parameter.lastBlock);
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.devSettings);
         if (!context.state.sync.halt) {
           const missingAccountsMap = {};
           const eventSelectors = context.state.eventSelectors || {};
@@ -944,7 +944,7 @@ const dataModule = {
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBuildTokens: " + accountIndex + " " + account);
         const accountData = context.state.accounts[account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.firstBlock, parameter.lastBlock);
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.devSettings);
         if (!context.state.sync.halt) {
           const missingTokensMap = {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
@@ -1086,7 +1086,7 @@ const dataModule = {
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBuildTokens: " + accountIndex + " " + account);
         const accountData = context.state.accounts[account] || {};
-        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.firstBlock, parameter.lastBlock);
+        const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.devSettings);
         if (!context.state.sync.halt) {
           const missingTokensMap = {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {

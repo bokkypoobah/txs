@@ -49,8 +49,8 @@ const Config = {
               <b-form-group v-if="settings.processPeriod == 'custom'" label="Last Block Number:" label-for="last-block" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Last block number to process'" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="last-block" :value="settings.lastBlock" @change="setLastBlock($event)" placeholder="Leave blank for all" class="w-75"></b-form-input>
               </b-form-group>
-              <b-form-group label="Check Balance:" label-for="check-balance" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Retrieve balance to check intermediate calculations'" class="mx-0 my-1 p-0">
-                <b-form-checkbox size="sm" id="check-balance" :checked="settings.checkBalance ? 1 : 0" value="1" @change="toggleCheckBalance" />
+              <b-form-group label="Process Contracts:" label-for="process-contracts" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restrict processing to a list of contracts'" class="mx-0 my-1 p-0">
+                <b-form-textarea size="sm" id="process-contracts" :value="settings.processContracts" @change="setProcessContracts($event)" rows="3" max-rows="5" placeholder="0x1234... 0x2345..., 0xAbCd..."></b-form-textarea>
               </b-form-group>
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
@@ -145,9 +145,6 @@ const Config = {
     settings() {
       return store.getters['config/settings'];
     },
-    devSettings() {
-      return store.getters['config/devSettings'];
-    },
     periodOptions() {
       return store.getters['config/periodOptions'];
     },
@@ -190,8 +187,8 @@ const Config = {
     setLastBlock(lastBlock) {
       store.dispatch('config/setLastBlock', lastBlock);
     },
-    toggleCheckBalance(checkBalance) {
-      store.dispatch('config/toggleCheckBalance', checkBalance);
+    setProcessContracts(processContracts) {
+      store.dispatch('config/setProcessContracts', processContracts);
     },
     // downloadFunctionSignatures() {
     //   store.dispatch('config/downloadFunctionSignatures');
@@ -317,9 +314,9 @@ const configModule = {
       periodStart: 'jul',
       reportingCurrency: 'USD',
       processPeriod: null,
+      processContracts: null,
       firstBlock: null,
       lastBlock: null,
-      checkBalance: false,
       preERC721s: {
         "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D": "CryptoPunksV1",
         "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB": "CryptoPunksV2Official",
@@ -332,7 +329,7 @@ const configModule = {
         "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d": "CryptoKitties", // Note that the transfer parameters are not indexed - Transfer (address from, address to, uint256 tokenId)
         "0x43fb95c7afA1Ac1E721F33C695b2A0A94C7ddAb2": "LunarMoonPlots",
       },
-      version: 8,
+      version: 9,
     },
     processPeriods: [
       { value: null, text: '(all)', data: { from: null, to: null } },
@@ -396,7 +393,7 @@ const configModule = {
           lastBlock = setting[0].data.to;
         }
       }
-      return { firstBlock, lastBlock, checkBalance: state.settings.checkBalance };
+      return { firstBlock, lastBlock, processContracts: state.settings.processContracts };
     },
   },
   mutations: {
@@ -424,16 +421,19 @@ const configModule = {
     setLastBlock(state, lastBlock) {
       state.settings.lastBlock = lastBlock;
     },
-    toggleCheckBalance(state) {
-      state.settings.checkBalance = !state.settings.checkBalance;
+    setProcessContracts(state, processContracts) {
+      console.log("state.settings: " + JSON.stringify(state.settings));
+      state.settings.processContracts = processContracts;
+      console.log("state.settings.processContracts: " + JSON.stringify(state.settings.processContracts));
     },
   },
   actions: {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 8) {
+        if ('version' in tempSettings && tempSettings.version == 9) {
           context.state.settings = tempSettings;
+          console.log("context.state.settings: " + JSON.stringify(context.state.settings, null, 2));
         }
       }
     },
@@ -469,8 +469,8 @@ const configModule = {
       context.commit('setLastBlock', lastBlock);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
-    toggleCheckBalance(context) {
-      context.commit('toggleCheckBalance');
+    setProcessContracts(context, processContracts) {
+      context.commit('setProcessContracts', processContracts);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
     // async downloadFunctionSignatures(context) {

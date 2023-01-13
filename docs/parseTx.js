@@ -641,7 +641,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   if (txData.txReceipt.status == 0) {
     results.info = {
-      type: "eth",
+      type: "contract",
       action: "errored",
     };
   }
@@ -652,7 +652,11 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   if (txData.tx.from == account && txData.tx.to == null) {
     // console.log(JSON.stringify(txData.tx, null, 2));
     // console.log(JSON.stringify(accounts[account].transactions[txData.tx.hash], null, 2));
-    results.info = "Contract deployment"; // to " + txData.tx.contractAddress;
+    // results.info = "Contract deployment"; // to " + txData.tx.contractAddress;
+    results.info = {
+      type: "contract",
+      action: "deployed",
+    };
   }
 
   // Multisig execute internal transfer
@@ -988,17 +992,17 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   results.myEvents = [];
   if ((txData.tx.from == account || txData.tx.to == account) && msgValue > 0) {
-    const record = { type: "eth", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
+    const record = { type: "eth", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString(), name: 'ETH', symbol: 'Ξ', decimals: 18 };
     results.myEvents.push(record);
   }
   // console.log("events.myEvents.entries(): " + JSON.stringify(events.myEvents.entries()));
-  // for (const event of events.myEvents) {
-  //   console.log(JSON.stringify(event));
-  // }
+  for (const event of events.myEvents) {
+    console.log(JSON.stringify(event));
+  }
   results.myEvents = [...results.myEvents, ...events.myEvents];
   for (const [eventIndex, event] of events.receivedInternalEvents.entries()) {
     // console.log(eventIndex + " => " + JSON.stringify(event));
-    const record = { type: "eth", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
+    const record = { type: "eth", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString(), name: 'ETH', symbol: 'Ξ', decimals: 18 };
     results.myEvents.push(record);
   }
 
