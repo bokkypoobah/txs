@@ -1,4 +1,4 @@
-const Mappings = {
+const Config = {
   template: `
     <div class="m-0 p-0">
       <b-card no-body no-header class="border-0">
@@ -278,7 +278,7 @@ const Mappings = {
       }, 5000);
     },
     async timeoutCallback() {
-      logDebug("Mappings", "timeoutCallback() count: " + this.count);
+      logDebug("Config", "timeoutCallback() count: " + this.count);
       this.count++;
       var t = this;
       if (this.reschedule) {
@@ -289,14 +289,14 @@ const Mappings = {
     },
   },
   beforeDestroy() {
-    logDebug("Mappings", "beforeDestroy()");
+    logDebug("Config", "beforeDestroy()");
   },
   mounted() {
-    logDebug("Mappings", "mounted() $route: " + JSON.stringify(this.$route.params));
+    logDebug("Config", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('config/restoreState');
     store.dispatch('data/restoreState');
     this.reschedule = true;
-    logDebug("Mappings", "Calling timeoutCallback()");
+    logDebug("Config", "Calling timeoutCallback()");
     this.timeoutCallback();
   },
   destroyed() {
@@ -304,7 +304,7 @@ const Mappings = {
   },
 };
 
-const mappingsModule = {
+const configModule = {
   namespaced: true,
   state: {
     settings: {

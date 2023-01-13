@@ -62,6 +62,7 @@
     <script src="moonCatRescueData.js"></script>
     <script src="functions.js"></script>
     <script src="config.js"></script>
+    <script src="mappings.js"></script>
     <script src="dataHelper.js"></script>
     <script src="data.js"></script>
     <script src="accountInfo.js"></script>
@@ -110,6 +111,7 @@
               <!-- <b-nav-item size="sm" to="/account" active-class="active" v-b-popover.hover="'View transactions by account'">Account</b-nav-item> -->
               <!-- <b-nav-item size="sm" to="/transactions" active-class="active" v-b-popover.hover="'View/edit transactions'">Transactions</b-nav-item> -->
               <b-nav-item size="sm" to="/accounts" active-class="active" v-b-popover.hover="'View/edit accounts'">Accounts</b-nav-item>
+              <b-nav-item size="sm" to="/mappings" active-class="active" v-b-popover.hover="'Mappings'">Mappings</b-nav-item>
               <b-nav-item size="sm" to="/config" active-class="active" v-b-popover.hover="'Configuration'">Config</b-nav-item>
               <b-nav-form>
                 <b-button size="sm" variant="link" class="ml-4" v-b-popover.hover="'Power up this app'" @click="setPowerOn();" v-if="!powerOn"><b-icon-power shift-v="-1" font-scale="1.5"></b-icon-power></b-button>
