@@ -498,6 +498,9 @@ const Mappings = {
     ensMap() {
       return store.getters['data/ensMap'];
     },
+    report() {
+      return store.getters['report/report'];
+    },
     sync() {
       return store.getters['data/sync'];
     },
@@ -773,6 +776,7 @@ const Mappings = {
   mounted() {
     logDebug("Mappings", "mounted() $route: " + JSON.stringify(this.$route.params));
     store.dispatch('data/restoreState');
+    store.dispatch('report/restoreState');
     if ('mappingsSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.mappingsSettings);
       if ('version' in tempSettings && tempSettings.version == 1) {

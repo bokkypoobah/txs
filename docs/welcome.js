@@ -75,58 +75,19 @@ const Welcome = {
               </b-card-text>
 
               <b-card-text class="mt-3 mb-2">
+                <h6>This Web3 Dapp</h6>
+                <ul>
+                  <li>
+                    <b-link href="https://bokkypoobah.github.io/txs/" target="_blank">https://bokkypoobah.github.io/txs/</b-link>
+                  </li>
+                </ul>
+              </b-card-text>
+
+              <b-card-text class="mt-3 mb-2">
                 <h6>Source Code</h6>
                 <ul>
                   <li>
                     <b-link href="https://github.com/bokkypoobah/txs" target="_blank">https://github.com/bokkypoobah/txs</b-link>
-                  </li>
-                </ul>
-              </b-card-text>
-
-              <b-card-text v-if="false" class="mt-3 mb-2">
-                <h5>ERC-721 Token Collection Data Retrieval</h5>
-                <ul>
-                  <li>
-                    The ERC721Helper contract at <b-link :href="network.explorer + 'address/' + network.erc721HelperAddress + '#code'" target="_blank">{{ network.erc721HelperAddress && network.erc721HelperAddress.substring(0, 20) + '...' || '' }}</b-link> allows this Web3 UI to retrieve the token ownership and tokenURI information for ERC-721 NFT collections in bulk, via the web3 connection.
-                  </li>
-                  <li>
-                    The tokenURI information for each tokenId within an NFT collection may have an image and/or traits. This can be parsed and used for displaying and filtering.
-                  </li>
-                </ul>
-              </b-card-text>
-
-              <b-card-text v-if="false" class="mt-3 mb-2">
-                <h5>Royalties</h5>
-                <ul>
-                  <li>
-                    This exchange uses <b-link href="https://royaltyregistry.xyz/lookup" target="_blank">Manifold's Royalty Engine</b-link> at <b-link :href="explorer + 'address/' + network.nixRoyaltyEngine + '#code'" target="_blank">{{ network.nixRoyaltyEngine && nixRoyaltyEngine.substring(0, 20) + '...' || '' }}</b-link> to compute the royalty payments on NFT sales. Note that there can be different royalty payment rates for different tokenIds within the same collection.
-                  </li>
-                  <li>
-                    Deployers of ERC-721 token collection configure the royalty payment information in the <b-link href="https://royaltyregistry.xyz/configure" target="_blank">Royalty Registry</b-link>.
-                  </li>
-                  <li>
-                    Makers specify a <b>royaltyFactor</b> (in percent, 0 to 1000, or 0x to 10x) when adding orders. Takers specify a royaltyFactor when executing against the orders. The NFT seller's royaltyFactor is multiplied by the royalty payments computed by the Royalty Engine. i.e., sellers pay 0x to 10x the royalty payment recommended by the Royalty Engine configuration.
-                  </li>
-                </ul>
-              </b-card-text>
-
-              <b-card-text v-if="false" class="mt-3 mb-2">
-                <h5>Calculating NetAmount</h5>
-                <ul>
-                  <li>
-                    As a taker, if you are selling an NFT, you will receive WETH minus any royalty payments. So selling an NFT for 0.1 WETH with a 1% royalty payment and 100% royaltyFactor will result in a netAmount of 0.0099 WETH. 0.0001 WETH will be paid to the collection owner address.
-                  </li>
-                </ul>
-              </b-card-text>
-
-              <b-card-text v-if="false" class="mt-3 mb-2">
-                <h5>Repos</h5>
-                <ul>
-                  <li>
-                    <b-link href="https://github.com/bokkypoobah/Nix" target="_blank">https://github.com/bokkypoobah/Nix</b-link> - smart contracts.
-                  </li>
-                  <li>
-                    <b-link href="https://github.com/bokkypoobah/NixApp" target="_blank">https://github.com/bokkypoobah/NixApp</b-link> - this web3 dapp.
                   </li>
                 </ul>
               </b-card-text>
