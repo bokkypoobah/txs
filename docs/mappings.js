@@ -182,6 +182,9 @@ const Mappings = {
         </b-card>
 
         <b-card v-if="settings.editMappings || totalMappings == 0" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+
+          {{ allFunctionSelectors }}
+
           <b-card-body class="m-1 p-1">
             <b-form-group label-cols-lg="2" label="Add New Mappings" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
               <b-form-group label="Accounts:" label-for="newaccounts-accounts" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of Ethereum accounts. These are saved in your local browser storage and are used to request information via your web3 connection, or via Etherscan and Reservoir API calls" class="mx-0 my-1 p-0">
@@ -486,6 +489,12 @@ const Mappings = {
     accountsInfo() {
       return store.getters['data/accountsInfo'];
     },
+    functionSelectors() {
+      return store.getters['data/functionSelectors'];
+    },
+    processFilters() {
+      return store.getters['config/processFilters'];
+    },
     mappings() {
       return store.getters['data/mappings'];
     },
@@ -509,6 +518,52 @@ const Mappings = {
     },
     totalMappings() {
       return Object.keys(this.mappings).length;
+    },
+    allFunctionSelectors() {
+      const results = [];
+      for (const [account, accountData] of Object.entries(this.accounts)) {
+        const accountsInfo = this.accountsInfo[account] || {};
+        if (accountsInfo.mine && accountsInfo.report) {
+          results.push(account);
+          console.log("--- Processing " + account + " ---");
+          const txHashesByBlocks = getTxHashesByBlocks(account, this.accounts, this.accountsInfo, this.processFilters);
+          // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
+          for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            for (const [index, txHash] of Object.keys(txHashes).entries()) {
+              const txData = this.txs[txHash] || null;
+              if (txData) {
+                // console.log(blockNumber + "." + index + " => " + JSON.stringify(txHash, null, 2));
+                // console.log(JSON.stringify(txData));
+                let functionSelector = null;
+                let functionCall = null;
+                if (txData.tx.to == null) {
+                  functionSelector = "(contract creation)";
+                  functionCall = "(contract creation)";
+                } else if (txData.tx.data.length >= 10) {
+                  functionSelector = txData.tx.data.substring(0, 10);
+                  functionCall = this.functionSelectors[functionSelector] && this.functionSelectors[functionSelector].length > 0 && this.functionSelectors[functionSelector][0] || functionSelector;
+                } else if (txData.tx.data.length > 2) {
+                  functionSelector = txData.tx.data;
+                  functionCall = functionSelector;
+                } else {
+                  functionSelector = "(none)";
+                  functionCall = "(none)";
+                }
+                console.log("  " + functionSelector + " " + functionCall);
+              }
+            }
+          }
+        }
+      }
+
+      if (this.report.transactions) {
+        results.push("Yah");
+        for (const [index, transaction] of this.report.transactions.entries()) {
+          // console.log(index + " " + JSON.stringify(transaction));
+        }
+
+      }
+      return results;
     },
     filteredMappings() {
       const results = [];

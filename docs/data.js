@@ -809,7 +809,7 @@ const dataModule = {
             const block = context.state.blocks[blockNumber] || null;
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
               const txInfo = context.state.txs[txHash] || {};
-              if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length > 9) {
+              if (txInfo.tx && txInfo.tx.to != null && txInfo.tx.data.length >= 10) {
                 const selector = txInfo.tx.data.substring(0, 10);
                 if (!(selector in functionSelectors) && !(selector in missingFunctionSelectorsMap)) {
                   missingFunctionSelectorsMap[selector] = true;

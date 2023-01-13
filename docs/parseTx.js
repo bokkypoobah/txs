@@ -605,7 +605,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   if (txData.tx.to == null) {
     results.functionSelector = "(contract creation)";
     results.functionCall = "(contract creation)";
-  } else if (txData.tx.data.length > 9) {
+  } else if (txData.tx.data.length >= 10) {
     results.functionSelector = txData.tx.data.substring(0, 10);
     results.functionCall = functionSelectors[results.functionSelector] && functionSelectors[results.functionSelector].length > 0 && functionSelectors[results.functionSelector][0] || results.functionSelector;
   } else if (txData.tx.data.length > 2) {
@@ -626,7 +626,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   } else {
     results.contract = txData.txReceipt.contractAddress;
   }
-  // if (txData.tx.to != null && txData.tx.data.length > 9) {
+  // if (txData.tx.to != null && txData.tx.data.length >= 10) {
   //   results.functionSelector = txData.tx.data.substring(0, 10);
   //   results.functionCall = functionSelectors[results.functionSelector] && functionSelectors[results.functionSelector].length > 0 && functionSelectors[results.functionSelector][0] || results.functionSelector;
   // } else {
@@ -681,7 +681,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     }
   }
 
-  if (!results.info && results.functionSelector.length > 9) {
+  if (!results.info && results.functionSelector.length >= 10) {
     for (const [index, handler] of _FUNCTIONSELECTORHANDLER.entries()) {
       if (results.functionSelector in handler.functionSelectors) {
         handler.process(txData, account, accounts, preERC721s, events, results);

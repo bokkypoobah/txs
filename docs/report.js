@@ -1348,7 +1348,7 @@ const Report = {
       this.modalTx.txReceipt = txData && txData.txReceipt || null;
       const gasUsed = ethers.BigNumber.from(txData.txReceipt.gasUsed);
       this.modalTx.txFee = gasUsed.mul(txData.txReceipt.effectiveGasPrice);
-      if (txData.tx.to != null && txData.tx.data.length > 9) {
+      if (txData.tx.to != null && txData.tx.data.length >= 10) {
         this.modalTx.functionSelector = txData.tx.data.substring(0, 10);
         this.modalTx.functionCall = this.functionSelectors[this.modalTx.functionSelector] && this.functionSelectors[this.modalTx.functionSelector].length > 0 && this.functionSelectors[this.modalTx.functionSelector][0] || this.modalTx.functionSelector;
       } else {
