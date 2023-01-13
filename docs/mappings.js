@@ -521,19 +521,17 @@ const Mappings = {
     },
     allFunctionSelectors() {
       const results = [];
+      const collator = {};
       for (const [account, accountData] of Object.entries(this.accounts)) {
         const accountsInfo = this.accountsInfo[account] || {};
         if (accountsInfo.mine && accountsInfo.report) {
           results.push(account);
           console.log("--- Processing " + account + " ---");
           const txHashesByBlocks = getTxHashesByBlocks(account, this.accounts, this.accountsInfo, this.processFilters);
-          // console.log("txHashesByBlocks: " + JSON.stringify(txHashesByBlocks, null, 2));
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
               const txData = this.txs[txHash] || null;
               if (txData) {
-                // console.log(blockNumber + "." + index + " => " + JSON.stringify(txHash, null, 2));
-                // console.log(JSON.stringify(txData));
                 let functionSelector = null;
                 let functionCall = null;
                 if (txData.tx.to == null) {
@@ -550,11 +548,25 @@ const Mappings = {
                   functionCall = "(none)";
                 }
                 console.log("  " + functionSelector + " " + functionCall);
+                if (!(functionSelector in collator)) {
+                  collator[functionSelector] = {
+                    functionCall,
+                    count: 0,
+                    accounts: {},
+                  };
+                }
+                const a = txData.tx.to || "(account creation)";
+                if (!(a in collator[functionSelector].accounts)) {
+                  collator[functionSelector].accounts[a] = [];
+                }
+                collator[functionSelector].accounts[a].push(txHash);
+                collator[functionSelector].count++;
               }
             }
           }
         }
       }
+      console.log("collator: " + JSON.stringify(collator, null, 2));
 
       if (this.report.transactions) {
         results.push("Yah");
