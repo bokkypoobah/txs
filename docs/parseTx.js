@@ -616,6 +616,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     results.functionCall = "(none)";
   }
 
+  // console.log("  " + results.functionSelector + " " + results.functionCall);
   results.contract = null;
   if (txData.tx.to != null) {
     const toAccount = accounts[txData.tx.to] || null;
@@ -1007,7 +1008,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     results.myEvents.push(record);
   }
 
-  console.log("myEvents: " + JSON.stringify(results.myEvents));
+  // console.log("myEvents: " + JSON.stringify(results.myEvents));
 
   const collator = {};
   for (const [eventIndex, event] of results.myEvents.entries()) {
@@ -1075,7 +1076,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
       }
     }
   }
-  console.log("summary: " + JSON.stringify(summary, null, 2));
+  // console.log("summary: " + JSON.stringify(summary, null, 2));
   results.summary = summary;
   results.collator = collator;
 

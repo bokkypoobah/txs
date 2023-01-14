@@ -1022,6 +1022,7 @@ const Report = {
               from: transaction.from,
               to: transaction.to,
               contract: transaction.contract,
+              functionSelector: transaction.functionSelector,
               functionCall: transaction.functionCall,
               exchangeRate: transaction.exchangeRate,
               info: transaction.info,
@@ -1174,9 +1175,17 @@ const Report = {
     },
     getAllFunctionCalls() {
       const functionCallsMap = {};
+      const collator = {};
+
+      for (const transaction of this.filteredTransactions) {
+        console.log(transaction.txHash + " " + transaction.contract + " " + transaction.functionSelector + " " + transaction.functionCall);
+        // functionCallsMap[transaction.functionCall] = (transaction.functionCall in functionCallsMap) ? parseInt(functionCallsMap[transaction.functionCall]) + 1 : 1;
+      }
+
       for (const transaction of this.filteredTransactions) {
         functionCallsMap[transaction.functionCall] = (transaction.functionCall in functionCallsMap) ? parseInt(functionCallsMap[transaction.functionCall]) + 1 : 1;
       }
+
       const results = [];
       for (const [k, v] of Object.entries(functionCallsMap)) {
         results.push({ functionCall: k, count: v });

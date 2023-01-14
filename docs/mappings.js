@@ -181,15 +181,25 @@ const Mappings = {
           </div>
         </b-card>
 
-        <b-card v-if="settings.editMappings || totalMappings == 0" no-body no-header bg-variant="light" class="m-1 p-1 w-75">
+        <b-card v-if="settings.editMappings || totalMappings == 0" no-body no-header bg-variant="light" class="m-1 p-1">
           <b-card-body class="m-1 p-1">
-            <b-form-group label-cols-lg="2" label="Add New Mappings" label-size="md" label-class="font-weight-bold pt-0" class="mb-0">
-              <b-form-group label="Select Function Selector:" label-for="select-function-selector" label-size="sm" label-cols-sm="2" label-align-sm="right" description="List of function selectors" class="mx-0 my-1 p-0">
+            <h6>Add New Mappings</h6>
+            <br />
+            <!-- <b-form-group label-cols-lg="2" label="Add New Mappings" label-size="md" label-class="font-weight-bold pt-0" class="mb-0"> -->
+              <b-form-group label="Select Function Selector:" label-for="select-function-selector" label-size="sm" label-cols-sm="2" label-align-sm="right" class="mx-0 my-1 p-0">
                 <font size="-1">
-                  <b-table small sticky-header fixed striped responsive hover selectable select-mode="single" :fields="functionSelectorFields" :items="allFunctionSelectors" show-empty head-variant="light" class="m-0 mt-1">
+                  <b-table small sticky-header fixed striped responsive hover selectable select-mode="single" @row-selected='functionSelectorSelected' :fields="functionSelectorFields" :items="allFunctionSelectors" show-empty head-variant="light" class="m-0 mt-1">
                     <template #cell(number)="data">
                       {{ data.index }}
                     </template>
+                    <!--
+                    <template #cell(accountCount)="data">
+                      {{ Object.keys(data.item.accounts).length }}
+                    </template>
+                    <template #cell(txCount)="data">
+                      {{ data.item.txCount }}
+                    </template>
+                    -->
                   </b-table>
                 </font>
               </b-form-group>
@@ -199,7 +209,8 @@ const Mappings = {
               <b-form-group label="Coinbase:" label-for="newaccounts-coinbase-submit" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="coinbase == null ? '' : (coinbaseIncluded ? (coinbase + ' already added') : ('Add ' + coinbase + '?'))" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="newaccounts-coinbase-submit" :disabled="block == null || coinbaseIncluded" @click="addCoinbase" variant="primary">Add</b-button>
               </b-form-group>
-            </b-form-group>
+            <!-- </b-form-group> -->
+            {{ settings.selectedFunctionSelector }}
           </b-card-body>
         </b-card>
 
@@ -458,10 +469,11 @@ const Mappings = {
         { value: 10000, text: '10k' },
       ],
       functionSelectorFields: [
-        { key: 'number', label: '#', sortable: false, thStyle: 'width: 7%;', thClass: 'text-right', tdClass: 'text-right' },
-        { key: 'functionSelector', label: 'Function Selector', sortable: true, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
-        { key: 'functionCall', label: 'Function Call', sortable: true, thStyle: 'width: 63%;' },
-        { key: 'txCount', label: '#txs', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'functionSelector', label: 'Function Selector', sortable: true, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'functionCall', label: 'Function Call', sortable: true, thStyle: 'width: 70%;' },
+        { key: 'accountCount', label: '#acc', sortable: true, thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'txCount', label: '#txs', sortable: true, thStyle: 'width: 5%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       accountsFields: [
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
@@ -577,14 +589,14 @@ const Mappings = {
         }
       }
       for (const [functionSelector, someData] of Object.entries(collator)) {
-        results.push({ functionSelector, functionCall: someData.functionCall, txCount: someData.txCount });
+        results.push({ functionSelector, functionCall: someData.functionCall, txCount: someData.txCount, accounts: someData.accounts });
       }
       return results;
     },
     allFunctionSelectors() {
       const results = [];
       for (const item of this.collatedFunctionSelectors) {
-        results.push({ functionSelector: item.functionSelector, functionCall: item.functionCall, txCount: item.txCount });
+        results.push({ functionSelector: item.functionSelector, functionCall: item.functionCall, txCount: item.txCount, accountCount: Object.keys(item.accounts).length, accounts: item.accounts });
       }
       return results;
     },
@@ -713,6 +725,18 @@ const Mappings = {
   methods: {
     saveSettings() {
       localStorage.mappingsSettings = JSON.stringify(this.settings);
+    },
+    functionSelectorSelected(item) {
+      // console.log("functionSelectorSelected: " + JSON.stringify(item));
+      this.settings.selectedFunctionSelector = item.length > 0 ? item[0] : null;
+      // if (item && item.length > 0) {
+      //   this.settings.selectedFunctionSelector = this.settings.selectedFunctionSelector != null ? null : item[0].functionSelector;
+      //
+      //   // this.selectedPool = this.selectedPool != null ? null : item[0].address;
+      //   // for (const setName of ['validTokenIdsInPool', 'validTokenIdsOwned']) {
+      //   //   Vue.set(this.selectedTokens, setName, {});
+      //   // }
+      // }
     },
     addNewAccounts() {
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
