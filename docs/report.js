@@ -333,9 +333,9 @@ const Report = {
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
-                  <b-table small fixed striped sticky-header="200px" :fields="functionCallsFilterFields" :items="getAllFunctionCalls" head-variant="light">
+                  <b-table small fixed striped sticky-header="200px" :fields="functionSelectorsFields" :items="getFunctionSelectors" head-variant="light">
                     <template #cell(select)="data">
-                      <b-form-checkbox size="sm" :checked="(settings.filters['functionCalls'] && settings.filters['functionCalls'][data.item.functionCall]) ? 1 : 0" value="1" @change="filterChanged('functionCalls', data.item.functionCall)"></b-form-checkbox>
+                      <b-form-checkbox size="sm" :checked="(settings.filters['functionSelectors'] && settings.filters['functionSelectors'][data.item.functionSelector]) ? 1 : 0" value="1" @change="filterChanged('functionSelectors', data.item.functionSelector)"></b-form-checkbox>
                     </template>
                   </b-table>
                 </font>
@@ -832,10 +832,12 @@ const Report = {
         { key: 'action', label: 'Action', sortable: true },
         { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
-      functionCallsFilterFields: [
+      functionSelectorsFields: [
         { key: 'select', label: '', thStyle: 'width: 5%;' },
-        { key: 'functionCall', label: 'Function Call', sortable: true },
-        { key: 'count', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'functionSelector', label: 'Selector', sortable: true, thStyle: 'width: 20%;' },
+        { key: 'functionCall', label: 'Function Call', sortable: true, thStyle: 'width: 55%;' },
+        { key: 'contractCount', label: 'con', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'txCount', label: 'txs', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       myEventsFields: [
         { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
@@ -927,9 +929,9 @@ const Report = {
       if (this.settings.filters.actions && Object.keys(this.settings.filters.actions).length > 0) {
         actionFilter = this.settings.filters.actions;
       }
-      let functionCallFilter = null;
-      if (this.settings.filters.functionCalls && Object.keys(this.settings.filters.functionCalls).length > 0) {
-        functionCallFilter = this.settings.filters.functionCalls;
+      let functionSelectorFilter = null;
+      if (this.settings.filters.functionSelectors && Object.keys(this.settings.filters.functionSelectors).length > 0) {
+        functionSelectorFilter = this.settings.filters.functionSelectors;
       }
       if (this.report.transactions) {
         let startPeriod = null;
@@ -990,9 +992,10 @@ const Report = {
               include = false;
             }
           }
-          if (include && functionCallFilter != null) {
-            const tempFunctionCall = transaction.functionCall.length > 0 && transaction.functionCall || "(none)";
-            if (!(tempFunctionCall in functionCallFilter)) {
+          if (include && functionSelectorFilter != null) {
+            const tempFunctionSelector = transaction.functionSelector.length > 0 && transaction.functionSelector || "(none)";
+            console.log("tempFunctionSelector: " + tempFunctionSelector + " in " + JSON.stringify(functionSelectorFilter));
+            if (!(tempFunctionSelector in functionSelectorFilter)) {
               include = false;
             }
           }
@@ -1173,41 +1176,39 @@ const Report = {
       // }
       // return results;
     },
-    getAllFunctionCalls() {
-      const functionCallsMap = {};
+    getFunctionSelectors() {
       const collator = {};
-
       for (const transaction of this.filteredTransactions) {
-        console.log(transaction.txHash + " " + transaction.contract + " " + transaction.functionSelector + " " + transaction.functionCall);
-        // functionCallsMap[transaction.functionCall] = (transaction.functionCall in functionCallsMap) ? parseInt(functionCallsMap[transaction.functionCall]) + 1 : 1;
+        if (!(transaction.functionSelector in collator)) {
+          collator[transaction.functionSelector] = {
+            functionCall: transaction.functionCall,
+            txCount: 0,
+            contracts: {},
+          }
+        }
+        const contract = transaction.contract || "(none)";
+        if (!(contract in collator[transaction.functionSelector].contracts)) {
+          collator[transaction.functionSelector].contracts[contract] = [];
+        }
+        collator[transaction.functionSelector].contracts[contract].push(transaction.txHash);
+        collator[transaction.functionSelector].txCount++;
       }
-
-      for (const transaction of this.filteredTransactions) {
-        functionCallsMap[transaction.functionCall] = (transaction.functionCall in functionCallsMap) ? parseInt(functionCallsMap[transaction.functionCall]) + 1 : 1;
-      }
-
       const results = [];
-      for (const [k, v] of Object.entries(functionCallsMap)) {
-        results.push({ functionCall: k, count: v });
+      for (const [functionSelector, someData] of Object.entries(collator)) {
+        results.push({ functionSelector, functionCall: someData.functionCall, contractCount: Object.keys(someData.contracts).length, txCount: someData.txCount });
       }
       results.sort((a, b) => {
-        if (a.count == b.count) {
-          return ('' + a.functionCall).localeCompare(b.functionCall);
+        if (a.txCount == b.txCount) {
+          if (a.contractCount == b.contractCount) {
+            return ('' + a.functionCall).localeCompare(b.functionCall);
+          } else {
+            return b.contractCount - a.contractCount;
+          }
         } else {
-          return b.count - a.count;
+          return b.txCount - a.txCount;
         }
       });
       return results;
-      // const results = [];
-      // if (this.report.functionCallsMap) {
-      //   for (const [k, v] of Object.entries(this.report.functionCallsMap)) {
-      //     results.push({ functionCall: k, count: v });
-      //   }
-      //   results.sort((a, b) => {
-      //     return ('' + a.functionCall).localeCompare(b.functionCall);
-      //   });
-      // }
-      // return results;
     },
   },
   methods: {
@@ -1681,7 +1682,7 @@ const reportModule = {
                 balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
                 expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
                 diff: isLastTxInBlock ? diff.toString() : null,
-                collator: results.collator,
+                // collator: results.collator,
                 summary: results.summary,
                 myEvents: mySupplementedEvents,
                 junk,
