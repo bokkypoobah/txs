@@ -141,7 +141,7 @@ const dataModule = {
       console.log("mutations.setAccountInfoField: " + JSON.stringify(info));
       console.log("state.accountsInfo: " + JSON.stringify(state.accountsInfo, null, 2));
       if (!(info.account in state.accountsInfo)) {
-        Vue.set(state.accountsInfo, info.account, {});        
+        Vue.set(state.accountsInfo, info.account, {});
       }
       console.log("state.accountsInfo[info.account]: " + JSON.stringify(state.accountsInfo[info.account], null, 2));
       Vue.set(state.accountsInfo[info.account], info.field, info.value);
@@ -285,7 +285,7 @@ const dataModule = {
       }
     },
     addBlock(state, info) {
-      const [blockNumber, timestamp, account, balance] = [info.blockNumber, info.timestamp, info.account, info.balance];
+      const [blockNumber, timestamp, account, asset, balance] = [info.blockNumber, info.timestamp, info.account, info.asset, info.balance];
       if (!(blockNumber in state.blocks)) {
         Vue.set(state.blocks, blockNumber, {
           timestamp,
@@ -293,7 +293,10 @@ const dataModule = {
         });
       }
       if (!(account in state.blocks[blockNumber].balances)) {
-        Vue.set(state.blocks[blockNumber].balances, account, balance);
+        Vue.set(state.blocks[blockNumber].balances, account, {});
+      }
+      if (!(asset in state.blocks[blockNumber].balances[account])) {
+        Vue.set(state.blocks[blockNumber].balances[account], asset, balance);
       }
     },
     addNewFunctionSelectors(state, functionSelectors) {
@@ -719,6 +722,7 @@ const dataModule = {
     async syncBlocksAndBalances(context, parameter) {
       logInfo("dataModule", "actions.syncBlocksAndBalances: " + JSON.stringify(parameter));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const weth = new ethers.Contract(WETHADDRESS, WETHABI, provider);
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncBlocksAndBalances: " + accountIndex + " " + account);
         const accountData = context.state.accounts[account] || {};
@@ -738,8 +742,10 @@ const dataModule = {
               const block = await provider.getBlock(parseInt(blockNumber));
               const timestamp = block.timestamp;
               console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber + " " + moment.unix(timestamp).format("YYYY-MM-DD HH:mm:ss"));
-              const balance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
-              context.commit('addBlock', { blockNumber, timestamp, account, balance });
+              const ethBalance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
+              const wethBalance = ethers.BigNumber.from(await weth.balanceOf(account, { blockTag: parseInt(blockNumber) })).toString();
+              context.commit('addBlock', { blockNumber, timestamp, account, asset: 'eth', balance: ethBalance });
+              context.commit('addBlock', { blockNumber, timestamp, account, asset: WETHADDRESS, balance: wethBalance });
               context.commit('setSyncCompleted', parseInt(index) + 1);
               if ((index + 1) % 100 == 0) {
                 console.log("Saving blocks");

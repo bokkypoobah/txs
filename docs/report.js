@@ -1635,7 +1635,9 @@ const reportModule = {
           let prevBalance = ethers.BigNumber.from(0);
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
             const block = blocks && blocks[blockNumber] || null;
-            const balance = ethers.BigNumber.from(block && block.balances[account] || 0);
+            const ethBalance = ethers.BigNumber.from(block && block.balances[account] && block.balances[account].eth || 0);
+            const wethBalance = ethers.BigNumber.from(block && block.balances[account] && block.balances[account][WETHADDRESS] || 0);
+            const balance = ethers.BigNumber.from(ethBalance).add(wethBalance);
             const exchangeRate = getExchangeRate(moment.unix(block.timestamp), exchangeRates);
             let totalEthReceived = ethers.BigNumber.from(0);
             let totalEthPaid = ethers.BigNumber.from(0);
@@ -1750,6 +1752,8 @@ const reportModule = {
                 info: results.info || "",
                 txType: results.info && results.info.type || "unknown",
                 txAction: results.info && results.info.action || "unknown",
+                ethBalance: isLastTxInBlock ? ethBalance.toString() : null,
+                wethBalance: isLastTxInBlock ? wethBalance.toString() : null,
                 balance: isLastTxInBlock ? balance.toString() : null,
                 balanceInReportingCurrency: isLastTxInBlock ? balanceInReportingCurrency : null,
                 expectedBalance: isLastTxInBlock ? expectedBalance.toString() : null,
