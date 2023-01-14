@@ -425,11 +425,21 @@ const Report = {
             <br />
             <span v-for="sentOrReceived in ['sent', 'received']">
               <span v-if="data.item.summary[sentOrReceived]">
-                <font size="-1"><b-badge pill variant="success" class="ml-2">{{ sentOrReceived }}</b-badge></font>
                 <span v-for="row of data.item.summary[sentOrReceived]">
-                  <font size="-1">
-                    <b-link @click="showModalAddress(row.account);">{{ ensOrAccount(row.account) }}</b-link>
-                  </font>
+                  <span v-if="row.account == '0x0000000000000000000000000000000000000000'">
+                    <span v-if="sentOrReceived == 'received'">
+                      <font size="-1"><b-badge pill variant="success" class="ml-2">minted</b-badge></font>
+                    </span>
+                    <span v-else>
+                      <font size="-1"><b-badge pill variant="success" class="ml-2">burnt</b-badge></font>
+                    </span>
+                  </span>
+                  <span v-else>
+                    <font size="-1"><b-badge pill variant="success" class="ml-2">{{ sentOrReceived }}</b-badge></font>
+                    <font size="-1">
+                      <b-link @click="showModalAddress(row.account);">{{ ensOrAccount(row.account) }}</b-link>
+                    </font>
+                  </span>
                   <span v-if="row.ftOrNFT == 'ft'">
                     <span v-if="row.tokenContract == 'eth'">
                       {{ formatETH(row.tokens) }}<font size="-1">{{ row.symbol }}</font>
