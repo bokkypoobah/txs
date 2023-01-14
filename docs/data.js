@@ -138,6 +138,12 @@ const dataModule = {
       Vue.set(state.accountsInfo[info.account], info.field, !state.accountsInfo[info.account][info.field]);
     },
     setAccountInfoField(state, info) {
+      console.log("mutations.setAccountInfoField: " + JSON.stringify(info));
+      console.log("state.accountsInfo: " + JSON.stringify(state.accountsInfo, null, 2));
+      if (!(info.account in state.accountsInfo)) {
+        Vue.set(state.accountsInfo, info.account, {});        
+      }
+      console.log("state.accountsInfo[info.account]: " + JSON.stringify(state.accountsInfo[info.account], null, 2));
       Vue.set(state.accountsInfo[info.account], info.field, info.value);
     },
     addNewAccountInfo(state, info) {

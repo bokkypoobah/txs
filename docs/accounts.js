@@ -513,7 +513,7 @@ const Accounts = {
         const accountName = accountInfo.name || accountData.name || null;
         let include = filterLower == null ||
           (account.toLowerCase().includes(filterLower)) ||
-          (accountName.toLowerCase().includes(filterLower)) ||
+          (accountName && accountName.toLowerCase().includes(filterLower)) ||
           (accountInfo.group && accountInfo.group.toLowerCase().includes(filterLower)) ||
           (accountInfo.notes && accountInfo.notes.toLowerCase().includes(filterLower)) ||
           (ensName != null && ensName.toLowerCase().includes(filterLower));
