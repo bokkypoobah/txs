@@ -285,8 +285,9 @@ const Report = {
           </div>
         </div>
 
+        <!-- ADDITIONAL FILTERS -->
         <div v-if="settings.showAdditionalFilters" class="d-flex flex-wrap m-0 p-0">
-          <div class="mt-0 pr-1" style="width: 15.0rem;">
+          <div class="mt-0 pr-1" style="width: 13.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
@@ -295,34 +296,23 @@ const Report = {
                       <b-form-checkbox size="sm" :checked="(settings.filters['accounts'] && settings.filters['accounts'][data.item.account]) ? 1 : 0" value="1" @change="filterChanged('accounts', data.item.account)"></b-form-checkbox>
                     </template>
                     <template #cell(account)="data">
-                      {{ ensOrAccount(data.item.account, 20) }}
+                      {{ ensOrAccount(data.item.account) }}
                     </template>
                   </b-table>
                 </font>
               </b-card-body>
             </b-card>
           </div>
-
-          <div class="mt-0 pr-1" style="width: 15.0rem;">
+          <div class="mt-0 pr-1" style="width: 13.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
-                  <b-table small fixed striped sticky-header="200px" :fields="typesFilterFields" :items="getAllTypes" head-variant="light">
+                  <b-table small fixed striped sticky-header="200px" :fields="contractsFilterFields" :items="getAllContracts" head-variant="light">
                     <template #cell(select)="data">
-                      <b-form-checkbox size="sm" :checked="(settings.filters['types'] && settings.filters['types'][data.item.type]) ? 1 : 0" value="1" @change="filterChanged('types', data.item.type)"></b-form-checkbox>
+                      <b-form-checkbox size="sm" :checked="(settings.filters['contracts'] && settings.filters['contracts'][data.item.account]) ? 1 : 0" value="1" @change="filterChanged('contracts', data.item.contract)"></b-form-checkbox>
                     </template>
-                  </b-table>
-                </font>
-              </b-card-body>
-            </b-card>
-          </div>
-          <div class="mt-0 pr-1" style="width: 15.0rem;">
-            <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
-              <b-card-body class="m-0 p-0">
-                <font size="-2">
-                  <b-table small fixed striped sticky-header="200px" :fields="actionsFilterFields" :items="getAllActions" head-variant="light">
-                    <template #cell(select)="data">
-                      <b-form-checkbox size="sm" :checked="(settings.filters['actions'] && settings.filters['actions'][data.item.action]) ? 1 : 0" value="1" @change="filterChanged('actions', data.item.action)"></b-form-checkbox>
+                    <template #cell(contract)="data">
+                      {{ ensOrAccount(data.item.contract) }}
                     </template>
                   </b-table>
                 </font>
@@ -336,6 +326,33 @@ const Report = {
                   <b-table small fixed striped sticky-header="200px" :fields="functionSelectorsFields" :items="getFunctionSelectors" head-variant="light">
                     <template #cell(select)="data">
                       <b-form-checkbox size="sm" :checked="(settings.filters['functionSelectors'] && settings.filters['functionSelectors'][data.item.functionSelector]) ? 1 : 0" value="1" @change="filterChanged('functionSelectors', data.item.functionSelector)"></b-form-checkbox>
+                    </template>
+                  </b-table>
+                </font>
+              </b-card-body>
+            </b-card>
+          </div>
+
+          <div class="mt-0 pr-1" style="width: 13.0rem;">
+            <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
+              <b-card-body class="m-0 p-0">
+                <font size="-2">
+                  <b-table small fixed striped sticky-header="200px" :fields="typesFilterFields" :items="getAllTypes" head-variant="light">
+                    <template #cell(select)="data">
+                      <b-form-checkbox size="sm" :checked="(settings.filters['types'] && settings.filters['types'][data.item.type]) ? 1 : 0" value="1" @change="filterChanged('types', data.item.type)"></b-form-checkbox>
+                    </template>
+                  </b-table>
+                </font>
+              </b-card-body>
+            </b-card>
+          </div>
+          <div class="mt-0 pr-1" style="width: 13.0rem;">
+            <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
+              <b-card-body class="m-0 p-0">
+                <font size="-2">
+                  <b-table small fixed striped sticky-header="200px" :fields="actionsFilterFields" :items="getAllActions" head-variant="light">
+                    <template #cell(select)="data">
+                      <b-form-checkbox size="sm" :checked="(settings.filters['actions'] && settings.filters['actions'][data.item.action]) ? 1 : 0" value="1" @change="filterChanged('actions', data.item.action)"></b-form-checkbox>
                     </template>
                   </b-table>
                 </font>
@@ -829,7 +846,12 @@ const Report = {
       ],
       accountsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
-        { key: 'account', label: 'Account', sortable: true },
+        { key: 'account', label: 'Account', sortable: true, tdClass: 'text-truncate' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
+      ],
+      contractsFilterFields: [
+        { key: 'select', label: '', thStyle: 'width: 15%;' },
+        { key: 'contract', label: 'Contract', sortable: true, tdClass: 'text-truncate' },
         { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       typesFilterFields: [
@@ -931,6 +953,14 @@ const Report = {
       if (this.settings.filters.accounts && Object.keys(this.settings.filters.accounts).length > 0) {
         accountFilter = this.settings.filters.accounts;
       }
+      let contractFilter = null;
+      if (this.settings.filters.contracts && Object.keys(this.settings.filters.contracts).length > 0) {
+        contractFilter = this.settings.filters.contracts;
+      }
+      let functionSelectorFilter = null;
+      if (this.settings.filters.functionSelectors && Object.keys(this.settings.filters.functionSelectors).length > 0) {
+        functionSelectorFilter = this.settings.filters.functionSelectors;
+      }
       let typeFilter = null;
       if (this.settings.filters.types && Object.keys(this.settings.filters.types).length > 0) {
         typeFilter = this.settings.filters.types;
@@ -938,10 +968,6 @@ const Report = {
       let actionFilter = null;
       if (this.settings.filters.actions && Object.keys(this.settings.filters.actions).length > 0) {
         actionFilter = this.settings.filters.actions;
-      }
-      let functionSelectorFilter = null;
-      if (this.settings.filters.functionSelectors && Object.keys(this.settings.filters.functionSelectors).length > 0) {
-        functionSelectorFilter = this.settings.filters.functionSelectors;
       }
       if (this.report.transactions) {
         let startPeriod = null;
@@ -990,6 +1016,18 @@ const Report = {
               include = false;
             }
           }
+          if (include && contractFilter != null) {
+            if (!(transaction.contract in contractFilter)) {
+              include = false;
+            }
+          }
+          if (include && functionSelectorFilter != null) {
+            const tempFunctionSelector = transaction.functionSelector.length > 0 && transaction.functionSelector || "(none)";
+            console.log("tempFunctionSelector: " + tempFunctionSelector + " in " + JSON.stringify(functionSelectorFilter));
+            if (!(tempFunctionSelector in functionSelectorFilter)) {
+              include = false;
+            }
+          }
           if (include && typeFilter != null) {
             const infoType = transaction.info && transaction.info.type || "(unknown)";
             if (!(infoType in typeFilter)) {
@@ -999,13 +1037,6 @@ const Report = {
           if (include && actionFilter != null) {
             const infoAction = transaction.info && transaction.info.action || "(unknown)";
             if (!(infoAction in actionFilter)) {
-              include = false;
-            }
-          }
-          if (include && functionSelectorFilter != null) {
-            const tempFunctionSelector = transaction.functionSelector.length > 0 && transaction.functionSelector || "(none)";
-            console.log("tempFunctionSelector: " + tempFunctionSelector + " in " + JSON.stringify(functionSelectorFilter));
-            if (!(tempFunctionSelector in functionSelectorFilter)) {
               include = false;
             }
           }
@@ -1112,6 +1143,37 @@ const Report = {
       results.sort((a, b) => {
         if (a.count == b.count) {
           return ('' + a.account).localeCompare(b.account);
+        } else {
+          return b.count - a.count;
+        }
+      });
+      return results;
+      // const results = [];
+      // if (this.report.accountsMap) {
+      //   for (const [k, v] of Object.entries(this.report.accountsMap)) {
+      //     results.push({ account: k, count: v });
+      //   }
+      //   results.sort((a, b) => {
+      //     return ('' + a.account).localeCompare(b.account);
+      //   });
+      // }
+      // return results;
+    },
+    getAllContracts() {
+      const contractsMap = {};
+      for (const transaction of this.filteredTransactions) {
+        if (!(transaction.contract in contractsMap)) {
+          contractsMap[transaction.contract] = 0;
+        }
+        contractsMap[transaction.contract]++;
+      }
+      const results = [];
+      for (const [k, v] of Object.entries(contractsMap)) {
+        results.push({ contract: k, count: v });
+      }
+      results.sort((a, b) => {
+        if (a.count == b.count) {
+          return ('' + a.contract).localeCompare(b.contract);
         } else {
           return b.count - a.count;
         }
