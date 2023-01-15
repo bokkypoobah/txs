@@ -454,6 +454,12 @@ const dataModule = {
         context.commit('addENSName', { account: accountData.account, name });
       }
     },
+    async restoreIntermediateData(context, info) {
+      if (info.blocks && info.txs) {
+        await context.commit('setState', { name: 'blocks', data: info.blocks });
+        await context.commit('setState', { name: 'txs', data: info.txs });
+      }
+    },
     async syncIt(context, info) {
       // TODO - Replaced below, for dev
       let sections = info.sections;

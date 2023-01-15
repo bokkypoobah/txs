@@ -56,16 +56,26 @@ const Config = {
                 <b-form-textarea size="sm" id="process-transactions" :value="settings.processTransactions" @change="setProcessTransactions($event)" rows="3" max-rows="5" placeholder="0x1234... 0x2345..., 0xabcd..."></b-form-textarea>
               </b-form-group>
             </b-form-group>
-            <b-form-group label-cols-lg="2" label="Backup & Restore" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
-              <b-form-group label="Backup:" label-for="download-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Download a backup of user entered information'" class="mx-0 my-1 p-0">
+            <b-form-group label-cols-lg="2" label="User Data Backup & Restore" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Backup:" label-for="download-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Download a backup of user entered information. File name txs_backup*.tsv'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="download-backup" @click="downloadBackup()" variant="primary">Download</b-button>
               </b-form-group>
-              <b-form-group label="Restore:" label-for="restore-from-backup-browse" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Select backup file from your local computer to restore'" class="mx-0 my-1 p-0">
-                <!-- <b-form-file size="sm" id="restore-from-backup-browse" v-model="restoreFile" name="file" form="upload" @change="filesChange($event.target.name, $event.target.files)" accept=".tsv" class="w-50"></b-form-file> -->
-                <b-form-file size="sm" id="restore-from-backup-browse" v-model="restoreFile" @change="filesChange($event.target.name, $event.target.files)" accept=".tsv" class="w-50"></b-form-file>
+              <b-form-group label="Restore:" label-for="restore-from-backup-browse" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Select backup .tsv file from your local computer to restore'" class="mx-0 my-1 p-0">
+                <b-form-file size="sm" id="restore-from-backup-browse" v-model="restoreFile" @change="backupFilesChange($event.target.name, $event.target.files)" accept=".tsv" class="w-75"></b-form-file>
               </b-form-group>
               <b-form-group label="" label-for="restore-from-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restore from backup file. Data has to be re-synced'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="restore-from-backup" :disabled="restoreAccountsData.length == 0" @click="restoreFromBackup()" variant="primary">Restore</b-button>
+              </b-form-group>
+            </b-form-group>
+            <b-form-group label-cols-lg="2" label="Intermediate Data Backup & Restore" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Backup:" label-for="download-intermediate-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Download a backup of blocks and tx data. File name txs_intermediate*.json'" class="mx-0 my-1 p-0">
+                <b-button size="sm" id="download-intermediate-backup" @click="downloadIntermediateBackup()" variant="primary">Download</b-button>
+              </b-form-group>
+              <b-form-group label="Restore:" label-for="restore-from-backup-browse" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Select backup .json file from your local computer to restore'" class="mx-0 my-1 p-0">
+                <b-form-file size="sm" id="restore-from-backup-browse" v-model="restoreFile" @change="intermediateBackupFilesChange($event.target.name, $event.target.files)" accept=".json" class="w-75"></b-form-file>
+              </b-form-group>
+              <b-form-group label="" label-for="restore-from-backup" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Restore from backup file. Data has to be re-synced'" class="mx-0 my-1 p-0">
+                <b-button size="sm" id="restore-from-backup" :disabled="!restoreIntermediateData.blocks || !restoreIntermediateData.txs" @click="restoreFromIntermediateBackup()" variant="primary">Restore</b-button>
               </b-form-group>
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
@@ -93,6 +103,7 @@ const Config = {
       reschedule: true,
       restoreFile: null,
       restoreAccountsData: [],
+      restoreIntermediateData: {},
       unlock: null,
       etherscanBatchSizeOptions: [
         { value: 250_000, text: '250,000 blocks' },
@@ -233,24 +244,18 @@ const Config = {
       document.body.appendChild(link); // Required for FF
       link.click(); // This will download the data with the specified file name
     },
-    async restoreFromBackup() {
-      // console.log("restoreFromBackup: " + JSON.stringify(this.restoreAccountsData));
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      if (this.restoreAccountsData.length > 0) {
-        for (const section of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'assets', 'ensMap', 'exchangeRates', 'report']) {
-          await store.dispatch('data/resetData', section);
-        }
-      }
-      for (const newAccount of this.restoreAccountsData) {
-        await store.dispatch('data/restoreAccount', newAccount);
-      }
-      await store.dispatch('data/saveData', ['accounts', 'accountsInfo']);
-      alert('Reloading this page in 5 seconds.')
-      setTimeout(function() {
-        window.location.reload();
-      }, 5000);
+    downloadIntermediateBackup() {
+      const blocks = store.getters['data/blocks'];
+      const txs = store.getters['data/txs'];
+      let jsonContent = "data:text/json;charset=utf-8," + JSON.stringify({ blocks, txs }, null, 2);
+      var encodedUri = encodeURI(jsonContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "txs_intermediate_backup-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".json");
+      document.body.appendChild(link); // Required for FF
+      link.click(); // This will download the data with the specified file name
     },
-    async filesChange(fileName, fileList) {
+    async backupFilesChange(fileName, fileList) {
       const reader = new FileReader();
       this.restoreAccountsData = [];
       const t = this;
@@ -266,6 +271,38 @@ const Config = {
         }
       };
       await reader.readAsText(fileList[0]);
+    },
+    async intermediateBackupFilesChange(fileName, fileList) {
+      const reader = new FileReader();
+      this.restoreIntermediateData = {};
+      const t = this;
+      reader.onload = function (event) {
+        const data = event.target.result;
+        t.restoreIntermediateData = JSON.parse(data);
+      };
+      await reader.readAsText(fileList[0]);
+    },
+    async restoreFromBackup() {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      if (this.restoreAccountsData.length > 0) {
+        for (const section of ['accounts', 'accountsInfo', 'txs', 'txsInfo', 'blocks', 'functionSelectors', 'eventSelectors', 'assets', 'ensMap', 'exchangeRates', 'report']) {
+          await store.dispatch('data/resetData', section);
+        }
+      }
+      for (const newAccount of this.restoreAccountsData) {
+        await store.dispatch('data/restoreAccount', newAccount);
+      }
+      await store.dispatch('data/saveData', ['accounts', 'accountsInfo']);
+      alert('Reloading this page in 5 seconds.')
+      setTimeout(function() {
+        window.location.reload();
+      }, 5000);
+    },
+    async restoreFromIntermediateBackup() {
+      if (this.restoreIntermediateData.blocks && this.restoreIntermediateData.txs) {
+        await store.dispatch('data/restoreIntermediateData', this.restoreIntermediateData);
+        await store.dispatch('data/saveData', ['blocks', 'txs']);
+      }
     },
     reset(sections) {
       console.log("reset() - sections: " + JSON.stringify(sections));
