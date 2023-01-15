@@ -408,10 +408,6 @@ const Report = {
             <font size="-2">
               <br />
               {{ data.item.blockNumber + ':' + data.item.nonce + ':' + data.item.txHash }}
-              <!--
-              <br />
-              {{ data.item.txHash }}
-              -->
             </font>
           </template>
           <template #cell(account)="data">
@@ -423,6 +419,11 @@ const Report = {
           </template>
           <template #cell(info)="data">
             <!--
+            <font size="-2">
+              <pre>
+                {{ JSON.stringify(data.item.myEvents, null, 2) }}
+              </pre>
+            </font>
             {{ data.item.summary }}
             <div v-if="data.item.contract">
               <font size="-1">
@@ -677,6 +678,7 @@ const Report = {
             </span>
             -->
 
+            <!-- MYEVENTS -->
             <div v-if="data.item.myEvents && data.item.myEvents.length > 0">
               <font size="-2">
                 <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
@@ -690,15 +692,15 @@ const Report = {
                     <span v-if="event.item.contract == 'eth'">
                       eth
                     </span>
-                    <span v-else-if="event.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
-                      <b-link @click="showModalAddress(event.item.contract);">weth</b-link>
+                    <span v-else-if="event.item.contract.address == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
+                      <b-link @click="showModalAddress(event.item.contract.address);">weth</b-link>
                     </span>
                     <span v-else>
                       <span v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'">
-                        <b-link @click="showModalNFTCollection(event.item.contract);">{{ getTokenContractName(event.item.contract) }}</b-link>
+                        <b-link @click="showModalNFTCollection(event.item.contract);">{{ event.item.contractName }}</b-link>
                       </span>
                       <span v-else>
-                        <b-link @click="showModalAddress(event.item.contract);">{{ event.item.name }}</b-link>
+                        <b-link @click="showModalAddress(event.item.contract);">{{ event.item.contractName }}</b-link>
                       </span>
                     </span>
                   </template>
@@ -706,7 +708,7 @@ const Report = {
                     <div v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'" class="align-top">
                       {{ getNFTName(event.item.contract, event.item.tokenId) }}
                       <span v-if="report && report.tokens && report.tokens[event.item.contract] && report.tokens[event.item.contract].ids[event.item.tokenId] && report.tokens[event.item.contract].ids[event.item.tokenId].image">
-                        <b-avatar rounded variant="light" size="3.0rem" :src="getNFTImage(event.item.contract, event.item.tokenId)" v-b-popover.hover="'ERC-721 collection'"></b-avatar>
+                        <b-avatar rounded variant="light" size="3.0rem" :src="event.item.tokenImage" v-b-popover.hover="event.item.contractName + ':' + event.item.tokenId + ' - ' + event.item.tokenName"></b-avatar>
                       </span>
                     </div>
                     <span v-else>
@@ -715,13 +717,13 @@ const Report = {
                       </span>
                       <span div="event.item.tokens">
                         <span v-if="event.item.contract == 'eth'">
-                          {{ formatETH(event.item.tokens) }}
+                          {{ formatERC20(event.item.tokens, 18) }}
                         </span>
                         <span v-else-if="event.item.contract == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
-                          {{ formatETH(event.item.tokens) }}
+                          {{ formatERC20(event.item.tokens, 18) }}
                         </span>
                         <span v-else>
-                          {{ event.item.tokens }}
+                          {{ formatERC20(event.item.tokens, event.item.decimals) }}
                         </span>
                       </span>
                     </span>
@@ -1685,32 +1687,47 @@ const reportModule = {
               for (const [eventIndex, event] of results.myEvents.entries()) {
                 let newEvent;
                 if (event.type == 'erc20' || event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
-                  const tokenContract = allAccounts[event.contract];
+                  const tokenContract = allAccounts[event.contract] || {};
                   if (!(event.contract in tokens)) {
                     // console.log("tokenContract: " + JSON.stringify(tokenContract));
                     tokens[event.contract] = {
-                      type: tokenContract && tokenContract.type || null,
-                      name: tokenContract && tokenContract.collection && tokenContract.collection.name || tokenContract.name || null,
-                      symbol: tokenContract && tokenContract.collection && tokenContract.collection.symbol || tokenContract.symbol || null,
-                      slug: tokenContract && tokenContract.collection && tokenContract.collection.slug /*|| tokenContract.slug*/ || null,
-                      image: tokenContract && tokenContract.collection && tokenContract.collection.image /*|| tokenContract.image*/ || null,
-                      decimals: tokenContract && tokenContract.decimals || null,
+                      type: tokenContract.type || null,
+                      name: tokenContract.name || null,
+                      symbol: tokenContract.symbol || null,
+                      slug: tokenContract.slug || null,
+                      image: tokenContract.image || null,
+                      decimals: tokenContract.decimals || null,
                       junk: false, // TODO: Check custom tags from accountsInfo
                       ids: {},
                     };
                   }
+                  const token = tokenContract.assets && tokenContract.assets[event.tokenId] || {};
                   newEvent = {
                     ...event,
-                    contract: {
-                      address: event.contract,
-                      contractType: tokenContract && tokenContract.type || null,
-                      name: tokenContract && tokenContract.collection && tokenContract.collection.name || tokenContract.name || null,
-                      symbol: tokenContract && tokenContract.collection && tokenContract.collection.symbol || tokenContract.symbol || null,
-                      slug: tokenContract && tokenContract.collection && tokenContract.collection.slug /*|| tokenContract.slug*/ || undefined,
-                      image: tokenContract && tokenContract.collection && tokenContract.collection.image /*|| tokenContract.image*/ || undefined,
-                      decimals: tokenContract && tokenContract.decimals || null,
-                      junk: false, // TODO: Check custom tags from accountsInfo
-                    }
+                    contractName: tokenContract && tokenContract.name || null,
+                    // contractSlug: tokenContract && tokenContract.slug || null,
+                    // contractImage: tokenContract && tokenContract.image || null,
+                    decimals: tokenContract && tokenContract.decimals || null,
+                    // contract: {
+                    //   address: event.contract,
+                    //   type: tokenContract && tokenContract.type || null,
+                    //   name: tokenContract.name || null,
+                    //   symbol: tokenContract.symbol || null,
+                    //   slug: tokenContract.slug || null,
+                    //   image: tokenContract.image || null,
+                    // },
+                    tokenName: token.name || null,
+                    // tokenDescription: token.description || null,
+                    tokenImage: token.image || null,
+                    // token: {
+                    //   id: event.tokenId,
+                    //   name: token.name || null,
+                    //   description: token.description || null,
+                    //   image: token && token.image || undefined,
+                    //   decimals: tokenContract.decimals || null,
+                    //   junk: false, // TODO: Check custom tags from accountsInfo
+                    // },
+                    // tokenId: undefined,
                   };
                 } else {
                   newEvent = event;
@@ -1725,7 +1742,6 @@ const reportModule = {
                     tokens[event.contract].ids[event.tokenId] = {
                       name: token.name || "?",
                       description: token.description || "?",
-                      name: token.name || "?",
                       image: token.image || null,
                     };
                   }
@@ -1769,7 +1785,7 @@ const reportModule = {
           }
         }
       }
-      // console.log("tokens: " + JSON.stringify(tokens, null, 2));
+      console.log("tokens: " + JSON.stringify(tokens, null, 2));
       // TODO: Delete accountsMap, typesMap, actionsMap, functionCallsMap
       context.commit('setReport', { transactions, tokens, accountsMap, typesMap, actionsMap, functionCallsMap });
       context.dispatch('saveData', ['report']);
