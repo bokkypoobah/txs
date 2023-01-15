@@ -529,6 +529,9 @@ const dataModule = {
         if (section == "syncImportExchangeRates" || section == "all") {
           await context.dispatch('syncImportExchangeRates', parameter);
         }
+        if (section == "syncRefreshENS" || section == "all") {
+          await context.dispatch('syncRefreshENS', parameter);
+        }
       }
       context.dispatch('saveData', ['accounts', 'accountsInfo', 'blocks', 'txs', 'ensMap']);
       context.commit('setSyncSection', { section: null, total: null });
@@ -1222,7 +1225,24 @@ const dataModule = {
       context.commit('setExchangeRates', results);
       context.dispatch('saveData', ['exchangeRates']);
     },
-
+    async syncRefreshENS(context, parameter) {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
+      const addresses = Object.keys(context.state.accounts);
+      const ENSOWNERBATCHSIZE = 200; // Can do 200, but incorrectly misconfigured reverse ENS causes the whole call to fail
+      for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
+        const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
+        const allnames = await ensReverseRecordsContract.getNames(batch);
+        for (let j = 0; j < batch.length; j++) {
+          const account = batch[j];
+          const name = allnames[j];
+          // const normalized = normalize(account);
+          // console.log(account + " => " + name);
+          context.commit('addENSName', { account, name });
+        }
+      }
+      context.dispatch('saveData', ['ensMap']);
+    },
     // Called by Connection.execWeb3()
     async execWeb3({ state, commit, rootState }, { count, listenersInstalled }) {
       logInfo("dataModule", "execWeb3() start[" + count + ", " + listenersInstalled + ", " + JSON.stringify(rootState.route.params) + "]");

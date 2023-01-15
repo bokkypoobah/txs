@@ -1741,7 +1741,7 @@ const reportModule = {
                     // console.log("token: " + JSON.stringify(token));
                     tokens[event.contract].ids[event.tokenId] = {
                       name: token.name || "?",
-                      description: token.description || "?",
+                      // description: token.description || "?",
                       image: token.image || null,
                     };
                   }
@@ -1785,7 +1785,7 @@ const reportModule = {
           }
         }
       }
-      console.log("tokens: " + JSON.stringify(tokens, null, 2));
+      // console.log("tokens: " + JSON.stringify(tokens, null, 2));
       // TODO: Delete accountsMap, typesMap, actionsMap, functionCallsMap
       context.commit('setReport', { transactions, tokens, accountsMap, typesMap, actionsMap, functionCallsMap });
       context.dispatch('saveData', ['report']);
