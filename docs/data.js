@@ -749,7 +749,7 @@ const dataModule = {
               const timestamp = block.timestamp;
               console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber + " " + moment.unix(timestamp).format("YYYY-MM-DD HH:mm:ss"));
               const ethBalance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
-              const wethBalance = ethers.BigNumber.from(await weth.balanceOf(account, { blockTag: parseInt(blockNumber) })).toString();
+              const wethBalance = (blockNumber < 4719568) ? 0 : ethers.BigNumber.from(await weth.balanceOf(account, { blockTag: parseInt(blockNumber) })).toString();
               context.commit('addBlock', { blockNumber, timestamp, account, asset: 'eth', balance: ethBalance });
               context.commit('addBlock', { blockNumber, timestamp, account, asset: WETHADDRESS, balance: wethBalance });
               context.commit('setSyncCompleted', parseInt(index) + 1);
