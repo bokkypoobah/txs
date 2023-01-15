@@ -302,6 +302,10 @@ const Config = {
       if (this.restoreIntermediateData.blocks && this.restoreIntermediateData.txs) {
         await store.dispatch('data/restoreIntermediateData', this.restoreIntermediateData);
         await store.dispatch('data/saveData', ['blocks', 'txs']);
+        alert('Reloading this page in 5 seconds.')
+        setTimeout(function() {
+          window.location.reload();
+        }, 5000);
       }
     },
     reset(sections) {
