@@ -1025,7 +1025,7 @@ const Report = {
           }
           if (include && functionSelectorFilter != null) {
             const tempFunctionSelector = transaction.functionSelector.length > 0 && transaction.functionSelector || "(none)";
-            console.log("tempFunctionSelector: " + tempFunctionSelector + " in " + JSON.stringify(functionSelectorFilter));
+            // console.log("tempFunctionSelector: " + tempFunctionSelector + " in " + JSON.stringify(functionSelectorFilter));
             if (!(tempFunctionSelector in functionSelectorFilter)) {
               include = false;
             }
