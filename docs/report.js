@@ -680,13 +680,20 @@ const Report = {
 
             <!-- MYEVENTS -->
             <div v-if="data.item.myEvents && data.item.myEvents.length > 0">
+              <!--
+              <font size="-2">
+                <pre>
+              {{ data.item.myEvents }}
+                </pre>
+              </font>
+              -->
               <font size="-2">
                 <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
                   <template #cell(from)="data">
-                    <b-link @click="showModalAddress(data.item.from);"><b-badge pill variant="none" v-b-popover.hover="data.item.from" class="truncate" style="max-width: 5.0rem;">{{ ensOrAccount(data.item.to) }}</b-badge></b-link>
+                    <b-link @click="showModalAddress(data.item.from);"><b-badge pill variant="none" v-b-popover.hover="data.item.from" class="text-truncate" style="max-width: 5.0rem;">{{ ensOrAccount(data.item.from) }}</b-badge></b-link>
                   </template>
                   <template #cell(to)="data">
-                    <b-link @click="showModalAddress(data.item.to);"><b-badge pill variant="none" v-b-popover.hover="data.item.to" class="truncate" style="max-width: 5.0rem;">{{ ensOrAccount(data.item.to) }}</b-badge></b-link>
+                    <b-link @click="showModalAddress(data.item.to);"><b-badge pill variant="none" v-b-popover.hover="data.item.to" class="text-truncate" style="max-width: 5.0rem;">{{ ensOrAccount(data.item.to) }}</b-badge></b-link>
                   </template>
                   <template #cell(contract)="event">
                     <span v-if="event.item.contract == 'eth'">
@@ -876,8 +883,8 @@ const Report = {
       myEventsFields: [
         { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
         { key: 'logIndex', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
-        { key: 'from', label: 'From', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
-        { key: 'to', label: 'To', thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'from', label: 'From', thStyle: 'width: 15%;' },
+        { key: 'to', label: 'To', thStyle: 'width: 15%;' },
         { key: 'contract', label: 'Token', thStyle: 'width: 15%;' },
         { key: 'tokenIdOrTokens', label: 'TokenId/Tokens', sortable: true, thStyle: 'width: 35%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
