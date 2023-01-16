@@ -683,30 +683,30 @@ const Report = {
               <font size="-2">
                 <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light">
                   <template #cell(from)="data">
-                    <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 64) }}</b-link>
+                    <b-link @click="showModalAddress(data.item.from);"><b-badge pill variant="none" v-b-popover.hover="data.item.from" class="truncate" style="max-width: 5.0rem;">{{ ensOrAccount(data.item.to) }}</b-badge></b-link>
                   </template>
                   <template #cell(to)="data">
-                    <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 64) }}</b-link>
+                    <b-link @click="showModalAddress(data.item.to);"><b-badge pill variant="none" v-b-popover.hover="data.item.to" class="truncate" style="max-width: 5.0rem;">{{ ensOrAccount(data.item.to) }}</b-badge></b-link>
                   </template>
                   <template #cell(contract)="event">
                     <span v-if="event.item.contract == 'eth'">
-                      eth
+                      <b-badge pill variant="none" v-b-popover.hover="'Ethereums'" class="truncate" style="max-width: 10.0rem;">eth</b-badge>
                     </span>
                     <span v-else-if="event.item.contract.address == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
-                      <b-link @click="showModalAddress(event.item.contract.address);">weth</b-link>
+                      <b-link @click="showModalAddress(event.item.contract.address);"><b-badge pill variant="none" v-b-popover.hover="data.item.to" class="truncate" style="max-width: 10.0rem;">{{ event.item.contractName }}</b-badge></b-link>
                     </span>
                     <span v-else>
                       <span v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'">
-                        <b-link @click="showModalNFTCollection(event.item.contract);">{{ event.item.contractName }}</b-link>
+                        <b-link @click="showModalNFTCollection(event.item.contract);"><b-badge pill variant="none" v-b-popover.hover="data.item.to" class="truncate" style="max-width: 10.0rem;">{{ event.item.contractName }}</b-badge></b-link>
                       </span>
                       <span v-else>
-                        <b-link @click="showModalAddress(event.item.contract);">{{ event.item.contractName }}</b-link>
+                        <b-link @click="showModalAddress(event.item.contract);"><b-badge pill variant="none" v-b-popover.hover="event.item.contractName" class="truncate" style="max-width: 10.0rem;">{{ event.item.contractName }}</b-badge></b-link>
                       </span>
                     </span>
                   </template>
                   <template #cell(tokenIdOrTokens)="event">
                     <div v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'" class="align-top">
-                      {{ getNFTName(event.item.contract, event.item.tokenId) }}
+                      <b-link @click="showModalNFT(event.item);"><b-badge pill variant="none" v-b-popover.hover="getNFTName(event.item.contract, event.item.tokenId)" class="truncate" style="max-width: 10.0rem;">{{ getNFTName(event.item.contract, event.item.tokenId) }}</b-badge></b-link>
                       <span v-if="report && report.tokens && report.tokens[event.item.contract] && report.tokens[event.item.contract].ids[event.item.tokenId] && report.tokens[event.item.contract].ids[event.item.tokenId].image">
                         <b-avatar rounded variant="light" size="3.0rem" :src="event.item.tokenImage" v-b-popover.hover="event.item.contractName + ':' + event.item.tokenId + ' - ' + event.item.tokenName"></b-avatar>
                       </span>
@@ -1448,6 +1448,7 @@ const Report = {
       this.$bvModal.show('modal-nft-collection');
     },
     showModalNFT(nftEvent) {
+      // console.log("showModalNFT: " + JSON.stringify(nftEvent));
       this.modalNFT.nftEvent = nftEvent;
       this.$bvModal.show('modal-nft');
     },
