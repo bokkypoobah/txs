@@ -1135,7 +1135,29 @@ const Report = {
       return results;
     },
     pagedFilteredSortedTransactions() {
-      return this.filteredSortedTransactions.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
+      const data = this.filteredSortedTransactions.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
+      const results = [];
+      for (const [itemIndex, item] of data.entries()) {
+        let newMyEvents = [];
+        for (const [eventIndex, event] of item.myEvents.entries()) {
+          if (event.type == 'erc20' || event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
+            const tokenContract = this.report.tokens[event.contract] || {};
+            const token = tokenContract.ids && tokenContract.ids[event.tokenId] || {};
+            newMyEvents.push({
+              ...event,
+              contractName: tokenContract && tokenContract.name || null,
+              decimals: tokenContract && tokenContract.decimals || null,
+              tokenName: token.name || null,
+              tokenImage: token.image || null,
+            });
+          } else {
+            newMyEvents.push(event);
+          }
+        }
+        results.push({...item, myEvents: newMyEvents });
+      }
+      // console.log(JSON.stringify(results, null, 2));
+      return results;
     },
     getAllAccounts() {
       const accountsMap = {};
@@ -1710,33 +1732,34 @@ const reportModule = {
                     };
                   }
                   const token = tokenContract.assets && tokenContract.assets[event.tokenId] || {};
-                  newEvent = {
-                    ...event,
-                    contractName: tokenContract && tokenContract.name || null,
-                    // contractSlug: tokenContract && tokenContract.slug || null,
-                    // contractImage: tokenContract && tokenContract.image || null,
-                    decimals: tokenContract && tokenContract.decimals || null,
-                    // contract: {
-                    //   address: event.contract,
-                    //   type: tokenContract && tokenContract.type || null,
-                    //   name: tokenContract.name || null,
-                    //   symbol: tokenContract.symbol || null,
-                    //   slug: tokenContract.slug || null,
-                    //   image: tokenContract.image || null,
-                    // },
-                    tokenName: token.name || null,
-                    // tokenDescription: token.description || null,
-                    tokenImage: token.image || null,
-                    // token: {
-                    //   id: event.tokenId,
-                    //   name: token.name || null,
-                    //   description: token.description || null,
-                    //   image: token && token.image || undefined,
-                    //   decimals: tokenContract.decimals || null,
-                    //   junk: false, // TODO: Check custom tags from accountsInfo
-                    // },
-                    // tokenId: undefined,
-                  };
+                  // newEvent = {
+                  //   ...event,
+                  //   contractName: tokenContract && tokenContract.name || null,
+                  //   // contractSlug: tokenContract && tokenContract.slug || null,
+                  //   // contractImage: tokenContract && tokenContract.image || null,
+                  //   decimals: tokenContract && tokenContract.decimals || null,
+                  //   // contract: {
+                  //   //   address: event.contract,
+                  //   //   type: tokenContract && tokenContract.type || null,
+                  //   //   name: tokenContract.name || null,
+                  //   //   symbol: tokenContract.symbol || null,
+                  //   //   slug: tokenContract.slug || null,
+                  //   //   image: tokenContract.image || null,
+                  //   // },
+                  //   tokenName: token.name || null,
+                  //   // tokenDescription: token.description || null,
+                  //   tokenImage: token.image || null,
+                  //   // token: {
+                  //   //   id: event.tokenId,
+                  //   //   name: token.name || null,
+                  //   //   description: token.description || null,
+                  //   //   image: token && token.image || undefined,
+                  //   //   decimals: tokenContract.decimals || null,
+                  //   //   junk: false, // TODO: Check custom tags from accountsInfo
+                  //   // },
+                  //   // tokenId: undefined,
+                  // };
+                  newEvent = event;
                 } else {
                   newEvent = event;
                 }
