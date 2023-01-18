@@ -410,7 +410,32 @@ const Assets = {
             {{ data.item.tokenId }}
           </template>
           <template #cell(image)="data">
-            <b-avatar rounded variant="light" size="3.0rem" :src="data.item.image" v-b-popover.hover="data.item.tokenId + ':' + data.item.name"></b-avatar>
+            <b-avatar rounded variant="light" size="5.0rem" :src="data.item.image" v-b-popover.hover="data.item.tokenId + ':' + data.item.name"></b-avatar>
+          </template>
+          <template #cell(events)="data">
+            <font size="-2">
+              <!-- <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light"> -->
+              <b-table small fixed striped sticky-header="200px" :fields="eventsFields" :items="data.item.events" head-variant="light">
+                <template #cell(timestamp)="data">
+                  <b-link @click="showModalTx(data.item.txHash);">{{ formatTimestamp(data.item.timestamp) }}</b-link>
+                  <!--
+                  <b-link @click="showModalTx(data.item.txHash);">{{ formatTimestamp(data.item.timestamp) }}</b-link>
+                  <font size="-2">
+                    <br />
+                    {{ data.item.blockNumber + ':' + data.item.nonce + ':' + data.item.txHash }}
+                  </font>
+                  <br />
+                  <b-form-tags size="sm" :disabled="!settings.taggingMode" @input="saveTxTags(data.item.txHash, $event)" v-model="data.item.tags" tag-variant="primary" tag-pills separator=" " v-b-popover.hover="'Enter tags'" placeholder="" class="ml-0 mt-1"></b-form-tags>
+                  -->
+                </template>
+                <template #cell(from)="data">
+                  <b-link @click="showModalAddress(data.item.from);">{{ ensOrAccount(data.item.from, 20) }}</b-link>
+                </template>
+                <template #cell(to)="data">
+                  <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 20) }}</b-link>
+                </template>
+              </b-table>
+            </font>
           </template>
         </b-table>
 
@@ -903,10 +928,21 @@ const Assets = {
       assetsFields: [
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
         { key: 'type', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
-        { key: 'collection', label: 'Collection', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+        { key: 'collection', label: 'Collection', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
         { key: 'tokenId', label: 'TokenId', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
         { key: 'image', label: 'Image', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
-        { key: 'events', label: 'Events', sortable: false, thStyle: 'width: 45%;', tdClass: 'text-truncate' },
+        { key: 'events', label: 'Events', sortable: false, thStyle: 'width: 55%;', tdClass: 'text-truncate' },
+      ],
+      eventsFields: [
+        // { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
+        { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        // { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
+        // { key: 'logIndex', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'from', label: 'From', thStyle: 'width: 15%;' },
+        { key: 'to', label: 'To', thStyle: 'width: 15%;' },
+        { key: 'notes', label: 'Notes', thStyle: 'width: 15%;' },
+        // { key: 'contract', label: 'Token', thStyle: 'width: 15%;' },
+        // { key: 'tokenIdOrTokens', label: 'TokenId/Tokens', sortable: true, thStyle: 'width: 35%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
 
       // results.push({ collection: account, type: accountData.type, collectionName: accountData.name, tokenId, name: tokenData.name, image: tokenData.image });
@@ -1180,6 +1216,7 @@ const Assets = {
                 events.push({
                   txHash,
                   blockNumber: someData.blockNumber,
+                  transactionIndex: someData.transactionIndex,
                   timestamp: someData.timestamp,
                   logIndex,
                   from: event.from,
@@ -1188,6 +1225,17 @@ const Assets = {
                 })
               }
             }
+            events.sort((a, b) => {
+              if (a.blockNumber == b.blockNumber) {
+                if (a.transactionIndex == b.transactionIndex) {
+                  return a.logIndex - b.logIndex;
+                } else {
+                  return a.transactionIndex - b.transactionIndex;
+                }
+              } else {
+                return a.blockNumber - b.blockNumber;
+              }
+            });
             results.push({
               collection: account,
               type: accountData.type,
