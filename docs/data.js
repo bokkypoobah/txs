@@ -278,6 +278,7 @@ const dataModule = {
             if (!(info.txHash in contractData.assets[event.tokenId].events)) {
               Vue.set(state.accounts[event.contract].assets[event.tokenId].events, info.txHash, {
                 blockNumber: info.blockNumber,
+                transactionIndex: info.transactionIndex,
                 timestamp: info.timestamp,
                 logs: {},
               });
@@ -1152,7 +1153,7 @@ const dataModule = {
             }
             context.commit('addAccountToken', tokenData);
           }
-          console.log("missingTokensList: " + JSON.stringify(missingTokensList));
+          // console.log("missingTokensList: " + JSON.stringify(missingTokensList));
           context.commit('setSyncSection', { section: 'Build Tokens', total: missingTokensList.length });
           const GETTOKENINFOBATCHSIZE = 50;
           const info = {};
@@ -1197,7 +1198,7 @@ const dataModule = {
               const txData = context.state.txs[txHash] || null;
               if (txData != null) {
                 const events = getEvents(account, context.state.accounts, context.state.eventSelectors, preERC721s, txData);
-                context.commit('addAccountTokenEvents', { txHash, blockNumber, timestamp, events: events.myEvents });
+                context.commit('addAccountTokenEvents', { txHash, blockNumber, transactionIndex: txData.txReceipt.transactionIndex, timestamp, events: events.myEvents });
                 // const results = parseTx(account, accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
                 // for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                 //   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
