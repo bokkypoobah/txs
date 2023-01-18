@@ -386,7 +386,29 @@ const Assets = {
           </div>
         </div>
 
-        <b-table small fixed striped responsive hover :items="pagedFilteredSortedAssets" show-empty head-variant="light" class="m-0 mt-1">
+        <!-- HERE -->
+        <b-table small fixed striped responsive hover :fields="assetsFields" :items="pagedFilteredSortedAssets" show-empty head-variant="light" class="m-0 mt-1">
+          <template #head(number)="data">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="'Toggle selection'">
+              <template #button-content>
+                <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
+              </template>
+              <b-dropdown-item href="#" @click="toggleSelectedTransactions(pagedFilteredSortedAssets)">Toggle selection for all transactions on this page</b-dropdown-item>
+              <b-dropdown-item href="#" @click="toggleSelectedTransactions(filteredSortedAssets)">Toggle selection for all transactions on all pages</b-dropdown-item>
+              <b-dropdown-item href="#" @click="clearSelectedTransactions()">Clear selection</b-dropdown-item>
+            </b-dropdown>
+          </template>
+          <template #cell(number)="data">
+            <b-form-checkbox size="sm" :checked="settings.selectedTransactions[data.item.txHash] ? 1 : 0" value="1" @change="toggleSelectedTransactions([data.item])">
+              {{ parseInt(data.index) + ((settings.currentPage - 1) * settings.pageSize) + 1 }}
+            </b-form-checkbox>
+          </template>
+          <template #cell(collection)="data">
+            <b-link @click="showModalNFTCollection(data.item.collection);"><b-badge pill variant="none" v-b-popover.hover="data.item.collection" class="truncate" style="max-width: 10.0rem;">{{ data.item.collectionName }}</b-badge></b-link>
+          </template>
+          <template #cell(tokenId)="data">
+            {{ data.item.tokenId }}
+          </template>
           <template #cell(image)="data">
             <b-avatar rounded variant="light" size="3.0rem" :src="data.item.image" v-b-popover.hover="data.item.tokenId + ':' + data.item.name"></b-avatar>
           </template>
@@ -878,6 +900,17 @@ const Assets = {
         { value: 2500, text: '2.5k' },
         { value: 10000, text: '10k' },
       ],
+      assetsFields: [
+        { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
+        { key: 'type', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        { key: 'collection', label: 'Collection', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
+        { key: 'tokenId', label: 'TokenId', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
+        { key: 'image', label: 'Image', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        { key: 'events', label: 'Events', sortable: false, thStyle: 'width: 45%;', tdClass: 'text-truncate' },
+      ],
+
+      // results.push({ collection: account, type: accountData.type, collectionName: accountData.name, tokenId, name: tokenData.name, image: tokenData.image });
+
       transactionsFields: [
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
         { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
@@ -1138,6 +1171,25 @@ const Assets = {
       //     }
       //   }
       // }
+      for (const [account, accountData] of Object.entries(this.accounts)) {
+        if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
+          console.log(account + " => " + JSON.stringify(accountData, null, 2));
+          for (const [tokenId, tokenData] of Object.entries(accountData.assets)) {
+            results.push({
+              collection: account,
+              type: accountData.type,
+              collectionName: accountData.name,
+              collectionSlug: accountData.slug,
+              tokenId,
+              tokens: accountData.type == 'erc1155' && tokenData.tokens || null,
+              name: tokenData.name,
+              image: tokenData.image,
+            });
+            // console.log("  " + tokenId + " => " + JSON.stringify(tokenData));
+          }
+        }
+      }
+      console.log(JSON.stringify(results.slice(0, 5), null, 2));
       return results;
     },
     filteredSortedAssets() {
@@ -1179,15 +1231,6 @@ const Assets = {
       //     }
       //   });
       // }
-      for (const [account, accountData] of Object.entries(this.accounts)) {
-        if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
-          // console.log(account + " => " + JSON.stringify(accountData, null, 2));
-          for (const [tokenId, tokenData] of Object.entries(accountData.assets)) {
-            results.push({ collection: account, type: accountData.type, collectionName: accountData.name, tokenId, name: tokenData.name, image: tokenData.image });
-            console.log("  " + tokenId + " => " + JSON.stringify(tokenData));
-          }
-        }
-      }
       return results;
     },
     pagedFilteredSortedAssets() {
