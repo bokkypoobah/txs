@@ -79,6 +79,9 @@ const Config = {
               </b-form-group>
             </b-form-group>
             <b-form-group label-cols-lg="2" label="Reset Data" label-size="md" label-class="font-weight-bold pt-0" class="mt-3 mb-0">
+              <b-form-group label="Tokens:" label-for="reset-tokens" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset tokens for regeneration. DEV function'" class="mx-0 my-1 p-0">
+                <b-button size="sm" id="reset-tokens" @click="resetTokens()" variant="primary">Reset</b-button>
+              </b-form-group>
               <b-form-group label="Temporary Data:" label-for="reset-localstorage" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Reset view preferences stored in your browser LocalStorage'" class="mx-0 my-1 p-0">
                 <b-button size="sm" id="reset-localstorage" @click="reset(['localStorage'])" variant="primary">Reset</b-button>
               </b-form-group>
@@ -293,7 +296,7 @@ const Config = {
         await store.dispatch('data/restoreAccount', newAccount);
       }
       await store.dispatch('data/saveData', ['accounts', 'accountsInfo']);
-      alert('Reloading this page in 5 seconds.')
+      alert('Click OK. This page will be reloaded in 5 seconds.')
       setTimeout(function() {
         window.location.reload();
       }, 5000);
@@ -302,11 +305,14 @@ const Config = {
       if (this.restoreIntermediateData.blocks && this.restoreIntermediateData.txs) {
         await store.dispatch('data/restoreIntermediateData', this.restoreIntermediateData);
         await store.dispatch('data/saveData', ['blocks', 'txs']);
-        alert('Reloading this page in 5 seconds.')
+        alert('Click OK. This page will be reloaded in 5 seconds.')
         setTimeout(function() {
           window.location.reload();
         }, 5000);
       }
+    },
+    async resetTokens() {
+      await store.dispatch('data/resetTokens');
     },
     reset(sections) {
       console.log("reset() - sections: " + JSON.stringify(sections));
@@ -321,7 +327,7 @@ const Config = {
           store.dispatch('data/resetData', section);
         }
       }
-      alert('Reloading this page in 5 seconds.')
+      alert('Click OK. This page will be reloaded in 5 seconds.')
       setTimeout(function() {
         window.location.reload();
       }, 5000);

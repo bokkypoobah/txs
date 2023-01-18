@@ -296,19 +296,13 @@ const dataModule = {
           // console.log(txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
         }
       }
-
-      // if (!(event.txHash in asset.events)) {
-      //   Vue.set(state.accounts[event.contract].assets[event.tokenId].events, event.txHash, {});
-      // }
-      // if (!(event.logIndex in asset.events[event.txHash])) {
-      //   Vue.set(state.accounts[event.contract].assets[event.tokenId].events[event.txHash], event.logIndex, {
-      //     blockNumber: event.blockNumber,
-      //     timestamp: event.timestamp,
-      //     from: event.from,
-      //     to: event.to,
-      //     value: event.value && event.value || null,
-      //   });
-      // }
+    },
+    resetTokens(state) {
+      for (const [account, accountData] of Object.entries(state.accounts)) {
+        if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
+          Vue.set(state.accounts[account], 'assets', {});
+        }
+      }
     },
     addBlock(state, info) {
       const [blockNumber, timestamp, account, asset, balance] = [info.blockNumber, info.timestamp, info.account, info.asset, info.balance];
@@ -478,6 +472,10 @@ const dataModule = {
     },
     async setSyncHalt(context, halt) {
       context.commit('setSyncHalt', halt);
+    },
+    async resetTokens(context) {
+      await context.commit('resetTokens');
+      await context.dispatch('saveData', ['accounts']);
     },
     async resetData(context, section) {
       const CHAIN_ID = 1;
