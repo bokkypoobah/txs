@@ -350,6 +350,15 @@ const dataModule = {
       // }
       Vue.set(state, 'exchangeRates', exchangeRates);
     },
+    saveTxTags(state, info) {
+      if (!(info.txHash in state.txsInfo)) {
+        Vue.set(state.txsInfo, info.txHash, {
+          tags: info.tags,
+        });
+      } else {
+        Vue.set(state.txsInfo[info.txHash], 'tags', info.tags);
+      }
+    },
     setSyncSection(state, info) {
       state.sync.section = info.section;
       state.sync.total = info.total;
@@ -388,17 +397,22 @@ const dataModule = {
       db0.close();
     },
     async toggleAccountInfoField(context, info) {
-      context.commit('toggleAccountInfoField', info);
-      context.dispatch('saveData', ['accounts', 'accountsInfo']);
+      await context.commit('toggleAccountInfoField', info);
+      await context.dispatch('saveData', ['accounts', 'accountsInfo']);
     },
     async setAccountInfoField(context, info) {
-      context.commit('setAccountInfoField', info);
-      context.dispatch('saveData', ['accounts', 'accountsInfo']);
+      await context.commit('setAccountInfoField', info);
+      await context.dispatch('saveData', ['accounts', 'accountsInfo']);
     },
     async deleteAccountAndAccountInfo(context, account) {
       console.log("deleteAccountAndAccountInfo: " + account);
-      context.commit('deleteAccountAndAccountInfo', account);
-      context.dispatch('saveData', ['accounts', 'accountsInfo']);
+      await context.commit('deleteAccountAndAccountInfo', account);
+      await context.dispatch('saveData', ['accounts', 'accountsInfo']);
+    },
+    async saveTxTags(context, info) {
+      console.log("action.saveTxTags - txHash: " + info.txHash + ", tags: " + JSON.stringify(info.tags));
+      await context.commit('saveTxTags', info);
+      await context.dispatch('saveData', ['txsInfo']);
     },
     async setSyncHalt(context, halt) {
       context.commit('setSyncHalt', halt);

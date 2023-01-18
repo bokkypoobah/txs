@@ -226,6 +226,9 @@ const Report = {
               </b-iconstack>
             </b-button>
           </div>
+          <div class="mt-0 pr-1">
+            <b-button size="sm" :pressed.sync="settings.taggingMode" @click="saveSettings" variant="link" v-b-popover.hover.top="'Manage Tags'"><span v-if="settings.taggingMode"><b-icon-archive-fill shift-v="+1" font-scale="1.0"></b-icon-archive-fill></span><span v-else><b-icon-archive shift-v="+1" font-scale="1.0"></b-icon-archive></span></b-button>
+          </div>
           <div class="mt-0 flex-grow-1">
           </div>
           <div v-if="sync.section == null" class="mt-0 pr-1">
@@ -285,6 +288,29 @@ const Report = {
           </div>
         </div>
 
+        <!-- TAGBAR -->
+        <div v-if="settings.taggingMode" class="d-flex flex-wrap m-0 mt-1 p-0">
+          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
+            <b-form-input type="text" size="sm" v-model.trim="settings.tag" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Enter tag for addition or removal from selected transactions'" placeholder="{tag}"></b-form-input>
+          </div>
+          <div class="mt-0 pr-1">
+            <b-button size="sm" :disabled="!settings.tag || Object.keys(settings.selectedTransactions).length == 0" @click="syncIt({ sections: ['all'], parameters: [] })" variant="link" v-b-popover.hover.top="'Add tag to selected transactions'">
+              <b-iconstack font-scale="1.2">
+                <b-icon stacked icon="square"></b-icon>
+                <b-icon stacked icon="plus"></b-icon>
+              </b-iconstack>
+            </b-button>
+          </div>
+          <div class="mt-0 pr-1">
+            <b-button size="sm" :disabled="!settings.tag || Object.keys(settings.selectedTransactions).length == 0" @click="syncIt({ sections: ['all'], parameters: [] })" variant="link" v-b-popover.hover.top="'Remove tag from selected transactions'">
+              <b-iconstack font-scale="1.2">
+                <b-icon stacked icon="square"></b-icon>
+                <b-icon stacked icon="dash"></b-icon>
+              </b-iconstack>
+            </b-button>
+          </div>
+        </div>
+
         <!-- ADDITIONAL FILTERS -->
         <div v-if="settings.showAdditionalFilters" class="d-flex flex-wrap m-0 p-0">
           <div class="mt-0 pr-1" style="width: 13.0rem;">
@@ -332,7 +358,6 @@ const Report = {
               </b-card-body>
             </b-card>
           </div>
-
           <div class="mt-0 pr-1" style="width: 13.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
@@ -409,6 +434,9 @@ const Report = {
               <br />
               {{ data.item.blockNumber + ':' + data.item.nonce + ':' + data.item.txHash }}
             </font>
+            <!-- <b-form-tags size="sm" @input="saveTxTags" v-model="tags[record.tokenId]" tag-variant="primary" tag-pills separator=" " v-b-popover.hover="'ENTER NEW TAGS'" placeholder="" class="ml-0 mt-1 mw-100"></b-form-tags> -->
+            <br />
+            <b-form-tags size="sm" @input="saveTxTags(data.item.txHash, $event)" v-model="data.item.tags" tag-variant="primary" tag-pills separator=" " v-b-popover.hover="'Enter tags'" placeholder="" class="ml-0 mt-1 mw-100"></b-form-tags>
           </template>
           <template #cell(account)="data">
             <b-link @click="showModalAddress(data.item.account);">{{ ensOrAccount(data.item.account) }}</b-link>
@@ -774,8 +802,10 @@ const Report = {
         pageSize: 100,
         sortOption: 'timestampdsc',
         showAdditionalFilters: false,
+        taggingMode: false,
+        tag: null,
         filters: {},
-        version: 4,
+        version: 5,
       },
       modalAddress: null,
       modalTx: {
@@ -932,6 +962,9 @@ const Report = {
     txs() {
       return store.getters['data/txs'];
     },
+    txsInfo() {
+      return store.getters['data/txsInfo'];
+    },
     blocks() {
       return store.getters['data/blocks'];
     },
@@ -1063,6 +1096,7 @@ const Report = {
               include = false;
             }
           }
+          const txInfo = this.txsInfo[transaction.txHash] || {};
           if (include) {
             results.push({
               // chainId: transaction.chainId,
@@ -1087,6 +1121,7 @@ const Report = {
               summary: transaction.summary,
               myEvents: transaction.myEvents,
               junk: transaction.junk,
+              tags: txInfo.tags || [],
             });
           }
         }
@@ -1408,6 +1443,9 @@ const Report = {
       this.settings.selectedTransactions = {};
       this.saveSettings();
     },
+    saveTxTags(txHash, tags) {
+      store.dispatch('data/saveTxTags', { txHash, tags });
+    },
     async syncIt(info) {
       store.dispatch('data/syncIt', info);
     },
@@ -1560,7 +1598,7 @@ const Report = {
     store.dispatch('report/restoreState');
     if ('reportSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.reportSettings);
-      if ('version' in tempSettings && tempSettings.version == 4) {
+      if ('version' in tempSettings && tempSettings.version == 5) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
