@@ -1171,9 +1171,15 @@ const Assets = {
       //     }
       //   }
       // }
+      // const reportData = this.report || {};
+      // console.log("reportData: " + JSON.stringify(reportData, null, 2));
+      // const allReportTokens = reportData.tokens;
+      // console.log("reportTokens: " + JSON.stringify(reportTokens, null, 2));
       for (const [account, accountData] of Object.entries(this.accounts)) {
         if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
           console.log(account + " => " + JSON.stringify(accountData, null, 2));
+          // const reportToken = allReportTokens[account] || {};
+          // console.log("reportToken: " + JSON.stringify(reportToken, null, 2));
           for (const [tokenId, tokenData] of Object.entries(accountData.assets)) {
             results.push({
               collection: account,
