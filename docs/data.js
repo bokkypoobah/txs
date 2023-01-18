@@ -359,6 +359,36 @@ const dataModule = {
         Vue.set(state.txsInfo[info.txHash], 'tags', info.tags);
       }
     },
+    addTagToTxs(state, info) {
+      for (const txHash of Object.keys(info.txHashes)) {
+        if (!(txHash in state.txsInfo)) {
+          Vue.set(state.txsInfo, txHash, {
+            tags: [info.tag],
+          });
+        } else {
+          const currentTags = state.txsInfo[txHash].tags || [];
+          if (!currentTags.includes(info.tag)) {
+            currentTags.push(info.tag);
+            Vue.set(state.txsInfo[txHash], 'tags', currentTags);
+          }
+        }
+      }
+    },
+    removeTagFromTxs(state, info) {
+      for (const txHash of Object.keys(info.txHashes)) {
+        if (txHash in state.txsInfo) {
+          const currentTags = state.txsInfo[txHash].tags || [];
+          if (currentTags.includes(info.tag)) {
+            const newTags = currentTags.filter(e => e != info.tag);
+            if (newTags.length == 0 && Object.keys(state.txsInfo[txHash]).length == 1) {
+              Vue.delete(state.txsInfo, txHash);
+            } else {
+              Vue.set(state.txsInfo[txHash], 'tags', newTags);
+            }
+          }
+        }
+      }
+    },
     setSyncSection(state, info) {
       state.sync.section = info.section;
       state.sync.total = info.total;
@@ -405,13 +435,19 @@ const dataModule = {
       await context.dispatch('saveData', ['accounts', 'accountsInfo']);
     },
     async deleteAccountAndAccountInfo(context, account) {
-      console.log("deleteAccountAndAccountInfo: " + account);
       await context.commit('deleteAccountAndAccountInfo', account);
       await context.dispatch('saveData', ['accounts', 'accountsInfo']);
     },
     async saveTxTags(context, info) {
-      console.log("action.saveTxTags - txHash: " + info.txHash + ", tags: " + JSON.stringify(info.tags));
       await context.commit('saveTxTags', info);
+      await context.dispatch('saveData', ['txsInfo']);
+    },
+    async addTagToTxs(context, info) {
+      await context.commit('addTagToTxs', info);
+      await context.dispatch('saveData', ['txsInfo']);
+    },
+    async removeTagFromTxs(context, info) {
+      await context.commit('removeTagFromTxs', info);
       await context.dispatch('saveData', ['txsInfo']);
     },
     async setSyncHalt(context, halt) {

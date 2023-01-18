@@ -294,7 +294,7 @@ const Report = {
             <b-form-input type="text" size="sm" v-model.trim="settings.tag" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Enter tag for addition or removal from selected transactions'" placeholder="{tag}"></b-form-input>
           </div>
           <div class="mt-0 pr-1">
-            <b-button size="sm" :disabled="!settings.tag || Object.keys(settings.selectedTransactions).length == 0" @click="syncIt({ sections: ['all'], parameters: [] })" variant="link" v-b-popover.hover.top="'Add tag to selected transactions'">
+            <b-button size="sm" :disabled="!settings.tag || Object.keys(settings.selectedTransactions).length == 0" @click="addTagToTxs(settings.selectedTransactions, settings.tag)" variant="link" v-b-popover.hover.top="'Add tag to selected transactions'">
               <b-iconstack font-scale="1.2">
                 <b-icon stacked icon="square"></b-icon>
                 <b-icon stacked icon="plus"></b-icon>
@@ -302,7 +302,7 @@ const Report = {
             </b-button>
           </div>
           <div class="mt-0 pr-1">
-            <b-button size="sm" :disabled="!settings.tag || Object.keys(settings.selectedTransactions).length == 0" @click="syncIt({ sections: ['all'], parameters: [] })" variant="link" v-b-popover.hover.top="'Remove tag from selected transactions'">
+            <b-button size="sm" :disabled="!settings.tag || Object.keys(settings.selectedTransactions).length == 0" @click="removeTagFromTxs(settings.selectedTransactions, settings.tag)" variant="link" v-b-popover.hover.top="'Remove tag from selected transactions'">
               <b-iconstack font-scale="1.2">
                 <b-icon stacked icon="square"></b-icon>
                 <b-icon stacked icon="dash"></b-icon>
@@ -436,7 +436,7 @@ const Report = {
             </font>
             <!-- <b-form-tags size="sm" @input="saveTxTags" v-model="tags[record.tokenId]" tag-variant="primary" tag-pills separator=" " v-b-popover.hover="'ENTER NEW TAGS'" placeholder="" class="ml-0 mt-1 mw-100"></b-form-tags> -->
             <br />
-            <b-form-tags size="sm" @input="saveTxTags(data.item.txHash, $event)" v-model="data.item.tags" tag-variant="primary" tag-pills separator=" " v-b-popover.hover="'Enter tags'" placeholder="" class="ml-0 mt-1 mw-100"></b-form-tags>
+            <b-form-tags size="sm" :disabled="!settings.taggingMode" @input="saveTxTags(data.item.txHash, $event)" v-model="data.item.tags" tag-variant="primary" tag-pills separator=" " v-b-popover.hover="'Enter tags'" placeholder="" class="ml-0 mt-1"></b-form-tags>
           </template>
           <template #cell(account)="data">
             <b-link @click="showModalAddress(data.item.account);">{{ ensOrAccount(data.item.account) }}</b-link>
@@ -1445,6 +1445,12 @@ const Report = {
     },
     saveTxTags(txHash, tags) {
       store.dispatch('data/saveTxTags', { txHash, tags });
+    },
+    addTagToTxs(txHashes, tag) {
+      store.dispatch('data/addTagToTxs', { txHashes, tag });
+    },
+    removeTagFromTxs(txHashes, tag) {
+      store.dispatch('data/removeTagFromTxs', { txHashes, tag });
     },
     async syncIt(info) {
       store.dispatch('data/syncIt', info);
