@@ -993,141 +993,141 @@ const Assets = {
     },
     filteredAssets() {
       const results = [];
-      let accountFilter = null;
-      if (this.settings.filters.accounts && Object.keys(this.settings.filters.accounts).length > 0) {
-        accountFilter = this.settings.filters.accounts;
-      }
-      let contractFilter = null;
-      if (this.settings.filters.contracts && Object.keys(this.settings.filters.contracts).length > 0) {
-        contractFilter = this.settings.filters.contracts;
-      }
-      let functionSelectorFilter = null;
-      if (this.settings.filters.functionSelectors && Object.keys(this.settings.filters.functionSelectors).length > 0) {
-        functionSelectorFilter = this.settings.filters.functionSelectors;
-      }
-      let typeFilter = null;
-      if (this.settings.filters.types && Object.keys(this.settings.filters.types).length > 0) {
-        typeFilter = this.settings.filters.types;
-      }
-      let actionFilter = null;
-      if (this.settings.filters.actions && Object.keys(this.settings.filters.actions).length > 0) {
-        actionFilter = this.settings.filters.actions;
-      }
-      if (this.report.transactions) {
-        let startPeriod = null;
-        let endPeriod = null;
-        const txhashFilterLower = this.settings.txhashFilter && this.settings.txhashFilter.toLowerCase() || null;
-        const accountFilterLower = this.settings.accountFilter && this.settings.accountFilter.toLowerCase() || null;
-        if (this.settings.period != null && this.settings.period != "nodata") {
-          const periodRecords = this.periodOptionsUnformatted.filter(e => e.value === this.settings.period);
-          if (periodRecords.length > 0) {
-            startPeriod = periodRecords[0].data.startPeriod;
-            endPeriod = periodRecords[0].data.endPeriod;
-          } else {
-            const quarterlyRecords = store.getters['config/quarterlyOptions'].filter(e => e.value == this.settings.period);
-            if (quarterlyRecords.length > 0) {
-              startPeriod = quarterlyRecords[0].data.startPeriod;
-              endPeriod = quarterlyRecords[0].data.endPeriod;
-            }
-          }
-        }
-        for (const [index, transaction] of this.report.transactions.entries()) {
-          let include = true;
-          if (startPeriod != null && transaction.timestamp < startPeriod.unix()) {
-            include = false;
-          }
-          if (include && endPeriod != null && transaction.timestamp > endPeriod.unix()) {
-            include = false;
-          }
-          if (include && txhashFilterLower != null) {
-            if (!(transaction.txHash.includes(txhashFilterLower))) {
-              include = false;
-            }
-          }
-          if (include && accountFilterLower != null) {
-            const fromENS = this.ensMap[transaction.from] || null;
-            const toENS = transaction.to && this.ensMap[transaction.to] || null;
-            if (
-              !(transaction.from.toLowerCase().includes(accountFilterLower)) &&
-              !(transaction.to && transaction.to.toLowerCase().includes(accountFilterLower)) &&
-              !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower)) &&
-              !(toENS != null && toENS.toLowerCase().includes(accountFilterLower))) {
-              include = false;
-            }
-          }
-          if (include && accountFilter != null) {
-            if (!(transaction.account in accountFilter)) {
-              include = false;
-            }
-          }
-          if (include && contractFilter != null) {
-            if (!(transaction.contract in contractFilter)) {
-              include = false;
-            }
-          }
-          if (include && functionSelectorFilter != null) {
-            const tempFunctionSelector = transaction.functionSelector.length > 0 && transaction.functionSelector || "(none)";
-            // console.log("tempFunctionSelector: " + tempFunctionSelector + " in " + JSON.stringify(functionSelectorFilter));
-            if (!(tempFunctionSelector in functionSelectorFilter)) {
-              include = false;
-            }
-          }
-          if (include && typeFilter != null) {
-            const infoType = transaction.info && transaction.info.type || "(unknown)";
-            if (!(infoType in typeFilter)) {
-              include = false;
-            }
-          }
-          if (include && actionFilter != null) {
-            const infoAction = transaction.info && transaction.info.action || "(unknown)";
-            if (!(infoAction in actionFilter)) {
-              include = false;
-            }
-          }
-          if (include && this.settings.junkFilter) {
-            if (this.settings.junkFilter == 'junk' && !transaction.junk) {
-              include = false;
-            } else if (this.settings.junkFilter == 'excludejunk' && transaction.junk) {
-              include = false;
-            }
-          }
-          if (include && this.settings.myTransactionsFilter) {
-            if (this.settings.myTransactionsFilter == 'mine' && transaction.account != transaction.from) {
-              include = false;
-            } else if (this.settings.myTransactionsFilter == 'notmine' && transaction.account == transaction.from) {
-              include = false;
-            }
-          }
-          const txInfo = this.txsInfo[transaction.txHash] || {};
-          if (include) {
-            results.push({
-              // chainId: transaction.chainId,
-              txHash: transaction.txHash,
-              blockNumber: transaction.blockNumber,
-              transactionIndex: transaction.transactionIndex,
-              timestamp: transaction.timestamp,
-              account: transaction.account,
-              nonce: transaction.nonce,
-              from: transaction.from,
-              to: transaction.to,
-              contract: transaction.contract,
-              functionSelector: transaction.functionSelector,
-              functionCall: transaction.functionCall,
-              exchangeRate: transaction.exchangeRate,
-              info: transaction.info,
-              balance: transaction.balance,
-              balanceInReportingCurrency: transaction.balanceInReportingCurrency,
-              expectedBalance: transaction.expectedBalance,
-              diff: transaction.diff,
-              collator: transaction.collator,
-              summary: transaction.summary,
-              myEvents: transaction.myEvents,
-              junk: transaction.junk,
-              tags: txInfo.tags || [],
-            });
-          }
-        }
-      }
+      // let accountFilter = null;
+      // if (this.settings.filters.accounts && Object.keys(this.settings.filters.accounts).length > 0) {
+      //   accountFilter = this.settings.filters.accounts;
+      // }
+      // let contractFilter = null;
+      // if (this.settings.filters.contracts && Object.keys(this.settings.filters.contracts).length > 0) {
+      //   contractFilter = this.settings.filters.contracts;
+      // }
+      // let functionSelectorFilter = null;
+      // if (this.settings.filters.functionSelectors && Object.keys(this.settings.filters.functionSelectors).length > 0) {
+      //   functionSelectorFilter = this.settings.filters.functionSelectors;
+      // }
+      // let typeFilter = null;
+      // if (this.settings.filters.types && Object.keys(this.settings.filters.types).length > 0) {
+      //   typeFilter = this.settings.filters.types;
+      // }
+      // let actionFilter = null;
+      // if (this.settings.filters.actions && Object.keys(this.settings.filters.actions).length > 0) {
+      //   actionFilter = this.settings.filters.actions;
+      // }
+      // if (this.report.transactions) {
+      //   let startPeriod = null;
+      //   let endPeriod = null;
+      //   const txhashFilterLower = this.settings.txhashFilter && this.settings.txhashFilter.toLowerCase() || null;
+      //   const accountFilterLower = this.settings.accountFilter && this.settings.accountFilter.toLowerCase() || null;
+      //   if (this.settings.period != null && this.settings.period != "nodata") {
+      //     const periodRecords = this.periodOptionsUnformatted.filter(e => e.value === this.settings.period);
+      //     if (periodRecords.length > 0) {
+      //       startPeriod = periodRecords[0].data.startPeriod;
+      //       endPeriod = periodRecords[0].data.endPeriod;
+      //     } else {
+      //       const quarterlyRecords = store.getters['config/quarterlyOptions'].filter(e => e.value == this.settings.period);
+      //       if (quarterlyRecords.length > 0) {
+      //         startPeriod = quarterlyRecords[0].data.startPeriod;
+      //         endPeriod = quarterlyRecords[0].data.endPeriod;
+      //       }
+      //     }
+      //   }
+      //   for (const [index, transaction] of this.report.transactions.entries()) {
+      //     let include = true;
+      //     if (startPeriod != null && transaction.timestamp < startPeriod.unix()) {
+      //       include = false;
+      //     }
+      //     if (include && endPeriod != null && transaction.timestamp > endPeriod.unix()) {
+      //       include = false;
+      //     }
+      //     if (include && txhashFilterLower != null) {
+      //       if (!(transaction.txHash.includes(txhashFilterLower))) {
+      //         include = false;
+      //       }
+      //     }
+      //     if (include && accountFilterLower != null) {
+      //       const fromENS = this.ensMap[transaction.from] || null;
+      //       const toENS = transaction.to && this.ensMap[transaction.to] || null;
+      //       if (
+      //         !(transaction.from.toLowerCase().includes(accountFilterLower)) &&
+      //         !(transaction.to && transaction.to.toLowerCase().includes(accountFilterLower)) &&
+      //         !(fromENS != null && fromENS.toLowerCase().includes(accountFilterLower)) &&
+      //         !(toENS != null && toENS.toLowerCase().includes(accountFilterLower))) {
+      //         include = false;
+      //       }
+      //     }
+      //     if (include && accountFilter != null) {
+      //       if (!(transaction.account in accountFilter)) {
+      //         include = false;
+      //       }
+      //     }
+      //     if (include && contractFilter != null) {
+      //       if (!(transaction.contract in contractFilter)) {
+      //         include = false;
+      //       }
+      //     }
+      //     if (include && functionSelectorFilter != null) {
+      //       const tempFunctionSelector = transaction.functionSelector.length > 0 && transaction.functionSelector || "(none)";
+      //       // console.log("tempFunctionSelector: " + tempFunctionSelector + " in " + JSON.stringify(functionSelectorFilter));
+      //       if (!(tempFunctionSelector in functionSelectorFilter)) {
+      //         include = false;
+      //       }
+      //     }
+      //     if (include && typeFilter != null) {
+      //       const infoType = transaction.info && transaction.info.type || "(unknown)";
+      //       if (!(infoType in typeFilter)) {
+      //         include = false;
+      //       }
+      //     }
+      //     if (include && actionFilter != null) {
+      //       const infoAction = transaction.info && transaction.info.action || "(unknown)";
+      //       if (!(infoAction in actionFilter)) {
+      //         include = false;
+      //       }
+      //     }
+      //     if (include && this.settings.junkFilter) {
+      //       if (this.settings.junkFilter == 'junk' && !transaction.junk) {
+      //         include = false;
+      //       } else if (this.settings.junkFilter == 'excludejunk' && transaction.junk) {
+      //         include = false;
+      //       }
+      //     }
+      //     if (include && this.settings.myTransactionsFilter) {
+      //       if (this.settings.myTransactionsFilter == 'mine' && transaction.account != transaction.from) {
+      //         include = false;
+      //       } else if (this.settings.myTransactionsFilter == 'notmine' && transaction.account == transaction.from) {
+      //         include = false;
+      //       }
+      //     }
+      //     const txInfo = this.txsInfo[transaction.txHash] || {};
+      //     if (include) {
+      //       results.push({
+      //         // chainId: transaction.chainId,
+      //         txHash: transaction.txHash,
+      //         blockNumber: transaction.blockNumber,
+      //         transactionIndex: transaction.transactionIndex,
+      //         timestamp: transaction.timestamp,
+      //         account: transaction.account,
+      //         nonce: transaction.nonce,
+      //         from: transaction.from,
+      //         to: transaction.to,
+      //         contract: transaction.contract,
+      //         functionSelector: transaction.functionSelector,
+      //         functionCall: transaction.functionCall,
+      //         exchangeRate: transaction.exchangeRate,
+      //         info: transaction.info,
+      //         balance: transaction.balance,
+      //         balanceInReportingCurrency: transaction.balanceInReportingCurrency,
+      //         expectedBalance: transaction.expectedBalance,
+      //         diff: transaction.diff,
+      //         collator: transaction.collator,
+      //         summary: transaction.summary,
+      //         myEvents: transaction.myEvents,
+      //         junk: transaction.junk,
+      //         tags: txInfo.tags || [],
+      //       });
+      //     }
+      //   }
+      // }
       return results;
     },
     filteredSortedAssets() {
@@ -1169,32 +1169,38 @@ const Assets = {
       //     }
       //   });
       // }
+      for (const [account, accountData] of Object.entries(this.accounts)) {
+        if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
+          results.push({ account, type: accountData.type, name: accountData.name });          
+        }
+      }
       return results;
     },
     pagedFilteredSortedAssets() {
       const data = this.filteredSortedAssets.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
-      const results = [];
-      for (const [itemIndex, item] of data.entries()) {
-        let newMyEvents = [];
-        for (const [eventIndex, event] of item.myEvents.entries()) {
-          if (event.type == 'erc20' || event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
-            const tokenContract = this.report.tokens[event.contract] || {};
-            const token = tokenContract.ids && tokenContract.ids[event.tokenId] || {};
-            newMyEvents.push({
-              ...event,
-              contractName: tokenContract && tokenContract.name || null,
-              decimals: tokenContract && tokenContract.decimals || null,
-              tokenName: token.name || null,
-              tokenImage: token.image || null,
-            });
-          } else {
-            newMyEvents.push(event);
-          }
-        }
-        results.push({...item, myEvents: newMyEvents });
-      }
+      return data;
+      // const results = [];
+      // for (const [itemIndex, item] of data.entries()) {
+      //   let newMyEvents = [];
+      //   for (const [eventIndex, event] of item.myEvents.entries()) {
+      //     if (event.type == 'erc20' || event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
+      //       const tokenContract = this.report.tokens[event.contract] || {};
+      //       const token = tokenContract.ids && tokenContract.ids[event.tokenId] || {};
+      //       newMyEvents.push({
+      //         ...event,
+      //         contractName: tokenContract && tokenContract.name || null,
+      //         decimals: tokenContract && tokenContract.decimals || null,
+      //         tokenName: token.name || null,
+      //         tokenImage: token.image || null,
+      //       });
+      //     } else {
+      //       newMyEvents.push(event);
+      //     }
+      //   }
+      //   results.push({...item, myEvents: newMyEvents });
+      // }
       // console.log(JSON.stringify(results, null, 2));
-      return results;
+      // return results;
     },
     getAllAccounts() {
       const accountsMap = {};
