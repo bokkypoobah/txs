@@ -1183,7 +1183,7 @@ const Assets = {
         if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
           // console.log(account + " => " + JSON.stringify(accountData, null, 2));
           for (const [tokenId, tokenData] of Object.entries(accountData.assets)) {
-            results.push({ account, type: accountData.type, collectionName: accountData.name, tokenId, name: tokenData.name, image: tokenData.image });
+            results.push({ collection: account, type: accountData.type, collectionName: accountData.name, tokenId, name: tokenData.name, image: tokenData.image });
             console.log("  " + tokenId + " => " + JSON.stringify(tokenData));
           }
         }
