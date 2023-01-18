@@ -15,6 +15,10 @@ const routes = [{
     component: Accounts,
     name: 'Accounts',
   }, {
+    path: '/assets',
+    component: Assets,
+    name: 'Assets',
+  }, {
     path: '/report/:contractOrTxOrBlockRange?',
     component: Report,
     name: 'Report',
