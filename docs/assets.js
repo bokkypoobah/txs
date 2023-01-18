@@ -278,10 +278,10 @@ const Assets = {
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedTransactions.length + '/' + totalTransactions }}</font>
+            <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedAssets.length + '/' + totalTransactions }}</font>
           </div>
           <div class="mt-0 pr-1">
-            <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedTransactions.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
+            <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedAssets.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
           </div>
           <div class="mt-0 pl-1">
             <b-form-select size="sm" v-model="settings.pageSize" @change="saveSettings" :options="pageSizes" v-b-popover.hover.top="'Page size'"></b-form-select>
@@ -386,7 +386,9 @@ const Assets = {
           </div>
         </div>
 
-        <b-table v-if="false" small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedTransactions" show-empty head-variant="light" class="m-0 mt-1">
+        <b-table small fixed striped responsive hover :items="pagedFilteredSortedAssets" show-empty head-variant="light" class="m-0 mt-1">
+        </b-table>
+        <b-table v-if="false" small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedAssets" show-empty head-variant="light" class="m-0 mt-1">
           <template #empty="scope">
             <h6>{{ scope.emptyText }}</h6>
             <div v-if="totalTransactions == 0">
@@ -418,8 +420,8 @@ const Assets = {
               <template #button-content>
                 <b-icon-check-square shift-v="+1" font-scale="0.9"></b-icon-check-square>
               </template>
-              <b-dropdown-item href="#" @click="toggleSelectedTransactions(pagedFilteredSortedTransactions)">Toggle selection for all transactions on this page</b-dropdown-item>
-              <b-dropdown-item href="#" @click="toggleSelectedTransactions(filteredSortedTransactions)">Toggle selection for all transactions on all pages</b-dropdown-item>
+              <b-dropdown-item href="#" @click="toggleSelectedTransactions(pagedFilteredSortedAssets)">Toggle selection for all transactions on this page</b-dropdown-item>
+              <b-dropdown-item href="#" @click="toggleSelectedTransactions(filteredSortedAssets)">Toggle selection for all transactions on all pages</b-dropdown-item>
               <b-dropdown-item href="#" @click="clearSelectedTransactions()">Clear selection</b-dropdown-item>
             </b-dropdown>
           </template>
@@ -989,7 +991,7 @@ const Assets = {
     totalTransactions() {
       return this.report.transactions && this.report.transactions.length || 0;
     },
-    filteredTransactions() {
+    filteredAssets() {
       const results = [];
       let accountFilter = null;
       if (this.settings.filters.accounts && Object.keys(this.settings.filters.accounts).length > 0) {
@@ -1128,49 +1130,49 @@ const Assets = {
       }
       return results;
     },
-    filteredSortedTransactions() {
-      const results = this.filteredTransactions;
-      if (this.settings.sortOption == 'timestampasc') {
-        results.sort((a, b) => a.timestamp - b.timestamp);
-      } else if (this.settings.sortOption == 'timestampdsc') {
-        results.sort((a, b) => b.timestamp - a.timestamp);
-      } else if (this.settings.sortOption == 'blocknumberasc') {
-        results.sort((a, b) => {
-          if (a.blockNumber == b.blockNumber) {
-            return a.transactionIndex - b.transactionIndex;
-          } else {
-            return a.blockNumber - b.blockNumber;
-          }
-        });
-      } else if (this.settings.sortOption == 'blocknumberdsc') {
-        results.sort((a, b) => {
-          if (a.blockNumber == b.blockNumber) {
-            return b.transactionIndex - a.transactionIndex;
-          } else {
-            return b.blockNumber - a.blockNumber
-          }
-        });
-      } else if (this.settings.sortOption == 'functioncallcontractblocknumberasc') {
-        results.sort((a, b) => {
-          if (('' + a.functionCall).localeCompare(b.functionCall) == 0) {
-            if (('' + a.contract).localeCompare(b.contract) == 0) {
-              if (a.blockNumber == b.blockNumber) {
-                return a.transactionIndex - b.transactionIndex;
-              } else {
-                return a.blockNumber - b.blockNumber;
-              }
-            } else {
-              return ('' + a.contract).localeCompare(b.contract);
-            }
-          } else {
-            return ('' + a.functionCall).localeCompare(b.functionCall);
-          }
-        });
-      }
+    filteredSortedAssets() {
+      const results = this.filteredAssets;
+      // if (this.settings.sortOption == 'timestampasc') {
+      //   results.sort((a, b) => a.timestamp - b.timestamp);
+      // } else if (this.settings.sortOption == 'timestampdsc') {
+      //   results.sort((a, b) => b.timestamp - a.timestamp);
+      // } else if (this.settings.sortOption == 'blocknumberasc') {
+      //   results.sort((a, b) => {
+      //     if (a.blockNumber == b.blockNumber) {
+      //       return a.transactionIndex - b.transactionIndex;
+      //     } else {
+      //       return a.blockNumber - b.blockNumber;
+      //     }
+      //   });
+      // } else if (this.settings.sortOption == 'blocknumberdsc') {
+      //   results.sort((a, b) => {
+      //     if (a.blockNumber == b.blockNumber) {
+      //       return b.transactionIndex - a.transactionIndex;
+      //     } else {
+      //       return b.blockNumber - a.blockNumber
+      //     }
+      //   });
+      // } else if (this.settings.sortOption == 'functioncallcontractblocknumberasc') {
+      //   results.sort((a, b) => {
+      //     if (('' + a.functionCall).localeCompare(b.functionCall) == 0) {
+      //       if (('' + a.contract).localeCompare(b.contract) == 0) {
+      //         if (a.blockNumber == b.blockNumber) {
+      //           return a.transactionIndex - b.transactionIndex;
+      //         } else {
+      //           return a.blockNumber - b.blockNumber;
+      //         }
+      //       } else {
+      //         return ('' + a.contract).localeCompare(b.contract);
+      //       }
+      //     } else {
+      //       return ('' + a.functionCall).localeCompare(b.functionCall);
+      //     }
+      //   });
+      // }
       return results;
     },
-    pagedFilteredSortedTransactions() {
-      const data = this.filteredSortedTransactions.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
+    pagedFilteredSortedAssets() {
+      const data = this.filteredSortedAssets.slice((this.settings.currentPage - 1) * this.settings.pageSize, this.settings.currentPage * this.settings.pageSize);
       const results = [];
       for (const [itemIndex, item] of data.entries()) {
         let newMyEvents = [];
@@ -1196,7 +1198,7 @@ const Assets = {
     },
     getAllAccounts() {
       const accountsMap = {};
-      for (const transaction of this.filteredTransactions) {
+      for (const transaction of this.filteredAssets) {
         if (!(transaction.account in accountsMap)) {
           accountsMap[transaction.account] = 0;
         }
@@ -1227,7 +1229,7 @@ const Assets = {
     },
     getAllContracts() {
       const contractsMap = {};
-      for (const transaction of this.filteredTransactions) {
+      for (const transaction of this.filteredAssets) {
         if (!(transaction.contract in contractsMap)) {
           contractsMap[transaction.contract] = 0;
         }
@@ -1258,7 +1260,7 @@ const Assets = {
     },
     getAllTypes() {
       const typesMap = {};
-      for (const transaction of this.filteredTransactions) {
+      for (const transaction of this.filteredAssets) {
         const t = transaction.info.type && transaction.info.type.length > 0 && transaction.info.type || "(unknown)";
         typesMap[t] = (t in typesMap) ? parseInt(typesMap[t]) + 1 : 1;
       }
@@ -1287,7 +1289,7 @@ const Assets = {
     },
     getAllActions() {
       const actionsMap = {};
-      for (const transaction of this.filteredTransactions) {
+      for (const transaction of this.filteredAssets) {
         const a = transaction.info.action && transaction.info.action.length > 0 && transaction.info.action || "(unknown)";
         actionsMap[a] = (a in actionsMap) ? parseInt(actionsMap[a]) + 1 : 1;
       }
@@ -1316,7 +1318,7 @@ const Assets = {
     },
     getFunctionSelectors() {
       const collator = {};
-      for (const transaction of this.filteredTransactions) {
+      for (const transaction of this.filteredAssets) {
         if (!(transaction.functionSelector in collator)) {
           collator[transaction.functionSelector] = {
             functionCall: transaction.functionCall,
@@ -1562,7 +1564,7 @@ const Assets = {
           ["No", "TxHash", "From", "FromENS", "To", "ToENS", "FunctionName", "InputFragment"],
       ];
       let i = 1;
-      for (const result of this.filteredSortedTransactions) {
+      for (const result of this.filteredSortedAssets) {
         const fromENS = this.ensMap[result.from] || null;
         rows.push([
           i,
