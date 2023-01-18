@@ -108,20 +108,20 @@ const Assets = {
           <p>{{ modalENS }}</p>
         </b-modal>
 
-        <div v-if="false" class="d-flex flex-wrap m-0 p-0">
-          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
+        <div class="d-flex flex-wrap m-0 p-0">
+          <div v-if="false" class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input>
           </div>
-          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
+          <div v-if="false" class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-input type="text" size="sm" v-model.trim="settings.accountFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by address fragment'" placeholder="🔍 address"></b-form-input>
           </div>
           <div v-if="false" class="mt-0 pr-1">
             <b-form-select size="sm" v-model="settings.accountTypeFilter" @change="saveSettings" :options="accountTypeFilters" v-b-popover.hover.top="'Filter by account types'"></b-form-select>
           </div>
-          <div class="mt-0 pr-1" style="max-width: 14.0rem;">
+          <div v-if="false" class="mt-0 pr-1" style="max-width: 14.0rem;">
             <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
           </div>
-          <div class="mt-0 pr-1">
+          <div v-if="false" class="mt-0 pr-1">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myTransactionsFilter == null ? 'All transactions' : (settings.myTransactionsFilter == 'mine' ? 'My transactions' : 'Other transactions')">
               <template #button-content>
                 <span v-if="settings.myTransactionsFilter == null">
@@ -172,7 +172,7 @@ const Assets = {
               </b-dropdown-item>
             </b-dropdown>
           </div>
-          <div class="mt-0 pr-1">
+          <div v-if="false" class="mt-0 pr-1">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'">
               <template #button-content>
                 <span v-if="settings.junkFilter == 'excludejunk'">
@@ -215,10 +215,10 @@ const Assets = {
               </b-dropdown-item>
             </b-dropdown>
           </div>
-          <div class="mt-0 pr-1">
+          <div v-if="false" class="mt-0 pr-1">
             <b-button size="sm" :pressed.sync="settings.showAdditionalFilters" @click="saveSettings" variant="link" v-b-popover.hover.top="'Additional filters'"><span v-if="settings.showAdditionalFilters"><b-icon-funnel-fill shift-v="+1" font-scale="1.0"></b-icon-funnel-fill></span><span v-else><b-icon-funnel shift-v="+1" font-scale="1.0"></b-icon-funnel></span></b-button>
           </div>
-          <div v-if="Object.keys(settings.filters).length > 0" class="mt-0 pr-1">
+          <div v-if="false && Object.keys(settings.filters).length > 0" class="mt-0 pr-1">
             <b-button size="sm" @click="resetAdditionalFilters();" variant="link" class="m-0 p-0" v-b-popover.hover.top="'Reset additional filters'">
               <b-iconstack shift-v="-1" font-scale="1">
                 <b-icon stacked icon="funnel-fill" variant="info" scale="1"></b-icon>
@@ -226,12 +226,12 @@ const Assets = {
               </b-iconstack>
             </b-button>
           </div>
-          <div class="mt-0 pr-1">
+          <div v-if="false" class="mt-0 pr-1">
             <b-button size="sm" :pressed.sync="settings.taggingMode" @click="saveSettings" variant="link" v-b-popover.hover.top="'Manage Tags'"><span v-if="settings.taggingMode"><b-icon-archive-fill shift-v="+1" font-scale="1.0"></b-icon-archive-fill></span><span v-else><b-icon-archive shift-v="+1" font-scale="1.0"></b-icon-archive></span></b-button>
           </div>
           <div class="mt-0 flex-grow-1">
           </div>
-          <div v-if="sync.section == null" class="mt-0 pr-1">
+          <div v-if="false && sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['all'], parameters: [] })" variant="link" v-b-popover.hover.top="'Import Etherscan transactions and web3 transfer events for accounts configured to be synced'"><b-icon-cloud-download shift-v="+1" font-scale="1.2"></b-icon-cloud-download></b-button>
           </div>
           <!--
@@ -244,7 +244,7 @@ const Assets = {
             <b-button size="sm" :disabled="block == null" @click="syncIt({ sections: ['getExchangeRates'], parameters: [] })" variant="link" v-b-popover.hover.top="'Get exchange rates'"><b-icon-bar-chart shift-v="+1" font-scale="1.2"></b-icon-bar-chart></b-button>
           </div>
           -->
-          <div v-if="sync.section == null" class="mt-0 pr-1">
+          <div v-if="false && sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" :disabled="block == null" @click="generateReport(contractOrTxOrBlockRange)" variant="link" v-b-popover.hover.top="'Generate Report'"><b-icon-newspaper shift-v="+1" font-scale="1.2"></b-icon-newspaper></b-button>
           </div>
           <!--
@@ -252,33 +252,33 @@ const Assets = {
             <b-button size="sm" @click="syncIt({ sections: ['computeTxs'], parameters: Object.keys(settings.selectedTransactions) })" variant="link" v-b-popover.hover.top="'Compute selected transactions'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
           </div>
           -->
-          <div v-if="sync.section == null" class="mt-0 pr-1">
+          <div v-if="false && sync.section == null" class="mt-0 pr-1">
             <b-button size="sm" @click="exportTransactions" variant="link" v-b-popover.hover.top="'Export transactions'"><b-icon-file-earmark-spreadsheet shift-v="+1" font-scale="1.2"></b-icon-file-earmark-spreadsheet></b-button>
           </div>
-          <div v-if="sync.section != null" class="mt-1" style="width: 200px;">
+          <div v-if="false && sync.section != null" class="mt-1" style="width: 200px;">
             <b-progress height="1.5rem" :max="sync.total" show-progress :animated="sync.section != null" :variant="sync.section != null ? 'success' : 'secondary'" v-b-popover.hover.top="'Click the button on the right to stop. This process can be continued later'">
               <b-progress-bar :value="sync.completed">
                 {{ sync.total == null ? (sync.completed + ' ' + sync.section) : (sync.completed + '/' + sync.total + ' ' + ((sync.completed / sync.total) * 100).toFixed(0) + '% ' + sync.section) }}
               </b-progress-bar>
             </b-progress>
           </div>
-          <div class="ml-0 mt-1">
+          <div v-if="false" class="ml-0 mt-1">
             <b-button v-if="sync.section != null" size="sm" @click="halt" variant="link" v-b-popover.hover.top="'Click to stop. This process can be continued later'"><b-icon-stop-fill shift-v="+1" font-scale="1.0"></b-icon-stop-fill></b-button>
           </div>
           <!--
-          <div class="mt-0 flex-grow-1">
+          <div v-if="false" class="mt-0 flex-grow-1">
           </div>
-          <div class="mt-0 pr-1">
+          <div v-if="false" class="mt-0 pr-1">
             <b-button size="sm" @click="exportAddresses" variant="link">Export</b-button>
           </div>
           -->
           <div class="mt-0 flex-grow-1">
           </div>
-          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
+          <div v-if="false" class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
-            <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedAssets.length + '/' + totalTransactions }}</font>
+            <font size="-2" v-b-popover.hover.top="'# transactions'">{{ filteredSortedAssets.length + '/' + totalAssets }}</font>
           </div>
           <div class="mt-0 pr-1">
             <b-pagination size="sm" v-model="settings.currentPage" @input="saveSettings" :total-rows="filteredSortedAssets.length" :per-page="settings.pageSize" style="height: 0;"></b-pagination>
@@ -395,7 +395,7 @@ const Assets = {
         <b-table v-if="false" small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedAssets" show-empty head-variant="light" class="m-0 mt-1">
           <template #empty="scope">
             <h6>{{ scope.emptyText }}</h6>
-            <div v-if="totalTransactions == 0">
+            <div v-if="totalAssets == 0">
               <ul>
                 <li>
                   Enter your account(s) in the Accounts tab
@@ -992,8 +992,14 @@ const Assets = {
     coinbaseIncluded() {
       return (this.coinbase in this.accounts);
     },
-    totalTransactions() {
-      return this.report.transactions && this.report.transactions.length || 0;
+    totalAssets() {
+      let result = 0;
+      for (const [account, accountData] of Object.entries(this.accounts)) {
+        if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
+          result += Object.keys(accountData.assets).length;
+        }
+      }
+      return result;
     },
     filteredAssets() {
       const results = [];
