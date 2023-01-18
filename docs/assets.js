@@ -931,16 +931,18 @@ const Assets = {
         { key: 'collection', label: 'Collection', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
         { key: 'tokenId', label: 'TokenId', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
         { key: 'image', label: 'Image', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        { key: 'owner', label: 'Owner', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
         { key: 'events', label: 'Events', sortable: false, thStyle: 'width: 55%;', tdClass: 'text-truncate' },
       ],
       eventsFields: [
         // { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
-        { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
+        { key: 'timestamp', label: 'When', sortable: false, thStyle: 'width: 20%;', tdClass: 'text-truncate' },
         // { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
         // { key: 'logIndex', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
-        { key: 'from', label: 'From', thStyle: 'width: 15%;' },
-        { key: 'to', label: 'To', thStyle: 'width: 15%;' },
-        { key: 'notes', label: 'Notes', thStyle: 'width: 15%;' },
+        { key: 'from', label: 'From', thStyle: 'width: 20%;' },
+        { key: 'to', label: 'To', thStyle: 'width: 20%;' },
+        { key: 'price', label: 'Price', thStyle: 'width: 20%;' },
+        { key: 'notes', label: 'Notes', thStyle: 'width: 20%;' },
         // { key: 'contract', label: 'Token', thStyle: 'width: 15%;' },
         // { key: 'tokenIdOrTokens', label: 'TokenId/Tokens', sortable: true, thStyle: 'width: 35%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
@@ -1236,6 +1238,7 @@ const Assets = {
                 return a.blockNumber - b.blockNumber;
               }
             });
+            const owner = events.length == 0 ? null : events[events.length - 1].to;
             results.push({
               collection: account,
               type: accountData.type,
@@ -1245,6 +1248,7 @@ const Assets = {
               tokens: accountData.type == 'erc1155' && tokenData.tokens || null,
               name: tokenData.name,
               image: tokenData.image,
+              owner,
               events: events,
             });
           }
