@@ -387,7 +387,11 @@ const Assets = {
         </div>
 
         <b-table small fixed striped responsive hover :items="pagedFilteredSortedAssets" show-empty head-variant="light" class="m-0 mt-1">
+          <template #cell(image)="data">
+            <b-avatar rounded variant="light" size="3.0rem" :src="data.item.image" v-b-popover.hover="data.item.tokenId + ':' + data.item.name"></b-avatar>
+          </template>
         </b-table>
+
         <b-table v-if="false" small fixed striped responsive hover :fields="transactionsFields" :items="pagedFilteredSortedAssets" show-empty head-variant="light" class="m-0 mt-1">
           <template #empty="scope">
             <h6>{{ scope.emptyText }}</h6>
