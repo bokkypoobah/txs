@@ -807,7 +807,7 @@ const Assets = {
         taggingMode: false,
         tag: null,
         filters: {},
-        version: 5,
+        version: 0,
       },
       modalAddress: null,
       modalTx: {
@@ -1171,7 +1171,11 @@ const Assets = {
       // }
       for (const [account, accountData] of Object.entries(this.accounts)) {
         if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
-          results.push({ account, type: accountData.type, name: accountData.name });          
+          // console.log(account + " => " + JSON.stringify(accountData, null, 2));
+          for (const [tokenId, tokenData] of Object.entries(accountData.assets)) {
+            results.push({ account, type: accountData.type, collectionName: accountData.name, tokenId, name: tokenData.name, image: tokenData.image });
+            console.log("  " + tokenId + " => " + JSON.stringify(tokenData));
+          }
         }
       }
       return results;
@@ -1399,7 +1403,7 @@ const Assets = {
     },
     saveSettings() {
       // console.log("saveSettings: " + JSON.stringify(this.settings));
-      localStorage.reportSettings = JSON.stringify(this.settings);
+      localStorage.assetsSettings = JSON.stringify(this.settings);
     },
     generateReport(contractOrTxOrBlockRange) {
       store.dispatch('report/generateReport', contractOrTxOrBlockRange);
@@ -1422,11 +1426,11 @@ const Assets = {
       } else {
         Vue.set(this.settings.filters[dataType], option, true);
       }
-      localStorage.reportSettings = JSON.stringify(this.settings);
+      localStorage.assetsSettings = JSON.stringify(this.settings);
     },
     resetAdditionalFilters() {
       Vue.set(this.settings, 'filters', {});
-      localStorage.reportSettings = JSON.stringify(this.settings);
+      localStorage.assetsSettings = JSON.stringify(this.settings);
     },
     toggleSelectedTransactions(items) {
       let someFalse = false;
@@ -1610,9 +1614,9 @@ const Assets = {
     logInfo("Assets", "mounted() $route: " + JSON.stringify(this.$route.params) + ", props['contractOrTxOrBlockRange']: " + (this.contractOrTxOrBlockRange || 'no parameters'));
     store.dispatch('data/restoreState');
     store.dispatch('report/restoreState');
-    if ('reportSettings' in localStorage) {
-      const tempSettings = JSON.parse(localStorage.reportSettings);
-      if ('version' in tempSettings && tempSettings.version == 5) {
+    if ('assetsSettings' in localStorage) {
+      const tempSettings = JSON.parse(localStorage.assetsSettings);
+      if ('version' in tempSettings && tempSettings.version == 0) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
