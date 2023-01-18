@@ -1762,6 +1762,7 @@ const reportModule = {
                 let newEvent;
                 if (event.type == 'erc20' || event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
                   const tokenContract = allAccounts[event.contract] || {};
+                  console.log(tx.tx.hash + "." + event.logIndex + " " + event.contract + " " + event.tokenId + " " + event.from + " " + event.to);
                   if (!(event.contract in tokens)) {
                     // console.log("tokenContract: " + JSON.stringify(tokenContract));
                     tokens[event.contract] = {

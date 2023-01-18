@@ -107,7 +107,7 @@ const dataModule = {
       halt: false,
     },
     db: {
-      name: "txs093b",
+      name: "txs093c",
       version: 1,
       schemaDefinition: {
         cache: '&objectName',
@@ -268,21 +268,46 @@ const dataModule = {
         Vue.set(state.accounts[contract].erc20transfers[transfer.txHash], transfer.logIndex, tempTransfer);
       }
     },
-    addAccountTokenEvent(state, event) {
-      const contractData = state.accounts[event.contract];
-      const asset = contractData.assets[event.tokenId];
-      if (!(event.txHash in asset.events)) {
-        Vue.set(state.accounts[event.contract].assets[event.tokenId].events, event.txHash, {});
+    addAccountTokenEvents(state, info) {
+      // console.log("addAccountTokenEvents: " + info.txHash + " " + JSON.stringify(info.events, null, 2));
+      for (const [eventIndex, event] of info.events.entries()) {
+        if (event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
+          // console.log(eventIndex + " " + JSON.stringify(event));
+          const contractData = state.accounts[event.contract] || {};
+          if (contractData.assets[event.tokenId]) {
+            if (!(info.txHash in contractData.assets[event.tokenId].events)) {
+              Vue.set(state.accounts[event.contract].assets[event.tokenId].events, info.txHash, {
+                blockNumber: info.blockNumber,
+                timestamp: info.timestamp,
+                logs: {},
+              });
+            }
+            if (!(event.logIndex in state.accounts[event.contract].assets[event.tokenId].events[info.txHash].logs)) {
+              Vue.set(state.accounts[event.contract].assets[event.tokenId].events[info.txHash].logs, event.logIndex, {
+                // txHash: info.txHash,
+                from: event.from,
+                to: event.to,
+                value: event.value || null,
+              });
+            }
+            // console.log("contractData.assets[event.tokenId]: " + JSON.stringify(contractData.assets[event.tokenId], null, 2));
+          }
+          // console.log(txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
+        }
       }
-      if (!(event.logIndex in asset.events[event.txHash])) {
-        Vue.set(state.accounts[event.contract].assets[event.tokenId].events[event.txHash], event.logIndex, {
-          blockNumber: event.blockNumber,
-          timestamp: event.timestamp,
-          from: event.from,
-          to: event.to,
-          value: event.value && event.value || null,
-        });
-      }
+
+      // if (!(event.txHash in asset.events)) {
+      //   Vue.set(state.accounts[event.contract].assets[event.tokenId].events, event.txHash, {});
+      // }
+      // if (!(event.logIndex in asset.events[event.txHash])) {
+      //   Vue.set(state.accounts[event.contract].assets[event.tokenId].events[event.txHash], event.logIndex, {
+      //     blockNumber: event.blockNumber,
+      //     timestamp: event.timestamp,
+      //     from: event.from,
+      //     to: event.to,
+      //     value: event.value && event.value || null,
+      //   });
+      // }
     },
     addBlock(state, info) {
       const [blockNumber, timestamp, account, asset, balance] = [info.blockNumber, info.timestamp, info.account, info.asset, info.balance];
@@ -573,7 +598,7 @@ const dataModule = {
         if (section == "syncBuildTokens" || section == "all") {
           await context.dispatch('syncBuildTokens', parameter);
         }
-        if (section == "syncBuildTokenEvents" || section == "xall") {
+        if (section == "syncBuildTokenEvents" || section == "all") {
           await context.dispatch('syncBuildTokenEvents', parameter);
         }
         if (section == "syncImportExchangeRates" || section == "all") {
@@ -1160,69 +1185,74 @@ const dataModule = {
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       const preERC721s = store.getters['config/settings'].preERC721s;
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
-        console.log("actions.syncBuildTokens: " + accountIndex + " " + account);
+        console.log("actions.syncBuildTokenEvents: " + accountIndex + " " + account);
         const accountData = context.state.accounts[account] || {};
         const txHashesByBlocks = getTxHashesByBlocks(account, context.state.accounts, context.state.accountsInfo, parameter.processFilters);
         if (!context.state.sync.halt) {
-          const missingTokensMap = {};
+          const missingTokenEventsMap = {};
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
+            const block = context.state.blocks[blockNumber] || null;
+            const timestamp = block && block.timestamp || null;
             for (const [index, txHash] of Object.keys(txHashes).entries()) {
               const txData = context.state.txs[txHash] || null;
               if (txData != null) {
-                const events = getEvents(account, accounts, context.state.eventSelectors, preERC721s, txData);
-                const results = parseTx(account, accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
-                for (const [eventIndex, eventItem] of events.myEvents.entries()) {
-                  if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
-                    const tokenContract = accounts[eventItem.contract] || {};
-                    console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
-                    if (!(eventItem.tokenId in tokenContract.assets)) {
-                      if (!(eventItem.contract in missingTokensMap)) {
-                        missingTokensMap[eventItem.contract] = {};
-                      }
-                      if (!(eventItem.tokenId in missingTokensMap[eventItem.contract])) {
-                        missingTokensMap[eventItem.contract][eventItem.tokenId] = true;
-                      }
-                    }
-                  }
-                }
+                const events = getEvents(account, context.state.accounts, context.state.eventSelectors, preERC721s, txData);
+                context.commit('addAccountTokenEvents', { txHash, blockNumber, timestamp, events: events.myEvents });
+                // const results = parseTx(account, accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
+                // for (const [eventIndex, eventItem] of events.myEvents.entries()) {
+                //   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
+                //     const tokenContract = context.state.accounts[eventItem.contract] || {};
+                //     console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
+                //     // if (!(eventItem.tokenId in tokenContract.assets)) {
+                //     //   if (!(eventItem.contract in missingTokenEventsMap)) {
+                //     //     missingTokenEventsMap[eventItem.contract] = {};
+                //     //   }
+                //     //   if (!(eventItem.tokenId in missingTokenEventsMap[eventItem.contract])) {
+                //     //     missingTokenEventsMap[eventItem.contract][eventItem.tokenId] = true;
+                //     //   }
+                //     // }
+                //   }
+                // }
               }
             }
           }
           let totalItems = 0;
           const missingTokensList = [];
-          for (const [tokenContract, tokenIds] of Object.entries(missingTokensMap)) {
-            totalItems += Object.keys(tokenIds).length;
-            for (let tokenId of Object.keys(tokenIds)) {
-              missingTokensList.push({ tokenContract, tokenId });
-            }
-          }
-          context.commit('setSyncSection', { section: 'Build Tokens', total: missingTokensList.length });
-          const GETTOKENINFOBATCHSIZE = 50;
-          const info = {};
-          const DELAYINMILLIS = 2000;
-          for (let i = 0; i < missingTokensList.length && !context.state.sync.halt; i += GETTOKENINFOBATCHSIZE) {
-            const batch = missingTokensList.slice(i, parseInt(i) + GETTOKENINFOBATCHSIZE);
-            let continuation = null;
-            do {
-              let url = "https://api.reservoir.tools/tokens/v5?" + batch.map(e => 'tokens=' + e.tokenContract + ':' + e.tokenId).join("&");
-              url = url + (continuation != null ? "&continuation=" + continuation : '');
-              url = url + "&limit=50";
-              console.log(url);
-              const data = await fetch(url).then(response => response.json());
-              context.commit('setSyncCompleted', parseInt(i) + batch.length);
-              continuation = data.continuation;
-              if (data.tokens) {
-                for (let record of data.tokens) {
-                  context.commit('addAccountToken', record.token);
-                }
-              }
-              await delay(DELAYINMILLIS);
-            } while (continuation != null);
-          }
+          console.log("missingTokenEventsMap: " + JSON.stringify(missingTokenEventsMap, null, 2));
+          // for (const [tokenContract, tokenIds] of Object.entries(missingTokenEventsMap)) {
+          //   totalItems += Object.keys(tokenIds).length;
+          //   for (let tokenId of Object.keys(tokenIds)) {
+          //     missingTokensList.push({ tokenContract, tokenId });
+          //   }
+          // }
+          // context.commit('setSyncSection', { section: 'Build Tokens', total: missingTokensList.length });
+          // const GETTOKENINFOBATCHSIZE = 50;
+          // const info = {};
+          // const DELAYINMILLIS = 2000;
+          // for (let i = 0; i < missingTokensList.length && !context.state.sync.halt; i += GETTOKENINFOBATCHSIZE) {
+          //   const batch = missingTokensList.slice(i, parseInt(i) + GETTOKENINFOBATCHSIZE);
+          //   let continuation = null;
+          //   do {
+          //     let url = "https://api.reservoir.tools/tokens/v5?" + batch.map(e => 'tokens=' + e.tokenContract + ':' + e.tokenId).join("&");
+          //     url = url + (continuation != null ? "&continuation=" + continuation : '');
+          //     url = url + "&limit=50";
+          //     console.log(url);
+          //     const data = await fetch(url).then(response => response.json());
+          //     context.commit('setSyncCompleted', parseInt(i) + batch.length);
+          //     continuation = data.continuation;
+          //     if (data.tokens) {
+          //       for (let record of data.tokens) {
+          //         context.commit('addAccountToken', record.token);
+          //       }
+          //     }
+          //     await delay(DELAYINMILLIS);
+          //   } while (continuation != null);
+          // }
         }
       }
 
-      //   for (let event of events) {
+      // for (let event of events) {
+      //   console.log(JSON.stringify(event));
       //     const contractData = context.state.accounts[chainId][event.contract] || null;
       //     if (contractData) {
       //       if (contractData.type != event.type) {
@@ -1245,7 +1275,7 @@ const dataModule = {
       //     if (context.state.sync.halt) {
       //       break;
       //     }
-      //   }
+      // }
       //
     },
     async syncImportExchangeRates(context, parameter) {
