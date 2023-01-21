@@ -438,6 +438,8 @@ const Assets = {
           </template>
           <template #cell(tokenId)="data">
             <b-link @click="showModalNFT(data.item);"><b-badge pill variant="none" v-b-popover.hover="data.item.name" class="truncate" style="max-width: 10.0rem;">{{ data.item.name || '(null)' }}</b-badge></b-link>
+            <br />
+            <b-button size="sm" @click="requestReservoirAPITokenMetadataRefresh(data.item)" variant="link" v-b-popover.hover.top="'Request a metadata refresh on the Reservoir API'"><b-icon-arrow-clockwise shift-v="+1" font-scale="1.2"></b-icon-arrow-clockwise></b-button>
             <!--
             {{ data.item.tokenId }}
             AAA
@@ -1633,7 +1635,7 @@ const Assets = {
       store.dispatch('data/removeTagFromTxs', { txHashes, tag });
     },
     async requestReservoirAPITokenMetadataRefresh(token) {
-      console.log("requestReservoirAPITokenMetadataRefresh - token: " + token);
+      console.log("requestReservoirAPITokenMetadataRefresh - token: " + JSON.stringify(token));
       const options = {
         method: 'POST',
         // mode: 'no-cors', // cors, no-cors, *cors, same-origin
@@ -1649,6 +1651,12 @@ const Assets = {
         .then(response => console.log(response))
         .catch(err => console.error(err));
       console.log("results: " + JSON.stringify(results));
+
+      this.$bvToast.toast("Please retry after 5 minutes if required", {
+        title: 'Metadata Refresh Requested',
+        autoHideDelay: 5000,
+        appendToast: true,
+      });
       setTimeout(function() {
         store.dispatch('data/refreshTokenMetadata', token);
       }, 5000);
