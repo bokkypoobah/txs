@@ -74,7 +74,7 @@ const Assets = {
             </b-button>
             <!--
             <b-button size="sm" @click="copyToClipboard(modalTx.hash);" variant="link" class="m-0 p-0" v-b-popover.hover.top="'Copy to clipboard'"><b-icon-clipboard shift-v="+1" font-scale="1.1"></b-icon-clipboard></b-button>
-            <b-button size="sm" :href="'https://opensea.io/assets/ethereum/' + modalNFT.nftEvent.contract + '/' + modalNFT.nftEvent.tokenId" target="_blank" variant="link" class="m-0 p-0" v-b-popover.hover.top="'View in etherscan.io'">
+            <b-button size="sm" :href="'https://opensea.io/assets/ethereum/' + modalNFT.token.contract + '/' + modalNFT.token.tokenId" target="_blank" variant="link" class="m-0 p-0" v-b-popover.hover.top="'View in etherscan.io'">
               <b-img rounded="0" width="16px" height="16px" src="images/OpenSea-Logomark-Blue.svg" blank-color="#777" target="_blank"></b-img>
             </b-button>
             -->
@@ -84,15 +84,45 @@ const Assets = {
 
         <b-modal id="modal-nft" hide-footer size="lg">
           <template #modal-title>
-            <font size="-1">NFT {{ modalNFT.nftEvent.contract + ':' + modalNFT.nftEvent.tokenId }}</font>
+            <font size="-1">NFT {{ modalNFT.token.contract + ':' + modalNFT.token.tokenId.substring(0, 20) }}</font>
             <!--
             <b-button size="sm" @click="copyToClipboard(modalTx.hash);" variant="link" class="m-0 p-0" v-b-popover.hover.top="'Copy to clipboard'"><b-icon-clipboard shift-v="+1" font-scale="1.1"></b-icon-clipboard></b-button>
             -->
-            <b-button size="sm" :href="'https://opensea.io/assets/ethereum/' + modalNFT.nftEvent.contract + '/' + modalNFT.nftEvent.tokenId" target="_blank" variant="link" class="m-0 p-0" v-b-popover.hover.top="'View in etherscan.io'">
+            <b-button size="sm" :href="'https://opensea.io/assets/ethereum/' + modalNFT.token.contract + '/' + modalNFT.token.tokenId" target="_blank" variant="link" class="m-0 p-0" v-b-popover.hover.top="'View in etherscan.io'">
               <b-img rounded="0" width="16px" height="16px" src="images/OpenSea-Logomark-Blue.svg" blank-color="#777" target="_blank"></b-img>
             </b-button>
           </template>
-            <p>{{ modalNFT.nftEvent }}</p>
+          <b-form-group label="Contract:" label-for="modalnft-contract" label-size="sm" label-cols-sm="3" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modalnft-contract" :value="modalNFTData.contract" class="w-100"></b-form-input>
+          </b-form-group>
+          <b-form-group label="Collection Name:" label-for="modalnft-collectionName" label-size="sm" label-cols-sm="3" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modalnft-collectionName" :value="modalNFTData.collectionName" class="w-100"></b-form-input>
+          </b-form-group>
+          <b-form-group label="Token Id:" label-for="modalnft-tokenId" label-size="sm" label-cols-sm="3" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modalnft-tokenId" :value="modalNFTData.tokenId" class="w-100"></b-form-input>
+          </b-form-group>
+          <b-form-group label="Token Name:" label-for="modalnft-tokenName" label-size="sm" label-cols-sm="3" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modalnft-tokenName" :value="modalNFTData.tokenName" class="w-100"></b-form-input>
+          </b-form-group>
+          <b-form-group label="Token Image:" label-for="modalnft-tokenImage" label-size="sm" label-cols-sm="3" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-form-input type="text" readonly size="sm" id="modalnft-tokenImage" :value="modalNFTData.tokenImage" class="w-100"></b-form-input>
+          </b-form-group>
+          <b-form-group label="" label-for="modalnft-tokenImage" label-size="sm" label-cols-sm="3" label-align-sm="right" class="mx-0 my-1 p-0">
+            <b-avatar id="modalnft-tokenImage" rounded variant="light" size="5.0rem" :src="modalNFTData.tokenImage"></b-avatar>
+          </b-form-group>
+          <b-form-group label="Reservoir API:" label-for="modalnft-metadatarefresh" label-size="sm" label-cols-sm="3" label-align-sm="right" description="Send request to the Reservoir API to refresh the token metadata. May be rate limited. Please do not abuse this Reservoir API service" class="mx-0 my-1 p-0">
+            <b-button size="sm" id="modalnft-metadatarefresh" @click="requestReservoirAPITokenMetadataRefresh(modalNFTData)" variant="primary">Request Reservoir API Token Metadata Refresh</b-button>
+          </b-form-group>
+          <b-form-group label="Local Cache:" label-for="modalnft-localcacherefresh" label-size="sm" label-cols-sm="3" label-align-sm="right" description="Refresh locally cached token metadata from Reservoir API. Click this a few minutes after the Reservoir API refresh request above" class="mx-0 my-1 p-0">
+            <b-button size="sm" id="modalnft-localcacherefresh" @click="refreshTokenMetadata(modalNFTData)" variant="primary">Request Token Metadata Refresh</b-button>
+          </b-form-group>
+          <!--
+          <font size="-2">
+            <pre>
+{{ modalNFTData }}
+            </pre>
+          </font>
+          -->
         </b-modal>
 
         <b-modal id="modal-ens" hide-footer size="lg">
@@ -404,10 +434,18 @@ const Assets = {
             </b-form-checkbox>
           </template>
           <template #cell(collection)="data">
-            <b-link @click="showModalNFTCollection(data.item.collection);"><b-badge pill variant="none" v-b-popover.hover="data.item.collection" class="truncate" style="max-width: 10.0rem;">{{ data.item.collectionName }}</b-badge></b-link>
+            <b-link @click="showModalNFTCollection(data.item.contract);"><b-badge pill variant="none" v-b-popover.hover="data.item.contract" class="truncate" style="max-width: 10.0rem;">{{ data.item.collectionName }}</b-badge></b-link>
           </template>
           <template #cell(tokenId)="data">
+            <b-link @click="showModalNFT(data.item);"><b-badge pill variant="none" v-b-popover.hover="getNFTName(data.item.contract, data.item.tokenId)" class="truncate" style="max-width: 10.0rem;">{{ getNFTName(data.item.contract, data.item.tokenId) }}</b-badge></b-link>
+            <!--
             {{ data.item.tokenId }}
+            AAA
+            {{ data.item }}
+            <span v-if="report && report.tokens && report.tokens[event.item.contract] && report.tokens[event.item.contract].ids[event.item.tokenId] && report.tokens[event.item.contract].ids[event.item.tokenId].image">
+              <b-avatar rounded variant="light" size="3.0rem" :src="event.item.tokenImage" v-b-popover.hover="event.item.contractName + ':' + event.item.tokenId + ' - ' + event.item.tokenName"></b-avatar>
+            </span>
+            -->
           </template>
           <template #cell(image)="data">
             <b-avatar rounded variant="light" size="5.0rem" :src="data.item.image" v-b-popover.hover="data.item.tokenId + ':' + data.item.name"></b-avatar>
@@ -875,7 +913,7 @@ const Assets = {
         nftCollection: null,
       },
       modalNFT: {
-        nftEvent: null,
+        token: null,
       },
       modalENS: {
         ensEvent: null,
@@ -1240,7 +1278,7 @@ const Assets = {
             });
             const owner = events.length == 0 ? null : events[events.length - 1].to;
             results.push({
-              collection: account,
+              contract: account,
               type: accountData.type,
               collectionName: accountData.name,
               collectionSlug: accountData.slug,
@@ -1478,6 +1516,18 @@ const Assets = {
       });
       return results;
     },
+    modalNFTData() {
+      const results = {};
+      results.contract = this.modalNFT.token && this.modalNFT.token.contract || null;
+      results.tokenId = this.modalNFT.token && this.modalNFT.token.tokenId || null;
+      const account = this.accounts[results.contract] || {};
+      const token = account.assets && account.assets[results.tokenId] || {};
+      results.collectionName = account.name || null;
+      results.collectionSlug = account.slug || null;
+      results.tokenName = token.name || null;
+      results.tokenImage = token.image || null;
+      return results;
+    },
   },
   methods: {
     formatTimestamp(ts) {
@@ -1582,6 +1632,28 @@ const Assets = {
     removeTagFromTxs(txHashes, tag) {
       store.dispatch('data/removeTagFromTxs', { txHashes, tag });
     },
+    async requestReservoirAPITokenMetadataRefresh(token) {
+      console.log("requestReservoirAPITokenMetadataRefresh - token: " + token);
+      const options = {
+        method: 'POST',
+        // mode: 'no-cors', // cors, no-cors, *cors, same-origin
+        headers: {accept: '*/*', 'content-type': 'application/json', 'x-api-key': 'demo-api-key'},
+        body: JSON.stringify({
+          overrideCoolDown: false,
+          token: token.contract + ':' + token.tokenId,
+        })
+      };
+      // console.log("options: " + JSON.stringify(options, null, 2));
+      const results = await fetch('https://api.reservoir.tools/tokens/refresh/v1', options)
+        .then(response => response.json())
+        .then(response => console.log(response))
+        .catch(err => console.error(err));
+      console.log("results: " + JSON.stringify(results));
+      alert("Request sent. Refresh the locally cached token metadata in a few minutes")
+    },
+    refreshTokenMetadata(token) {
+      store.dispatch('data/refreshTokenMetadata', token);
+    },
     async syncIt(info) {
       store.dispatch('data/syncIt', info);
     },
@@ -1650,9 +1722,8 @@ const Assets = {
       this.modalNFTCollection.nftCollection = nftCollection;
       this.$bvModal.show('modal-nft-collection');
     },
-    showModalNFT(nftEvent) {
-      // console.log("showModalNFT: " + JSON.stringify(nftEvent));
-      this.modalNFT.nftEvent = nftEvent;
+    showModalNFT(token) {
+      this.modalNFT.token = token;
       this.$bvModal.show('modal-nft');
     },
     showModalENS(ensEvent) {

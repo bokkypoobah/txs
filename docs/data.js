@@ -257,6 +257,21 @@ const dataModule = {
         });
       }
     },
+    updateAccountToken(state, token) {
+      const contract = ethers.utils.getAddress(token.contract);
+      const contractData = state.accounts[contract] || {};
+      if (token.tokenId in contractData.assets) {
+        const newData = {
+          ...state.accounts[contract].assets[token.tokenId],
+          name: token.name,
+          description: token.description,
+          image: token.image,
+          type: token.kind,
+          isFlagged: token.isFlagged,
+        };
+        Vue.set(state.accounts[contract].assets, token.tokenId, newData);
+      }
+    },
     addAccountERC20Transfers(state, transfer) {
       const contract = ethers.utils.getAddress(transfer.contract);
       const contractData = state.accounts[contract];
@@ -469,6 +484,18 @@ const dataModule = {
     async removeTagFromTxs(context, info) {
       await context.commit('removeTagFromTxs', info);
       await context.dispatch('saveData', ['txsInfo']);
+    },
+    async refreshTokenMetadata(context, token) {
+      console.log("actions.refreshTokenMetadata - token: " + JSON.stringify(token));
+      const url = "https://api.reservoir.tools/tokens/v5?tokens=" + token.contract + ":" + token.tokenId;
+      console.log(url);
+      const data = await fetch(url).then(response => response.json());
+      if (data.tokens) {
+        for (let record of data.tokens) {
+          context.commit('updateAccountToken', record.token);
+        }
+      }
+      await context.dispatch('saveData', ['accounts']);
     },
     async setSyncHalt(context, halt) {
       context.commit('setSyncHalt', halt);
