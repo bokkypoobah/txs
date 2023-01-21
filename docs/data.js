@@ -855,16 +855,16 @@ const dataModule = {
               let ethBalance = null;
               let wethBalance = null;
               // Jan 21 2022 - Metamask returning inpage.js:1 MetaMask - RPC Error: RetryOnEmptyMiddleware - retries exhausted {code: -32603, message: 'RetryOnEmptyMiddleware - retries exhausted', data: {…}}
-              // try {
-              //   ethBalance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
-              // } catch (e) {
-              //   console.log("ERROR: " + e.message.toString());
-              // }
-              // try {
-              //   wethBalance = (parseInt(blockNumber) < 4719568) ? 0 : ethers.BigNumber.from(await weth.balanceOf(account, { blockTag: parseInt(blockNumber) })).toString();
-              // } catch (e) {
-              //   console.log("ERROR: " + e.message.toString());
-              // }
+              try {
+                ethBalance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
+              } catch (e) {
+                console.log("ERROR: " + e.message.toString());
+              }
+              try {
+                wethBalance = (parseInt(blockNumber) < 4719568) ? 0 : ethers.BigNumber.from(await weth.balanceOf(account, { blockTag: parseInt(blockNumber) })).toString();
+              } catch (e) {
+                console.log("ERROR: " + e.message.toString());
+              }
               context.commit('addBlock', { blockNumber, timestamp, account, asset: 'eth', balance: ethBalance });
               context.commit('addBlock', { blockNumber, timestamp, account, asset: WETHADDRESS, balance: wethBalance });
               context.commit('setSyncCompleted', parseInt(index) + 1);
