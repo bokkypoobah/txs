@@ -113,7 +113,7 @@ const Assets = {
           <b-form-group label="Reservoir API:" label-for="modalnft-metadatarefresh" label-size="sm" label-cols-sm="3" label-align-sm="right" description="Send request to the Reservoir API to refresh the token metadata. May be rate limited. Please do not abuse this Reservoir API service" class="mx-0 my-1 p-0">
             <b-button size="sm" id="modalnft-metadatarefresh" @click="requestReservoirAPITokenMetadataRefresh(modalNFTData)" variant="primary">Request Reservoir API Token Metadata Refresh</b-button>
           </b-form-group>
-          <b-form-group label="Local Cache:" label-for="modalnft-localcacherefresh" label-size="sm" label-cols-sm="3" label-align-sm="right" description="Refresh locally cached token metadata from Reservoir API. Click this a few minutes after the Reservoir API refresh request above" class="mx-0 my-1 p-0">
+          <b-form-group label="Local Cache:" label-for="modalnft-localcacherefresh" label-size="sm" label-cols-sm="3" label-align-sm="right" description="Refresh locally cached token metadata from Reservoir API. Click this 15 seconds after the Reservoir API refresh request above" class="mx-0 my-1 p-0">
             <b-button size="sm" id="modalnft-localcacherefresh" @click="refreshTokenMetadata(modalNFTData)" variant="primary">Request Token Metadata Refresh</b-button>
           </b-form-group>
           <!--
@@ -434,10 +434,10 @@ const Assets = {
             </b-form-checkbox>
           </template>
           <template #cell(collection)="data">
-            <b-link @click="showModalNFTCollection(data.item.contract);"><b-badge pill variant="none" v-b-popover.hover="data.item.contract" class="truncate" style="max-width: 10.0rem;">{{ data.item.collectionName }}</b-badge></b-link>
+            <b-link @click="showModalNFTCollection(data.item.contract);"><b-badge pill variant="none" v-b-popover.hover="data.item.contractName + ' @ ' + data.item.contract" class="truncate" style="max-width: 10.0rem;">{{ data.item.contractName }}</b-badge></b-link>
           </template>
           <template #cell(tokenId)="data">
-            <b-link @click="showModalNFT(data.item);"><b-badge pill variant="none" v-b-popover.hover="getNFTName(data.item.contract, data.item.tokenId)" class="truncate" style="max-width: 10.0rem;">{{ getNFTName(data.item.contract, data.item.tokenId) }}</b-badge></b-link>
+            <b-link @click="showModalNFT(data.item);"><b-badge pill variant="none" v-b-popover.hover="data.item.name" class="truncate" style="max-width: 10.0rem;">{{ data.item.name || '(null)' }}</b-badge></b-link>
             <!--
             {{ data.item.tokenId }}
             AAA
@@ -965,7 +965,7 @@ const Assets = {
       ],
       assetsFields: [
         { key: 'number', label: '#', sortable: false, thStyle: 'width: 5%;', tdClass: 'text-truncate' },
-        { key: 'type', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
+        { key: 'contractType', label: 'Type', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
         { key: 'collection', label: 'Collection', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
         { key: 'tokenId', label: 'TokenId', sortable: false, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
         { key: 'image', label: 'Image', sortable: false, thStyle: 'width: 10%;', tdClass: 'text-truncate' },
@@ -1279,9 +1279,9 @@ const Assets = {
             const owner = events.length == 0 ? null : events[events.length - 1].to;
             results.push({
               contract: account,
-              type: accountData.type,
-              collectionName: accountData.name,
-              collectionSlug: accountData.slug,
+              contractType: accountData.type,
+              contractName: accountData.name,
+              contractSlug: accountData.slug,
               tokenId,
               tokens: accountData.type == 'erc1155' && tokenData.tokens || null,
               name: tokenData.name,
@@ -1292,7 +1292,7 @@ const Assets = {
           }
         }
       }
-      console.log(JSON.stringify(results.slice(0, 5), null, 2));
+      // console.log(JSON.stringify(results.slice(0, 5), null, 2));
       return results;
     },
     filteredSortedAssets() {
@@ -1649,7 +1649,10 @@ const Assets = {
         .then(response => console.log(response))
         .catch(err => console.error(err));
       console.log("results: " + JSON.stringify(results));
-      alert("Request sent. Refresh the locally cached token metadata in a few minutes")
+      setTimeout(function() {
+        store.dispatch('data/refreshTokenMetadata', token);
+      }, 5000);
+      // alert("Request sent and will data will be auto-refreshed in 5 seconds. Manually refresh the locally cached token metadata if required")
     },
     refreshTokenMetadata(token) {
       store.dispatch('data/refreshTokenMetadata', token);
