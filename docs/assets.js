@@ -139,6 +139,9 @@ const Assets = {
         </b-modal>
 
         <div class="d-flex flex-wrap m-0 p-0">
+          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
+            <b-form-input type="text" size="sm" v-model.trim="settings.searchFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by text fragment'" placeholder="🔍 text"></b-form-input>
+          </div>
           <div v-if="false" class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input>
           </div>
@@ -884,6 +887,7 @@ const Assets = {
       count: 0,
       reschedule: true,
       settings: {
+        searchFilter: null,
         txhashFilter: null,
         accountFilter: null,
         accountTypeFilter: null,
@@ -898,7 +902,7 @@ const Assets = {
         taggingMode: false,
         tag: null,
         filters: {},
-        version: 0,
+        version: 1,
       },
       modalAddress: null,
       modalTx: {
@@ -1249,6 +1253,7 @@ const Assets = {
       //     }
       //   }
       // }
+      const searchFilter = this.settings.searchFilter && this.settings.searchFilter.toLowerCase() || null;
       for (const [account, accountData] of Object.entries(this.accounts)) {
         if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
           for (const [tokenId, tokenData] of Object.entries(accountData.assets)) {
@@ -1279,18 +1284,28 @@ const Assets = {
               }
             });
             const owner = events.length == 0 ? null : events[events.length - 1].to;
-            results.push({
-              contract: account,
-              contractType: accountData.type,
-              contractName: accountData.name,
-              contractSlug: accountData.slug,
-              tokenId,
-              tokens: accountData.type == 'erc1155' && tokenData.tokens || null,
-              name: tokenData.name,
-              image: tokenData.image,
-              owner,
-              events: events,
-            });
+            let include = true;
+            if (include && searchFilter != null) {
+              if (
+                !(accountData.name && accountData.name.toLowerCase().includes(searchFilter)) &&
+                !(tokenData.name && tokenData.name.toLowerCase().includes(searchFilter))) {
+                include = false;
+              }
+            }
+            if (include) {
+              results.push({
+                contract: account,
+                contractType: accountData.type,
+                contractName: accountData.name,
+                contractSlug: accountData.slug,
+                tokenId,
+                tokens: accountData.type == 'erc1155' && tokenData.tokens || null,
+                name: tokenData.name,
+                image: tokenData.image,
+                owner,
+                events: events,
+              });
+            }
           }
         }
       }
@@ -1816,7 +1831,7 @@ const Assets = {
     store.dispatch('report/restoreState');
     if ('assetsSettings' in localStorage) {
       const tempSettings = JSON.parse(localStorage.assetsSettings);
-      if ('version' in tempSettings && tempSettings.version == 0) {
+      if ('version' in tempSettings && tempSettings.version == 1) {
         this.settings = tempSettings;
         this.settings.currentPage = 1;
       }
