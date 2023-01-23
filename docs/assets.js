@@ -350,28 +350,28 @@ const Assets = {
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
-                  <b-table small fixed striped sticky-header="200px" :fields="collectionsFilterFields" :items="getAllCollections" head-variant="light">
+                  <b-table small fixed striped sticky-header="200px" :fields="ownersFilterFields" :items="getAllOwners" head-variant="light">
                     <template #cell(select)="data">
-                      <b-form-checkbox size="sm" :checked="(settings.filters['collections'] && settings.filters['collections'][data.item.contract]) ? 1 : 0" value="1" @change="filterChanged('collections', data.item.contract)"></b-form-checkbox>
+                      <b-form-checkbox size="sm" :checked="(settings.filters['owners'] && settings.filters['owners'][data.item.owner]) ? 1 : 0" value="1" @change="filterChanged('owners', data.item.owner)"></b-form-checkbox>
                     </template>
-                    <template #cell(collection)="data">
-                      {{ data.item.contractName }}
+                    <template #cell(owner)="data">
+                      {{ ensOrAccount(data.item.owner) }}
                     </template>
                   </b-table>
                 </font>
               </b-card-body>
             </b-card>
           </div>
-          <div v-if="false" class="mt-0 pr-1" style="width: 13.0rem;">
+          <div class="mt-0 pr-1" style="width: 13.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
-                  <b-table small fixed striped sticky-header="200px" :fields="accountsFilterFields" :items="getAllAccounts" head-variant="light">
+                  <b-table small fixed striped sticky-header="200px" :fields="collectionsFilterFields" :items="getAllCollections" head-variant="light">
                     <template #cell(select)="data">
-                      <b-form-checkbox size="sm" :checked="(settings.filters['accounts'] && settings.filters['accounts'][data.item.account]) ? 1 : 0" value="1" @change="filterChanged('accounts', data.item.account)"></b-form-checkbox>
+                      <b-form-checkbox size="sm" :checked="(settings.filters['collections'] && settings.filters['collections'][data.item.contract]) ? 1 : 0" value="1" @change="filterChanged('collections', data.item.contract)"></b-form-checkbox>
                     </template>
-                    <template #cell(account)="data">
-                      {{ ensOrAccount(data.item.account) }}
+                    <template #cell(collection)="data">
+                      {{ data.item.contractName }}
                     </template>
                   </b-table>
                 </font>
@@ -1025,9 +1025,9 @@ const Assets = {
         { key: 'collection', label: 'Collection', sortable: true, tdClass: 'text-truncate' },
         { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
-      accountsFilterFields: [
+      ownersFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
-        { key: 'account', label: 'Account', sortable: true, tdClass: 'text-truncate' },
+        { key: 'owner', label: 'Owner', sortable: true, tdClass: 'text-truncate' },
         { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       contractsFilterFields: [
@@ -1143,7 +1143,10 @@ const Assets = {
       if (this.settings.filters.collections && Object.keys(this.settings.filters.collections).length > 0) {
         collectionFilter = this.settings.filters.collections;
       }
-      console.log("collectionFilter: " + JSON.stringify(collectionFilter));
+      let ownerFilter = null;
+      if (this.settings.filters.owners && Object.keys(this.settings.filters.owners).length > 0) {
+        ownerFilter = this.settings.filters.owners;
+      }
       // let accountFilter = null;
       // if (this.settings.filters.accounts && Object.keys(this.settings.filters.accounts).length > 0) {
       //   accountFilter = this.settings.filters.accounts;
@@ -1324,18 +1327,25 @@ const Assets = {
                 }
               });
               const owner = events.length == 0 ? null : events[events.length - 1].to;
-              results.push({
-                contract: account,
-                contractType: accountData.type,
-                contractName: accountData.name,
-                contractSlug: accountData.slug,
-                tokenId,
-                tokens: accountData.type == 'erc1155' && tokenData.tokens || null,
-                name: tokenData.name,
-                image: tokenData.image,
-                owner,
-                events: events,
-              });
+              if (include && ownerFilter != null) {
+                if (!(owner in ownerFilter)) {
+                  include = false;
+                }
+              }
+              if (include) {
+                results.push({
+                  contract: account,
+                  contractType: accountData.type,
+                  contractName: accountData.name,
+                  contractSlug: accountData.slug,
+                  tokenId,
+                  tokens: accountData.type == 'erc1155' && tokenData.tokens || null,
+                  name: tokenData.name,
+                  image: tokenData.image,
+                  owner,
+                  events: events,
+                });
+              }
             }
           }
         }
@@ -1410,36 +1420,26 @@ const Assets = {
       // console.log(JSON.stringify(results, null, 2));
       // return results;
     },
-    getAllAccounts() {
-      const accountsMap = {};
-      for (const transaction of this.filteredAssets) {
-        if (!(transaction.account in accountsMap)) {
-          accountsMap[transaction.account] = 0;
+    getAllOwners() {
+      const ownersMap = {};
+      for (const a of this.filteredAssets) {
+        if (!(a.owner in ownersMap)) {
+          ownersMap[a.owner] = 0;
         }
-        accountsMap[transaction.account]++;
+        ownersMap[a.owner]++;
       }
       const results = [];
-      for (const [k, v] of Object.entries(accountsMap)) {
-        results.push({ account: k, count: v });
+      for (const [k, v] of Object.entries(ownersMap)) {
+        results.push({ owner: k, count: v });
       }
       results.sort((a, b) => {
         if (a.count == b.count) {
-          return ('' + a.account).localeCompare(b.account);
+          return ('' + a.owner).localeCompare(b.owner);
         } else {
           return b.count - a.count;
         }
       });
       return results;
-      // const results = [];
-      // if (this.report.accountsMap) {
-      //   for (const [k, v] of Object.entries(this.report.accountsMap)) {
-      //     results.push({ account: k, count: v });
-      //   }
-      //   results.sort((a, b) => {
-      //     return ('' + a.account).localeCompare(b.account);
-      //   });
-      // }
-      // return results;
     },
     getAllCollections() {
       const collectionsMap = {};
