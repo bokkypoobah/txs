@@ -488,14 +488,20 @@ const Report = {
                   </span>
                   <span v-if="row.ftOrNFT == 'ft'">
                     <span v-if="row.tokenContract == 'eth'">
-                      {{ formatETH(row.tokens) }}<font size="-1">{{ row.symbol }}</font>
+                      <font size="-1">
+                        {{ formatETH(row.tokens) }}<font size="-1">{{ row.symbol }}</font>
+                      </font>
                     </span>
                     <span v-else>
-                      {{ formatERC20(row.tokens, row.decimals) }}<font size="-1">{{ row.symbol }}</font>
+                      <font size="-1">
+                        {{ formatERC20(row.tokens, row.decimals) }}<font size="-1">{{ row.symbol }}</font>
+                      </font>
                     </span>
                   </span>
                   <span v-else>
-                    <b-link @click="showModalNFTCollection(row.tokenContract);">{{ row.tokens }} x {{ row.name }}</b-link>
+                    <font size="-1">
+                      <b-link @click="showModalNFTCollection(row.tokenContract);">{{ row.tokens }} x {{ row.name }}</b-link>
+                    </font>
                   </span>
                 </span>
               </span>
@@ -741,7 +747,7 @@ const Report = {
                   </template>
                   <template #cell(tokenIdOrTokens)="event">
                     <div v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'" class="align-top">
-                      <b-link @click="showModalNFT(event.item);"><b-badge pill variant="none" v-b-popover.hover="getNFTName(event.item.contract, event.item.tokenId)" class="truncate" style="max-width: 10.0rem;">{{ getNFTName(event.item.contract, event.item.tokenId) }}</b-badge></b-link>
+                      <b-link @click="showModalNFT(event.item);"><b-badge pill variant="none" v-b-popover.hover="event.item.tokenName" class="truncate" style="max-width: 10.0rem;">{{ (event.item.type == 'erc1155' ? event.item.tokens + ' x ' : '') + event.item.tokenName }}</b-badge></b-link>
                       <span v-if="report && report.tokens && report.tokens[event.item.contract] && report.tokens[event.item.contract].ids[event.item.tokenId] && report.tokens[event.item.contract].ids[event.item.tokenId].image">
                         <b-avatar rounded variant="light" size="3.0rem" :src="event.item.tokenImage" v-b-popover.hover="event.item.contractName + ':' + event.item.tokenId + ' - ' + event.item.tokenName"></b-avatar>
                       </span>
