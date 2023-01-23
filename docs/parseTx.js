@@ -1034,6 +1034,8 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
         for (const tokens of event.tokens) {
           collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(tokens).toString();
         }
+      } else if (event.type == 'erc1155') {
+        collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(event.tokens).toString();
       } else {
         collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(1).toString();
       }

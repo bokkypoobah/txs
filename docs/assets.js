@@ -248,7 +248,7 @@ const Assets = {
               </b-dropdown-item>
             </b-dropdown>
           </div>
-          <div v-if="false" class="mt-0 pr-1">
+          <div class="mt-0 pr-1">
             <b-button size="sm" :pressed.sync="settings.showAdditionalFilters" @click="saveSettings" variant="link" v-b-popover.hover.top="'Additional filters'"><span v-if="settings.showAdditionalFilters"><b-icon-funnel-fill shift-v="+1" font-scale="1.0"></b-icon-funnel-fill></span><span v-else><b-icon-funnel shift-v="+1" font-scale="1.0"></b-icon-funnel></span></b-button>
           </div>
           <div v-if="false && Object.keys(settings.filters).length > 0" class="mt-0 pr-1">
@@ -345,8 +345,24 @@ const Assets = {
         </div>
 
         <!-- ADDITIONAL FILTERS -->
-        <div v-if="false && settings.showAdditionalFilters" class="d-flex flex-wrap m-0 p-0">
+        <div v-if="settings.showAdditionalFilters" class="d-flex flex-wrap m-0 p-0">
           <div class="mt-0 pr-1" style="width: 13.0rem;">
+            <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
+              <b-card-body class="m-0 p-0">
+                <font size="-2">
+                  <b-table small fixed striped sticky-header="200px" :fields="collectionsFilterFields" :items="getAllCollections" head-variant="light">
+                    <template #cell(select)="data">
+                      <b-form-checkbox size="sm" :checked="(settings.filters['collections'] && settings.filters['collections'][data.item.contract]) ? 1 : 0" value="1" @change="filterChanged('collections', data.item.contract)"></b-form-checkbox>
+                    </template>
+                    <template #cell(collection)="data">
+                      {{ data.item.contractName }}
+                    </template>
+                  </b-table>
+                </font>
+              </b-card-body>
+            </b-card>
+          </div>
+          <div v-if="false" class="mt-0 pr-1" style="width: 13.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
@@ -362,7 +378,7 @@ const Assets = {
               </b-card-body>
             </b-card>
           </div>
-          <div class="mt-0 pr-1" style="width: 13.0rem;">
+          <div v-if="false" class="mt-0 pr-1" style="width: 13.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
@@ -378,7 +394,7 @@ const Assets = {
               </b-card-body>
             </b-card>
           </div>
-          <div class="mt-0 pr-1" style="width: 30.0rem;">
+          <div v-if="false" class="mt-0 pr-1" style="width: 30.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
@@ -391,7 +407,7 @@ const Assets = {
               </b-card-body>
             </b-card>
           </div>
-          <div class="mt-0 pr-1" style="width: 13.0rem;">
+          <div v-if="false" class="mt-0 pr-1" style="width: 13.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
@@ -404,7 +420,7 @@ const Assets = {
               </b-card-body>
             </b-card>
           </div>
-          <div class="mt-0 pr-1" style="width: 13.0rem;">
+          <div v-if="false" class="mt-0 pr-1" style="width: 13.0rem;">
             <b-card no-header no-body class="m-0 mt-1 p-0 border-1">
               <b-card-body class="m-0 p-0">
                 <font size="-2">
@@ -1004,6 +1020,11 @@ const Assets = {
         { key: 'balance', label: 'Balance', sortable: false, thStyle: 'width: 15%;', tdClass: 'text-truncate' },
         // { key: 'account', label: 'Account', sortable: false, thStyle: 'width: 35%;', tdClass: 'text-truncate' },
       ],
+      collectionsFilterFields: [
+        { key: 'select', label: '', thStyle: 'width: 15%;' },
+        { key: 'collection', label: 'Collection', sortable: true, tdClass: 'text-truncate' },
+        { key: 'count', label: '#', sortable: true, thStyle: 'width: 20%;', thClass: 'text-right', tdClass: 'text-right' },
+      ],
       accountsFilterFields: [
         { key: 'select', label: '', thStyle: 'width: 15%;' },
         { key: 'account', label: 'Account', sortable: true, tdClass: 'text-truncate' },
@@ -1118,6 +1139,11 @@ const Assets = {
     },
     filteredAssets() {
       const results = [];
+      let collectionFilter = null;
+      if (this.settings.filters.collections && Object.keys(this.settings.filters.collections).length > 0) {
+        collectionFilter = this.settings.filters.collections;
+      }
+      console.log("collectionFilter: " + JSON.stringify(collectionFilter));
       // let accountFilter = null;
       // if (this.settings.filters.accounts && Object.keys(this.settings.filters.accounts).length > 0) {
       //   accountFilter = this.settings.filters.accounts;
@@ -1257,33 +1283,6 @@ const Assets = {
       for (const [account, accountData] of Object.entries(this.accounts)) {
         if (['preerc721', 'erc721', 'erc1155'].includes(accountData.type)) {
           for (const [tokenId, tokenData] of Object.entries(accountData.assets)) {
-            const events = [];
-            for (const [txHash, someData] of Object.entries(tokenData.events)) {
-              for (const [logIndex, event] of Object.entries(someData.logs)) {
-                events.push({
-                  txHash,
-                  blockNumber: someData.blockNumber,
-                  transactionIndex: someData.transactionIndex,
-                  timestamp: someData.timestamp,
-                  logIndex,
-                  from: event.from,
-                  to: event.to,
-                  value: event.value,
-                })
-              }
-            }
-            events.sort((a, b) => {
-              if (a.blockNumber == b.blockNumber) {
-                if (a.transactionIndex == b.transactionIndex) {
-                  return a.logIndex - b.logIndex;
-                } else {
-                  return a.transactionIndex - b.transactionIndex;
-                }
-              } else {
-                return a.blockNumber - b.blockNumber;
-              }
-            });
-            const owner = events.length == 0 ? null : events[events.length - 1].to;
             let include = true;
             if (include && searchFilter != null) {
               if (
@@ -1292,7 +1291,39 @@ const Assets = {
                 include = false;
               }
             }
+            if (include && collectionFilter != null) {
+              if (!(account in collectionFilter)) {
+                include = false;
+              }
+            }
             if (include) {
+              const events = [];
+              for (const [txHash, someData] of Object.entries(tokenData.events)) {
+                for (const [logIndex, event] of Object.entries(someData.logs)) {
+                  events.push({
+                    txHash,
+                    blockNumber: someData.blockNumber,
+                    transactionIndex: someData.transactionIndex,
+                    timestamp: someData.timestamp,
+                    logIndex,
+                    from: event.from,
+                    to: event.to,
+                    value: event.value,
+                  })
+                }
+              }
+              events.sort((a, b) => {
+                if (a.blockNumber == b.blockNumber) {
+                  if (a.transactionIndex == b.transactionIndex) {
+                    return a.logIndex - b.logIndex;
+                  } else {
+                    return a.transactionIndex - b.transactionIndex;
+                  }
+                } else {
+                  return a.blockNumber - b.blockNumber;
+                }
+              });
+              const owner = events.length == 0 ? null : events[events.length - 1].to;
               results.push({
                 contract: account,
                 contractType: accountData.type,
@@ -1409,6 +1440,30 @@ const Assets = {
       //   });
       // }
       // return results;
+    },
+    getAllCollections() {
+      const collectionsMap = {};
+      for (const a of this.filteredAssets) {
+        if (!(a.contract in collectionsMap)) {
+          collectionsMap[a.contract] = {
+            contractName: a.contractName,
+            count: 0,
+          };
+        }
+        collectionsMap[a.contract].count++;
+      }
+      const results = [];
+      for (const [k, v] of Object.entries(collectionsMap)) {
+        results.push({ contract: k, contractName: v.contractName, count: v.count });
+      }
+      results.sort((a, b) => {
+        if (a.count == b.count) {
+          return ('' + a.contractName).localeCompare(b.contractName);
+        } else {
+          return b.count - a.count;
+        }
+      });
+      return results;
     },
     getAllContracts() {
       const contractsMap = {};
