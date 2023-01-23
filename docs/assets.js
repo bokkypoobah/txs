@@ -471,6 +471,9 @@ const Assets = {
           <template #cell(image)="data">
             <b-avatar rounded variant="light" size="5.0rem" :src="data.item.image" v-b-popover.hover="data.item.tokenId + ':' + data.item.name"></b-avatar>
           </template>
+          <template #cell(owner)="data">
+            <b-link @click="showModalAddress(data.item.owner);">{{ ensOrAccount(data.item.owner) }}</b-link>
+          </template>          
           <template #cell(events)="data">
             <font size="-2">
               <!-- <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light"> -->
