@@ -139,8 +139,8 @@ const Assets = {
         </b-modal>
 
         <div class="d-flex flex-wrap m-0 p-0">
-          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
-            <b-form-input type="text" size="sm" v-model.trim="settings.searchFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by text fragment'" placeholder="🔍 text"></b-form-input>
+          <div class="mt-0 pr-1" style="max-width: 12.0rem;">
+            <b-form-input type="text" size="sm" v-model.trim="settings.searchFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by text fragment'" placeholder="🔍 token id/name"></b-form-input>
           </div>
           <div v-if="false" class="mt-0 pr-1" style="max-width: 8.0rem;">
             <b-form-input type="text" size="sm" v-model.trim="settings.txhashFilter" @change="saveSettings" debounce="600" v-b-popover.hover.top="'Filter by tx hash fragment'" placeholder="🔍 txhash"></b-form-input>
@@ -154,10 +154,10 @@ const Assets = {
           <div v-if="false" class="mt-0 pr-1" style="max-width: 14.0rem;">
             <b-form-select size="sm" v-model="settings.period" @change="saveSettings" :options="periodOptions" v-b-popover.hover.top="'Filter by period'"></b-form-select>
           </div>
-          <div v-if="false" class="mt-0 pr-1">
-            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myTransactionsFilter == null ? 'All transactions' : (settings.myTransactionsFilter == 'mine' ? 'My transactions' : 'Other transactions')">
+          <div class="mt-0 pr-1">
+            <b-dropdown size="sm" variant="link" v-b-popover.hover="settings.myTokensFilter == null ? 'All tokens' : (settings.myTokensFilter == 'mine' ? 'My tokens' : 'Not my tokens')">
               <template #button-content>
-                <span v-if="settings.myTransactionsFilter == null">
+                <span v-if="settings.myTokensFilter == null">
                   <b-iconstack font-scale="1">
                     <b-icon stacked icon="person-fill" variant="dark" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
                     <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
@@ -165,7 +165,7 @@ const Assets = {
                     <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
                   </b-iconstack>
                 </span>
-                <span v-else-if="settings.myTransactionsFilter == 'mine'">
+                <span v-else-if="settings.myTokensFilter == 'mine'">
                   <b-iconstack font-scale="1">
                     <b-icon stacked icon="person-fill" variant="dark" scale="0.75"></b-icon>
                   </b-iconstack>
@@ -179,33 +179,33 @@ const Assets = {
                   </b-iconstack>
                 </span>
               </template>
-              <b-dropdown-item href="#" @click="settings.myTransactionsFilter = null; saveSettings()">
+              <b-dropdown-item href="#" @click="settings.myTokensFilter = null; saveSettings()">
                 <b-iconstack font-scale="1">
                   <b-icon stacked icon="person-fill" variant="dark" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
                 </b-iconstack>
-                All Transactions
+                All Tokens
               </b-dropdown-item>
-              <b-dropdown-item href="#" @click="settings.myTransactionsFilter = 'mine'; saveSettings()">
+              <b-dropdown-item href="#" @click="settings.myTokensFilter = 'mine'; saveSettings()">
                 <b-iconstack font-scale="1">
                   <b-icon stacked icon="person-fill" variant="dark" scale="0.75"></b-icon>
                 </b-iconstack>
-                My Transactions
+                My Tokens
               </b-dropdown-item>
-              <b-dropdown-item href="#" @click="settings.myTransactionsFilter = 'notmine'; saveSettings()">
+              <b-dropdown-item href="#" @click="settings.myTokensFilter = 'notmine'; saveSettings()">
                 <b-iconstack font-scale="1">
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="-3"></b-icon>
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="3" shift-h="3"></b-icon>
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="3"></b-icon>
                   <b-icon stacked icon="person" variant="info" scale="0.5" shift-v="-3" shift-h="-3"></b-icon>
                 </b-iconstack>
-                Other Transactions
+                Not My Tokens
               </b-dropdown-item>
             </b-dropdown>
           </div>
-          <div v-if="false" class="mt-0 pr-1">
+          <div class="mt-0 pr-1">
             <b-dropdown size="sm" variant="link" v-b-popover.hover="'Junk filter'">
               <template #button-content>
                 <span v-if="settings.junkFilter == 'excludejunk'">
@@ -907,7 +907,7 @@ const Assets = {
         txhashFilter: null,
         accountFilter: null,
         accountTypeFilter: null,
-        myTransactionsFilter: null,
+        myTokensFilter: null,
         junkFilter: null,
         period: null,
         selectedTransactions: {},
@@ -957,7 +957,7 @@ const Assets = {
         { value: 'erc20', text: 'ERC-20' },
         { value: 'unknown', text: '(unknown)' },
       ],
-      myTransactionsFilterOptions: [
+      myTokensFilterOptions: [
         { value: null, text: '(any)' },
         { value: 'mine', text: 'Mine' },
         { value: 'notmine', text: 'Not Mine' },
@@ -1101,6 +1101,9 @@ const Assets = {
     accounts() {
       return store.getters['data/accounts'];
     },
+    accountsInfo() {
+      return store.getters['data/accountsInfo'];
+    },
     txs() {
       return store.getters['data/txs'];
     },
@@ -1147,6 +1150,15 @@ const Assets = {
       if (this.settings.filters.owners && Object.keys(this.settings.filters.owners).length > 0) {
         ownerFilter = this.settings.filters.owners;
       }
+      const myAccounts = {};
+      for (const [account, accountData] of Object.entries(this.accounts)) {
+        const accountInfo = this.accountsInfo[account] || {};
+        if (accountInfo.mine) {
+          myAccounts[account] = true;
+        }
+      }
+      // console.log("myAccounts: " + JSON.stringify(myAccounts));
+
       // let accountFilter = null;
       // if (this.settings.filters.accounts && Object.keys(this.settings.filters.accounts).length > 0) {
       //   accountFilter = this.settings.filters.accounts;
@@ -1245,13 +1257,6 @@ const Assets = {
       //         include = false;
       //       }
       //     }
-      //     if (include && this.settings.myTransactionsFilter) {
-      //       if (this.settings.myTransactionsFilter == 'mine' && transaction.account != transaction.from) {
-      //         include = false;
-      //       } else if (this.settings.myTransactionsFilter == 'notmine' && transaction.account == transaction.from) {
-      //         include = false;
-      //       }
-      //     }
       //     const txInfo = this.txsInfo[transaction.txHash] || {};
       //     if (include) {
       //       results.push({
@@ -1329,6 +1334,21 @@ const Assets = {
               const owner = events.length == 0 ? null : events[events.length - 1].to;
               if (include && ownerFilter != null) {
                 if (!(owner in ownerFilter)) {
+                  include = false;
+                }
+              }
+              if (include && this.settings.myTokensFilter) {
+                if (this.settings.myTokensFilter == 'mine' && !(owner in myAccounts)) {
+                  include = false;
+                } else if (this.settings.myTokensFilter == 'notmine' && owner in myAccounts) {
+                  include = false;
+                }
+              }
+              if (include && this.settings.junkFilter) {
+                const contractInfo = this.accountsInfo[account] || {};
+                if (this.settings.junkFilter == 'junk' && !contractInfo.junk) {
+                  include = false;
+                } else if (this.settings.junkFilter == 'excludejunk' && contractInfo.junk) {
                   include = false;
                 }
               }
