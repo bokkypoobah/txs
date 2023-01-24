@@ -284,10 +284,10 @@ const dataModule = {
       }
     },
     addAccountTokenEvents(state, info) {
-      // console.log("addAccountTokenEvents: " + info.txHash + " " + JSON.stringify(info.events, null, 2));
+      console.log("addAccountTokenEvents: " + info.txHash + " " + JSON.stringify(info.events, null, 2));
       for (const [eventIndex, event] of info.events.entries()) {
         if (event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
-          // console.log(eventIndex + " " + JSON.stringify(event));
+          console.log(eventIndex + " " + JSON.stringify(event));
           const contractData = state.accounts[event.contract] || {};
           if (contractData.assets[event.tokenId]) {
             if (!(info.txHash in contractData.assets[event.tokenId].events)) {
@@ -1242,7 +1242,8 @@ const dataModule = {
               if (txData != null) {
                 const events = getEvents(account, context.state.accounts, context.state.eventSelectors, preERC721s, txData);
                 context.commit('addAccountTokenEvents', { txHash, blockNumber, transactionIndex: txData.txReceipt.transactionIndex, timestamp, events: events.myEvents });
-                // const results = parseTx(account, accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
+                const results = parseTx(account, context.state.accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
+                console.log("results: " + JSON.stringify(results, null, 2));
                 // for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                 //   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
                 //     const tokenContract = context.state.accounts[eventItem.contract] || {};

@@ -1187,7 +1187,7 @@ const Report = {
             newMyEvents.push({
               ...event,
               contractName: tokenContract && tokenContract.name || null,
-              decimals: tokenContract && tokenContract.decimals || null,
+              decimals: tokenContract && tokenContract.decimals || undefined,
               tokenName: token.name || null,
               tokenImage: token.image || null,
             });

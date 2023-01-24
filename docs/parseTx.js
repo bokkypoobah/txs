@@ -693,7 +693,8 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   // ENS Registrations and renewals, can be executed via ENS Batch Renewal, ENS.vision, ...
   // ENS commits when executed via ENS.vision will not be detectable
   if (!results.info && events.ensEvents.length > 0) {
-    // console.log("ensEvents: " + JSON.stringify(events.ensEvents, null, 2));
+    console.log("ensEvents: " + JSON.stringify(events.ensEvents, null, 2));
+    console.log("myEvents: " + JSON.stringify(events.myEvents, null, 2));
     const registrationEvents = events.ensEvents.filter(e => e.type == "NameRegistered");
     const renewalEvents = events.ensEvents.filter(e => e.type == "NameRenewed");
     let totalCost = ethers.BigNumber.from(0);
@@ -701,7 +702,14 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     if (registrationEvents.length > 0) {
       // ENS.vision does not refund, and will take leftover as fees
       if (events.receivedInternalEvents.length > 0) {
-        for (const event of registrationEvents) {
+        for (const [eventIndex, event] of registrationEvents.entries()) {
+          console.log(eventIndex + " " + JSON.stringify(event));
+          console.log("  " + JSON.stringify(events.myEvents[eventIndex]));
+          events.myEvents[eventIndex].action = "registered";
+          events.myEvents[eventIndex].price = {
+            token: "eth",
+            amount: event.cost,
+          };
           names.push(event.name + ".eth");
           totalCost = totalCost.add(event.cost);
         }
@@ -710,14 +718,29 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
       }
       results.info = { type: "ens",  action: "registered", /* from: txData.tx.from, */ events: registrationEvents, totalCost: totalCost.toString() };
     } else if (renewalEvents.length > 0) {
-      if (events.receivedInternalEvents.length > 0) {
+      // if (events.receivedInternalEvents.length > 0) {
         for (const event of renewalEvents) {
           names.push(event.name + ".eth");
           totalCost = totalCost.add(event.cost);
+          const tokenId = ethers.BigNumber.from(event.label).toString();
+          events.myEvents.push({
+            type: "erc721",
+            logIndex: event.logIndex,
+            contract: "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85", // event.contract,
+            tokenId,
+            from: ADDRESS0,
+            to: ADDRESS0,
+            action: "renewed",
+            price: {
+              type: "erc721",
+              token: "eth",
+              amount: event.cost,
+            },
+          });
         }
-      } else {
-        totalCost = msgValue;
-      }
+      // } else {
+      //   totalCost = msgValue;
+      // }
       results.info = { type: "ens", action: "renewed", /* from: txData.tx.from, */ events: renewalEvents, totalCost: totalCost.toString() };
     }
     results.ethPaid = totalCost;
@@ -993,7 +1016,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   results.myEvents = [];
   if ((txData.tx.from == account || txData.tx.to == account) && msgValue > 0) {
-    const record = { type: "eth", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString(), name: 'ETH', symbol: 'Ξ', decimals: 18 };
+    const record = { type: "eth", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
     results.myEvents.push(record);
   }
   // console.log("events.myEvents.entries(): " + JSON.stringify(events.myEvents.entries()));
@@ -1004,11 +1027,11 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   results.myEvents = [...results.myEvents, ...events.myEvents];
   for (const [eventIndex, event] of events.receivedInternalEvents.entries()) {
     // console.log(eventIndex + " => " + JSON.stringify(event));
-    const record = { type: "eth", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString(), name: 'ETH', symbol: 'Ξ', decimals: 18 };
+    const record = { type: "eth", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
     results.myEvents.push(record);
   }
 
-  // console.log("myEvents: " + JSON.stringify(results.myEvents));
+  // console.log("myEvents: " + JSON.stringify(results.myEvents, null, 2));
 
   const collator = {};
   for (const [eventIndex, event] of results.myEvents.entries()) {
@@ -1052,7 +1075,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
               let name = undefined;
               let symbol = undefined;
               let decimals = undefined;
-              const tc = accounts[tokenContract];
+              const tc = accounts[tokenContract] || {};
               // const tcInfo = accounts[tokenContract];
               if (ftOrNFT == 'ft') {
                 if (tokenContract == 'eth') {
@@ -1065,8 +1088,8 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
                   decimals = tc.decimals;
                 }
               } else {
-                name = tc.name;
-                symbol = tc.symbol;
+                name = tc.name || null;
+                symbol = tc.symbol || null;
               }
               if (!(sentOrReceived in summary)) {
                 summary[sentOrReceived] = [];
