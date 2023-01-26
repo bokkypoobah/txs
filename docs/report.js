@@ -917,7 +917,7 @@ const Report = {
         { key: 'txCount', label: 'txs', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
       ],
       myEventsFields: [
-        { key: 'type', label: 'Type', thStyle: 'width: 10%;' },
+        { key: 'action', label: 'Action', thStyle: 'width: 10%;' },
         { key: 'logIndex', label: '#', sortable: true, thStyle: 'width: 10%;', thClass: 'text-right', tdClass: 'text-right' },
         { key: 'from', label: 'From', thStyle: 'width: 15%;' },
         { key: 'to', label: 'To', thStyle: 'width: 15%;' },
