@@ -744,6 +744,20 @@ const Report = {
                         <b-link @click="showModalAddress(event.item.contract);"><b-badge pill variant="none" v-b-popover.hover="event.item.contractName" class="truncate" style="max-width: 10.0rem;">{{ event.item.contractName }}</b-badge></b-link>
                       </span>
                     </span>
+                    <br />
+                    <span v-if="event.item.price">
+                      <font size="-2">
+                        <span v-if="event.item.price.token == 'eth'">
+                          {{ formatERC20(event.item.price.tokens, 18) }}<font size="-2">Ξ</font>
+                        </span>
+                        <span v-else-if="event.item.price.token == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
+                          {{ formatERC20(event.item.price.tokens, 18) }}
+                        </span>
+                        <span v-else>
+                          {{ formatERC20(event.item.price.tokens, event.item.price.decimals) }}
+                        </span>
+                      </span>
+                    </span>
                   </template>
                   <template #cell(tokenIdOrTokens)="event">
                     <div v-if="event.item.type == 'preerc721' || event.item.type == 'erc721' || event.item.type == 'erc1155'" class="align-top">

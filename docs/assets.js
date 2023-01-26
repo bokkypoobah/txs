@@ -473,7 +473,7 @@ const Assets = {
           </template>
           <template #cell(owner)="data">
             <b-link @click="showModalAddress(data.item.owner);">{{ ensOrAccount(data.item.owner) }}</b-link>
-          </template>          
+          </template>
           <template #cell(events)="data">
             <font size="-2">
               <!-- <b-table small fixed striped sticky-header="200px" :fields="myEventsFields" :items="data.item.myEvents" head-variant="light"> -->
@@ -495,6 +495,19 @@ const Assets = {
                 </template>
                 <template #cell(to)="data">
                   <b-link @click="showModalAddress(data.item.to);">{{ ensOrAccount(data.item.to, 20) }}</b-link>
+                </template>
+                <template #cell(price)="data">
+                  <span v-if="data.item.price">
+                    <span v-if="data.item.price.token == 'eth'">
+                      {{ formatERC20(data.item.price.tokens, 18) }}<font size="-2">Ξ</font>
+                    </span>
+                    <span v-else-if="data.item.price.token == '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'">
+                      {{ formatERC20(data.item.price.tokens, 18) }}
+                    </span>
+                    <span v-else>
+                      {{ formatERC20(data.item.price.tokens, data.item.price.decimals) }}
+                    </span>
+                  </span>
                 </template>
               </b-table>
             </font>
@@ -1309,6 +1322,7 @@ const Assets = {
             }
             if (include) {
               const events = [];
+              // console.log(JSON.stringify(tokenData, null, 2));
               for (const [txHash, someData] of Object.entries(tokenData.events)) {
                 for (const [logIndex, event] of Object.entries(someData.logs)) {
                   events.push({
@@ -1319,7 +1333,7 @@ const Assets = {
                     logIndex,
                     from: event.from,
                     to: event.to,
-                    value: event.value,
+                    price: event.price,
                   })
                 }
               }
@@ -1373,7 +1387,7 @@ const Assets = {
           }
         }
       }
-      // console.log(JSON.stringify(results.slice(0, 5), null, 2));
+      console.log(JSON.stringify(results.slice(0, 5), null, 2));
       return results;
     },
     filteredSortedAssets() {

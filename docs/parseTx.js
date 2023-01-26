@@ -708,7 +708,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
           events.myEvents[eventIndex].action = "registered";
           events.myEvents[eventIndex].price = {
             token: "eth",
-            amount: event.cost,
+            tokens: event.cost,
           };
           names.push(event.name + ".eth");
           totalCost = totalCost.add(event.cost);
@@ -724,17 +724,17 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
           totalCost = totalCost.add(event.cost);
           const tokenId = ethers.BigNumber.from(event.label).toString();
           events.myEvents.push({
+            action: "renewed",
             type: "erc721",
             logIndex: event.logIndex,
             contract: "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85", // event.contract,
             tokenId,
-            from: ADDRESS0,
-            to: ADDRESS0,
-            action: "renewed",
+            from: undefined,
+            to: undefined,
             price: {
-              type: "erc721",
+              // type: "erc721",
               token: "eth",
-              amount: event.cost,
+              tokens: event.cost,
             },
           });
         }
@@ -800,7 +800,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
       events.myEvents[eventIndex].action = "minted";
       events.myEvents[eventIndex].price = {
         token: "eth",
-        amount: eventIndex < (events.myEvents.length - 1) ? costPerItem.toString() : totalCost.sub(costPerItem.mul(numberOfItems - 1)).toString(),
+        tokens: eventIndex < (events.myEvents.length - 1) ? costPerItem.toString() : totalCost.sub(costPerItem.mul(numberOfItems - 1)).toString(),
       };
     }
     results.info = {
@@ -1032,7 +1032,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   results.myEvents = [];
   if ((txData.tx.from == account || txData.tx.to == account) && msgValue > 0) {
-    const record = { action: "paid", type: "eth", logIndex: null, contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
+    const record = { action: "paid", type: "eth", logIndex: "(first)", contract: "eth", from: txData.tx.from, to: txData.tx.to, tokens: msgValue.toString() };
     results.myEvents.push(record);
   }
   // console.log("events.myEvents.entries(): " + JSON.stringify(events.myEvents.entries()));
@@ -1043,7 +1043,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   results.myEvents = [...results.myEvents, ...events.myEvents];
   for (const [eventIndex, event] of events.receivedInternalEvents.entries()) {
     // console.log(eventIndex + " => " + JSON.stringify(event));
-    const record = { action: "refunded", type: "eth", logIndex: null, contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
+    const record = { action: "refunded", type: "eth", logIndex: "(last)", contract: "eth", from: event.from, to: event.to, tokens: event.value.toString() };
     results.myEvents.push(record);
   }
 
