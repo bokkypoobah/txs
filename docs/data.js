@@ -844,7 +844,8 @@ const dataModule = {
         if (!context.state.sync.halt) {
           const blockNumbers = [];
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            const existing = context.state.blocks[blockNumber] && context.state.blocks[blockNumber].balances[account] || null;
+            const existing = context.state.blocks[blockNumber] && context.state.blocks[blockNumber].balances[account] && context.state.blocks[blockNumber].balances[account].eth && context.state.blocks[blockNumber].balances[account][WETHADDRESS] || null;
+            // const existing = context.state.blocks[blockNumber] && context.state.blocks[blockNumber].balances[account] || null;
             if (!existing) {
               blockNumbers.push(blockNumber);
             }
@@ -852,37 +853,34 @@ const dataModule = {
           context.commit('setSyncSection', { section: 'Blocks & Balances', total: blockNumbers.length });
           let getBalances = true;
           for (const [index, blockNumber] of blockNumbers.entries()) {
-            const existing = context.state.blocks[blockNumber] && context.state.blocks[blockNumber].balances[account] && context.state.blocks[blockNumber].balances[account].eth && context.state.blocks[blockNumber].balances[account][WETHADDRESS] || null;
-            if (!existing) {
-              const block = await provider.getBlock(parseInt(blockNumber));
-              const timestamp = block.timestamp;
-              console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber + " " + moment.unix(timestamp).format("YYYY-MM-DD HH:mm:ss"));
-              let ethBalance = null;
-              let wethBalance = null;
-              // Jan 21 2022 - Metamask returning inpage.js:1 MetaMask - RPC Error: RetryOnEmptyMiddleware - retries exhausted {code: -32603, message: 'RetryOnEmptyMiddleware - retries exhausted', data: {…}}
-              if (getBalances) {
-                try {
-                  ethBalance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
-                } catch (e) {
-                  console.log("ERROR: " + e.message.toString());
-                  getBalances = false;
-                }
+            const block = await provider.getBlock(parseInt(blockNumber));
+            const timestamp = block.timestamp;
+            console.log((parseInt(index) + 1) + "/" + blockNumbers.length + " Timestamp & Balance: " + blockNumber + " " + moment.unix(timestamp).format("YYYY-MM-DD HH:mm:ss"));
+            let ethBalance = null;
+            let wethBalance = null;
+            // Jan 21 2022 - Metamask returning inpage.js:1 MetaMask - RPC Error: RetryOnEmptyMiddleware - retries exhausted {code: -32603, message: 'RetryOnEmptyMiddleware - retries exhausted', data: {…}}
+            if (getBalances) {
+              try {
+                ethBalance = ethers.BigNumber.from(await provider.getBalance(account, parseInt(blockNumber))).toString();
+              } catch (e) {
+                console.log("ERROR: " + e.message.toString());
+                getBalances = false;
               }
-              if (getBalances) {
-                try {
-                  wethBalance = (parseInt(blockNumber) < 4719568) ? 0 : ethers.BigNumber.from(await weth.balanceOf(account, { blockTag: parseInt(blockNumber) })).toString();
-                } catch (e) {
-                  console.log("ERROR: " + e.message.toString());
-                  getBalances = false;
-                }
+            }
+            if (getBalances) {
+              try {
+                wethBalance = (parseInt(blockNumber) < 4719568) ? 0 : ethers.BigNumber.from(await weth.balanceOf(account, { blockTag: parseInt(blockNumber) })).toString();
+              } catch (e) {
+                console.log("ERROR: " + e.message.toString());
+                getBalances = false;
               }
-              context.commit('addBlock', { blockNumber, timestamp, account, asset: 'eth', balance: ethBalance });
-              context.commit('addBlock', { blockNumber, timestamp, account, asset: WETHADDRESS, balance: wethBalance });
-              context.commit('setSyncCompleted', parseInt(index) + 1);
-              if ((index + 1) % 100 == 0) {
-                console.log("Saving blocks");
-                context.dispatch('saveData', ['blocks']);
-              }
+            }
+            context.commit('addBlock', { blockNumber, timestamp, account, asset: 'eth', balance: ethBalance });
+            context.commit('addBlock', { blockNumber, timestamp, account, asset: WETHADDRESS, balance: wethBalance });
+            context.commit('setSyncCompleted', parseInt(index) + 1);
+            if ((index + 1) % 100 == 0) {
+              console.log("Saving blocks");
+              context.dispatch('saveData', ['blocks']);
             }
             if (context.state.sync.halt) {
               break;
