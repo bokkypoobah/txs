@@ -756,7 +756,7 @@ const Report = {
                         <span v-else>
                           {{ formatERC20(event.item.price.tokens, event.item.price.decimals) }}
                         </span>
-                      </span>
+                      </font>
                     </span>
                   </template>
                   <template #cell(tokenIdOrTokens)="event">

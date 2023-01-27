@@ -729,7 +729,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
             logIndex: event.logIndex,
             contract: "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85", // event.contract,
             tokenId,
-            from: undefined,
+            from: txData.tx.from,
             to: undefined,
             price: {
               // type: "erc721",

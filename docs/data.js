@@ -286,11 +286,11 @@ const dataModule = {
     addAccountTokenEvents(state, info) {
       console.log("addAccountTokenEvents: " + info.txHash + " " + JSON.stringify(info.events, null, 2));
       for (const [eventIndex, event] of info.events.entries()) {
-        console.log("  " + eventIndex + " " + event.type + " " + event.contract + " " + event.tokenId + " " + JSON.stringify(event));
+        // console.log("  " + eventIndex + " " + event.type + " " + event.contract + " " + event.tokenId + " " + JSON.stringify(event));
         if (event.type == 'preerc721' || event.type == 'erc721' || event.type == 'erc1155') {
           const contractData = state.accounts[event.contract] || {};
-          console.log("contractData: " + JSON.stringify(contractData, null, 2));
-          console.log("contractData.assets[event.tokenId]: " + JSON.stringify(contractData.assets[event.tokenId], null, 2));
+          // console.log("contractData: " + JSON.stringify(contractData, null, 2));
+          // console.log("contractData.assets[event.tokenId]: " + JSON.stringify(contractData.assets[event.tokenId], null, 2));
           if (contractData.assets[event.tokenId]) {
             if (!(info.txHash in contractData.assets[event.tokenId].events)) {
               Vue.set(state.accounts[event.contract].assets[event.tokenId].events, info.txHash, {
@@ -310,7 +310,7 @@ const dataModule = {
                 price: event.price || undefined,
               });
             }
-            console.log("contractData.assets[event.tokenId]: " + JSON.stringify(contractData.assets[event.tokenId], null, 2));
+            // console.log("contractData.assets[event.tokenId]: " + JSON.stringify(contractData.assets[event.tokenId], null, 2));
           }
           // console.log(txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
         }
@@ -1202,9 +1202,9 @@ const dataModule = {
           }
           // console.log("missingTokensList: " + JSON.stringify(missingTokensList));
           context.commit('setSyncSection', { section: 'Build Tokens', total: missingTokensList.length });
-          const GETTOKENINFOBATCHSIZE = 50;
+          const GETTOKENINFOBATCHSIZE = 40; // 50 causes the Reservoir API to fail for some fetches
           const info = {};
-          const DELAYINMILLIS = 2000;
+          const DELAYINMILLIS = 2500;
           for (let i = 0; i < missingTokensList.length && !context.state.sync.halt; i += GETTOKENINFOBATCHSIZE) {
             const batch = missingTokensList.slice(i, parseInt(i) + GETTOKENINFOBATCHSIZE);
             let continuation = null;
