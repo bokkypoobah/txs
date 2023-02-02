@@ -566,10 +566,7 @@ const dataModule = {
       }
     },
     async syncIt(context, info) {
-      // TODO - Replaced below, for dev
-      let sections = info.sections;
-      const parameters = info.parameters || [];
-      logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(sections) + ", parameters: " + JSON.stringify(parameters).substring(0, 1000));
+      logInfo("dataModule", "actions.syncIt - sections: " + JSON.stringify(info.sections) + ", parameters: " + JSON.stringify(info.parameters).substring(0, 1000));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const block = await provider.getBlock();
       const confirmations = store.getters['config/settings'].confirmations && parseInt(store.getters['config/settings'].confirmations) || 10;
@@ -581,24 +578,14 @@ const dataModule = {
       const OVERLAPBLOCKS = 10000;
       const processFilters = store.getters['config/processFilters'];
 
-      // const moonCatRescueCatIdsToRescueIndices = {};
-      // for (const [rescueIndex, catId] of MOONCATRESCUECATIDS.entries()) {
-      //   moonCatRescueCatIdsToRescueIndices[catId] = rescueIndex;
-      // }
-      // const moonCatRescueLookup = getMoonCatRescueLookup();
-      // console.log(JSON.stringify(moonCatRescueLookup));
-
       const accountsToSync = [];
       for (const [account, accountData] of Object.entries(context.state.accounts)) {
         const accountsInfo = context.state.accountsInfo[account] || {};
-        if ((parameters.length == 0 && accountsInfo.sync) || parameters.includes(account)) {
+        if ((info.parameters.length == 0 && accountsInfo.sync) || info.parameters.includes(account)) {
             accountsToSync.push(account);
         }
       }
-      // sections = ['syncTransferEvents', 'syncImportInternalTransactions', 'syncImportTransactions', 'scrapeTxs', 'retrieveSelectors', 'buildAssets'];
-      // sections = ['all'];
-      // sections = ['syncBuildTokenContractsAndAccounts'];
-      for (const [sectionIndex, section] of sections.entries()) {
+      for (const [sectionIndex, section] of info.sections.entries()) {
         console.log(sectionIndex + "." + section);
         const parameter = { accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, processFilters };
         if (section == "syncTransferEvents" || section == "all") {
