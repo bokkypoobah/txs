@@ -173,6 +173,7 @@ const dataModule = {
         Vue.set(state.accounts, info.account, {
           type: info.type || null,
           name: info.name || null, // ERC-20, ERC-721 & ERC-1155
+          ensName: null,
           symbol: info.symbol || null, // ERC-20, ERC-721 & ERC-1155
           decimals: info.decimals || null, // ERC-20
           slug: info.slug || null, // ERC-721 & ERC-1155
@@ -200,10 +201,8 @@ const dataModule = {
       const [account, eventRecord] = [info.account, info.eventRecord];
       const accountData = state.accounts[account];
       if (!(eventRecord.txHash in accountData.events)) {
-        accountData.events[eventRecord.txHash] = {};
+        accountData.events[eventRecord.txHash] = eventRecord.blockNumber;
       }
-      const tempEvent = { ...eventRecord, txHash: undefined, logIndex: undefined };
-      accountData.events[eventRecord.txHash][eventRecord.logIndex] = tempEvent;
     },
     addAccountInternalTransactions(state, info) {
       const [account, results] = [info.account, info.results];
@@ -232,7 +231,7 @@ const dataModule = {
       const accountData = state.accounts[account];
       for (const result of results) {
         if (!(result.hash in accountData.transactions)) {
-          accountData.transactions[result.hash] = {...result, hash: undefined };
+          accountData.transactions[result.hash] = result.blockNumber;
         }
       }
     },
@@ -634,8 +633,8 @@ const dataModule = {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const interfaces = getInterfaces();
       const preERC721s = store.getters['config/settings'].preERC721s;
-      // const BATCHSIZE = parameter.etherscanBatchSize;
-      const BATCHSIZE = 5000000;
+      const BATCHSIZE = parameter.etherscanBatchSize;
+      // const BATCHSIZE = 50000000;
       for (const [accountIndex, account] of parameter.accountsToSync.entries()) {
         console.log("actions.syncTransferEvents: " + accountIndex + " " + account);
         context.commit('setSyncSection', { section: 'Import', total: parameter.accountsToSync.length });
