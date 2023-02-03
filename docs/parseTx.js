@@ -568,6 +568,11 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   results.ethReceived = 0;
   results.ethPaid = 0;
   const events = getEvents(account, accounts, eventSelectors, preERC721s, txData);
+  const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
+  console.log("totalReceivedInternally: " + totalReceivedInternally);
+  if (events.myEvents.length > 0) {
+    console.log("myEvents: " + JSON.stringify(events.myEvents, null, 2));
+  }
 
   // if (events.receivedNFTEvents.length > 0) {
   //   console.log("receivedNFTEvents: " + JSON.stringify(events.receivedNFTEvents, null, 2));
@@ -662,7 +667,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   // Multisig execute internal transfer
   if (events.receivedInternalEvents.length > 0 && results.functionSelector == "0xb61d27f6") {
-    // TODO: Handle > 1
+    // TODO: Handle > 1 totalReceivedInternally
     if (events.receivedInternalEvents.length == txData.txReceipt.logs.length) {
       results.ethReceived = events.receivedInternalEvents[0].value;
       results.info = "Received Internal " + ethers.utils.formatEther(events.receivedInternalEvents[0].value) + "Ξ from " + events.receivedInternalEvents[0].from;
@@ -748,7 +753,6 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   // We purchase NFTs
   if (!results.info && events.nftExchangeEvents.length > 0 && events.receivedNFTEvents.length > 0 && txData.tx.from == account) {
-    const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
     results.info = {
       type: "nft",
       action: "purchased",
@@ -760,7 +764,22 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   // Other account purchased our NFTs
   if (!results.info && events.nftExchangeEvents.length > 0 && events.sentNFTEvents.length > 0 && txData.tx.from != account) {
-    const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
+    // console.log("HERE");
+    const numberOfItems = events.myEvents.length;
+    const totalCost = totalReceivedInternally;
+    const costPerItem = totalCost.div(numberOfItems);
+    // console.log("totalCost: " + totalCost);
+    // console.log("costPerItem: " + costPerItem);
+    for (const [eventIndex, event] of events.myEvents.entries()) {
+      // console.log(eventIndex + " " + JSON.stringify(event));
+      // console.log("  " + JSON.stringify(events.myEvents[eventIndex]));
+      events.myEvents[eventIndex].action = "sold";
+      events.myEvents[eventIndex].price = {
+        token: "eth",
+        tokens: eventIndex < (events.myEvents.length - 1) ? costPerItem.toString() : totalCost.sub(costPerItem.mul(numberOfItems - 1)).toString(),
+      };
+    }
+
     results.info = {
       type: "nft",
       action: "sold",
@@ -788,10 +807,9 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   // We mint NFTs
   if (!results.info && events.nftExchangeEvents.length == 0 && events.receivedNFTEvents.length > 0 && txData.tx.from == account) {
     // console.log("myEvents: " + JSON.stringify(events.myEvents, null, 2));
-    const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
     const numberOfItems = events.myEvents.length;
     const totalCost = ethers.BigNumber.from(msgValue).sub(totalReceivedInternally);
-    const costPerItem = totalCost.div(events.myEvents.length);
+    const costPerItem = totalCost.div(numberOfItems);
     // console.log("totalCost: " + totalCost);
     // console.log("costPerItem: " + costPerItem);
     for (const [eventIndex, event] of events.myEvents.entries()) {
@@ -908,8 +926,6 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
     const receivedERC20Events = events.erc20Events.filter(e => e.to == account);
     // console.log("receivedERC20Events: " + JSON.stringify(receivedERC20Events));
     // console.log("receivedInternalEvents: " + JSON.stringify(events.receivedInternalEvents));
-    const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
-    // console.log("totalReceivedInternally: " + totalReceivedInternally);
     if (receivedERC20Events.length > 0) {
       const info = getTokenContractInfo(receivedERC20Events[0].contract, accounts);
       results.info = "Purchased " + ethers.utils.formatUnits(receivedERC20Events[0].tokens, info.decimals) + " ERC-20 " + info.symbol + " for " + ethers.utils.formatEther(msgValue) + "Ξ with " + ethers.utils.formatEther(totalReceivedInternally) + "Ξ refund";
