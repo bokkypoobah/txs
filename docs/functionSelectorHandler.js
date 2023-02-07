@@ -15,6 +15,9 @@ const _FUNCTIONSELECTORHANDLER = [
             if (to == account) {
               if (event.address in preERC721s) {
                 // results.info = { type: "nft", action: "received", contract: event.address, from, tokenId: tokens.toString(), events: events.receivedNFTEvents };
+                for (const [eventIndex, event] of events.myEvents.entries()) {
+                  events.myEvents[eventIndex].action = "received";
+                }
                 results.info = {
                   type: "nft",
                   action: "received",
@@ -27,6 +30,9 @@ const _FUNCTIONSELECTORHANDLER = [
             } else if (from == account) {
               if (event.address in preERC721s) {
                 // results.info = { type: "nft", action: "sent", contract: event.address, to, tokenId: tokens.toString(), events: events.receivedNFTEvents };
+                for (const [eventIndex, event] of events.myEvents.entries()) {
+                  events.myEvents[eventIndex].action = "sent";
+                }
                 results.info = {
                   type: "nft",
                   action: "sent",
@@ -85,9 +91,15 @@ const _FUNCTIONSELECTORHANDLER = [
         }
       } else {
         if (events.receivedNFTEvents.length > 0) {
+          for (const [eventIndex, event] of events.myEvents.entries()) {
+            events.myEvents[eventIndex].action = "received";
+          }
           results.info = { type: "nft", action: "received", from: txData.tx.from, events: events.receivedNFTEvents };
         }
         if (events.sentNFTEvents.length > 0) {
+          for (const [eventIndex, event] of events.myEvents.entries()) {
+            events.myEvents[eventIndex].action = "sent";
+          }
           results.info = { type: "nft", action: "sent", /* to: txData.tx.to,*/ events: events.sentNFTEvents };
         }
       }

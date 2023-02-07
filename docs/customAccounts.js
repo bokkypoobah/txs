@@ -104,6 +104,9 @@ const _CUSTOMACCOUNTS = {
           } else if (log.name == "PunkTransfer") {
             const [from, to, punkIndex] = log.args;
             if (to == account) {
+              for (const [eventIndex, event] of events.myEvents.entries()) {
+                events.myEvents[eventIndex].action = "received";
+              }
               results.info = {
                 type: "nft",
                 action: "received",
@@ -111,6 +114,9 @@ const _CUSTOMACCOUNTS = {
                 events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
               };
             } else if (from == account) {
+              for (const [eventIndex, event] of events.myEvents.entries()) {
+                events.myEvents[eventIndex].action = "sent";
+              }
               results.info = {
                 type: "nft",
                 action: "sent",
@@ -177,6 +183,9 @@ const _CUSTOMACCOUNTS = {
           } else if (log.name == "PunkTransfer") {
             const [from, to, punkIndex] = log.args;
             if (to == account) {
+              for (const [eventIndex, event] of events.myEvents.entries()) {
+                events.myEvents[eventIndex].action = "received";
+              }
               results.info = {
                 type: "nft",
                 action: "received",
@@ -184,6 +193,9 @@ const _CUSTOMACCOUNTS = {
                 events: [ { type: "preerc721", logIndex: event.logIndex, contract: event.address, tokenId: punkIndex.toString(), from, to } ], // events.receivedNFTEvents,
               };
             } else if (from == account) {
+              for (const [eventIndex, event] of events.myEvents.entries()) {
+                events.myEvents[eventIndex].action = "sent";
+              }
               results.info = {
                 type: "nft",
                 action: "sent",

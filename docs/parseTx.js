@@ -753,6 +753,21 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   // We purchase NFTs
   if (!results.info && events.nftExchangeEvents.length > 0 && events.receivedNFTEvents.length > 0 && txData.tx.from == account) {
+    // console.log("HERE");
+    const numberOfItems = events.myEvents.length;
+    const totalCost = ethers.BigNumber.from(msgValue).sub(totalReceivedInternally);
+    const costPerItem = totalCost.div(numberOfItems);
+    // console.log("totalCost: " + totalCost);
+    // console.log("costPerItem: " + costPerItem);
+    for (const [eventIndex, event] of events.myEvents.entries()) {
+      // console.log(eventIndex + " " + JSON.stringify(event));
+      // console.log("  " + JSON.stringify(events.myEvents[eventIndex]));
+      events.myEvents[eventIndex].action = "purchased";
+      events.myEvents[eventIndex].price = {
+        token: "eth",
+        tokens: eventIndex < (events.myEvents.length - 1) ? costPerItem.toString() : totalCost.sub(costPerItem.mul(numberOfItems - 1)).toString(),
+      };
+    }
     results.info = {
       type: "nft",
       action: "purchased",
