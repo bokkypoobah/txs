@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-# # Update Vue.js Devtools
-
-# mkdir -p ./docs/server/js/vue-devtools
-# wget -NP ./docs/server/js/vue-devtools https://cdn.jsdelivr.net/npm/vue-devtools@5.1.4/lib/index.min.js
-
 # Update dependencies and source maps
 
 # JS
