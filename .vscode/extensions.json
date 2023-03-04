@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "vue.volar"
+        "vue.volar",
+        "faisalhakim47.vue-inline-template"
     ]
 }
