@@ -392,6 +392,9 @@ const configModule = {
     processPeriods: [
       { value: null, text: '(all)', data: { from: null, to: null } },
       { value: "custom", text: '(custom)', data: { from: null, to: null } },
+      { value: 'toJun302018', text: 'to Jun 30 2018', data: { from: 0, to: 5_880_581 } },
+      { value: 'toJun302019', text: 'to Jun 30 2019', data: { from: 0, to: 8_059_133 } },
+      { value: 'toJun302020', text: 'to Jun 30 2020', data: { from: 0, to: 10_366_994 } },
       { value: '20152016', text: 'Jul 1 2015 - Jun 30 2016', data: { from: 0, to: 1_795_814 } },
       { value: '20162017', text: 'Jul 1 2016 - Jun 30 2017', data: { from: 1_801_799, to: 3_950_123 } },
       { value: '20172018', text: 'Jul 1 2017 - Jun 30 2018', data: { from: 3_955_159, to: 5_880_581 } },
