@@ -979,6 +979,9 @@ const Report = {
     accounts() {
       return store.getters['data/accounts'];
     },
+    accountsInfo() {
+      return store.getters['data/accountsInfo'];
+    },
     txs() {
       return store.getters['data/txs'];
     },
@@ -1118,6 +1121,7 @@ const Report = {
           }
           const txInfo = this.txsInfo[transaction.txHash] || {};
           if (include) {
+            const accountInfo = this.accountsInfo[transaction.account] || {};
             results.push({
               // chainId: transaction.chainId,
               txHash: transaction.txHash,
@@ -1125,6 +1129,8 @@ const Report = {
               transactionIndex: transaction.transactionIndex,
               timestamp: transaction.timestamp,
               account: transaction.account,
+              accountName: accountInfo.name || '',
+              group: accountInfo.group || '',
               nonce: transaction.nonce,
               from: transaction.from,
               to: transaction.to,
@@ -1579,20 +1585,25 @@ const Report = {
     exportTransactions() {
       // console.log("exportTransactions");
       const rows = [
-          ["No", "TxHash", "From", "FromENS", "To", "ToENS", "FunctionName", "InputFragment"],
+          ["No", "Account", "AccountName", "AccountGroup", "TxHash", "From", "FromENS", "FromNonce", "To", "ToENS", "FunctionName", "InputFragment", "ExchangeRate"],
       ];
       let i = 1;
       for (const result of this.filteredSortedTransactions) {
         const fromENS = this.ensMap[result.from] || null;
         rows.push([
           i,
+          result.account,
+          result.accountName,
+          result.group,
           result.txHash,
           result.from,
           this.ensMap[result.from] || null,
+          result.nonce,
           result.to,
           this.ensMap[result.to] || null,
           result.functionName || null,
           result.input && result.input.substring(0, 100) || null,
+          result.exchangeRate,
         ]);
         i++;
       }
