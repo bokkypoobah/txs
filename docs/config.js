@@ -8,6 +8,9 @@ const Config = {
               <b-form-group label="Etherscan API Key:" label-for="etherscan-apikey" label-size="sm" label-cols-sm="2" label-align-sm="right" description="This key is stored in your local browser storage and is sent with Etherscan API requests. If not supplied, imports from Etherscan will be rate limited to 1 request every 5 seconds" class="mx-0 my-1 p-0">
                 <b-form-input type="text" size="sm" id="etherscan-apikey" :value="settings.etherscanAPIKey" @change="setEtherscanAPIKey($event)" placeholder="See https://docs.etherscan.io/ to obtain an API key" class="w-75"></b-form-input>
               </b-form-group>
+              <b-form-group label="CryptoCompare API Key:" label-for="cryptocompare-apikey" label-size="sm" label-cols-sm="2" label-align-sm="right" description="This key is stored in your local browser storage and is sent with CryptoCompare API requests. If not supplied, imports from CryptoCompare may fail if you reach your free quota" class="mx-0 my-1 p-0">
+                <b-form-input type="text" size="sm" id="cryptocompare-apikey" :value="settings.cryptoCompareAPIKey" @change="setCryptoCompareAPIKey($event)" placeholder="See https://www.cryptocompare.com/ to obtain an API key" class="w-75"></b-form-input>
+              </b-form-group>
               <b-form-group label="Batch Size:" label-for="import-batchsize" label-size="sm" label-cols-sm="2" label-align-sm="right" :description="'Batch size for Etherscan transactions and internal transactions API calls, and web3 event filter calls. Use the smaller values if the web3 event filter call returns more than 10k results as the RPC calls will fail'" class="mx-0 my-1 p-0">
                 <b-form-select size="sm" id="import-batchsize" :value="settings.etherscanBatchSize" @change="setEtherscanBatchSize($event)" :options="etherscanBatchSizeOptions" class="w-25"></b-form-select>
               </b-form-group>
@@ -184,8 +187,11 @@ const Config = {
     },
   },
   methods: {
-    setEtherscanAPIKey(etherscanAPIKey) {
-      store.dispatch('config/setEtherscanAPIKey', etherscanAPIKey);
+    setEtherscanAPIKey(apiKey) {
+      store.dispatch('config/setEtherscanAPIKey', apiKey);
+    },
+    setCryptoCompareAPIKey(apiKey) {
+      store.dispatch('config/setCryptoCompareAPIKey', apiKey);
     },
     setEtherscanBatchSize(etherscanBatchSize) {
       store.dispatch('config/setEtherscanBatchSize', etherscanBatchSize);
@@ -366,6 +372,7 @@ const configModule = {
   state: {
     settings: {
       etherscanAPIKey: null,
+      cryptoCompareAPIKey: null,
       etherscanBatchSize: 10_000_000,
       confirmations: 10,
       periodStart: 'jul',
@@ -387,7 +394,7 @@ const configModule = {
         "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d": "CryptoKitties", // Note that the transfer parameters are not indexed - Transfer (address from, address to, uint256 tokenId)
         "0x43fb95c7afA1Ac1E721F33C695b2A0A94C7ddAb2": "LunarMoonPlots",
       },
-      version: 10,
+      version: 11,
     },
     processPeriods: [
       { value: null, text: '(all)', data: { from: null, to: null } },
@@ -458,8 +465,11 @@ const configModule = {
     },
   },
   mutations: {
-    setEtherscanAPIKey(state, etherscanAPIKey) {
-      state.settings.etherscanAPIKey = etherscanAPIKey;
+    setEtherscanAPIKey(state, apiKey) {
+      state.settings.etherscanAPIKey = apiKey;
+    },
+    setCryptoCompareAPIKey(state, apiKey) {
+      state.settings.cryptoCompareAPIKey = apiKey;
     },
     setEtherscanBatchSize(state, etherscanBatchSize) {
       state.settings.etherscanBatchSize = etherscanBatchSize;
@@ -493,13 +503,17 @@ const configModule = {
     restoreState(context) {
       if ('configSettings' in localStorage) {
         const tempSettings = JSON.parse(localStorage.configSettings);
-        if ('version' in tempSettings && tempSettings.version == 10) {
+        if ('version' in tempSettings && tempSettings.version == 11) {
           context.state.settings = tempSettings;
         }
       }
     },
-    setEtherscanAPIKey(context, etherscanAPIKey) {
-      context.commit('setEtherscanAPIKey', etherscanAPIKey);
+    setEtherscanAPIKey(context, apiKey) {
+      context.commit('setEtherscanAPIKey', apiKey);
+      localStorage.configSettings = JSON.stringify(context.state.settings);
+    },
+    setCryptoCompareAPIKey(context, apiKey) {
+      context.commit('setCryptoCompareAPIKey', apiKey);
       localStorage.configSettings = JSON.stringify(context.state.settings);
     },
     setEtherscanBatchSize(context, etherscanBatchSize) {
