@@ -573,6 +573,7 @@ const dataModule = {
       const confirmedBlock = await provider.getBlock(confirmedBlockNumber);
       const confirmedTimestamp = confirmedBlock && confirmedBlock.timestamp || null;
       const etherscanAPIKey = store.getters['config/settings'].etherscanAPIKey && store.getters['config/settings'].etherscanAPIKey.length > 0 && store.getters['config/settings'].etherscanAPIKey || "YourApiKeyToken";
+      const cryptoCompareAPIKey = store.getters['config/settings'].cryptoCompareAPIKey && store.getters['config/settings'].cryptoCompareAPIKey.length > 0 && store.getters['config/settings'].cryptoCompareAPIKey || null;
       const etherscanBatchSize = store.getters['config/settings'].etherscanBatchSize && parseInt(store.getters['config/settings'].etherscanBatchSize) || 5_000_000;
       const OVERLAPBLOCKS = 10000;
       const processFilters = store.getters['config/processFilters'];
@@ -586,7 +587,7 @@ const dataModule = {
       }
       for (const [sectionIndex, section] of info.sections.entries()) {
         console.log(sectionIndex + "." + section);
-        const parameter = { accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, etherscanBatchSize, OVERLAPBLOCKS, processFilters };
+        const parameter = { accountsToSync, confirmedBlockNumber, confirmedTimestamp, etherscanAPIKey, cryptoCompareAPIKey, etherscanBatchSize, OVERLAPBLOCKS, processFilters };
         if (section == "syncTransferEvents" || section == "all") {
           await context.dispatch('syncTransferEvents', parameter);
         }
@@ -1324,7 +1325,10 @@ const dataModule = {
         if (days > MAXDAYS) {
           days = MAXDAYS;
         }
-        const url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + reportingCurrency + "&toTs=" + toTs.unix() + "&limit=" + days;
+        let url = "https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=" + reportingCurrency + "&toTs=" + toTs.unix() + "&limit=" + days;
+        if (parameter.cryptoCompareAPIKey) {
+          url = url + "&api_key=" + parameter.cryptoCompareAPIKey;
+        }
         console.log(url);
         const data = await fetch(url)
           .then(response => response.json())
