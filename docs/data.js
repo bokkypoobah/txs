@@ -355,8 +355,7 @@ const dataModule = {
       Vue.set(state.ensMap, nameInfo.account, nameInfo.name);
     },
     addTxs(state, info) {
-      const txInfo = info.txInfo;
-      Vue.set(state.txs, txInfo.tx.hash, txInfo);
+      Vue.set(state.txs, info.txHash, info.txInfo);
     },
     // updateTxData(state, info) {
     //   Vue.set(state.txs[info.txHash].dataImported, 'tx', {
@@ -907,7 +906,7 @@ const dataModule = {
                 console.log(processed + "/" + txHashList.length + " Retrieving " + txHash + " @ " + blockNumber + " " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss"));
                 const currentInfo = context.state.txs[txHash] || {};
                 const info = await getTxInfo(txHash, currentInfo, account, provider);
-                context.commit('addTxs', { txInfo: info});
+                context.commit('addTxs', { txHash, txInfo: info});
                 if (processed % 50 == 0) {
                   console.log("Saving txs");
                   context.dispatch('saveData', ['txs']);

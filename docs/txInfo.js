@@ -2,7 +2,7 @@ async function getTxInfo(txHash, item, account, provider) {
   const results = {};
   const tx = await provider.getTransaction(txHash);
   results.tx = {
-    hash: tx.hash,
+    // hash: tx.hash,
     type: tx.type,
     blockHash: tx.blockHash,
     blockNumber: tx.blockNumber,
@@ -13,10 +13,10 @@ async function getTxInfo(txHash, item, account, provider) {
     to: tx.to,
     value: ethers.BigNumber.from(tx.value).toString(),
     nonce: tx.nonce,
-    data: tx.data,
-    r: tx.r,
-    s: tx.s,
-    v: tx.v,
+    data: tx.to && tx.data || null, // Remove contract creation data to reduce memory footprint
+    // r: tx.r,
+    // s: tx.s,
+    // v: tx.v,
     chainId: tx.chainId,
   };
   const txReceipt = await provider.getTransactionReceipt(txHash);
@@ -28,15 +28,15 @@ async function getTxInfo(txHash, item, account, provider) {
     gasUsed: ethers.BigNumber.from(txReceipt.gasUsed).toString(),
     blockHash: txReceipt.blockHash,
     blockHash: txReceipt.blockHash,
-    transactionHash: txReceipt.transactionHash,
+    // transactionHash: txReceipt.transactionHash,
     logs: txReceipt.logs,
     blockNumber: txReceipt.blockNumber,
-    confirmations: txReceipt.confirmations,
+    // confirmations: txReceipt.confirmations,
     cumulativeGasUsed: ethers.BigNumber.from(txReceipt.cumulativeGasUsed).toString(),
     effectiveGasPrice: ethers.BigNumber.from(txReceipt.effectiveGasPrice).toString(),
     status: txReceipt.status,
     type: txReceipt.type,
-    byzantium: txReceipt.byzantium,
+    // byzantium: txReceipt.byzantium,
   };
   return results;
 }
