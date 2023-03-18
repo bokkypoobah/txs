@@ -830,7 +830,7 @@ const dataModule = {
         if (!context.state.sync.halt) {
           const blockNumbers = [];
           for (const [blockNumber, txHashes] of Object.entries(txHashesByBlocks)) {
-            const existing = context.state.blocks[blockNumber] && context.state.blocks[blockNumber].balances[account] && context.state.blocks[blockNumber].balances[account].eth && context.state.blocks[blockNumber].balances[account][WETHADDRESS] || null;
+            const existing = context.state.blocks[blockNumber] && context.state.blocks[blockNumber].balances[account] && context.state.blocks[blockNumber].balances[account].eth && (blockNumber < 4719568 || context.state.blocks[blockNumber].balances[account][WETHADDRESS]) || null;
             // const existing = context.state.blocks[blockNumber] && context.state.blocks[blockNumber].balances[account] || null;
             if (!existing) {
               blockNumbers.push(blockNumber);
