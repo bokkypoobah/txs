@@ -2,7 +2,7 @@ async function getTxInfo(txHash, item, account, provider) {
   const results = {};
   const tx = await provider.getTransaction(txHash);
   results.tx = {
-    // hash: tx.hash,
+    hash: tx.hash,
     type: tx.type,
     blockHash: tx.blockHash,
     blockNumber: tx.blockNumber,
