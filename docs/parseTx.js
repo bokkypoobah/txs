@@ -569,10 +569,10 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   results.ethPaid = 0;
   const events = getEvents(account, accounts, eventSelectors, preERC721s, txData);
   const totalReceivedInternally = events.receivedInternalEvents.reduce((acc, e) => ethers.BigNumber.from(acc).add(e.value), 0);
-  console.log("totalReceivedInternally: " + totalReceivedInternally);
-  if (events.myEvents.length > 0) {
-    console.log("myEvents: " + JSON.stringify(events.myEvents, null, 2));
-  }
+  // console.log("totalReceivedInternally: " + totalReceivedInternally);
+  // if (events.myEvents.length > 0) {
+  //   console.log("myEvents: " + JSON.stringify(events.myEvents, null, 2));
+  // }
 
   // if (events.receivedNFTEvents.length > 0) {
   //   console.log("receivedNFTEvents: " + JSON.stringify(events.receivedNFTEvents, null, 2));
@@ -732,7 +732,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
             action: "renewed",
             type: "erc721",
             logIndex: event.logIndex,
-            contract: "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85", // event.contract,
+            contract: event.contract,
             tokenId,
             from: txData.tx.from,
             to: undefined,

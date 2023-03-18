@@ -1091,13 +1091,17 @@ const dataModule = {
                   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
                     const tokenContract = context.state.accounts[eventItem.contract] || {};
                     console.log(blockNumber + " " + txHash + " " + eventItem.type + " " + eventItem.contract + " " + (tokenContract ? tokenContract.type : '') + " " + (tokenContract ? tokenContract.name : '') + " " + (eventItem.tokenId ? eventItem.tokenId : '?'));
-                    if (!(eventItem.tokenId in tokenContract.assets)) {
-                      if (!(eventItem.contract in missingTokensMap)) {
-                        missingTokensMap[eventItem.contract] = {};
+                    if (tokenContract.assets) {
+                      if (!(eventItem.tokenId in tokenContract.assets)) {
+                        if (!(eventItem.contract in missingTokensMap)) {
+                          missingTokensMap[eventItem.contract] = {};
+                        }
+                        if (!(eventItem.tokenId in missingTokensMap[eventItem.contract])) {
+                          missingTokensMap[eventItem.contract][eventItem.tokenId] = true;
+                        }
                       }
-                      if (!(eventItem.tokenId in missingTokensMap[eventItem.contract])) {
-                        missingTokensMap[eventItem.contract][eventItem.tokenId] = true;
-                      }
+                    } else {
+                      console.log("token contract not found");
                     }
                   }
                 }
