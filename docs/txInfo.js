@@ -27,7 +27,6 @@ async function getTxInfo(txHash, item, account, provider) {
     transactionIndex: txReceipt.transactionIndex,
     gasUsed: ethers.BigNumber.from(txReceipt.gasUsed).toString(),
     blockHash: txReceipt.blockHash,
-    blockHash: txReceipt.blockHash,
     // transactionHash: txReceipt.transactionHash,
     logs: txReceipt.logs,
     blockNumber: txReceipt.blockNumber,
