@@ -274,7 +274,7 @@ const Report = {
           -->
           <div class="mt-0 flex-grow-1">
           </div>
-          <div class="mt-0 pr-1" style="max-width: 8.0rem;">
+          <div class="mt-0 pr-1" style="max-width: 12.0rem;">
             <b-form-select size="sm" v-model="settings.sortOption" @change="saveSettings" :options="sortOptions" v-b-popover.hover.top="'Yeah. Sort'"></b-form-select>
           </div>
           <div class="mt-0 pr-1">
@@ -870,6 +870,8 @@ const Report = {
         { value: 'notmine', text: 'Not Mine' },
       ],
       sortOptions: [
+        { value: 'accounttimestampasc', text: '▲ Account, ▲ Timestamp' },
+        { value: 'accounttimestampdsc', text: '▲ Account, ▼ Timestamp' },
         { value: 'timestampasc', text: '▲ Timestamp' },
         { value: 'timestampdsc', text: '▼ Timestamp' },
         { value: 'blocknumberasc', text: '▲ Block Number' },
@@ -1160,7 +1162,23 @@ const Report = {
     },
     filteredSortedTransactions() {
       const results = this.filteredTransactions;
-      if (this.settings.sortOption == 'timestampasc') {
+      if (this.settings.sortOption == 'accounttimestampasc') {
+        results.sort((a, b) => {
+          if (('' + a.accountName).localeCompare(b.accountName) == 0) {
+            results.sort((a, b) => a.timestamp - b.timestamp);
+          } else {
+            return ('' + a.accountName).localeCompare(b.accountName);
+          }
+        });
+      } else if (this.settings.sortOption == 'accounttimestampdsc') {
+        results.sort((a, b) => {
+          if (('' + a.accountName).localeCompare(b.accountName) == 0) {
+            results.sort((a, b) => b.timestamp - a.timestamp);
+          } else {
+            return ('' + a.accountName).localeCompare(b.accountName);
+          }
+        });
+      } else if (this.settings.sortOption == 'timestampasc') {
         results.sort((a, b) => a.timestamp - b.timestamp);
       } else if (this.settings.sortOption == 'timestampdsc') {
         results.sort((a, b) => b.timestamp - a.timestamp);
