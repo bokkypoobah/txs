@@ -1140,8 +1140,11 @@ const Report = {
               functionCall: transaction.functionCall,
               exchangeRate: transaction.exchangeRate,
               info: transaction.info,
+              ethPaid: transaction.ethPaid,
+              ethReceived: transaction.ethReceived,
               balance: transaction.balance,
               balanceInReportingCurrency: transaction.balanceInReportingCurrency,
+              txFeeInReportingCurrency: transaction.txFeeInReportingCurrency,
               expectedBalance: transaction.expectedBalance,
               diff: transaction.diff,
               collator: transaction.collator,
@@ -1587,18 +1590,32 @@ const Report = {
       // console.log("exportTransactions");
       const rows = [
           // "No", "Account", "AccountGroup", "FromENS", "ToENS", "FunctionName", "InputFragment",
-          ["AccountName", "DateTime", "From", "FromNonce", "To", "ExchangeRate", "TxHash"],
+          ["AccountName", "DateTime", "From", "Nonce", "To", "Type", "Action", "Paid ETH", "Received ETH", "Bal ETH", "ETH/" + this.reportingCurrency, "Balance " + this.reportingCurrency, "Fee " + this.reportingCurrency, "Expenses", "Income", "Cap G/L", "Notes", "TxHash"],
       ];
       let i = 1;
       for (const result of this.filteredSortedTransactions) {
-        const fromENS = this.ensMap[result.from] || null;
+        console.log(JSON.stringify(result, null, 2));
+        const fromName = result.from == result.account ? result.accountName : (this.ensMap[result.from] || result.from.substring(0, 12));
+        const toName = result.to ? (this.ensMap[result.to] || result.to.substring(0, 12)) : ' ';
         rows.push([
           result.accountName,
           moment.unix(result.timestamp).format("YYYY-MM-DD HH:mm:ss"),
-          result.from,
+          fromName,
           result.from == result.account ? result.nonce : ' ',
-          result.to,
+          toName,
+          // result.to && result.to.substring(0, 16),
+          result.txType,
+          result.txAction,
+          result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
+          result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
+          result.balance && ethers.utils.formatEther(result.balance) || '',
           result.exchangeRate,
+          result.balanceInReportingCurrency && result.balanceInReportingCurrency.toFixed(2) || '',
+          result.txFeeInReportingCurrency && result.txFeeInReportingCurrency.toFixed(2) || '',
+          '',
+          '',
+          '',
+          '',
           result.txHash,
           // this.ensMap[result.to] || null,
           // result.functionName || null,
@@ -1767,7 +1784,7 @@ const reportModule = {
               totalEthPaid = totalEthPaid.add(results.ethPaid);
               totalEthReceived = totalEthReceived.add(results.ethReceived);
               const gasUsed = ethers.BigNumber.from(tx.txReceipt.gasUsed);
-              const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice) : 0;
+              const txFee = tx.tx.from == account ? gasUsed.mul(tx.txReceipt.effectiveGasPrice).toString() : 0;
               totalTxFee = totalTxFee.add(txFee);
               const expectedBalance = prevBalance.add(totalEthReceived).sub(totalEthPaid).sub(totalTxFee);
               const diff = balance.sub(expectedBalance);
@@ -1878,6 +1895,8 @@ const reportModule = {
                 info: results.info || "",
                 txType: results.info && results.info.type || "unknown",
                 txAction: results.info && results.info.action || "unknown",
+                ethPaid: results.ethPaid,
+                ethReceived: results.ethReceived,
                 ethBalance: isLastTxInBlock ? ethBalance.toString() : null,
                 wethBalance: isLastTxInBlock ? wethBalance.toString() : null,
                 balance: isLastTxInBlock ? balance.toString() : null,
@@ -1888,6 +1907,7 @@ const reportModule = {
                 summary: results.summary,
                 myEvents: mySupplementedEvents,
                 junk,
+                txFeeInReportingCurrency: ethers.utils.formatEther(txFee) * exchangeRate.rate,
               });
             }
             // console.log("∟ " + moment.unix(block.timestamp).format("YYYY-MM-DD HH:mm:ss") + " " + blockNumber + " " + ethers.utils.formatEther(prevBalance) + "+" + ethers.utils.formatEther(totalEthReceived) + "-" + ethers.utils.formatEther(totalEthPaid) + "-" + ethers.utils.formatEther(totalTxFee) + " => " + (diff != 0 ? "DIFF " : "") + ethers.utils.formatEther(diff) + "+" + ethers.utils.formatEther(balance) + " " + balanceInReportingCurrency.toFixed(2) + " @ " + exchangeRate.rate);
@@ -1895,7 +1915,7 @@ const reportModule = {
           }
         }
       }
-      // console.log("tokens: " + JSON.stringify(tokens, null, 2));
+      console.log("transactions: " + JSON.stringify(transactions, null, 2));
       // TODO: Delete accountsMap, typesMap, actionsMap, functionCallsMap
       context.commit('setReport', { transactions, tokens, accountsMap, typesMap, actionsMap, functionCallsMap });
       context.dispatch('saveData', ['report']);
