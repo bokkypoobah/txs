@@ -439,7 +439,7 @@ const Report = {
             <b-form-tags size="sm" :disabled="!settings.taggingMode" @input="saveTxTags(data.item.txHash, $event)" v-model="data.item.tags" tag-variant="primary" tag-pills separator=" " v-b-popover.hover="'Enter tags'" placeholder="" class="ml-0 mt-1"></b-form-tags>
           </template>
           <template #cell(account)="data">
-            <b-link @click="showModalAddress(data.item.account);">{{ ensOrAccount(data.item.account) }}</b-link>
+            <b-link @click="showModalAddress(data.item.account);">{{ data.item.accountName }}</b-link>
             <br />
             <font size="-1">
               <b-badge v-if="data.item.account != data.item.from" pill variant="warning" @click="showModalAddress(data.item.from);" v-b-popover.hover.top="'Transaction sender, if different from account'">{{ ensOrAccount(data.item.from, 20) }}</b-badge>
@@ -1122,6 +1122,7 @@ const Report = {
           const txInfo = this.txsInfo[transaction.txHash] || {};
           if (include) {
             const accountInfo = this.accountsInfo[transaction.account] || {};
+            const accountName = (accountInfo.name || '') + ' ' + transaction.account.substring(0, 10);
             results.push({
               // chainId: transaction.chainId,
               txHash: transaction.txHash,
@@ -1129,7 +1130,7 @@ const Report = {
               transactionIndex: transaction.transactionIndex,
               timestamp: transaction.timestamp,
               account: transaction.account,
-              accountName: accountInfo.name || '',
+              accountName,
               group: accountInfo.group || '',
               nonce: transaction.nonce,
               from: transaction.from,
@@ -1585,25 +1586,27 @@ const Report = {
     exportTransactions() {
       // console.log("exportTransactions");
       const rows = [
-          ["No", "Account", "AccountName", "AccountGroup", "TxHash", "From", "FromENS", "FromNonce", "To", "ToENS", "FunctionName", "InputFragment", "ExchangeRate"],
+          // "No", "Account", "AccountGroup", "FromENS", "ToENS", "FunctionName", "InputFragment",
+          ["AccountName", "DateTime", "From", "FromNonce", "To", "ExchangeRate", "TxHash"],
       ];
       let i = 1;
       for (const result of this.filteredSortedTransactions) {
         const fromENS = this.ensMap[result.from] || null;
         rows.push([
-          i,
-          result.account,
           result.accountName,
-          result.group,
-          result.txHash,
+          moment.unix(result.timestamp).format("YYYY-MM-DD HH:mm:ss"),
           result.from,
-          this.ensMap[result.from] || null,
-          result.nonce,
+          result.from == result.account ? result.nonce : ' ',
           result.to,
-          this.ensMap[result.to] || null,
-          result.functionName || null,
-          result.input && result.input.substring(0, 100) || null,
           result.exchangeRate,
+          result.txHash,
+          // this.ensMap[result.to] || null,
+          // result.functionName || null,
+          // result.input && result.input.substring(0, 100) || null,
+          // this.ensMap[result.from] || null,
+          // i,
+          // result.account,
+          // result.group,
         ]);
         i++;
       }
