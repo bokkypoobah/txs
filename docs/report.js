@@ -25,7 +25,7 @@ const Report = {
           <br />
           <b-link :href="'https://x2y2.io/user/' + modalAddress + '/items'" target="_blank">View account in x2y2.io</b-link>
           <br />
-          {{ modalAddress }}
+          <b-form-checkbox size="sm" :checked="accountsInfo[modalAddress] && accountsInfo[modalAddress].junk ? 1 : 0" value="1" @change="toggleAccountInfoField(modalAddress, 'junk')" v-b-popover.hover="'Junk?'">Junk</b-form-checkbox>
         </b-modal>
 
         <b-modal id="modal-tx" hide-footer size="lg">
@@ -1470,6 +1470,9 @@ const Report = {
     resetAdditionalFilters() {
       Vue.set(this.settings, 'filters', {});
       localStorage.reportSettings = JSON.stringify(this.settings);
+    },
+    async toggleAccountInfoField(account, field) {
+      store.dispatch('data/toggleAccountInfoField', { account, field });
     },
     toggleSelectedTransactions(items) {
       let someFalse = false;
