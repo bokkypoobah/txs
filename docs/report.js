@@ -24,6 +24,8 @@ const Report = {
           <b-link :href="'https://looksrare.org/accounts/' + modalAddress + '#owned'" target="_blank">View account in looksrare.org</b-link>
           <br />
           <b-link :href="'https://x2y2.io/user/' + modalAddress + '/items'" target="_blank">View account in x2y2.io</b-link>
+          <br />
+          {{ modalAddress }}
         </b-modal>
 
         <b-modal id="modal-tx" hide-footer size="lg">
@@ -1146,6 +1148,7 @@ const Report = {
               ethReceived: transaction.ethReceived,
               balance: transaction.balance,
               balanceInReportingCurrency: transaction.balanceInReportingCurrency,
+              txFee: transaction.txFee,
               txFeeInReportingCurrency: transaction.txFeeInReportingCurrency,
               expectedBalance: transaction.expectedBalance,
               diff: transaction.diff,
@@ -1608,13 +1611,14 @@ const Report = {
       // console.log("exportTransactions");
       const rows = [
           // "No", "Account", "AccountGroup", "FromENS", "ToENS", "FunctionName", "InputFragment",
-          ["AccountName", "DateTime", "From", "Nonce", "To", "Type", "Action", "Paid ETH", "Received ETH", "Bal ETH", "ETH/" + this.reportingCurrency, "Balance " + this.reportingCurrency, "Fee " + this.reportingCurrency, "Expenses", "Income", "Cap G/L", "Notes", "TxHash"],
+          ["AccountName", "DateTime", "From", "Nonce", "To", "Type", "Action", "Rcvd CCY", "Paid CCY", "Fee CCY", "Bal CCY", "CCY", "CCY/" + this.reportingCurrency, "Balance " + this.reportingCurrency, "Fee " + this.reportingCurrency, "Expenses", "Income", "Cap G/L", "Cap G %", "Eff Cap G/L", "Notes", "TxHash"],
       ];
       let i = 1;
       for (const result of this.filteredSortedTransactions) {
-        console.log(JSON.stringify(result, null, 2));
+        // console.log(JSON.stringify(result).substring(0, 300));
         const fromName = result.from == result.account ? result.accountName : (this.ensMap[result.from] || result.from.substring(0, 12));
         const toName = result.to ? (this.ensMap[result.to] || result.to.substring(0, 12)) : ' ';
+        // console.log("accountName: " + result.accountName + ", fromName: " + fromName + ", toName: " + toName);
         rows.push([
           result.accountName,
           moment.unix(result.timestamp).format("YYYY-MM-DD HH:mm:ss"),
@@ -1624,12 +1628,16 @@ const Report = {
           // result.to && result.to.substring(0, 16),
           result.txType,
           result.txAction,
-          result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
           result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
+          result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
+          result.txFee && ethers.utils.formatEther(result.txFee) || '',
           result.balance && ethers.utils.formatEther(result.balance) || '',
+          'ETH',
           result.exchangeRate,
           result.balanceInReportingCurrency && result.balanceInReportingCurrency.toFixed(2) || '',
           result.txFeeInReportingCurrency && result.txFeeInReportingCurrency.toFixed(2) || '',
+          '',
+          '',
           '',
           '',
           '',
@@ -1925,6 +1933,7 @@ const reportModule = {
                 summary: results.summary,
                 myEvents: mySupplementedEvents,
                 junk,
+                txFee,
                 txFeeInReportingCurrency: ethers.utils.formatEther(txFee) * exchangeRate.rate,
               });
             }
