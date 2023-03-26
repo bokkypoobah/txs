@@ -1127,7 +1127,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
               if (ftOrNFT == 'ft') {
                 if (tokenContract == 'eth') {
                   name = 'ETH';
-                  symbol = 'Ξ';
+                  symbol = 'ETH';
                   decimals = 18;
                 } else {
                   name = tc.name;

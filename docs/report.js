@@ -1614,48 +1614,177 @@ const Report = {
       // console.log("exportTransactions");
       const rows = [
           // "No", "Account", "AccountGroup", "FromENS", "ToENS", "FunctionName", "InputFragment",
-          ["AccountName", "DateTime", "From", "Nonce", "To", "Type", "Action", "Rcvd CCY", "Paid CCY", "Fee CCY", "Bal CCY", "CCY", "CCY/" + this.reportingCurrency, "Balance " + this.reportingCurrency, "Fee " + this.reportingCurrency, "Expenses", "Income", "Cap G/L", "Cap G %", "Eff Cap G/L", "Notes", "TxHash"],
+          ["AccountName", "DateTime", "No", "From", "Nonce", "To", "Type", "Action", "Rcvd CCY", "Paid CCY", "Bal CCY", "CCY", "CCY/" + this.reportingCurrency, "Rcvd " + this.reportingCurrency, "Paid " + this.reportingCurrency, "Bal " + this.reportingCurrency, "Expenses", "Income", "Cap G/L", "Cap G %", "Eff Cap G/L", "Notes", "TxHash"],
       ];
       let i = 1;
+      let no = 1;
       for (const result of this.filteredSortedTransactions) {
-        // console.log(JSON.stringify(result).substring(0, 300));
+        console.log(JSON.stringify(result, null, 2));
+        const timestampString = moment.unix(result.timestamp).format("YYYY-MM-DD HH:mm:ss");
         const fromName = result.from == result.account ? result.accountName : (this.ensMap[result.from] || result.from.substring(0, 12));
         const toName = result.to ? (this.ensMap[result.to] || result.to.substring(0, 12)) : ' ';
         // console.log("accountName: " + result.accountName + ", fromName: " + fromName + ", toName: " + toName);
-        rows.push([
-          result.accountName,
-          moment.unix(result.timestamp).format("YYYY-MM-DD HH:mm:ss"),
-          fromName,
-          result.from == result.account ? result.nonce : ' ',
-          toName,
-          // result.to && result.to.substring(0, 16),
-          result.txType,
-          result.txAction,
-          result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
-          result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
-          result.txFee && ethers.utils.formatEther(result.txFee) || '',
-          result.balance && ethers.utils.formatEther(result.balance) || '',
-          'ETH',
-          result.exchangeRate,
-          result.balanceInReportingCurrency && result.balanceInReportingCurrency.toFixed(2) || '',
-          result.txFeeInReportingCurrency && result.txFeeInReportingCurrency.toFixed(2) || '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          result.txHash,
-          // this.ensMap[result.to] || null,
-          // result.functionName || null,
-          // result.input && result.input.substring(0, 100) || null,
-          // this.ensMap[result.from] || null,
-          // i,
-          // result.account,
-          // result.group,
-        ]);
+        // rows.push([
+        //   result.accountName,
+        //   timestampString,
+        //   no++,
+        //   fromName,
+        //   result.from == result.account ? result.nonce : ' ',
+        //   toName,
+        //   // result.to && result.to.substring(0, 16),
+        //   result.txType,
+        //   result.txAction,
+        //   result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
+        //   result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
+        //   result.txFee && ethers.utils.formatEther(result.txFee) || '',
+        //   result.balance && ethers.utils.formatEther(result.balance) || '',
+        //   'ETH',
+        //   result.exchangeRate,
+        //   result.balanceInReportingCurrency && result.balanceInReportingCurrency.toFixed(2) || '',
+        //   result.txFeeInReportingCurrency && result.txFeeInReportingCurrency.toFixed(2) || '',
+        //   '',
+        //   '',
+        //   '',
+        //   '',
+        //   '',
+        //   '',
+        //   result.txHash,
+        // ]);
+        if (result.summary) {
+          for (const [sentOrReceived, items] of Object.entries(result.summary)) {
+            // console.log(sentOrReceived + " " + JSON.stringify(items));
+            for (const item of items) {
+              console.log(sentOrReceived + " " + JSON.stringify(item));
+              const rcvdInReportingCurrency = (sentOrReceived == 'received' && item.symbol == 'ETH' && item.ftOrNFT == 'ft') ? ethers.utils.formatEther(item.tokens) * result.exchangeRate : null;
+              const paidInReportingCurrency = (sentOrReceived == 'sent' && item.symbol == 'ETH' && item.ftOrNFT == 'ft') ? ethers.utils.formatEther(item.tokens) * result.exchangeRate : null;
+              rows.push([
+                result.accountName,
+                timestampString,
+                no++,
+                fromName,
+                result.from == result.account ? result.nonce : ' ',
+                toName,
+                // result.to && result.to.substring(0, 16),
+                result.txType,
+                result.txAction,
+                sentOrReceived == 'received' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : item.tokens) : '', // result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
+                sentOrReceived == 'sent' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : item.tokens) : '', // result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
+                // '', // result.txFee && ethers.utils.formatEther(result.txFee) || '',
+                '', // result.balance && ethers.utils.formatEther(result.balance) || '',
+                item.symbol,
+                item.symbol == 'ETH' ? result.exchangeRate : '', // result.exchangeRate,
+                rcvdInReportingCurrency,
+                paidInReportingCurrency,
+                item.symbol == 'ETH' && result.balanceInReportingCurrency ? result.balanceInReportingCurrency.toFixed(2) : '',
+                // '', // result.txFeeInReportingCurrency && result.txFeeInReportingCurrency.toFixed(2) || '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                result.txHash,
+              ]);
+            }
+          }
+        }
+        if (result.txFee) {
+          rows.push([
+            result.accountName,
+            timestampString,
+            no++,
+            fromName,
+            result.from == result.account ? result.nonce : ' ',
+            toName,
+            // result.to && result.to.substring(0, 16),
+            'Fee', // result.txType,
+            result.txAction,
+            '', // result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
+            result.txFee && ethers.utils.formatEther(result.txFee) || '', // result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
+            // '', // result.txFee && ethers.utils.formatEther(result.txFee) || '',
+            result.balance && ethers.utils.formatEther(result.balance) || '',
+            'ETH',
+            result.exchangeRate,
+            '',
+            result.txFeeInReportingCurrency && result.txFeeInReportingCurrency.toFixed(2) || '',
+            result.balanceInReportingCurrency && result.balanceInReportingCurrency.toFixed(2) || '',
+            // result.txFeeInReportingCurrency && result.txFeeInReportingCurrency.toFixed(2) || '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            result.txHash,
+          ]);
+        }
+
+
+        // const receivedFTs = result.summary && result.summary.received && result.summary.received.filter(e => e.ftOrNFT == 'ft' /*&& e.name != 'ETH'*/);
+        // console.log("receivedFTs: " + JSON.stringify(receivedFTs, null, 2));
+        // for (const ft of receivedFTs) {
+        //   console.log("ft: " + JSON.stringify(ft, null, 2));
+        //   rows.push([
+        //     result.accountName,
+        //     timestampString,
+        //     no++,
+        //     fromName,
+        //     result.from == result.account ? result.nonce : ' ',
+        //     toName,
+        //     // result.to && result.to.substring(0, 16),
+        //     result.txType,
+        //     result.txAction,
+        //     ethers.utils.formatUnits(ft.tokens, ft.decimals), // result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
+        //     '', // result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
+        //     '', // result.txFee && ethers.utils.formatEther(result.txFee) || '',
+        //     '', // result.balance && ethers.utils.formatEther(result.balance) || '',
+        //     ft.symbol,
+        //     ft.symbol == 'ETH' ? result.exchangeRate : '', // result.exchangeRate,
+        //     '', // result.balanceInReportingCurrency && result.balanceInReportingCurrency.toFixed(2) || '',
+        //     '', // result.txFeeInReportingCurrency && result.txFeeInReportingCurrency.toFixed(2) || '',
+        //     '',
+        //     '',
+        //     '',
+        //     '',
+        //     '',
+        //     '',
+        //     result.txHash,
+        //   ]);
+        // }
+        // const paidFTs = result.summary && result.summary.sent && result.summary.sent.filter(e => e.ftOrNFT == 'ft' /*&& e.name != 'ETH'*/);
+        // console.log("paidFTs: " + JSON.stringify(paidFTs, null, 2));
+        // for (const ft of paidFTs) {
+        //   console.log("ft: " + JSON.stringify(ft, null, 2));
+        //   rows.push([
+        //     result.accountName,
+        //     timestampString,
+        //     no++,
+        //     fromName,
+        //     result.from == result.account ? result.nonce : ' ',
+        //     toName,
+        //     // result.to && result.to.substring(0, 16),
+        //     result.txType,
+        //     result.txAction,
+        //     '', // result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
+        //     ethers.utils.formatUnits(ft.tokens, ft.decimals), // result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
+        //     '', // result.txFee && ethers.utils.formatEther(result.txFee) || '',
+        //     '', // result.balance && ethers.utils.formatEther(result.balance) || '',
+        //     ft.symbol,
+        //     ft.symbol == 'ETH' ? result.exchangeRate : '', // result.exchangeRate,
+        //     '', // result.balanceInReportingCurrency && result.balanceInReportingCurrency.toFixed(2) || '',
+        //     '', // result.txFeeInReportingCurrency && result.txFeeInReportingCurrency.toFixed(2) || '',
+        //     '',
+        //     '',
+        //     '',
+        //     '',
+        //     '',
+        //     '',
+        //     result.txHash,
+        //   ]);
+        // }
         i++;
       }
+      // console.log("results: " + rows.map(e => e.join("\t")).join("\n"));
       let csvContent = "data:text/tsv;charset=utf-8," + rows.map(e => e.join("\t")).join("\n");
       var encodedUri = encodeURI(csvContent);
       var link = document.createElement("a");
