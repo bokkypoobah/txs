@@ -525,7 +525,7 @@ const dataModule = {
         const accountData = await getAccountInfo(account, provider);
         if (accountData.account) {
           context.commit('addNewAccount', accountData);
-          const isMyAccount = account == store.getters['connection/coinbase'];
+          const isMyAccount = true; // account == store.getters['connection/coinbase'];
           const accountInfo = {
             account,
             mine: isMyAccount,
@@ -1236,7 +1236,7 @@ const dataModule = {
                 // context.commit('addAccountTokenEvents', { txHash, blockNumber, transactionIndex: txData.txReceipt.transactionIndex, timestamp, events: events.myEvents });
                 const results = parseTx(account, context.state.accounts, context.state.functionSelectors, context.state.eventSelectors, preERC721s, txData);
                 context.commit('addAccountTokenEvents', { txHash, blockNumber, transactionIndex: txData.txReceipt.transactionIndex, timestamp, events: results.myEvents });
-                console.log("results: " + JSON.stringify(results, null, 2));
+                // console.log("results: " + JSON.stringify(results, null, 2));
                 // for (const [eventIndex, eventItem] of events.myEvents.entries()) {
                 //   if (eventItem.type == 'preerc721' || eventItem.type == 'erc721' || eventItem.type == 'erc1155') {
                 //     const tokenContract = context.state.accounts[eventItem.contract] || {};

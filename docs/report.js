@@ -324,7 +324,7 @@ const Report = {
                       <b-form-checkbox size="sm" :checked="(settings.filters['accounts'] && settings.filters['accounts'][data.item.account]) ? 1 : 0" value="1" @change="filterChanged('accounts', data.item.account)"></b-form-checkbox>
                     </template>
                     <template #cell(account)="data">
-                      {{ ensOrAccount(data.item.account) }}
+                      {{ data.item.accountName }}
                     </template>
                   </b-table>
                 </font>
@@ -1126,7 +1126,17 @@ const Report = {
           const txInfo = this.txsInfo[transaction.txHash] || {};
           if (include) {
             const accountInfo = this.accountsInfo[transaction.account] || {};
-            const accountName = (accountInfo.name || '') + ' ' + transaction.account.substring(0, 10);
+            const ensName = this.ensMap && this.ensMap[transaction.account] || null;
+            const accountName = ensName || ((accountInfo.name || '') + ' ' + transaction.account.substring(0, 10)) || transaction.account.substring(0, 16);
+
+            const fromInfo = this.accountsInfo[transaction.from] || {};
+            const fromENSName = this.ensMap && this.ensMap[transaction.from] || null;
+            const fromName = fromENSName || ((fromInfo.name || '') + ' ' + transaction.from.substring(0, 10)) || transaction.from.substring(0, 16);
+
+            const toInfo = transaction.to && this.accountsInfo[transaction.to] || {};
+            const toENSName = transaction.to && this.ensMap && this.ensMap[transaction.to] || null;
+            const toName = toENSName || ((toInfo.name || '') + ' ' + transaction.to.substring(0, 10)) || transaction.to.substring(0, 16);
+
             results.push({
               // chainId: transaction.chainId,
               txHash: transaction.txHash,
@@ -1138,7 +1148,9 @@ const Report = {
               group: accountInfo.group || '',
               nonce: transaction.nonce,
               from: transaction.from,
+              fromName,
               to: transaction.to,
+              toName,
               contract: transaction.contract,
               functionSelector: transaction.functionSelector,
               functionCall: transaction.functionCall,
@@ -1255,26 +1267,19 @@ const Report = {
       }
       const results = [];
       for (const [k, v] of Object.entries(accountsMap)) {
-        results.push({ account: k, count: v });
+        const accountInfo = this.accountsInfo[k] || {};
+        const ensName = this.ensMap && this.ensMap[k] || null;
+        const accountName = ensName || ((accountInfo.name || '') + ' ' + k.substring(0, 10)) || k.substring(0, 16);
+        results.push({ account: k, accountName, count: v });
       }
       results.sort((a, b) => {
-        if (a.count == b.count) {
-          return ('' + a.account).localeCompare(b.account);
+        if (('' + a.accountName).localeCompare(b.accountName) == 0) {
+          results.sort((a, b) => a.count - b.count);
         } else {
-          return b.count - a.count;
+          return ('' + a.accountName).localeCompare(b.accountName);
         }
       });
       return results;
-      // const results = [];
-      // if (this.report.accountsMap) {
-      //   for (const [k, v] of Object.entries(this.report.accountsMap)) {
-      //     results.push({ account: k, count: v });
-      //   }
-      //   results.sort((a, b) => {
-      //     return ('' + a.account).localeCompare(b.account);
-      //   });
-      // }
-      // return results;
     },
     getAllContracts() {
       const contractsMap = {};
@@ -1614,15 +1619,15 @@ const Report = {
       // console.log("exportTransactions");
       const rows = [
           // "No", "Account", "AccountGroup", "FromENS", "ToENS", "FunctionName", "InputFragment",
-          ["AccountName", "DateTime", "No", "From", "Nonce", "To", "Type", "Action", "Rcvd CCY", "Paid CCY", "Bal CCY", "CCY", "CCY/" + this.reportingCurrency, "Rcvd " + this.reportingCurrency, "Paid " + this.reportingCurrency, "Bal " + this.reportingCurrency, "Expenses", "Income", "Cap G/L", "Cap G %", "Eff Cap G/L", "Notes", "TxHash"],
+          ["AccountName", "DateTime", "No", "From", "Nonce", "To", "Type", "Action", "Rcvd CCY", "Paid CCY", "Bal CCY", "CCY", "CCY/" + this.reportingCurrency, "Rcvd " + this.reportingCurrency, "Paid " + this.reportingCurrency, "Bal " + this.reportingCurrency, "Income", "Expenses", "Cap G/L", "Cap G %", "Eff Cap G/L", "Notes", "TxHash"],
       ];
       let i = 1;
-      let no = 1;
       for (const result of this.filteredSortedTransactions) {
+        let no = 1;
         console.log(JSON.stringify(result, null, 2));
         const timestampString = moment.unix(result.timestamp).format("YYYY-MM-DD HH:mm:ss");
-        const fromName = result.from == result.account ? result.accountName : (this.ensMap[result.from] || result.from.substring(0, 12));
-        const toName = result.to ? (this.ensMap[result.to] || result.to.substring(0, 12)) : ' ';
+        // const fromName = result.from == result.account ? result.accountName : (this.ensMap[result.from] || result.from.substring(0, 12));
+        // const toName = result.to ? (this.ensMap[result.to] || result.to.substring(0, 12)) : ' ';
         // console.log("accountName: " + result.accountName + ", fromName: " + fromName + ", toName: " + toName);
         // rows.push([
         //   result.accountName,
@@ -1661,9 +1666,9 @@ const Report = {
                 result.accountName,
                 timestampString,
                 no++,
-                fromName,
+                result.fromName,
                 result.from == result.account ? result.nonce : ' ',
-                toName,
+                result.toName,
                 // result.to && result.to.substring(0, 16),
                 result.txType,
                 result.txAction,
@@ -1693,9 +1698,9 @@ const Report = {
             result.accountName,
             timestampString,
             no++,
-            fromName,
+            result.fromName,
             result.from == result.account ? result.nonce : ' ',
-            toName,
+            result.toName,
             // result.to && result.to.substring(0, 16),
             'Fee', // result.txType,
             result.txAction,
