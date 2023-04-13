@@ -1135,7 +1135,7 @@ const Report = {
 
             const toInfo = transaction.to && this.accountsInfo[transaction.to] || {};
             const toENSName = transaction.to && this.ensMap && this.ensMap[transaction.to] || null;
-            const toName = toENSName || ((toInfo.name || '') + ' ' + transaction.to.substring(0, 10)) || transaction.to.substring(0, 16);
+            const toName = transaction.to ? (toENSName || ((toInfo.name || '') + ' ' + transaction.to.substring(0, 10)) || transaction.to.substring(0, 16)) : '';
 
             results.push({
               // chainId: transaction.chainId,
