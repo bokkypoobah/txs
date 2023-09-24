@@ -1800,8 +1800,6 @@ const Report = {
         console.log("results: " + rows.map(e => e.join("\t")).join("\n"));
       } else {
         let csvContent = "data:text/tsv;charset=utf-8," + rows.map(e => e.join("\t")).join("\n");
-        // console.log("results: " + rows.map(e => e.join("\t")).join("\n"));
-        // console.log("csvContent: " + csvContent);
         var encodedUri = encodeURI(csvContent);
         var link = document.createElement("a");
         link.setAttribute("href", encodedUri.replaceAll('#', '%23'));

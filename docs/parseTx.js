@@ -781,7 +781,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   if (!results.info && events.nftExchangeEvents.length > 0 && events.sentNFTEvents.length > 0 && txData.tx.from != account) {
     // console.log("HERE");
     const numberOfItems = events.myEvents.length;
-    const totalCost = totalReceivedInternally;
+    const totalCost = ethers.BigNumber.from(totalReceivedInternally);
     const costPerItem = totalCost.div(numberOfItems);
     // console.log("totalCost: " + totalCost);
     // console.log("costPerItem: " + costPerItem);
