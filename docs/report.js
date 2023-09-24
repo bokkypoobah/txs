@@ -1679,8 +1679,8 @@ const Report = {
                 // result.to && result.to.substring(0, 16),
                 result.txType,
                 result.txAction,
-                sentOrReceived == 'received' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : tokenName.replace('#', '')) : '', // result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
-                sentOrReceived == 'sent' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : tokenName.replace('#', '')) : '', // result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
+                sentOrReceived == 'received' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : tokenName) : '', // result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
+                sentOrReceived == 'sent' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : tokenName) : '', // result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
                 // '', // result.txFee && ethers.utils.formatEther(result.txFee) || '',
                 '', // result.balance && ethers.utils.formatEther(result.balance) || '',
                 item.ftOrNFT == 'ft' ? item.symbol : contractName,
@@ -1804,7 +1804,7 @@ const Report = {
         // console.log("csvContent: " + csvContent);
         var encodedUri = encodeURI(csvContent);
         var link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
+        link.setAttribute("href", encodedUri.replaceAll('#', '%23'));
         link.setAttribute("download", "txs_transactions_export-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".tsv");
         document.body.appendChild(link); // Required for FF
         link.click(); // This will download the data with the specified file name
