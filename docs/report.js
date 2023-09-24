@@ -502,7 +502,7 @@ const Report = {
                   </span>
                   <span v-else>
                     <font size="-1">
-                      <b-link @click="showModalNFTCollection(row.tokenContract);">{{ row.tokens }} x {{ row.name }}</b-link>
+                      <b-link @click="showModalNFTCollection(row.tokenContract);">{{ '[' + row.tokens + ']' }} x {{ row.name }}</b-link>
                     </font>
                   </span>
                 </span>
@@ -1619,7 +1619,7 @@ const Report = {
       // console.log("exportTransactions");
       const rows = [
           // "No", "Account", "AccountGroup", "FromENS", "ToENS", "FunctionName", "InputFragment",
-          ["AccountName", "DateTime", "No", "From", "Nonce", "To", "Type", "Action", "Rcvd CCY", "Paid CCY", "Bal CCY", "CCY", "CCY/" + this.reportingCurrency, "Rcvd " + this.reportingCurrency, "Paid " + this.reportingCurrency, "Bal " + this.reportingCurrency, "Income", "Expenses", "Cap G/L", "Cap G %", "Eff Cap G/L", "Notes", "TxHash"],
+          ["AccountName", "DateTime", "No", "From", "Nonce", "To", "Type", "Action", "Rcvd", "Paid", "Balance", "Token", "Token/" + this.reportingCurrency, "Rcvd " + this.reportingCurrency, "Paid " + this.reportingCurrency, "Bal " + this.reportingCurrency, "Income", "Expenses", "Cap G/L", "Cap G %", "Eff Cap G/L", "Notes", "TxHash"],
       ];
       let i = 1;
       for (const result of this.filteredSortedTransactions) {
@@ -1659,7 +1659,14 @@ const Report = {
           for (const [sentOrReceived, items] of Object.entries(result.summary)) {
             // console.log(sentOrReceived + " " + JSON.stringify(items));
             for (const item of items) {
-              console.log(sentOrReceived + " " + JSON.stringify(item));
+              // console.log(sentOrReceived + " " + JSON.stringify(item));
+              const tokenContract = this.report.tokens[item.tokenContract] || {};
+              // console.log("tokenContract: " + JSON.stringify(tokenContract));
+              const token = tokenContract.ids && tokenContract.ids[item.tokens[0]] || {};
+              // console.log("token: " + JSON.stringify(token));
+              const contractName = tokenContract && tokenContract.name || 'x';
+              const tokenName = token.name || 'y';
+
               const rcvdInReportingCurrency = (sentOrReceived == 'received' && item.symbol == 'ETH' && item.ftOrNFT == 'ft') ? ethers.utils.formatEther(item.tokens) * result.exchangeRate : null;
               const paidInReportingCurrency = (sentOrReceived == 'sent' && item.symbol == 'ETH' && item.ftOrNFT == 'ft') ? ethers.utils.formatEther(item.tokens) * result.exchangeRate : null;
               rows.push([
@@ -1672,11 +1679,11 @@ const Report = {
                 // result.to && result.to.substring(0, 16),
                 result.txType,
                 result.txAction,
-                sentOrReceived == 'received' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : item.tokens) : '', // result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
-                sentOrReceived == 'sent' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : item.tokens) : '', // result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
+                sentOrReceived == 'received' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : tokenName.replace('#', '')) : '', // result.ethReceived && ethers.utils.formatEther(result.ethReceived) || '',
+                sentOrReceived == 'sent' ? (item.ftOrNFT == 'ft' ? ethers.utils.formatUnits(item.tokens, item.decimals) : tokenName.replace('#', '')) : '', // result.ethPaid && ethers.utils.formatEther(result.ethPaid) || '',
                 // '', // result.txFee && ethers.utils.formatEther(result.txFee) || '',
                 '', // result.balance && ethers.utils.formatEther(result.balance) || '',
-                item.symbol,
+                item.ftOrNFT == 'ft' ? item.symbol : contractName,
                 item.symbol == 'ETH' ? result.exchangeRate : '', // result.exchangeRate,
                 rcvdInReportingCurrency,
                 paidInReportingCurrency,
@@ -1789,14 +1796,19 @@ const Report = {
         // }
         i++;
       }
-      // console.log("results: " + rows.map(e => e.join("\t")).join("\n"));
-      let csvContent = "data:text/tsv;charset=utf-8," + rows.map(e => e.join("\t")).join("\n");
-      var encodedUri = encodeURI(csvContent);
-      var link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "txs_transactions_export-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".tsv");
-      document.body.appendChild(link); // Required for FF
-      link.click(); // This will download the data with the specified file name
+      if (false) {
+        console.log("results: " + rows.map(e => e.join("\t")).join("\n"));
+      } else {
+        let csvContent = "data:text/tsv;charset=utf-8," + rows.map(e => e.join("\t")).join("\n");
+        // console.log("results: " + rows.map(e => e.join("\t")).join("\n"));
+        // console.log("csvContent: " + csvContent);
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "txs_transactions_export-" + moment().format("YYYY-MM-DD-HH-mm-ss") + ".tsv");
+        document.body.appendChild(link); // Required for FF
+        link.click(); // This will download the data with the specified file name
+      }
     },
     async timeoutCallback() {
       logDebug("Report", "timeoutCallback() count: " + this.count);

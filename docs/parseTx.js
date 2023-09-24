@@ -1082,6 +1082,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
 
   const collator = {};
   for (const [eventIndex, event] of results.myEvents.entries()) {
+    // console.log("myEvents[" + eventIndex + "]: " + JSON.stringify(event));
     const sentOrReceived = (event.from == account) ? "sent" : "received";
     const counterparty = (event.from == account) ? event.to : event.from;
     const ftOrNFT = (event.type == 'eth' || event.type == 'erc20') ? 'ft' : 'nft';
@@ -1095,19 +1096,20 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
       collator[sentOrReceived][counterparty][ftOrNFT] = {};
     }
     if (!(event.contract in collator[sentOrReceived][counterparty][ftOrNFT])) {
-      collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = 0;
+      collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ftOrNFT == 'ft' ? 0 : [];
     }
     if (ftOrNFT == 'ft') {
       collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(event.tokens).toString();
     } else {
       if (event.type == 'erc1155batch') {
+        // TODO
         for (const tokens of event.tokens) {
           collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(tokens).toString();
         }
       } else if (event.type == 'erc1155') {
-        collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(event.tokens).toString();
+        collator[sentOrReceived][counterparty][ftOrNFT][event.contract].push(event.tokenId);
       } else {
-        collator[sentOrReceived][counterparty][ftOrNFT][event.contract] = ethers.BigNumber.from(collator[sentOrReceived][counterparty][ftOrNFT][event.contract]).add(1).toString();
+        collator[sentOrReceived][counterparty][ftOrNFT][event.contract].push(event.tokenId);
       }
     }
   }
