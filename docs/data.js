@@ -534,10 +534,13 @@ const dataModule = {
           };
           context.commit('addNewAccountInfo', accountInfo);
         }
-        const names = await ensReverseRecordsContract.getNames([account]);
-        const name = names.length == 1 ? names[0] : account;
-        if (!(account in context.state.ensMap)) {
-          context.commit('addENSName', { account, name });
+        try {
+          const names = await ensReverseRecordsContract.getNames([account]);
+          const name = names.length == 1 ? names[0] : account;
+          if (!(account in context.state.ensMap)) {
+            context.commit('addENSName', { account, name });
+          }
+        } catch (e) {
         }
       }
       context.dispatch('saveData', ['accountsInfo', 'accounts', 'ensMap']);
@@ -1053,10 +1056,13 @@ const dataModule = {
               context.commit('addNewAccount', accountDataInfo);
               context.commit('addNewAccountInfo', { account: accountDataInfo.account });
             }
-            const names = await ensReverseRecordsContract.getNames([accountItem]);
-            const name = names.length == 1 ? names[0] : accountItem;
-            if (!(accountItem in context.state.ensMap)) {
-              context.commit('addENSName', { account: accountItem, name });
+            try {
+              const names = await ensReverseRecordsContract.getNames([accountItem]);
+              const name = names.length == 1 ? names[0] : accountItem;
+              if (!(accountItem in context.state.ensMap)) {
+                context.commit('addENSName', { account: accountItem, name });
+              }
+            } catch (e) {              
             }
             if ((accountItemIndex + 1) % 25 == 0) {
               console.log("Saving accounts");
