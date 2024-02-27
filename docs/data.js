@@ -554,10 +554,13 @@ const dataModule = {
         context.commit('addNewAccount', accountInfo);
         context.commit('addNewAccountInfo', accountData);
       }
-      const names = await ensReverseRecordsContract.getNames([accountData.account]);
-      const name = names.length == 1 ? names[0] : accountData.account;
-      if (!(accountData.account in context.state.ensMap)) {
-        context.commit('addENSName', { account: accountData.account, name });
+      try {
+        const names = await ensReverseRecordsContract.getNames([accountData.account]);
+        const name = names.length == 1 ? names[0] : accountData.account;
+        if (!(accountData.account in context.state.ensMap)) {
+          context.commit('addENSName', { account: accountData.account, name });
+        }
+      } catch (e) {
       }
     },
     async restoreIntermediateData(context, info) {
@@ -1062,7 +1065,7 @@ const dataModule = {
               if (!(accountItem in context.state.ensMap)) {
                 context.commit('addENSName', { account: accountItem, name });
               }
-            } catch (e) {              
+            } catch (e) {
             }
             if ((accountItemIndex + 1) % 25 == 0) {
               console.log("Saving accounts");
@@ -1359,13 +1362,16 @@ const dataModule = {
       const ENSOWNERBATCHSIZE = 200; // Can do 200, but incorrectly misconfigured reverse ENS causes the whole call to fail
       for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
         const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
-        const allnames = await ensReverseRecordsContract.getNames(batch);
-        for (let j = 0; j < batch.length; j++) {
-          const account = batch[j];
-          const name = allnames[j];
-          // const normalized = normalize(account);
-          // console.log(account + " => " + name);
-          context.commit('addENSName', { account, name });
+        try {
+          const allnames = await ensReverseRecordsContract.getNames(batch);
+          for (let j = 0; j < batch.length; j++) {
+            const account = batch[j];
+            const name = allnames[j];
+            // const normalized = normalize(account);
+            // console.log(account + " => " + name);
+            context.commit('addENSName', { account, name });
+          }
+        } catch (e) {
         }
       }
       context.dispatch('saveData', ['ensMap']);
