@@ -362,7 +362,7 @@ const Connection = {
       logInfo("Connection", "execWeb3() start[" + this.count + "]");
 
       if (this.powerOn) {
-        if (!window.ethereum.isConnected() || !window.ethereum['isUnlocked']) {
+        if (window.ethereum && (!window.ethereum.isConnected() || !window.ethereum['isUnlocked'])) {
             logDebug("Connection", "execWeb3() requesting accounts");
             try {
               const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
