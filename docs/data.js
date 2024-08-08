@@ -333,9 +333,9 @@ const dataModule = {
       if (!(account in state.blocks[blockNumber].balances)) {
         Vue.set(state.blocks[blockNumber].balances, account, {});
       }
-      if (!(asset in state.blocks[blockNumber].balances[account])) {
+      // if (!(asset in state.blocks[blockNumber].balances[account])) {
         Vue.set(state.blocks[blockNumber].balances[account], asset, balance);
-      }
+      // }
     },
     addNewFunctionSelectors(state, functionSelectors) {
       for (const [functionSelector, functionNames] of Object.entries(functionSelectors)) {
@@ -873,14 +873,15 @@ const dataModule = {
             context.commit('addBlock', { blockNumber, timestamp, account, asset: WETHADDRESS, balance: wethBalance });
             context.commit('setSyncCompleted', parseInt(index) + 1);
             if ((index + 1) % 100 == 0) {
-              console.log("Saving blocks");
+              console.log("Saving blocks - periodic");
               context.dispatch('saveData', ['blocks']);
             }
             if (context.state.sync.halt) {
               break;
             }
           }
-          // context.dispatch('saveData', ['blocks']);
+          console.log("Saving blocks - final");
+          context.dispatch('saveData', ['blocks']);
           // context.commit('setSyncSection', { section: null, total: null });
         }
       }
