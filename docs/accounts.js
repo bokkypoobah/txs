@@ -630,9 +630,11 @@ const Accounts = {
       localStorage.accountsSettings = JSON.stringify(this.settings);
     },
     addNewAccounts() {
+      console.log(now() + " INFO Accounts:methods.addNewAccounts - this.settings.newAccounts: " + JSON.stringify(this.settings.newAccounts, null, 2));
       store.dispatch('data/addNewAccounts', this.settings.newAccounts);
     },
     addCoinbase() {
+      console.log(now() + " INFO Accounts:methods.addCoinbase - this.coinbase: " + JSON.stringify(this.coinbase, null, 2));
       store.dispatch('data/addNewAccounts', this.coinbase);
     },
     toggleSelectedAccounts(items) {

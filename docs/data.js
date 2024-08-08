@@ -147,7 +147,7 @@ const dataModule = {
       Vue.set(state.accountsInfo[info.account], info.field, info.value);
     },
     addNewAccountInfo(state, info) {
-      logInfo("dataModule", "mutations.addNewAccountInfo(" + JSON.stringify(info) + ")");
+      console.log(now() + " INFO Data:mutations.addNewAccountInfo(" + JSON.stringify(info) + ")");
       if (!(info.account in state.accountsInfo)) {
         Vue.set(state.accountsInfo, info.account, {
           type: info.type || null,
@@ -167,7 +167,7 @@ const dataModule = {
       }
     },
     addNewAccount(state, info) {
-      logInfo("dataModule", "mutations.addNewAccount(" + JSON.stringify(info) + ")");
+      console.log(now() + " INFO Data:mutations.addNewAccount(" + JSON.stringify(info) + ")");
       const block = store.getters['connection/block'];
       if (!(info.account in state.accounts)) {
         Vue.set(state.accounts, info.account, {
@@ -518,16 +518,18 @@ const dataModule = {
       db0.close();
     },
     async addNewAccounts(context, newAccounts) {
+      console.log(now() + " INFO Data:actions.addNewAccounts - newAccounts: " + JSON.stringify(newAccounts, null, 2));
       const accounts = newAccounts == null ? [] : newAccounts.split(/[, \t\n]+/).filter(name => (name.length == 42 && name.substring(0, 2) == '0x'));
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
       for (let account of accounts) {
         const accountData = await getAccountInfo(account, provider);
+        console.log(now() + " INFO Data:actions.addNewAccounts - accountData: " + JSON.stringify(accountData, null, 2));
         if (accountData.account) {
           context.commit('addNewAccount', accountData);
           const isMyAccount = true; // account == store.getters['connection/coinbase'];
           const accountInfo = {
-            account,
+            account: accountData.account,
             mine: isMyAccount,
             sync: isMyAccount,
             report: isMyAccount,

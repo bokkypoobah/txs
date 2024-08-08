@@ -356,3 +356,5 @@ function getExchangeRate(date, exchangeRates) {
   }
   return { date: null, rate: null };
 }
+
+const now = () => moment().format("HH:mm:ss");
