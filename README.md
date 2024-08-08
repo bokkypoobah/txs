@@ -50,6 +50,10 @@ Accounts interacted with, ERC-20, ERC-721 and ERC-1155 token contracts.
 
 <kbd><img src="images/txs_Accounts_AutomaticallyGeneratedAccounts.png" /></kbd>
 
+### Assets - View Assets
+
+<kbd><img src="images/txs_Assets.png" /></kbd>
+
 ### Reports - Generate Report Button
 
 <kbd><img src="images/txs_Reports_GenerateReportButton.png" /></kbd>
