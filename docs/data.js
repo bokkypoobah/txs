@@ -966,7 +966,7 @@ const dataModule = {
               .catch(function(e) {
                 console.log("error: " + e);
               });
-            if (data.ok && Object.keys(data.result.function).length > 0) {
+            if (data && data.ok && Object.keys(data.result.function).length > 0) {
               context.commit('addNewFunctionSelectors', data.result.function);
             }
           }
@@ -1008,7 +1008,7 @@ const dataModule = {
               .catch(function(e) {
                 console.log("error: " + e);
               });
-            if (data.ok && Object.keys(data.result.event).length > 0) {
+            if (data && data.ok && Object.keys(data.result.event).length > 0) {
               context.commit('addNewEventSelectors', data.result.event);
             }
           }
