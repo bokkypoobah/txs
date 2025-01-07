@@ -626,7 +626,7 @@ function parseTx(account, accounts, functionSelectors, eventSelectors, preERC721
   if (txData.tx.to != null) {
     const toAccount = accounts[txData.tx.to] || null;
     // console.log(txData.tx.hash + " - to: " + txData.tx.to + ", type: " + toAccount.type);
-    if (toAccount.type != 'eoa') {
+    if (toAccount && toAccount.type != 'eoa') {
       results.contract = txData.tx.to;
     }
   } else {
