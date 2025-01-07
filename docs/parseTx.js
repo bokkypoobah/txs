@@ -77,7 +77,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
     // CryptoVoxels ERC-721 @ 0x79986aF15539de2db9A5086382daEdA917A9CF0C uses ERC-20 style
     // CryptoKitties ERC-721 @ 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d has unindexed parameters
 
-    if (topic == "Transfer(address,address,uint256)") {
+    if (event.topics[0] == ethers.utils.id("Transfer(address,address,uint256)")) {
       let [from, to, tokensOrTokenId] = [null, null, null];
       if (event.topics.length == 4) {
         from = ethers.utils.getAddress("0x" + event.topics[1].substring(26));
@@ -167,7 +167,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
         }
       }
 
-    } else if (topic == "Assign(address,uint256)") {
+    } else if (event.topics[0] == ethers.utils.id("Assign(address,uint256)")) {
       if (event.address == "0x6Ba6f2207e343923BA692e5Cae646Fb0F566DB8D" || event.address == "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB") {
         const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[event.address].abi);
         const log = interface.parseLog(event);
@@ -197,7 +197,7 @@ function getEvents(account, accounts, eventSelectors, preERC721s, txData) {
     //     myEvents.push({ type: "preerc721", logIndex: event.logIndex, contract: event.address, from, to, tokenId: tokenId.toString() });
     //   }
 
-    } else if (topic == "CatRescued(address,bytes5)") {
+    } else if (event.topics[0] == ethers.utils.id("CatRescued(address,bytes5)")) {
       const interface = new ethers.utils.Interface(_CUSTOMACCOUNTS[event.address].abi);
       const log = interface.parseLog(event);
       // console.log("CatRescued: " + JSON.stringify(log));
